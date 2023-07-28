@@ -1,0 +1,11 @@
+body {
+    background-color:#0c0c0c;
+    color: #7a1212;
+}
+
+button {
+    display: flex; 
+    flex-direction: row;
+    align-items: center;
+    text-align: center;
+}
