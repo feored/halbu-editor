@@ -1,9 +1,8 @@
-# Svelte + Vite
-
-This template should help get you started developing with Tauri and Svelte in Vite.
-
-## Recommended IDE Setup
-
-[VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer).
-
 # halbu-editor
+
+Save Editor for Diablo II Resurrected, using halbu as the backend for parsing .d2s files and tauri/svelte for the frontend.
+```
+$ npm install
+
+$ npm run tauri dev
+```

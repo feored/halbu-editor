@@ -60,7 +60,6 @@
 </script>
 
 <div class="center">
-    
     <div class="center"> 
         <button on:click={readFileContents}>Edit Character</button>
     </div>
