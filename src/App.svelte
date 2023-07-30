@@ -44,7 +44,7 @@
         <CharacterPicker on:message={handlePickedCharacter} />
     {:else}
         <div class="row">
-            <button on:click={unpickCharacter}><ArrowLeftIcon />Back</button>
+            <button class="icon-btn" on:click={unpickCharacter}><ArrowLeftIcon />Back</button>
             <button on:click={saveCharacter}>Save</button>
         </div>
         
