@@ -14,6 +14,7 @@
     "lucide-svelte": "^0.263.0"
   },
   "devDependencies": {
+    "@svelte-plugins/tooltips": "^0.1.6",
     "@sveltejs/vite-plugin-svelte": "^2.4.2",
     "@tauri-apps/cli": "^1.4.0",
     "svelte": "^4.0.5",

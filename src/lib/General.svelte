@@ -1,6 +1,8 @@
 <script>
     import { invoke } from "@tauri-apps/api/tauri";
     import { Info, InfoIcon} from "lucide-svelte";
+    import { Tooltip } from "@svelte-plugins/tooltips";
+
     export let save;
 
     const MAX_GOLD_PER_LEVEL = 10000;
@@ -58,7 +60,9 @@
         <div class="row" style="align-items:center">
             <input title="2-15 characters" bind:this = {nameRef} type="text" id="name" placeholder="default" name="name" required minlength="2" maxlength="15" size="15" on:input={() => {validateName}} bind:value="{save.character.name}"/>
             <div>
-            <InfoIcon />
+            <Tooltip content="<ul><li>2-15 characters (UTF-8)</li><li>1 underscore or dash allowed</li><li>Must begin with a letter</li></ul>" position={"bottom"}>
+                <InfoIcon />
+            </Tooltip>
             </div>
         </div>
         <p>
