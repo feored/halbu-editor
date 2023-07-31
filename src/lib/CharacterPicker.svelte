@@ -77,7 +77,6 @@
 <style>
 
     button {
-        color:brown;
         font-weight: bold;
     }
     .center-button {

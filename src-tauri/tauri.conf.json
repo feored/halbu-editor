@@ -44,8 +44,8 @@
         "fullscreen": false,
         "resizable": true,
         "title": "Halbu Editor",
-        "width": 800,
-        "height": 800
+        "width": 1024,
+        "height": 768
       }
     ]
   }

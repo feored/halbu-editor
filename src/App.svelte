@@ -1,7 +1,7 @@
 <script>
     import { invoke } from "@tauri-apps/api/tauri";
     import { save } from "@tauri-apps/api/dialog";
-    import { ArrowLeftIcon} from 'svelte-feather-icons'
+    import { ArrowLeftIcon, SaveIcon} from 'lucide-svelte'
     import CharacterPicker, {CharacterType} from "./lib/CharacterPicker.svelte";
     import Character from "./lib/Character.svelte";
 
@@ -29,7 +29,7 @@
             extensions: ['d2s']
         }]
         });
-        let res = await invoke("save_file", {path:filePath});
+        let res = await invoke("save_file", {path:filePath, save: currentCharacter});
     }
 
     function unpickCharacter(){
@@ -39,13 +39,13 @@
 </script>
 
 <main class="container">
-    <h1 id="title">Halbu Editor</h1>
     {#if !loaded_character}
+        <h1 id="title">Halbu Editor</h1>
         <CharacterPicker on:message={handlePickedCharacter} />
     {:else}
         <div class="row">
-            <button class="icon-btn" on:click={unpickCharacter}><ArrowLeftIcon />Back</button>
-            <button on:click={saveCharacter}>Save</button>
+            <button class="icon-btn" on:click={unpickCharacter}><ArrowLeftIcon /> Back</button>
+            <button class="icon-btn" on:click={saveCharacter}><SaveIcon /> Save</button>
         </div>
         
         <Character save={currentCharacter}/>
