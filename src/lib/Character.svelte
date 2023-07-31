@@ -17,12 +17,12 @@
 
 <div class="row">
     <div class="col tabs">
-        <button class="tab" class:selected={currentTab == TabID.General} on:click={() => {currentTab = TabID.General}}><UserSquare2Icon /></button>
-        <button class="tab" class:selected={currentTab == TabID.Mercenary} on:click={() => {currentTab = TabID.Mercenary}}><PersonStandingIcon /></button>
-        <button class="tab" class:selected={currentTab == TabID.Skills} on:click={() => {currentTab = TabID.Skills}}><BookPlusIcon /></button>
-        <button class="tab" class:selected={currentTab == TabID.Waypoints} on:click={() => {currentTab = TabID.Waypoints}}><LocateIcon /></button>
-        <button class="tab" class:selected={currentTab == TabID.Quests} on:click={() => {currentTab = TabID.Quests}}><ScrollIcon/></button>
-        <button class="tab" class:selected={currentTab == TabID.Items} on:click={() => {currentTab = TabID.Items}}><SwordIcon /></button>
+        <button class="tab col" class:selected={currentTab == TabID.General} on:click={() => {currentTab = TabID.General}}><UserSquare2Icon /><p>Character</p></button>
+        <button class="tab" class:selected={currentTab == TabID.Mercenary} on:click={() => {currentTab = TabID.Mercenary}}><PersonStandingIcon /><p>Mercenary</p></button>
+        <button class="tab" class:selected={currentTab == TabID.Skills} on:click={() => {currentTab = TabID.Skills}}><BookPlusIcon /><p>Skills</p></button>
+        <button class="tab" class:selected={currentTab == TabID.Waypoints} on:click={() => {currentTab = TabID.Waypoints}}><LocateIcon /><p>Waypoints</p></button>
+        <button class="tab" class:selected={currentTab == TabID.Quests} on:click={() => {currentTab = TabID.Quests}}><ScrollIcon /><p>Quests</p></button>
+        <button class="tab" class:selected={currentTab == TabID.Items} on:click={() => {currentTab = TabID.Items}}><SwordIcon /><p>Items</p></button>
     </div>
     <div class="col margin tabContent">
         {#if currentTab == TabID.General}
@@ -34,12 +34,17 @@
 <style>
     .tabs {
         justify-content: space-between;
+        align-items: center;
         height:100%;
-        width:100px;
     }
     .tab {
         flex:0 0 auto;
         height:100px;
+        width:100%;
+        align-items: center;
+    }
+    .tab p {
+        font-weight:lighter;
     }
     .selected{
         background-color: var(--beige);
