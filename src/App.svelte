@@ -7,6 +7,7 @@
 
     let loaded_character = false;
     let currentSave = null;
+    let validSave = true;
 
     async function handlePickedCharacter(event) {
         console.log(event.detail);
@@ -37,6 +38,11 @@
         loaded_character = false;
         currentSave = null;
     }
+
+    function handleSaveValid(event){
+        console.log(event.detail.valid);
+        validSave = event.detail.valid;
+    }
 </script>
 
 <main class="container">
@@ -46,10 +52,10 @@
     {:else}
         <div class="row">
             <button class="icon-btn" on:click={unpickCharacter}><ArrowLeftIcon /> Back</button>
-            <button class="icon-btn" on:click={saveCharacter}><SaveIcon /> Save</button>
+            <button class="icon-btn" on:click={saveCharacter} disabled={!validSave}><SaveIcon /> Save</button>
         </div>
         
-        <Character save={currentSave}/>
+        <Character save={currentSave} on:message={handleSaveValid}/>
     {/if}
 </main>
 

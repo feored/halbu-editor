@@ -1,5 +1,7 @@
 <script>
     import General from "./General.svelte"
+    import Mercenary from "./Mercenary.svelte"
+
     import { UserSquare2Icon, PersonStandingIcon, LocateIcon, ScrollIcon, SwordIcon, BookPlusIcon} from 'lucide-svelte'
 
     export let save;
@@ -26,7 +28,9 @@
     </div>
     <div class="col margin tabContent">
         {#if currentTab == TabID.General}
-            <General save={save} />
+            <General save={save} on:message />
+        {:else if currentTab == TabID.Mercenary}
+            <Mercenary save={save} />
         {/if}
     </div>
 </div>

@@ -2,17 +2,28 @@
     import { invoke } from "@tauri-apps/api/tauri";
     import { Info, InfoIcon} from "lucide-svelte";
     import { Tooltip } from "@svelte-plugins/tooltips";
+    import { createEventDispatcher } from 'svelte';
+
+    const dispatch = createEventDispatcher();
+
+    function dispatchValidSave(validity){
+        dispatch('message', {
+			valid: validity
+		});
+    }
 
     export let save;
 
     const MAX_GOLD_PER_LEVEL = 10000;
 
-    let nameRef;
+    let nameRef, mapSeedRef;
+    let lastDifficultyRef, lastActRef;
     let strengthRef, dexterityRef, vitalityRef, energyRef;
     let levelRef, experienceRef;
     let lifeCurrentRef,  lifeBaseRef, manaCurrentRef, manaBaseRef, staminaCurrentRef, staminaBaseRef;
     let statPointsLeftRef, skillPointsLeftRef;
     let goldInventoryRef, goldStashRef;
+
 
     async function changeLevel(){
         save.character.level = save.attributes.level;
@@ -49,26 +60,59 @@
         }
     }
 
-    function validateName(){
+    let validName = true;
 
+    async function validateName(){
+        await invoke("validate_name", {potentialName : nameRef.value})
+        .then(message => {
+            validName = true;
+            save.character.name = nameRef.value;
+            dispatchValidSave(true);
+        })
+        .catch(e => {
+            validName = false;
+            dispatchValidSave(false);
+        })
     }
 </script>
 
-<div class="row">
-    <div>
-        <label for="name" class="row" style="vertical-align:middle;">Name</label>
-        <div class="row" style="align-items:center">
-            <input title="2-15 characters" bind:this = {nameRef} type="text" id="name" placeholder="default" name="name" required minlength="2" maxlength="15" size="15" on:input={() => {validateName}} bind:value="{save.character.name}"/>
-            <div>
-            <Tooltip content="<ul><li>2-15 characters (UTF-8)</li><li>1 underscore or dash allowed</li><li>Must begin with a letter</li></ul>" position={"bottom"}>
-                <InfoIcon />
-            </Tooltip>
+<div class="row" style="align-items:center;vertical-align:middle;">
+    <fieldset id="info" style="width:100%;">
+        <div class="row">
+            <div class="col">
+                <div class="row">
+                    <label for="name" >
+                        Name
+                        &nbsp;
+                        <Tooltip content="<ul><li>2-15 characters</li><li>Only 1 _ and - allowed</li><li>Must begin with a letter</li><li>No numbers</li><li>No mixing languages</li></ul>" position={"bottom"}>
+                            <InfoIcon size={18}/>
+                        </Tooltip>
+                        &nbsp;
+                        <i>{save.character.title}</i> 
+                    </label>
+                </div>
+                <input class={validName == false ? "invalid" : ""} on:keydown={validateName} on:input={validateName} on:change={validateName}
+                title="2-15 characters" bind:this = {nameRef} type="text" id="name" placeholder="default" name="name" required minlength="2"
+                maxlength="15" size="15" value="{save.character.name}" style="width:15em;"/>
             </div>
-        </div>
-        <p>
-            <i>{save.character.title}</i> <b>{save.character.class}</b>
-        </p>
-    </div>
+            <div class="col">
+                <label for="class">Class</label>
+                <select bind:value={save.character.class} name="class" id="class">
+                    <option value="Amazon">Amazon</option>
+                    <option value="Assassin">Assassin</option>
+                    <option value="Barbarian">Barbarian</option>
+                    <option value="Druid">Druid</option>
+                    <option value="Necromancer">Necromancer</option>
+                    <option value="Paladin">Paladin</option>
+                    <option value="Sorceress">Sorceress</option>
+                </select>
+            </div>
+            <div class="col">
+                <label for="mapSeed">Map Seed</label>
+                <input bind:this = {mapSeedRef} type="number" name="mapSeed" min="0" max="4294967295" step="1" on:input={() => {enforceMinMax(mapSeedRef)}} bind:value="{save.character.map_seed}">
+            </div>
+        </div>    
+    </fieldset>
 </div>
 <div class="row">
     <fieldset id="levelxp" class="row">
@@ -86,7 +130,7 @@
         <legend>Status</legend>
 
         <div class="row">
-            <input type="checkbox" id="expansion" name="expansion" bind:checked="{save.character.status.expansion}">
+            <input type="checkbox" id="expansion" name="expansion" bind:checked="{save.character.status.expansion}" disabled = {save.character.class === "Druid" || save.character.class === "Assassin"}>
             <label for="expansion">Expansion</label>
         </div>
 
@@ -177,8 +221,8 @@
             </div>
         </fieldset>
     </div>
-    <div class="container">
-        <fieldset id="gold">
+    <div class="container col">
+        <fieldset id="gold" class="row">
             <legend>Gold</legend>
             <div>
                 <label for="goldInventory">Gold In Inventory</label>
@@ -187,6 +231,27 @@
             <div>
                 <label for="goldStash">Gold In Stash</label>
                 <input bind:this = {goldStashRef} type="number" name="goldStash" min="0" max="2500000" step="1" on:input={() => {enforceMinMax(goldStashRef)}} bind:value="{save.attributes.gold_stash}">
+            </div>
+        </fieldset>
+        <fieldset id="difficulty" class="row">
+            <legend>Difficulty</legend>
+            <div>
+                <label for="lastDifficulty">Last Difficulty</label>
+                <select bind:value={save.character.difficulty} name="lastDifficulty">
+                    <option value="Normal">Normal</option>
+                    <option value="Nightmare">Nightmare</option>
+                    <option value="Hell">Hell</option>
+                </select>
+            </div>
+            <div>
+                <label for="lastAct">Last Act</label>
+                <select bind:value={save.character.act} name="lastDifficulty">
+                    <option value="Act1">Act I</option>
+                    <option value="Act2">Act II</option>
+                    <option value="Act3">Act III</option>
+                    <option value="Act4">Act IV</option>
+                    <option value="Act5">Act V</option>
+                </select>
             </div>
         </fieldset>
     </div>
@@ -199,6 +264,7 @@
         align-items: end;
         justify-content: center;
     }
+
     input[type="number"] {
         width:100px;
     }
@@ -210,6 +276,10 @@
     fieldset {
         margin-right:1em;
         align-items: center;
+    }
+
+    .invalid {
+        background-color: #271616;
     }
 
 </style>

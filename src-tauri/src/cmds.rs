@@ -70,4 +70,11 @@ pub fn save_file(path: String, save:Save) -> Result<String, String> {
     file.write_all(&generated_save).unwrap();
     Ok(String::from("Success!"))
 }
+#[tauri::command]
+pub fn validate_name(potential_name : String) -> Result<(), String> {
+    match halbu::character::Name::from(&potential_name) {
+        Ok(res) => Ok(()),
+        Err(e) => Err(e.to_string())
+    }
+}
 

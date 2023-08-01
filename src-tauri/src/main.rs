@@ -13,7 +13,8 @@ fn main() {
             new_character,
             save_file,
             get_experience_range_from_level,
-            get_level_from_experience
+            get_level_from_experience,
+            validate_name
         ])
         .run(tauri::generate_context!());
 }

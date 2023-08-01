@@ -1103,6 +1103,7 @@ dependencies = [
  "bit",
  "serde",
  "serde_with",
+ "unicode-segmentation",
 ]
 
 [[package]]
