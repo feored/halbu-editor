@@ -70,11 +70,22 @@ pub fn save_file(path: String, save:Save) -> Result<String, String> {
     file.write_all(&generated_save).unwrap();
     Ok(String::from("Success!"))
 }
+
 #[tauri::command]
 pub fn validate_name(potential_name : String) -> Result<(), String> {
     match halbu::character::Name::from(&potential_name) {
-        Ok(res) => Ok(()),
+        Ok(_res) => Ok(()),
         Err(e) => Err(e.to_string())
     }
+}
+
+#[tauri::command]
+pub fn get_character_title(character: halbu::character::Character) -> String {
+    character.title()
+}
+
+#[tauri::command]
+pub fn get_mercenary_names(class: halbu::character::mercenary::Class) -> &'static [&'static str] {
+    halbu::character::mercenary::names_list(class)
 }
 

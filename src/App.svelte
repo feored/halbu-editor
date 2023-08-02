@@ -50,7 +50,7 @@
         <h1 id="title">Halbu Editor</h1>
         <CharacterPicker on:message={handlePickedCharacter} />
     {:else}
-        <div class="row">
+        <div>
             <button class="icon-btn" on:click={unpickCharacter}><ArrowLeftIcon /> Back</button>
             <button class="icon-btn" on:click={saveCharacter} disabled={!validSave}><SaveIcon /> Save</button>
         </div>

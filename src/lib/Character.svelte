@@ -1,6 +1,7 @@
 <script>
     import General from "./General.svelte"
     import Mercenary from "./Mercenary.svelte"
+    import Waypoints from "./Waypoints.svelte"
 
     import { UserSquare2Icon, PersonStandingIcon, LocateIcon, ScrollIcon, SwordIcon, BookPlusIcon} from 'lucide-svelte'
 
@@ -26,7 +27,7 @@
         <button class="tab" class:selected={currentTab == TabID.Quests} on:click={() => {currentTab = TabID.Quests}}><ScrollIcon /><p>Quests</p></button>
         <button class="tab" class:selected={currentTab == TabID.Items} on:click={() => {currentTab = TabID.Items}}><SwordIcon /><p>Items</p></button>
     </div>
-    <div class="col margin tabContent">
+    <div class="col tabContent" style="margin-left:1em;">
         {#if currentTab == TabID.General}
             <General save={save} on:message />
         {:else if currentTab == TabID.Mercenary}

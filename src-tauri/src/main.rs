@@ -14,7 +14,9 @@ fn main() {
             save_file,
             get_experience_range_from_level,
             get_level_from_experience,
-            validate_name
+            validate_name,
+            get_character_title,
+            get_mercenary_names
         ])
         .run(tauri::generate_context!());
 }

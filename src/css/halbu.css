@@ -1,19 +1,70 @@
-body {
-    background-color: var(--black);
-    color: var(--light-beige);
-    font-family: monospace;
+
+.row {
+    display:flex;
+    flex-direction: row;
 }
 
 .col {
     display: flex;
     flex-direction: column;
-    ;
 }
 
-.row {
-    display: flex;
-    flex-direction: row;
+.flex-center {
+    align-items: center;
 }
+
+:root{
+    --col-size: 100px;
+}
+
+
+.grid {
+    display: grid;
+    grid-gap: 10px;
+}
+
+.grid-1{
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-gap: 10px;
+}
+
+.grid-2{
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-gap: 10px;
+}
+
+.grid-3{
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-gap: 10px;
+}
+
+.grid-3-fixed{
+    display: grid;
+    grid-template-columns: repeat(3, var(--col-size));
+    grid-gap: 10px;
+}
+
+.grid-4{
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-gap: 10px;
+}
+
+.grid-5{
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-gap: 10px;
+}
+
+.grid-6{
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    grid-gap: 10px;
+}
+
 
 :global(svg) {
     width: 1rem;
@@ -24,21 +75,6 @@ body {
     display: inline-flex;
 }
 
-button {
-    border-radius: 0.5em;
-    padding: 0.5em;
-}
-
-.margin {
-    margin: 1em;
-}
-
-.flex-center {
-    justify-content: center;
-    text-align: center;
-    align-items: center;
-}
-
 #app {
     width:100%;
     height:100%;
@@ -46,4 +82,20 @@ button {
 
 svg {
     vertical-align:sub;
+}
+
+.apart {
+    align-items:start;
+    justify-content: space-between;
+}
+.spaced > *:not(:last-child) {
+    margin-right: 1em; 
+} 
+
+input[type="number"]{
+    text-align: right;
+}   
+
+.invalid {
+    background-color: #271616;
 }
