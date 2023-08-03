@@ -40,6 +40,7 @@
     .tabs {
         justify-content: space-between;
         align-items: center;
+        width : 140px;
         height:100%;
     }
     .tab {
@@ -52,7 +53,8 @@
         font-weight:lighter;
     }
     .selected{
-        background-color: var(--beige);
+        background-color: var(--button-hover);
+        border: 1px var(--focus) solid;
     }
 
     /* .tabContent {

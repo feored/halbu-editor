@@ -1,6 +1,6 @@
 <script>
     import { invoke } from "@tauri-apps/api/tauri";
-    import { Info, InfoIcon} from "lucide-svelte";
+    import { InfoIcon} from "lucide-svelte";
     import { Tooltip } from "@svelte-plugins/tooltips";
     import { createEventDispatcher } from 'svelte';
 
@@ -36,7 +36,7 @@
 
     async function updateTitle(){
         save.character.progression = (4 + (save.character.status.expansion ? 1 : 0)) * (difficultiesToBeat.indexOf(difficultyBeatenRef.value));
-        await invoke("get_character_title", {character: save.character})
+        await invoke("character_get_title", {character: save.character})
         .then((newTitle) => {
             save.character.title = newTitle;
         })
@@ -44,7 +44,7 @@
 
     async function changeLevel(){
         save.character.level = save.attributes.level;
-        await invoke("get_experience_range_from_level", {level: save.attributes.level})
+        await invoke("character_get_experience_range_from_level", {level: save.attributes.level})
         .then((xpRange) => {
             if(save.attributes.experience < xpRange[0] || save.attributes.experience >= xpRange[1]){
                 save.attributes.experience = xpRange[0];
@@ -53,7 +53,7 @@
     }
 
     async function setExperience(){
-        await invoke("get_level_from_experience", {experience: save.attributes.experience})
+        await invoke("character_get_level_from_experience", {experience: save.attributes.experience})
         .then((level) => {
             if(save.attributes.level != level){
                 save.attributes.level = level;
@@ -75,7 +75,7 @@
     }
 
     async function validateName(){
-        await invoke("validate_name", {potentialName : nameRef.value})
+        await invoke("character_validate_name", {potentialName : nameRef.value})
         .then(message => {
             validName = true;
             save.character.name = nameRef.value;
@@ -105,7 +105,7 @@
             </div>
             <div class="col">
                 <label for="class">Class</label>
-                <select on:change={updateTitle} bind:value={save.character.class} name="class" id="class">
+                <select bind:value={save.character.class} name="class" id="class" on:change={updateTitle} >
                     <option value="Amazon">Amazon</option>
                     <option value="Assassin">Assassin</option>
                     <option value="Barbarian">Barbarian</option>
