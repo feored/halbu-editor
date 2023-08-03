@@ -2,16 +2,15 @@
     import { invoke } from "@tauri-apps/api/tauri";
     import { InfoIcon} from "lucide-svelte";
     import { Tooltip } from "@svelte-plugins/tooltips";
+    import { Message, buildMessage} from "./Message.svelte";
     import { createEventDispatcher } from 'svelte';
 
-    const dispatch = createEventDispatcher();
-
-    function dispatchValidSave(validity){
-        dispatch('message', {
-			valid: validity
-		});
+   
+    export const dispatch = createEventDispatcher();
+    function dispatchMessage(id, data) {
+        dispatch('message', buildMessage(id, data));
     }
-
+    
     export let save;
 
 
@@ -79,11 +78,11 @@
         .then(message => {
             validName = true;
             save.character.name = nameRef.value;
-            dispatchValidSave(true);
+            dispatchMessage(Message.ValidSave, true);
         })
         .catch(e => {
             validName = false;
-            dispatchValidSave(false);
+            dispatchMessage(Message.ValidSave, false);
         })
     }
 </script>

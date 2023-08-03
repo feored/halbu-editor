@@ -142,7 +142,7 @@
 
 </script>
 
-<div class="row spaced">
+<div class="grid-2">
     <fieldset id="status" class="row flex-center spaced">
         <legend>Status</legend>
 
@@ -170,7 +170,7 @@
             </select>
         </div>
     </fieldset>
-    <fieldset id="level" class="row spaced">
+    <fieldset id="level" class="row flex-center">
         <legend>Level</legend>
         <div class="col">
             <label for="level">Level&nbsp;

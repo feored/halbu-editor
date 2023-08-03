@@ -65,6 +65,24 @@
     grid-gap: 10px;
 }
 
+.grid-7{
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    grid-gap: 10px;
+}
+
+.grid-8{
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-gap: 10px;
+}
+
+.grid-9{
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    grid-gap: 10px;
+}
+
 
 :global(svg) {
     width: 1rem;

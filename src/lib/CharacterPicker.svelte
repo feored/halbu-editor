@@ -8,6 +8,11 @@
 <script>
     import { open } from "@tauri-apps/api/dialog";
     import { createEventDispatcher } from 'svelte';
+    import { Message, buildMessage} from "./Message.svelte";
+
+    function dispatchMessage(id, data) {
+        dispatch('message', buildMessage(id, data));
+    }
 
     const readFileContents = async () => {
         try {
@@ -19,7 +24,7 @@
                 }],
                 title: "Open .d2s file"
             });
-            dispatchFile(selectedPath);
+            dispatchMessage(Message.CharacterPicked, {data: selectedPath, character: CharacterType.Existing});
         } catch (err) {
             console.error(err);
         }
@@ -37,24 +42,9 @@
         "Sorceress"
     ];
 
-    let files;
-
-    function dispatchFile(path){
-        console.log("Dispatching " + path);
-        dispatch('message', {
-            //remove the data:*/*;base64, from the data URL
-            data: path,
-            character: CharacterType.Existing
-        });
-    }
-
     function dispatchNewCharacter(characterClass){
-        dispatch('message', {
-            //remove the data:*/*;base64, from the data URL
-            data: characterClass,
-            character: CharacterType.New
-        });
-    };
+        dispatchMessage(Message.CharacterPicked, {data: characterClass, character: CharacterType.New});
+    }
 
 
 </script>
@@ -75,7 +65,6 @@
 </div>
 
 <style>
-
     button {
         font-weight: bold;
     }
