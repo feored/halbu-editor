@@ -34,7 +34,6 @@
     let mercLevel;
 
     async function changeExperience(){
-        console.log(save.character.mercenary);
         await invoke("mercenary_get_level_from_xp", {mercenary: save.character.mercenary})
         .then((level) => {
             mercLevel = level;
@@ -42,8 +41,6 @@
     }
 
     async function changeLevel(){
-        console.log(save.character.mercenary);
-        console.log(mercLevel);
         await invoke("mercenary_get_xp_from_level", {mercenary: save.character.mercenary, level: mercLevel})
         .then((experience) => {
             save.character.mercenary.experience = experience;
@@ -73,8 +70,10 @@
 
     async function updateName(){
         await get_names();
-        save.character.mercenary.name = variantNames[Math.floor(Math.random()*variantNames.length)];
+        save.character.mercenary.name_id = Math.floor(Math.random()*variantNames.length);
     }
+
+    $: if (variantNames.length > 0) { save.character.mercenary.name = variantNames[save.character.mercenary.name_id]; }
 
 
     let difficulties = ["Normal", "Nightmare", "Hell"];
@@ -143,7 +142,7 @@
 
 </script>
 
-<div class="row">
+<div class="row spaced">
     <fieldset id="status" class="row flex-center spaced">
         <legend>Status</legend>
 
@@ -164,11 +163,27 @@
 
         <div class="col">
             <label for="name">Name</label>
-            <select bind:value={save.character.mercenary.name} name="name" id="name" on:change={() => save.character.mercenary.name_id = variantNames.indexOf(save.character.mercenary.name)}>
-                {#each variantNames as name}
-                    <option value="{name}">{name}</option>
+            <select bind:value={save.character.mercenary.name_id} name="name_id" id="name_id">
+                {#each variantNames as name, index}
+                    <option value="{index}">{name}</option>
                 {/each}
             </select>
+        </div>
+    </fieldset>
+    <fieldset id="level" class="row spaced">
+        <legend>Level</legend>
+        <div class="col">
+            <label for="level">Level&nbsp;
+                <Tooltip content="<p style='text-align:center'>Hirelings need different amounts of XP per level depending on their class.</p>" position={"bottom"}>
+                    <InfoIcon size={18}/>
+                </Tooltip></label>
+            <input bind:this = {levelRef} type="number" name="id" min="1" max="98" step="1" bind:value="{mercLevel}" on:input={() => {changeLevel(); enforceMinMax(levelRef);}}>
+        </div>
+    
+    
+        <div class="col">
+            <label for="experience">Experience</label>
+            <input bind:this = {experienceRef} type="number" name="id" min="0" max="4294967295" step="1" bind:value="{save.character.mercenary.experience}" on:input={() => {changeExperience(); enforceMinMax(experienceRef);}} >
         </div>
     </fieldset>
 </div>
@@ -212,25 +227,6 @@
 </fieldset>
 
 <div class="grid-5 flex-center">
-    <fieldset id="level" class="row spaced">
-
-        <legend>Level</legend>
-        <div class="col">
-            <label for="level">Level&nbsp;
-                <Tooltip content="<p style='text-align:center'>Hirelings need different amounts of XP per level depending on their class.</p>" position={"bottom"}>
-                    <InfoIcon size={18}/>
-                </Tooltip></label>
-            <input bind:this = {levelRef} type="number" name="id" min="1" max="98" step="1" bind:value="{mercLevel}" on:input={() => {changeLevel(); enforceMinMax(levelRef);}}>
-        </div>
     
-    
-        <div class="col">
-            <label for="experience">Experience</label>
-            <input bind:this = {experienceRef} type="number" name="id" min="0" max="4294967295" step="1" bind:value="{save.character.mercenary.experience}" on:input={() => {changeExperience(); enforceMinMax(experienceRef);}} >
-        </div>
-    
-    
-    
-    </fieldset>
 </div>
 
