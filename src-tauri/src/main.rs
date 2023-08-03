@@ -16,8 +16,7 @@ fn main() {
             character_get_title,
             mercenary_get_names,
             mercenary_get_level_from_xp,
-            mercenary_get_xp_from_level,
-            mercenary_get_variants
+            mercenary_get_xp_from_level
         ])
         .run(tauri::generate_context!());
 }

@@ -98,8 +98,3 @@ pub fn mercenary_get_xp_from_level(mercenary: halbu::character::mercenary::Merce
 pub fn mercenary_get_level_from_xp(mercenary: halbu::character::mercenary::Mercenary) -> u8{
     mercenary.level_from_xp()
 }
-
-#[tauri::command]
-pub fn mercenary_get_variants() ->  halbu::character::mercenary::Variants {
-    halbu::character::mercenary::variants()
-}
