@@ -142,7 +142,7 @@
 
 </script>
 
-<div class="grid-2">
+<div class="row flex-center spaced">
     <fieldset id="status" class="row flex-center spaced">
         <legend>Status</legend>
 
@@ -189,7 +189,7 @@
 </div>
 
 <fieldset id="variant" class="grid-3 flex-center">
-
+    <legend>Mercenary Type</legend>
     <div class="col">
         <label for="difficultyHired">Difficulty Hired</label>
         <select bind:value={difficultyHired} name="difficultyHired" id="difficultyHired"  on:change={updateVariant}>

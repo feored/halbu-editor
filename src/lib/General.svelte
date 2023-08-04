@@ -88,40 +88,39 @@
 </script>
 
 
-<div class="row">
-    <fieldset id="info" class="row spaced">
-            <div class="col">
-                <label for="name" >
-                    Name
-                    &nbsp;
-                    <Tooltip content="<ul><li>2-15 characters</li><li>Only 1 _ and - allowed</li><li>Must begin with a letter</li><li>No numbers</li><li>No mixing languages</li></ul>" position={"bottom"}>
-                        <InfoIcon size={18}/>
-                    </Tooltip>
-                </label>
-                    <input class={validName == false ? "invalid" : ""} on:keydown={validateName} on:input={validateName} on:change={validateName}
-                    title="2-15 characters" bind:this = {nameRef} type="text" id="name" placeholder="default" name="name" required minlength="2"
-                    maxlength="15" size="15" value="{save.character.name}" style="width:15em;"/>
-            </div>
-            <div class="col">
-                <label for="class">Class</label>
-                <select bind:value={save.character.class} name="class" id="class" on:change={updateTitle} >
-                    <option value="Amazon">Amazon</option>
-                    <option value="Assassin">Assassin</option>
-                    <option value="Barbarian">Barbarian</option>
-                    <option value="Druid">Druid</option>
-                    <option value="Necromancer">Necromancer</option>
-                    <option value="Paladin">Paladin</option>
-                    <option value="Sorceress">Sorceress</option>
-                </select>
-            </div>
-            <div class="col">
-                <label for="mapSeed">Map Seed</label>
-                <input bind:this = {mapSeedRef} type="number" name="mapSeed" min="0" max="4294967295" step="1" on:input={() => {enforceMinMax(mapSeedRef)}} bind:value="{save.character.map_seed}">
-            </div>
-    </fieldset>
-</div>
+<fieldset id="info" class="row spaced">
+    <legend>Information</legend>
+        <div class="col">
+            <label for="name" >
+                Name
+                &nbsp;
+                <Tooltip content="<ul><li>2-15 characters</li><li>Only 1 _ and - allowed</li><li>Must begin with a letter</li><li>No numbers</li><li>No mixing languages</li></ul>" position={"bottom"}>
+                    <InfoIcon size={18}/>
+                </Tooltip>
+            </label>
+                <input class={validName == false ? "invalid" : ""} on:keydown={validateName} on:input={validateName} on:change={validateName}
+                title="2-15 characters" bind:this = {nameRef} type="text" id="name" placeholder="default" name="name" required minlength="2"
+                maxlength="15" size="15" value="{save.character.name}" style="width:15em;"/>
+        </div>
+        <div class="col">
+            <label for="class">Class</label>
+            <select bind:value={save.character.class} name="class" id="class" on:change={updateTitle} >
+                <option value="Amazon">Amazon</option>
+                <option value="Assassin">Assassin</option>
+                <option value="Barbarian">Barbarian</option>
+                <option value="Druid">Druid</option>
+                <option value="Necromancer">Necromancer</option>
+                <option value="Paladin">Paladin</option>
+                <option value="Sorceress">Sorceress</option>
+            </select>
+        </div>
+        <div class="col">
+            <label for="mapSeed">Map Seed</label>
+            <input bind:this = {mapSeedRef} type="number" name="mapSeed" min="0" max="4294967295" step="1" on:input={() => {enforceMinMax(mapSeedRef)}} bind:value="{save.character.map_seed}">
+        </div>
+</fieldset>
 <div class="row spaced">
-    <fieldset id="levelxp" class="row spaced">
+    <fieldset id="levelxp" class="row spaced flex-center">
         <legend>Level</legend>
         <div id="level">
             <label for="level">Level</label>
@@ -158,7 +157,7 @@
 </div>
 <h3>Stats</h3>
 <div class="row spaced">
-        <fieldset id="attributes" class="grid-1">
+        <fieldset id="attributes" class="col flex-center">
             <legend>Attributes</legend>
             <div>
                 <label for="strength">Strength</label>

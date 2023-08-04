@@ -59,7 +59,7 @@
     }
     .tab {
         flex:0 0 auto;
-        height:100px;
+        height:5%;
         width:100%;
         align-items: center;
     }

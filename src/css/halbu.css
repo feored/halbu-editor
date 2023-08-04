@@ -11,12 +11,12 @@
 
 .flex-center {
     align-items: center;
+    justify-content: center;
 }
 
 :root{
     --col-size: 100px;
 }
-
 
 .grid {
     display: grid;
@@ -38,12 +38,6 @@
 .grid-3{
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    grid-gap: 10px;
-}
-
-.grid-3-fixed{
-    display: grid;
-    grid-template-columns: repeat(3, var(--col-size));
     grid-gap: 10px;
 }
 
@@ -107,7 +101,7 @@ svg {
     justify-content: space-between;
 }
 .spaced > *:not(:last-child) {
-    margin-right: 1em; 
+    margin-right: 20px; 
 } 
 
 input[type="number"]{
