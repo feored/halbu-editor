@@ -1,10 +1,9 @@
 <script>
     import { invoke } from "@tauri-apps/api/tauri";
     import { save } from "@tauri-apps/api/dialog";
-    import { ArrowLeftIcon, SaveIcon} from 'lucide-svelte'
-    import { Message} from "./lib/Message.svelte";
-    import CharacterPicker, {CharacterType} from "./lib/CharacterPicker.svelte";
-    import Character from "./lib/Character.svelte";
+    import { Message} from "./lib/utils/Message.svelte";
+    import SavePicker, {CharacterType} from "./lib/SavePicker.svelte";
+    import Save from "./lib/Save.svelte";
 
     let currentSave = null;
     let validSave = true;
@@ -65,9 +64,9 @@
 <main class="container">
     {#if currentSave == null}
         <h1 id="title">Halbu Editor</h1>
-        <CharacterPicker on:message={handleMessages} />
+        <SavePicker on:message={handleMessages} />
     {:else}
-        <Character save={currentSave} validSave={validSave} on:message={handleMessages}/>
+        <Save save={currentSave} validSave={validSave} on:message={handleMessages}/>
     {/if}
 </main>
 

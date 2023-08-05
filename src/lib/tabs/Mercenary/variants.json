@@ -1,0 +1,254 @@
+[
+    {
+        "id": 0,
+        "type": "Rogue",
+        "difficulty": "Normal",
+        "variant": "Fire",
+        "rate" : 100
+    },
+    {
+        "id": 1,
+        "type": "Rogue",
+        "difficulty": "Normal",
+        "variant": "Cold",
+        "rate": 105
+    },
+    {
+        "id": 2,
+        "type": "Rogue",
+        "difficulty": "Nightmare",
+        "variant": "Fire",
+        "rate" : 110
+    },
+    {
+        "id": 3,
+        "type": "Rogue",
+        "difficulty": "Nightmare",
+        "variant": "Cold",
+        "rate": 115
+    },
+    {
+        "id": 4,
+        "type": "Rogue",
+        "difficulty": "Hell",
+        "variant": "Fire",
+        "rate" : 120
+    },
+    {
+        "id": 5,
+        "type": "Rogue",
+        "difficulty": "Hell",
+        "variant": "Cold",
+        "rate": 125
+    },
+    {
+        "id": 6,
+        "type": "Desert Mercenary",
+        "difficulty": "Normal",
+        "variant": "Prayer",
+        "rate" : 110
+    },
+    {
+        "id": 7,
+        "type": "Desert Mercenary",
+        "difficulty": "Normal",
+        "variant": "Defiance",
+        "rate" : 110
+    },
+    {
+        "id": 8,
+        "type": "Desert Mercenary",
+        "difficulty": "Normal",
+        "variant": "Blessed Aim",
+        "rate" : 110
+    },
+    {
+        "id": 9,
+        "type": "Desert Mercenary",
+        "difficulty": "Nightmare",
+        "variant": "Thorns",
+        "rate" : 120
+    },
+    {
+        "id": 10,
+        "type": "Desert Mercenary",
+        "difficulty": "Nightmare",
+        "variant": "Holy Freeze",
+        "rate" : 120
+    },
+    {
+        "id": 11,
+        "type": "Desert Mercenary",
+        "difficulty": "Nightmare",
+        "variant": "Might",
+        "rate" : 120
+    },
+    {
+        "id": 12,
+        "type": "Desert Mercenary",
+        "difficulty": "Hell",
+        "variant": "Prayer",
+        "rate" : 130
+    },
+    {
+        "id": 13,
+        "type": "Desert Mercenary",
+        "difficulty": "Hell",
+        "variant": "Defiance",
+        "rate" : 130
+    },
+    {
+        "id": 14,
+        "type": "Desert Mercenary",
+        "difficulty": "Hell",
+        "variant": "Blessed Aim",
+        "rate" : 130
+    },
+    {
+        "id": 15,
+        "type": "Iron Wolf",
+        "difficulty": "Normal",
+        "variant": "Fire",
+        "rate" : 110
+    },
+    {
+        "id": 16,
+        "type": "Iron Wolf",
+        "difficulty": "Normal",
+        "variant": "Lightning",
+        "rate" : 110
+    },
+    {
+        "id": 17,
+        "type": "Iron Wolf",
+        "difficulty": "Normal",
+        "variant": "Cold",
+        "rate" : 120
+    },
+    {
+        "id": 18,
+        "type": "Iron Wolf",
+        "difficulty": "Nightmare",
+        "variant": "Fire",
+        "rate" : 120
+    },
+    {
+        "id": 19,
+        "type": "Iron Wolf",
+        "difficulty": "Nightmare",
+        "variant": "Lightning",
+        "rate" : 120
+    },
+    {
+        "id": 20,
+        "type": "Iron Wolf",
+        "difficulty": "Nightmare",
+        "variant": "Cold",
+        "rate" : 130
+    },
+    {
+        "id": 21,
+        "type": "Iron Wolf",
+        "difficulty": "Hell",
+        "variant": "Fire",
+        "rate" : 130
+    },
+    {
+        "id": 22,
+        "type": "Iron Wolf",
+        "difficulty": "Hell",
+        "variant": "Lightning",
+        "rate" : 130
+    },
+    {
+        "id": 23,
+        "type": "Iron Wolf",
+        "difficulty": "Hell",
+        "variant": "Cold",
+        "rate" : 140
+    },
+    {
+        "id": 24,
+        "type": "Barbarian",
+        "difficulty": "Normal",
+        "variant": "Bash",
+        "rate": 120
+    },
+    {
+        "id": 26,
+        "type": "Barbarian",
+        "difficulty": "Nightmare",
+        "variant": "Bash",
+        "rate": 130
+    },
+    {
+        "id": 28,
+        "type": "Barbarian",
+        "difficulty": "Hell",
+        "variant": "Bash",
+        "rate": 140
+    },
+    {
+        "id": 30,
+        "type": "Desert Mercenary",
+        "difficulty": "Nightmare",
+        "variant": "Prayer",
+        "rate" : 120
+    },
+    {
+        "id": 31,
+        "type": "Desert Mercenary",
+        "difficulty": "Nightmare",
+        "variant": "Defiance",
+        "rate" : 120
+    },
+    {
+        "id": 32,
+        "type": "Desert Mercenary",
+        "difficulty": "Nightmare",
+        "variant": "Blessed Aim",
+        "rate" : 120
+    },
+    {
+        "id": 33,
+        "type": "Desert Mercenary",
+        "difficulty": "Hell",
+        "variant": "Thorns",
+        "rate" : 130
+    },
+    {
+        "id": 34,
+        "type": "Desert Mercenary",
+        "difficulty": "Hell",
+        "variant": "Holy Freeze",
+        "rate" : 130
+    },
+    {
+        "id": 35,
+        "type": "Desert Mercenary",
+        "difficulty": "Hell",
+        "variant": "Might",
+        "rate" : 130
+    },
+    {
+        "id": 36,
+        "type": "Barbarian",
+        "difficulty": "Normal",
+        "variant": "Frenzy",
+        "rate": 120
+    },
+    {
+        "id": 37,
+        "type": "Barbarian",
+        "difficulty": "Nightmare",
+        "variant": "Frenzy",
+        "rate": 130
+    },
+    {
+        "id": 38,
+        "type": "Barbarian",
+        "difficulty": "Hell",
+        "variant": "Frenzy",
+        "rate": 140
+    }
+]

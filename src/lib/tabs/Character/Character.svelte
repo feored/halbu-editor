@@ -2,7 +2,7 @@
     import { invoke } from "@tauri-apps/api/tauri";
     import { InfoIcon} from "lucide-svelte";
     import { Tooltip } from "@svelte-plugins/tooltips";
-    import { Message, buildMessage} from "./Message.svelte";
+    import { Message, buildMessage} from "../../utils/Message.svelte";
     import { createEventDispatcher } from 'svelte';
 
    
@@ -15,6 +15,7 @@
 
 
     const MAX_GOLD_PER_LEVEL = 10000;
+    const MAX_XP = 3520485254;
 
     let nameRef, mapSeedRef;
     let lastDifficultyRef, lastActRef;
@@ -30,6 +31,7 @@
     $: goldInventoryMax = MAX_GOLD_PER_LEVEL * save.character.level;
 
     let difficultyBeatenRef;
+    
     let difficultiesToBeat = ["None", "Normal", "Nightmare", "Hell"];
     let difficultyBeaten = difficultiesToBeat[Math.floor(save.character.progression / (4 + (save.character.expansion ? 1 : 0)))];
 
@@ -128,7 +130,7 @@
         </div>
         <div id="experience">
             <label for="experience">Experience</label>
-            <input bind:this = {experienceRef} type="number" name="experience" min="0" max="3520485254" step="1" on:input={() => {enforceMinMax(experienceRef)}} on:change={setExperience} bind:value="{save.attributes.experience}">
+            <input bind:this = {experienceRef} type="number" name="experience" min="0" max={MAX_XP} step="1" on:input={() => {enforceMinMax(experienceRef)}} on:change={setExperience} bind:value="{save.attributes.experience}">
         </div>
     </fieldset>
     <fieldset id="status" class="grid-4 flex-center">

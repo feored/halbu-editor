@@ -18,7 +18,6 @@
     ];
 
     function setAllWaypoints(difficulty, value){
-        console.log(save.waypoints[difficulty]);
         acts.forEach((act) => {
             for (let i = 0; i < save.waypoints[difficulty][act.id].length; i++){
                 if (save.waypoints[difficulty][act.id][i] != ROGUE_ENCAMPMENT){
@@ -31,7 +30,7 @@
 
 {#each difficulties as difficulty}
     <div class="row spaced" style="align-items:center;">
-        <h3>{difficulty.display}</h3>
+        <h3 style="flex-grow:1;">{difficulty.display}</h3>
         <button on:click={()=>setAllWaypoints(difficulty.id, true)}>Get All</button>
         <button on:click={()=>setAllWaypoints(difficulty.id, false)}>Remove All</button>
     </div>

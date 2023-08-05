@@ -1,8 +1,10 @@
 <script>
-    import General from "./General.svelte"
-    import Mercenary from "./Mercenary.svelte"
-    import Waypoints from "./Waypoints.svelte"
-    import {Message, buildMessage} from "./Message.svelte";
+    import Character from "./tabs/Character/Character.svelte"
+    import Mercenary from "./tabs/Mercenary/Mercenary.svelte"
+    import Waypoints from "./tabs/Waypoints.svelte"
+    import Skills from "./tabs/Skills.svelte";
+
+    import {Message, buildMessage} from "./utils/Message.svelte";
     import { createEventDispatcher } from 'svelte';
 
     export const dispatch = createEventDispatcher();
@@ -16,36 +18,39 @@
     export let validSave = true;
 
     export const TabID = {
-            General: Symbol("General"),
+            Character: Symbol("Character"),
             Mercenary: Symbol("Mercenary"),
             Skills: Symbol("Skills"),
             Waypoints: Symbol("Waypoints"),
             Quests: Symbol("Quests"),
             Items: Symbol("Items")
         };
-    let currentTab = TabID.General;
+    let currentTab = TabID.Mercenary;
 
     
 </script>
 
 <div class="row" style="align-self: flex-start">
     <div class="col tabs" style="position: -webkit-sticky; position:sticky; top:20px;">
-        <button class="tab-btn" on:click={()=> dispatchMessage(Message.CharacterUnpicked)}><ArrowLeftIcon />&nbsp;Back</button>
+        <button class="tab-btn icon-btn flex-center" on:click={()=> dispatchMessage(Message.CharacterUnpicked)}><ArrowLeftIcon />&nbsp;Back</button>
         <button class="tab" class:selected={currentTab == TabID.General} on:click={() => {currentTab = TabID.General}}><UserSquare2Icon /><p>Character</p></button>
         <button class="tab" class:selected={currentTab == TabID.Mercenary} on:click={() => {currentTab = TabID.Mercenary}}><PersonStandingIcon /><p>Mercenary</p></button>
         <button class="tab" class:selected={currentTab == TabID.Skills} on:click={() => {currentTab = TabID.Skills}}><BookPlusIcon /><p>Skills</p></button>
         <button class="tab" class:selected={currentTab == TabID.Waypoints} on:click={() => {currentTab = TabID.Waypoints}}><LocateIcon /><p>Waypoints</p></button>
         <button class="tab" class:selected={currentTab == TabID.Quests} on:click={() => {currentTab = TabID.Quests}}><ScrollIcon /><p>Quests</p></button>
         <button class="tab" class:selected={currentTab == TabID.Items} on:click={() => {currentTab = TabID.Items}}><SwordIcon /><p>Items</p></button>
-        <button class="tab-btn" on:click={()=> dispatchMessage(Message.SaveFile)} disabled={!validSave}><SaveIcon />&nbsp;Save</button>
+        <button class="tab-btn icon-btn flex-center" on:click={()=> dispatchMessage(Message.SaveFile)} disabled={!validSave}><SaveIcon />&nbsp;Save</button>
     </div>
     <div class="col" style="margin-left:20px;">
-        {#if currentTab == TabID.General}
-            <General save={save} on:message/>
+        {#if currentTab == TabID.Character}
+            <Character save={save} on:message/>
         {:else if currentTab == TabID.Mercenary}
             <Mercenary save={save} />
+        {:else if currentTab == TabID.Skills}
+            <Skills save={save} />
         {:else if currentTab == TabID.Waypoints}
             <Waypoints save={save} />
+        
         {/if}
     </div>
 </div>
@@ -59,13 +64,13 @@
     }
     .tab {
         flex:0 0 auto;
-        height:5%;
         width:100%;
         align-items: center;
     }
     .tab-btn {
         flex:0 0 auto;
         width:100%;
+        text-align: center;
         align-items: center;
     }
     .tab p {

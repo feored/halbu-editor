@@ -8,7 +8,7 @@
 <script>
     import { open } from "@tauri-apps/api/dialog";
     import { createEventDispatcher } from 'svelte';
-    import { Message, buildMessage} from "./Message.svelte";
+    import { Message, buildMessage} from "./utils/Message.svelte";
 
     function dispatchMessage(id, data) {
         dispatch('message', buildMessage(id, data));
