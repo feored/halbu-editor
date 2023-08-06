@@ -78,13 +78,19 @@
             return // if we have changed to the same value, don't erase old xp
         }
         save.character.level = save.attributes.level.value;
-        save.attribute.experience.value = experienceTable[save.attributes.level.value-1];
+        save.attributes.experience.value = experienceTable[save.attributes.level.value-1];
     }
 
     async function changeExperience(){
-        let new_level = experienceTable.filter((xp) => xp < save.attributes.experience.value)[0];
+        let new_level = 99;
+        for (let i=0; i < 99;  i++){
+            if (experienceTable[i] > save.attributes.experience.value){
+                new_level = i-1;
+                break;
+            }
+        }
         if (new_level != save.attributes.level.value) {
-            save.attribute.level = new_level;
+            save.attributes.level.value = new_level;
             save.character.level = new_level;
         }
     }
@@ -163,11 +169,11 @@
         <legend>Level</legend>
         <div id="level">
             <label for="level">Level</label>
-            <input bind:this = {levelRef} type="number" name="level" min="1" max="99" step="1" on:input={() => {enforceMinMax(levelRef)}} on:change={changeLevel} bind:value="{save.attributes.level.value}">
+            <input bind:this = {levelRef} type="number" name="level" min="1" max="99" step="1" on:input={() => {enforceMinMax(levelRef)}} bind:value="{save.attributes.level.value}"  on:input={changeLevel} >
         </div>
         <div id="experience">
             <label for="experience">Experience</label>
-            <input bind:this = {experienceRef} type="number" name="experience" min="0" max={MAX_XP} step="1" on:input={() => {enforceMinMax(experienceRef)}} on:change={changeExperience} bind:value="{save.attributes.experience.value}">
+            <input bind:this = {experienceRef} type="number" name="experience" min="0" max={MAX_XP} step="1" on:input={() => {enforceMinMax(experienceRef)}} bind:value="{save.attributes.experience.value}" on:input={changeExperience} >
         </div>
     </fieldset>
     <fieldset id="status" class="grid-4 flex-center">

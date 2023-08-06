@@ -1,6 +1,5 @@
 <script context="module">
     export function enforceMinMax(el) {
-        console.log("enforcing");
         if (el.value != "") {
             if (parseFloat(el.value) < parseFloat(el.min)) {
             el.value = el.min;
