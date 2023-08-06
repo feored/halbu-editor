@@ -1,6 +1,13 @@
 <script context="module">
-    async function readCSV(path ){
-        
+    export function enforceMinMax(el) {
+        console.log("enforcing");
+        if (el.value != "") {
+            if (parseFloat(el.value) < parseFloat(el.min)) {
+            el.value = el.min;
+            }
+            if (parseFloat(el.value) > parseFloat(el.max)) {
+            el.value = el.max;
+            }
+        }
     }
-
 </script>

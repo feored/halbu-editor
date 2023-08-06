@@ -5,6 +5,7 @@
     import names from "./names.json";
     import variants from "./variants.json";
     import {Difficulty, Act, u32MAX} from "../../utils/Constants.svelte";
+    import {enforceMinMax} from "../../utils/Utils.svelte";
 
     console.log(variants);
     export let save;
@@ -14,18 +15,6 @@
         Desert: "Desert Mercenary",
         IronWolf: "Iron Wolf",
         Barbarian: "Barbarian"
-    }
-
-
-    function enforceMinMax(el) {
-        if (el.value != "") {
-            if (parseFloat(el.value) < parseFloat(el.min)) {
-            el.value = el.min;
-            }
-            if (parseFloat(el.value) > parseFloat(el.max)) {
-            el.value = el.max;
-            }
-        }
     }
 
     function xpFromLevel(level, rate){

@@ -1,0 +1,78 @@
+{
+    "Softcore": {
+        "Classic": {
+            "None": {
+                "Male": "",
+                "Female": ""
+            },
+            "Normal": {
+                "Male": "Sir",
+                "Female": "Dame"
+            },
+            "Nightmare": {
+                "Male": "Lord",
+                "Female": "Lady"
+            },
+            "Hell": {
+                "Male": "Baron",
+                "Female": "Baroness"
+            }
+        },
+        "Expansion": {
+            "None": {
+                "Male": "",
+                "Female": ""
+            },
+            "Normal": {
+                "Male": "Slayer",
+                "Female": "Slayer"
+            },
+            "Nightmare": {
+                "Male": "Champion",
+                "Female": "Champion"
+            },
+            "Hell": {
+                "Male": "Patriarch",
+                "Female": "Matriarch"
+            }
+        }
+    },
+    "Hardcore": {
+        "Classic": {
+            "None": {
+                "Male": "",
+                "Female": ""
+            },
+            "Normal": {
+                "Male": "Count",
+                "Female": "Countess"
+            },
+            "Nightmare": {
+                "Male": "Duke",
+                "Female": "Duchess"
+            },
+            "Hell": {
+                "Male": "King",
+                "Female": "Queen"
+            }
+        },
+        "Expansion": {
+            "None": {
+                "Male": "",
+                "Female": ""
+            },
+            "Normal": {
+                "Male": "Destroyer",
+                "Female": "Destroyer"
+            },
+            "Nightmare": {
+                "Male": "Conqueror",
+                "Female": "Conqueror"
+            },
+            "Hell": {
+                "Male": "Guardian",
+                "Female": "Guardian"
+            }
+        }
+    }
+}

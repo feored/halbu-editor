@@ -25,7 +25,7 @@
             Quests: Symbol("Quests"),
             Items: Symbol("Items")
         };
-    let currentTab = TabID.Mercenary;
+    let currentTab = TabID.Character;
 
     
 </script>
@@ -33,7 +33,7 @@
 <div class="row" style="align-self: flex-start">
     <div class="col tabs" style="position: -webkit-sticky; position:sticky; top:20px;">
         <button class="tab-btn icon-btn flex-center" on:click={()=> dispatchMessage(Message.CharacterUnpicked)}><ArrowLeftIcon />&nbsp;Back</button>
-        <button class="tab" class:selected={currentTab == TabID.General} on:click={() => {currentTab = TabID.General}}><UserSquare2Icon /><p>Character</p></button>
+        <button class="tab" class:selected={currentTab == TabID.Character} on:click={() => {currentTab = TabID.Character}}><UserSquare2Icon /><p>Character</p></button>
         <button class="tab" class:selected={currentTab == TabID.Mercenary} on:click={() => {currentTab = TabID.Mercenary}}><PersonStandingIcon /><p>Mercenary</p></button>
         <button class="tab" class:selected={currentTab == TabID.Skills} on:click={() => {currentTab = TabID.Skills}}><BookPlusIcon /><p>Skills</p></button>
         <button class="tab" class:selected={currentTab == TabID.Waypoints} on:click={() => {currentTab = TabID.Waypoints}}><LocateIcon /><p>Waypoints</p></button>
