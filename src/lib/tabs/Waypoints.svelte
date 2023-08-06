@@ -3,6 +3,7 @@
 
     const ROGUE_ENCAMPMENT = "RogueEncampment";
     
+    let allWaypoints = {"normal" : false, "nightmare" : false, "hell" : false}
     let difficulties = [
         {id:"normal", display:"Normal"}, 
         {id:"nightmare", display: "Nightmare"},
@@ -16,6 +17,11 @@
         {id:"act4", display:"Act IV"},
         {id:"act5", display:"Act V"},
     ];
+
+    function checkAllWaypoints(difficulty){
+        allWaypoints[difficulty.id] = !allWaypoints[difficulty.id];
+        setAllWaypoints(difficulty.id, allWaypoints[difficulty.id])
+    }
 
     function setAllWaypoints(difficulty, value){
         acts.forEach((act) => {
@@ -31,8 +37,10 @@
 {#each difficulties as difficulty}
     <div class="row spaced" style="align-items:center;">
         <h3 style="flex-grow:1;">{difficulty.display}</h3>
-        <button on:click={()=>setAllWaypoints(difficulty.id, true)}>Get All</button>
-        <button on:click={()=>setAllWaypoints(difficulty.id, false)}>Remove All</button>
+        <div class="row spaced">
+            <input type="checkbox" name="allWaypoints" on:change={() => checkAllWaypoints(difficulty)} />
+            <label for="allWaypoints">Toggle All</label>
+        </div>
     </div>
     <div class="grid-5">
         {#each acts as act}

@@ -4,11 +4,11 @@
     import { Tooltip } from "@svelte-plugins/tooltips";
     import { Message, buildMessage} from "../../utils/Message.svelte";
     import { createEventDispatcher } from 'svelte';
+    import { enforceMinMax } from "../../utils/actions.js";
 
     import titles from "./titles.json";
     import experienceTable from "./experience.json";
     import {Class, Difficulty, Act} from "../../utils/Constants.svelte";
-    import {enforceMinMax} from "../../utils/Utils.svelte";
 
    
     export const dispatch = createEventDispatcher();
@@ -24,13 +24,7 @@
     const MAX_GOLD_PER_LEVEL = 10000;
     const MAX_XP = 3520485254;
 
-    let nameRef, mapSeedRef;
-    let lastDifficultyRef, lastActRef;
-    let strengthRef, dexterityRef, vitalityRef, energyRef;
-    let levelRef, experienceRef;
-    let lifeCurrentRef,  lifeBaseRef, manaCurrentRef, manaBaseRef, staminaCurrentRef, staminaBaseRef;
-    let statPointsLeftRef, skillPointsLeftRef;
-    let goldInventoryRef, goldStashRef;
+    let nameRef;
 
     $: goldInventoryMax = MAX_GOLD_PER_LEVEL * save.character.level;
 
@@ -100,8 +94,8 @@
     let validName = true;
 
     function validateName(){
-        let nameByteSize = new Blob(nameRef.value).size;
-        let characterByteSize = new Blob(nameRef.value.charAt(0)).size;
+        let nameByteSize = new Blob([nameRef.value]).size;
+        let characterByteSize = new Blob([nameRef.value.charAt(0)]).size;
         let characters = nameByteSize / characterByteSize;
         if (characters < 2 || characters > 15){
             validName = false;
@@ -127,6 +121,7 @@
             validName = false;
             return
         }
+        console.log("valid name.");
         validName = true;
         save.character.name = nameRef.value;
     }
@@ -161,7 +156,7 @@
         </div>
         <div class="col">
             <label for="mapSeed">Map Seed</label>
-            <input bind:this = {mapSeedRef} type="number" name="mapSeed" min="0" max="4294967295" step="1" on:input={() => {enforceMinMax(mapSeedRef)}} bind:value="{save.character.map_seed}">
+            <input type="number" name="mapSeed" min="0" max="4294967295" step="1" use:enforceMinMax bind:value="{save.character.map_seed}">
         </div>
 </fieldset>
 <div class="row spaced">
@@ -169,11 +164,11 @@
         <legend>Level</legend>
         <div id="level">
             <label for="level">Level</label>
-            <input bind:this = {levelRef} type="number" name="level" min="1" max="99" step="1" on:input={() => {enforceMinMax(levelRef)}} bind:value="{save.attributes.level.value}"  on:input={changeLevel} >
+            <input type="number" name="level" min="1" max="99" step="1" use:enforceMinMax bind:value="{save.attributes.level.value}" on:input={changeLevel} >
         </div>
         <div id="experience">
             <label for="experience">Experience</label>
-            <input bind:this = {experienceRef} type="number" name="experience" min="0" max={MAX_XP} step="1" on:input={() => {enforceMinMax(experienceRef)}} bind:value="{save.attributes.experience.value}" on:input={changeExperience} >
+            <input type="number" name="experience" min="0" max={MAX_XP} step="1" use:enforceMinMax bind:value="{save.attributes.experience.value}" on:input={changeExperience} >
         </div>
     </fieldset>
     <fieldset id="status" class="grid-4 flex-center">
@@ -206,61 +201,61 @@
             <legend>Attributes</legend>
             <div>
                 <label for="strength">Strength</label>
-                <input bind:this = {strengthRef} type="number" name="strength" min="0" max="1023" step="1"  on:input={() => {enforceMinMax(strengthRef)}} bind:value="{save.attributes.strength.value}">
+                <input type="number" name="strength" min="0" max="1023" step="1" use:enforceMinMax bind:value="{save.attributes.strength.value}">
             </div>
             <div>
                 <label for="dexterity">Dexterity</label>
-                <input bind:this = {dexterityRef} type="number" name="dexterity" min="0" max="1023" step="1" on:input={() => {enforceMinMax(dexterityRef)}} bind:value="{save.attributes.dexterity.value}">
+                <input type="number" name="dexterity" min="0" max="1023" step="1" use:enforceMinMax bind:value="{save.attributes.dexterity.value}">
             </div>
             <div>
                 <label for="vitality">Vitality</label>
-                <input bind:this = {vitalityRef} type="number" name="vitality" min="0" max="1023" step="1" on:input={() => {enforceMinMax(vitalityRef)}} bind:value="{save.attributes.vitality.value}">
+                <input type="number" name="vitality" min="0" max="1023" step="1" use:enforceMinMax bind:value="{save.attributes.vitality.value}">
             </div>
             <div>
                 <label for="energy">Energy</label>
-                <input bind:this = {energyRef} type="number" name="energy" min="0" max="1023" step="1" on:input={() => {enforceMinMax(energyRef)}} bind:value="{save.attributes.energy.value}">
+                <input type="number" name="energy" min="0" max="1023" step="1" use:enforceMinMax bind:value="{save.attributes.energy.value}">
             </div>
         </fieldset>
         <fieldset id="resources" class="grid-2">
             <legend>Resources</legend>
                 <div class="col">
                     <label for="lifeCurrent">Current Life</label>
-                    <input bind:this = {lifeCurrentRef} on:input={() => {enforceMinMax(lifeCurrentRef)}} type="number" name="lifeCurrent" min="1" max="8181" step="0.001" bind:value="{currentLife}">                
+                    <input  use:enforceMinMax type="number" name="lifeCurrent" min="1" max="8181" step="0.001" bind:value="{currentLife}">                
                 </div>
                 
                 <div class="col">
                     <label for="lifeBase">Base Life</label>
-                    <input bind:this = {lifeBaseRef} on:input={() => {enforceMinMax(lifeBaseRef)}} type="number" name="lifeBase" min="1" max="8181" step="0.001" bind:value="{baseLife}">
+                    <input use:enforceMinMax type="number" name="lifeBase" min="1" max="8181" step="0.001" bind:value="{baseLife}">
                 </div>
                 
                 <div class="col">
                     <label for="manaCurrent">Current Mana</label>
-                    <input bind:this = {manaCurrentRef} on:input={() => {enforceMinMax(manaCurrentRef)}} type="number" name="manaCurrent" min="1" max="8181" step="0.001" bind:value="{currentMana}">
+                    <input use:enforceMinMax type="number" name="manaCurrent" min="1" max="8181" step="0.001" bind:value="{currentMana}">
                 </div>
 
                 <div class="col">
                     <label for="manaBase">Base Mana</label>
-                    <input bind:this = {manaBaseRef} on:input={() => {enforceMinMax(manaBaseRef)}} type="number" name="manaBase" min="1" max="8181" step="0.001" bind:value="{baseMana}">
+                    <input use:enforceMinMax type="number" name="manaBase" min="1" max="8181" step="0.001" bind:value="{baseMana}">
                 </div>
 
                 <div class="col">
                     <label for="staminaCurrent">Current Stamina</label>
-                    <input bind:this = {staminaCurrentRef} on:input={() => {enforceMinMax(staminaCurrentRef)}} type="number" name="staminaCurrent" min="1" max="8181" step="0.001" bind:value="{currentStamina}">
+                    <input use:enforceMinMax type="number" name="staminaCurrent" min="1" max="8181" step="0.001" bind:value="{currentStamina}">
                 </div>
 
                 <div class="col">
                     <label for="staminaBase">Base Stamina</label>
-                    <input bind:this = {staminaBaseRef} on:input={() => {enforceMinMax(staminaBaseRef)}} type="number" name="staminaBase" min="1" max="8181" step="0.001" bind:value="{baseStamina}">
+                    <input use:enforceMinMax type="number" name="staminaBase" min="1" max="8181" step="0.001" bind:value="{baseStamina}">
                 </div>
 
                 <div class="col">
                     <label for="statPointsLeft">Stat Points Left</label>
-                    <input bind:this = {statPointsLeftRef} on:input={() => {enforceMinMax(statPointsLeftRef)}} type="number" name="statPointsLeft" min="0" max="1023" step="1" bind:value="{save.attributes.statpts.value}">
+                    <input use:enforceMinMax type="number" name="statPointsLeft" min="0" max="1023" step="1" bind:value="{save.attributes.statpts.value}">
                 </div>
 
                 <div class="col">
                     <label for="skillPointsLeft">Skill Points Left</label>
-                    <input bind:this = {skillPointsLeftRef} on:input={() => {enforceMinMax(skillPointsLeftRef)}} type="number" name="skillPointsLeft" min="0" max="255" step="1" bind:value="{save.attributes.newskills.value}">
+                    <input use:enforceMinMax type="number" name="skillPointsLeft" min="0" max="255" step="1" bind:value="{save.attributes.newskills.value}">
                 </div>
         </fieldset>
         <div class="grid-1">
@@ -268,11 +263,11 @@
                 <legend>Gold</legend>
                 <div>
                     <label for="goldInventory">Inventory</label>
-                    <input bind:this = {goldInventoryRef} type="number" name="goldInventory" min="0" max={goldInventoryMax} step="1"  on:input={() => {enforceMinMax(goldInventoryRef)}} bind:value="{save.attributes.gold.value}">
+                    <input use:enforceMinMax type="number" name="goldInventory" min="0" max={goldInventoryMax} step="1" bind:value="{save.attributes.gold.value}">
                 </div>
                 <div>
                     <label for="goldStash">Stash</label>
-                    <input bind:this = {goldStashRef} type="number" name="goldStash" min="0" max="2500000" step="1" on:input={() => {enforceMinMax(goldStashRef)}} bind:value="{save.attributes.goldbank.value}">
+                    <input use:enforceMinMax type="number" name="goldStash" min="0" max="2500000" step="1" bind:value="{save.attributes.goldbank.value}">
                 </div>
             </fieldset>
         

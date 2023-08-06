@@ -7,7 +7,6 @@
     import {Difficulty, Act, u32MAX} from "../../utils/Constants.svelte";
     import {enforceMinMax} from "../../utils/Utils.svelte";
 
-    console.log(variants);
     export let save;
 
     const MercenaryClass = {
@@ -34,7 +33,7 @@
     function variantIDToInfo(variantID){
         const result = variants.filter((info) => info.id == variantID);
         if (result.length != 1){
-            console.log(`Error trying to get variant from variant id ${variantID}.`);
+            console.error(`Error trying to get variant from variant id ${variantID}.`);
             return variants[0];
         }
         return JSON.parse(JSON.stringify(result[0]));
@@ -60,10 +59,8 @@
     let possibleVariants = variants.filter((merc) => merc.difficulty == mercVariant.difficulty && merc.type == mercVariant.type);
 
     function updateVariant(){
-        console.log(variants);
         possibleVariants = variants.filter((merc) => merc.difficulty == mercVariant.difficulty && merc.type == mercVariant.type);
         changeExperience();
-        console.log(possibleVariants);
     }
 
     // Experience
