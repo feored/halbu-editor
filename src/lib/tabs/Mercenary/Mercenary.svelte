@@ -5,7 +5,7 @@
     import names from "./names.json";
     import variants from "./variants.json";
     import {Difficulty, Act, u32MAX} from "../../utils/Constants.svelte";
-    import {enforceMinMax} from "../../utils/Utils.svelte";
+    import { enforceMinMax } from "../../utils/actions.js";
 
     export let save;
 
@@ -39,18 +39,14 @@
         return JSON.parse(JSON.stringify(result[0]));
     }
 
+    // Check if mercenary is hired and disable everything if not
+
     function hire(){
         isHired = !isHired;
         save.character.mercenary.id = isHired ? Math.floor(Math.random() * u32MAX) : 0;
     }
 
-
-    // References
-    let idRef, nameRef, hiredRef;
-    let classRef, variantRef, difficultyRef;
-    let experienceRef, levelRef;
-
-
+    let hiredRef;
     $: isHired = save.character.mercenary.id != 0;
 
     // Variants
@@ -106,7 +102,7 @@
 
         <div class="col">
             <label for="id">ID</label>
-            <input bind:this = {idRef} type="number" name="id" min="0" max={u32MAX} step="1" bind:value="{save.character.mercenary.id}" readonly>
+            <input type="number" name="id" min="0" max={u32MAX} step="1" bind:value="{save.character.mercenary.id}" readonly>
         </div>
 
         <div class="col">
@@ -125,13 +121,13 @@
                 <Tooltip content="<p style='text-align:center'>Hirelings need different amounts of XP per level depending on their class.</p>" position={"bottom"}>
                     <InfoIcon size={18}/>
                 </Tooltip></label>
-            <input bind:this = {levelRef} type="number" name="id" min="1" max="98" step="1" bind:value="{mercLevel}" on:input={() => {changeLevel(); enforceMinMax(levelRef);}} disabled={!isHired}>
+            <input use:enforceMinMax type="number" name="id" min="1" max="98" step="1" bind:value="{mercLevel}" on:input={changeLevel} disabled={!isHired}>
         </div>
     
     
         <div class="col">
             <label for="experience">Experience</label>
-            <input bind:this = {experienceRef} type="number" name="id" min="0" max={u32MAX} step="1" bind:value="{save.character.mercenary.experience}" on:input={() => {changeExperience(); enforceMinMax(experienceRef);}} disabled={!isHired}>
+            <input use:enforceMinMax type="number" name="id" min="0" max={u32MAX} step="1" bind:value="{save.character.mercenary.experience}" on:input={changeExperience} disabled={!isHired}>
         </div>
     </fieldset>
 </div>

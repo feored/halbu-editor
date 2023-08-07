@@ -20,16 +20,7 @@
     }
 
     async function handlePickedCharacter(messageContents) {
-        console.log(messageContents);
-        if (messageContents.character == CharacterType.Existing){
-            let result = await invoke("get_character_from_path", {path: messageContents.data});
-            currentSave = result;
-        } else {
-            
-            let result = await invoke("new_character", {class: messageContents.data});
-            currentSave = result;
-        }
-        
+        currentSave = messageContents.save;
     }
 
     function unpickCharacter(){

@@ -11,7 +11,7 @@ pub fn get_character_from_path(path : String) -> Result<Save, String> {
         Ok(bytes) => bytes,
         Err(e) => panic!("File invalid: {e:?}"),
     };
-    println!("{0:?}", path);
+
     let result = match halbu::parse(&save_file) {
         Ok(res) => res,
         Err(e) => return Err(e.to_string())
@@ -21,21 +21,15 @@ pub fn get_character_from_path(path : String) -> Result<Save, String> {
     
 }
 
-// #[tauri::command]
-// pub fn new_character(class : String) -> Result<Save, String> {
-//     let class = match halbu::Class::try_from(class){
-//         Ok(res) => res,
-//         Err(e) => return Err(e.to_string())
-//     };
-//     let result = Save::new_character(class);
-//     Ok(result)
-    
-// }
+#[tauri::command]
+pub fn blank_save() -> Save {
+    Save::default()
+}
 
 #[tauri::command]
 pub fn save_file(path: String, save:Save) -> Result<String, String> {
     let path: &Path = Path::new(&path);
-    let generated_save = halbu::generate(&save);
+    let generated_save = save.write();
 
     let mut file = OpenOptions::new()
         .write(true)

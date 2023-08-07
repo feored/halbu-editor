@@ -121,7 +121,6 @@
             validName = false;
             return
         }
-        console.log("valid name.");
         validName = true;
         save.character.name = nameRef.value;
     }
