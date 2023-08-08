@@ -22,8 +22,8 @@ pub fn get_character_from_path(path : String) -> Result<Save, String> {
 }
 
 #[tauri::command]
-pub fn blank_save() -> Save {
-    Save::default()
+pub fn new_save(class: halbu::Class) -> Save {
+    Save::default_class(class)
 }
 
 #[tauri::command]

@@ -1,0 +1,9 @@
+{
+    "Amazon": ["Bow and Crossbow skills", "Passive and Magic skills", "Javelin and Spear skills"],
+    "Sorceress": ["Fire Spells", "Lightning Spells", "Cold Spells"],
+    "Necromancer": ["Curses", "Poison and Bone Spells", "Summoning Spells"],
+    "Paladin": ["Combat Skills", "Offensive Auras", "Defensive Auras"],
+    "Barbarian": ["Combat Skills", "Combat Masteries", "Warcries"],
+    "Druid": ["Summoning", "Shape Shifting", "Elemental"],
+    "Assassin": ["Traps", "Shadow Disciplines", "Martial Arts"]
+}

@@ -11,7 +11,7 @@
     import {Class, Difficulty, Act} from "../../utils/Constants.svelte";
 
    
-    export const dispatch = createEventDispatcher();
+    const dispatch = createEventDispatcher();
     function dispatchMessage(id, data) {
         dispatch('message', buildMessage(id, data));
     }

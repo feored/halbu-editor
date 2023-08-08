@@ -2,7 +2,7 @@
     import Character from "./tabs/Character/Character.svelte"
     import Mercenary from "./tabs/Mercenary/Mercenary.svelte"
     import Waypoints from "./tabs/Waypoints.svelte"
-    import Skills from "./tabs/Skills.svelte";
+    import Skills from "./tabs/skills/Skills.svelte";
 
     import {Message, buildMessage} from "./utils/Message.svelte";
     import { createEventDispatcher } from 'svelte';
@@ -50,7 +50,6 @@
             <Skills save={save} />
         {:else if currentTab == TabID.Waypoints}
             <Waypoints save={save} />
-        
         {/if}
     </div>
 </div>
@@ -62,6 +61,7 @@
         width : 140px;
         height:100%;
     }
+
     .tab {
         flex:0 0 auto;
         width:100%;

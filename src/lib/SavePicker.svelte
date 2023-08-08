@@ -36,28 +36,8 @@
     }
 
     async function newSave(charClass){
-        let blankSave = await invoke("blank_save");
-        
-        blankSave.character.class = charClass;
-
-        blankSave.character.level = 1;
-        blankSave.attributes.level.value = 1;
-
-        blankSave.attributes.strength.value = charstats[charClass].str;
-        blankSave.attributes.dexterity.value = charstats[charClass].dex;
-        blankSave.attributes.energy.value = charstats[charClass].int;
-        blankSave.attributes.vitality.value = charstats[charClass].vit;
-
-        blankSave.attributes.maxhp.value = (blankSave.attributes.vitality.value + charstats[charClass].hpadd) * 256;
-        blankSave.attributes.hitpoints.value = blankSave.attributes.maxhp.value;
-
-        blankSave.attributes.maxstamina.value = charstats[charClass].stamina * 256;
-        blankSave.attributes.stamina.value = blankSave.attributes.maxstamina.value;
-
-        blankSave.attributes.maxmana.value = charstats[charClass].int* 256;
-        blankSave.attributes.mana.value = blankSave.attributes.maxmana.value;
-
-        dispatchMessage(Message.CharacterPicked, {save: blankSave});
+        let newSave = await invoke("new_save", {class: charClass});
+        dispatchMessage(Message.CharacterPicked, {save: newSave});
     } 
 
 

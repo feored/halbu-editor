@@ -1,0 +1,1321 @@
+{
+    "skillname0": {
+        "skillname0": "Attack",
+        "skillsd0": "normal attack",
+        "skillld0": "normal attack",
+        "skillan0": "Attack"
+    },
+    "skillname1": {
+        "skillname1": "Kick",
+        "skillsd1": "kick target",
+        "skillld1": "kick target",
+        "skillan1": "kick target"
+    },
+    "skillname2": {
+        "skillname2": "Throw",
+        "skillsd2": "throw equipped item",
+        "skillld2": "throw equipped item",
+        "skillan2": "Throw"
+    },
+    "skillname3": {
+        "skillname3": "Unsummon",
+        "skillsd3": "releases a summoned creature",
+        "skillld3": "of one of your creatures\nrelinquishes control",
+        "skillan3": "Unsummon"
+    },
+    "skillname4": {
+        "skillname4": "Left Hand Throw",
+        "skillsd4": "throw left hand item",
+        "skillld4": "throw left hand item",
+        "skillan4": "Left Throw"
+    },
+    "skillname5": {
+        "skillname5": "Left Hand Swing",
+        "skillsd5": "swing left hand weapon",
+        "skillld5": "swing left hand weapon",
+        "skillan5": "Left Swing"
+    },
+    "skillname6": {
+        "skillname6": "Magic Arrow",
+        "skillsd6": "creates a magical arrow",
+        "skillld6": "that does extra damage\ncreates a magical arrow or bolt",
+        "skillan6": "Magic Arrow"
+    },
+    "skillname7": {
+        "skillname7": "Fire Arrow",
+        "skillsd7": "enchants arrows with flame",
+        "skillld7": "always hits\nor bolts with fire\nmagically enhances your arrows",
+        "skillan7": "Fire Arrow"
+    },
+    "skillname8": {
+        "skillname8": "Inner Sight",
+        "skillsd8": "illuminates and weakens nearby monsters",
+        "skillld8": "for you and your party\nmaking them easier to hit\nilluminates nearby enemies",
+        "skillan8": "Inner Sight"
+    },
+    "skillname9": {
+        "skillname9": "Critical Strike",
+        "skillsd9": "passive - chance of doing double damage",
+        "skillld9": "passive - your attacks have a chance to do double damage",
+        "skillan9": "Critical Strike"
+    },
+    "skillname10": {
+        "skillname10": "Jab",
+        "skillsd10": "rapid attacks with a thrusting weapon",
+        "skillld10": "using a javelin or spear class weapon\nattacks with a series of rapid thrusts",
+        "skillan10": "Jab"
+    },
+    "skillname11": {
+        "skillname11": "Cold Arrow",
+        "skillsd11": "enchants arrows to slow targets",
+        "skillld11": "always hits\ncold arrows only do half of their regular damage\nby adding cold damage and a slowing effect\nmagically enhances your arrows or bolts",
+        "skillan11": "Cold Arrow"
+    },
+    "skillname12": {
+        "skillname12": "Multiple Shot",
+        "skillsd12": "fires multiple arrows",
+        "skillld12": "or bolt into many\nmagically splits one arrow",
+        "skillan12": "Multiple Shot"
+    },
+    "skillname13": {
+        "skillname13": "Dodge",
+        "skillsd13": "passive - dodges melee attacks",
+        "skillld13": "or standing still\na melee attack when attacking\npassive - you have a chance to dodge",
+        "skillan13": "Dodge"
+    },
+    "skillname14": {
+        "skillname14": "Power Strike",
+        "skillsd14": "adds lightning damage",
+        "skillld14": "javelin and spear class weapons\nadds lightning damage to attacks with",
+        "skillan14": "Power Strike"
+    },
+    "skillname15": {
+        "skillname15": "Poison Javelin",
+        "skillsd15": "adds poison damage",
+        "skillld15": "to leave a trail of poison clouds\nmagically enhances your javelin",
+        "skillan15": "Poison Javelin"
+    },
+    "skillname16": {
+        "skillname16": "Exploding Arrow",
+        "skillsd16": "enchant arrows to explode",
+        "skillld16": "always hits\ncontact, damaging all nearby enemies\nenchants an arrow or bolt that explodes on",
+        "skillan16": "Exploding"
+    },
+    "skillname17": {
+        "skillname17": "Slow Missiles",
+        "skillsd17": "slows ranged attacks of enemies",
+        "skillld17": "illuminates nearby enemies and slows their ranged attacks",
+        "skillan17": "Slow Missiles"
+    },
+    "skillname18": {
+        "skillname18": "Avoid",
+        "skillsd18": "passive - dodges missiles",
+        "skillld18": "when attacking or standing still\npassive - you have a chance to dodge enemy missiles",
+        "skillan18": "Avoid"
+    },
+    "skillname19": {
+        "skillname19": "Impale",
+        "skillsd19": "increases damage but degrades weapon",
+        "skillld19": "increases attack damage but rapidly degrades the weapon",
+        "skillan19": "Impale"
+    },
+    "skillname20": {
+        "skillname20": "Lightning Bolt",
+        "skillsd20": "changes a thrown javelin into lightning",
+        "skillld20": "magically converts your javelin into a bolt of lightning",
+        "skillan20": "Lightning Bolt"
+    },
+    "skillname21": {
+        "skillname21": "Ice Arrow",
+        "skillsd21": "enchants arrows to freeze enemies",
+        "skillld21": "always hits\nto freeze your enemies\nmagically enhances your arrow or bolt",
+        "skillan21": "Ice Arrow"
+    },
+    "skillname22": {
+        "skillname22": "Guided Arrow",
+        "skillsd22": "enchants arrows to seek enemies",
+        "skillld22": "always hits\nor seek one of its own\nto track your target\nenhances your arrows and bolts",
+        "skillan22": "Guided Arrow"
+    },
+    "skillname23": {
+        "skillname23": "Penetrate",
+        "skillsd23": "passive - increases attack rating",
+        "skillld23": "passive - increases your attack rating",
+        "skillan23": "Penetrate"
+    },
+    "skillname24": {
+        "skillname24": "Charged Strike",
+        "skillsd24": "enchants thrusting weapons with charged bolts",
+        "skillld24": "and releases charged bolts upon impact\nadds lightning damage to javelin and spear class weapons",
+        "skillan24": "Charged Strike"
+    },
+    "skillname25": {
+        "skillname25": "Plague Javelin",
+        "skillsd25": "enchants javelins with poison explosions",
+        "skillld25": "expanding clouds of poison upon impact\nmagically enhances your javelin to release",
+        "skillan25": "Plague Javelin"
+    },
+    "skillname26": {
+        "skillname26": "Strafe",
+        "skillsd26": "enchants arrows to strike multiple targets",
+        "skillld26": "that target multiple nearby enemies\nmagically splits one arrow into several",
+        "skillan26": "Strafe"
+    },
+    "skillname27": {
+        "skillname27": "Immolation Arrow",
+        "skillsd27": "enchants arrows to burn enemies",
+        "skillld27": "always hits\ncreates a pyre upon impact\ncause severe fire damage and\nenhances arrows or bolts to",
+        "skillan27": "Immolation"
+    },
+    "skillname28": {
+        "skillname28": "Decoy",
+        "skillsd28": "creates a duplicate of yourself",
+        "skillld28": "that draws fire from enemies\ncreates a duplicate of yourself",
+        "skillan28": "Decoy"
+    },
+    "skillname29": {
+        "skillname29": "Evade",
+        "skillsd29": "passive - dodges when moving",
+        "skillld29": "when walking or running\na melee or missile attack\npassive - you have a chance to dodge",
+        "skillan29": "Evade"
+    },
+    "skillname30": {
+        "skillname30": "Fend",
+        "skillsd30": "attacks all adjacent targets",
+        "skillld30": "attacks all adjacent targets",
+        "skillan30": "Fend"
+    },
+    "skillname31": {
+        "skillname31": "Freezing Arrow",
+        "skillsd31": "enchants arrows to freeze multiple monsters",
+        "skillld31": "always hits\nto freeze entire groups of monsters\nmagically enhances an arrow or bolt",
+        "skillan31": "Freezing Arrow"
+    },
+    "skillname32": {
+        "skillname32": "Valkyrie",
+        "skillsd32": "summons a powerful Valkyrie ally",
+        "skillld32": "summons a powerful Valkyrie ally",
+        "skillan32": "Valkyrie"
+    },
+    "skillname33": {
+        "skillname33": "Pierce",
+        "skillsd33": "passive - missiles may continue through enemies",
+        "skillld33": "pass through enemies that they hit\npassive - your missiles have a chance to",
+        "skillan33": "Pierce"
+    },
+    "skillname34": {
+        "skillname34": "Lightning Strike",
+        "skillsd34": "enchants thrusting weapons with chain lightning",
+        "skillld34": "and releases chain lightning upon impact\nadds lightning damage to javelin and spear class weapons",
+        "skillan34": "Light'ng Strike"
+    },
+    "skillname35": {
+        "skillname35": "Lightning Fury",
+        "skillsd35": "a lightning bolt that splits on impact",
+        "skillld35": "bolt of lightning that splits on impact\nchanges a thrown javelin into a powerful",
+        "skillan35": "Lightning Fury"
+    },
+    "skillname36": {
+        "skillname36": "Fire Bolt",
+        "skillsd36": "creates a missile of flame",
+        "skillld36": "creates a magical flaming missile",
+        "skillan36": "Fire Bolt"
+    },
+    "skillname37": {
+        "skillname37": "Warmth",
+        "skillsd37": "passive - increases mana recovery rate",
+        "skillld37": "passive - increases the rate at which you recover mana",
+        "skillan37": "Warmth"
+    },
+    "skillname38": {
+        "skillname38": "Charged Bolt",
+        "skillsd38": "creates multiple deadly sparks",
+        "skillld38": "bolts of electrical energy\ncreates multiple, randomly directed",
+        "skillan38": "Charged Bolt"
+    },
+    "skillname39": {
+        "skillname39": "Ice Bolt",
+        "skillsd39": "creates a shard of ice that slows enemies",
+        "skillld39": "that damages and slows your enemies\ncreates a magical bolt of ice",
+        "skillan39": "Ice Bolt"
+    },
+    "skillname40": {
+        "skillname40": "Frozen Armor",
+        "skillsd40": "improves defense and freezes attacker",
+        "skillld40": "and freezes enemies that hit you\nincreases your defense rating",
+        "skillan40": "Frozen Armor"
+    },
+    "skillname41": {
+        "skillname41": "Inferno",
+        "skillsd41": "creates a jet of flame",
+        "skillld41": "to scorch your enemies\ncreates a continuous jet of flame",
+        "skillan41": "Inferno"
+    },
+    "skillname42": {
+        "skillname42": "Static Field",
+        "skillsd42": "creates a field of deadly sparks",
+        "skillld42": "of all nearby enemies by one third\ncreates an electrical field that reduces life",
+        "skillan42": "Static Field"
+    },
+    "skillname43": {
+        "skillname43": "Telekinesis",
+        "skillsd43": "moves objects with your mind",
+        "skillld43": "and knock back enemies\npick up items, use objects,\nuses the power of your mind to",
+        "skillan43": "Telekinesis"
+    },
+    "skillname44": {
+        "skillname44": "Frost Nova",
+        "skillsd44": "creates a freezing ring",
+        "skillld44": "and slows all nearby enemies\ncreates an expanding ring of ice that damages",
+        "skillan44": "Frost Nova"
+    },
+    "skillname45": {
+        "skillname45": "Ice Blast",
+        "skillsd45": "creates an ice bolt that freezes enemies",
+        "skillld45": "damages and freezes your enemy\ncreates a magical sphere of ice that",
+        "skillan45": "Ice Blast"
+    },
+    "skillname46": {
+        "skillname46": "Blaze",
+        "skillsd46": "creates fire in your wake",
+        "skillld46": "in your wake to scorch your enemies\ncreates a wall of fire",
+        "skillan46": "Blaze"
+    },
+    "skillname47": {
+        "skillname47": "Fire Ball",
+        "skillsd47": "creates an explosive sphere of fire",
+        "skillld47": "to engulf your enemies\ncreates an explosive sphere of fiery death",
+        "skillan47": "Fire Ball"
+    },
+    "skillname48": {
+        "skillname48": "Nova",
+        "skillsd48": "creates an electrically charged ring",
+        "skillld48": "to shock nearby enemies\ncreates an expanding ring of lightning",
+        "skillan48": "Nova"
+    },
+    "skillname49": {
+        "skillname49": "Lightning",
+        "skillsd49": "creates a bolt of lightning",
+        "skillld49": "to lay waste to your enemies\ncreates a powerful lightning bolt",
+        "skillan49": "Lightning"
+    },
+    "skillname50": {
+        "skillname50": "Shiver Armor",
+        "skillsd50": "freezes and damages attackers",
+        "skillld50": "freezes and damages enemies that hit you\nincreases your defense rating",
+        "skillan50": "Shiver Armor"
+    },
+    "skillname51": {
+        "skillname51": "Fire Wall",
+        "skillsd51": "creates a wall of flame",
+        "skillld51": "blocks or burns your enemies\ncreates a wall of flame that",
+        "skillan51": "Fire Wall"
+    },
+    "skillname52": {
+        "skillname52": "Enchant",
+        "skillsd52": "enchants melee or ranged weapons with fire",
+        "skillld52": "adds one-third fire damage to ranged weapons\nadds fire damage to melee weapons\nenchants equipped weapon of targeted character or minion",
+        "skillan52": "Enchant"
+    },
+    "skillname53": {
+        "skillname53": "Chain Lightning",
+        "skillsd53": "creates a bolt of lightning that arcs",
+        "skillld53": "arcs through several targets\ncreates a bolt of lightning that",
+        "skillan53": "Chain Lightning"
+    },
+    "skillname54": {
+        "skillname54": "Teleport",
+        "skillsd54": "instantly moves to destination",
+        "skillld54": "instantly moves to a destination within your line of sight",
+        "skillan54": "Teleport"
+    },
+    "skillname55": {
+        "skillname55": "Glacial Spike",
+        "skillsd55": "creates a freezing comet of ice",
+        "skillld55": "that freezes or kills nearby enemies\ncreates a magical ice comet",
+        "skillan55": "Glacial Spike"
+    },
+    "skillname56": {
+        "skillname56": "Meteor",
+        "skillsd56": "summons a meteor from the heavens",
+        "skillld56": "to crush and incinerate your enemies\nsummons a meteor from the heavens",
+        "skillan56": "Meteor"
+    },
+    "skillname57": {
+        "skillname57": "Thunder Storm",
+        "skillsd57": "summons a powerful tempest",
+        "skillld57": "your enemies with bolts of lightning\nsummons a deadly thunderstorm that strikes",
+        "skillan57": "Thunder Storm"
+    },
+    "skillname58": {
+        "skillname58": "Energy Shield",
+        "skillsd58": "uses your mana as a shield",
+        "skillld58": "instead of health when you take damage\ncreates a magical shield that consumes mana",
+        "skillan58": "Energy Shield"
+    },
+    "skillname59": {
+        "skillname59": "Blizzard",
+        "skillsd59": "summons a massive ice storm",
+        "skillld59": "summons massive shards of ice to destroy your enemies",
+        "skillan59": "Blizzard"
+    },
+    "skillname60": {
+        "skillname60": "Chilling Armor",
+        "skillsd60": "retaliates against ranged attackers",
+        "skillld60": "against ranged attackers\nincreases defense and discharges an ice bolt in retaliation",
+        "skillan60": "Chill'n Armor"
+    },
+    "skillsname61": {
+        "skillsname61": "Fire Mastery",
+        "skillsd61": "passive - increases fire damage",
+        "skillld61": "passive - increases all damage caused by your fire spells",
+        "skillan61": "Fire Mastery"
+    },
+    "skillname62": {
+        "skillname62": "Hydra",
+        "skillsd62": "summons multi-headed fire beast",
+        "skillld62": "to reduce your enemies to ashes\nsummons a multi-headed beast of flame",
+        "skillan62": "Hydra"
+    },
+    "skillname63": {
+        "skillname63": "Lightning Mastery",
+        "skillsd63": "passive - reduces cost of lightning spells",
+        "skillld63": "to cast your lightning spells\npassive - reduces the mana required",
+        "skillan63": "Lightning Mastery"
+    },
+    "skillname64": {
+        "skillname64": "Frozen Orb",
+        "skillsd64": "creates a globe of frozen death",
+        "skillld64": "to lay waste to your enemies\ncreates a magical globe that sprays a torrent of ice bolts",
+        "skillan64": "Frozen Orb"
+    },
+    "skillname65": {
+        "skillname65": "Cold Mastery",
+        "skillsd65": "passive - cold attacks become piercing",
+        "skillld65": "by piercing enemies resistances to cold\npassive - increases the damage of your cold attacks",
+        "skillan65": "Cold Mastery"
+    },
+    "skillname66": {
+        "skillname66": "Amplify Damage",
+        "skillsd66": "curse - amplifies damage taken by enemies",
+        "skillld66": "the non-magic damage they receive\ncurses a group of enemies, increasing",
+        "skillan66": "Amplify"
+    },
+    "skillname67": {
+        "skillname67": "Teeth",
+        "skillsd67": "fires barbed teeth",
+        "skillld67": "fires a barrage of summoned barbed teeth",
+        "skillan67": "Teeth"
+    },
+    "skillname68": {
+        "skillname68": "Bone Armor",
+        "skillsd68": "creates a damage absorbing bone shell",
+        "skillld68": "that absorbs melee damage\ncreates an orbiting shield of bone",
+        "skillan68": "Bone Armor"
+    },
+    "skillname69": {
+        "skillname69": "Skeleton Mastery",
+        "skillsd69": "passive - better skeletons and revived creatures",
+        "skillld69": "of raised skeletons and revived creatures\npassive - increases life and damage",
+        "skillan69": "Skeleton Mastery"
+    },
+    "skillname70": {
+        "skillname70": "Raise Skeleton",
+        "skillsd70": "reanimate skeletal warrior from target corpse",
+        "skillld70": "fights for you\nthis raises a skeleton warrior that\ncast on the corpse of a slain monster,",
+        "skillan70": "Raise Skeleton"
+    },
+    "skillname71": {
+        "skillname71": "Dim Vision",
+        "skillsd71": "curse - reduces vision of monsters",
+        "skillld71": "reducing their vision radius\ncurses a group of monsters,",
+        "skillan71": "Dim Vision"
+    },
+    "skillname72": {
+        "skillname72": "Weaken",
+        "skillsd72": "curse - reduces damage done by enemies",
+        "skillld72": "reducing the amount of damage they inflict\ncurses a group of enemies,",
+        "skillan72": "Weaken"
+    },
+    "skillname73": {
+        "skillname73": "Poison Dagger",
+        "skillsd73": "next dagger attack poisons target",
+        "skillld73": "adds poison to your dagger attacks",
+        "skillan73": "Poison Dagger"
+    },
+    "skillname74": {
+        "skillname74": "Corpse Explosion",
+        "skillsd74": "turns a corpse into a bomb",
+        "skillld74": "it explodes, damaging nearby enemies\ncast on the corpse of a slain monster,",
+        "skillan74": "Corpse Exp."
+    },
+    "skillname75": {
+        "skillname75": "Clay Golem",
+        "skillsd75": "creates a golem to fight for you",
+        "skillld75": "to fight by your side\ncreates a golem from the earth",
+        "skillan75": "Clay Golem"
+    },
+    "skillname76": {
+        "skillname76": "Iron Maiden",
+        "skillsd76": "curse - enemies damage themselves",
+        "skillld76": "to damage themselves when damaging others\ncurses a group of enemies, causing them",
+        "skillan76": "Iron Maiden"
+    },
+    "skillname77": {
+        "skillname77": "Terror",
+        "skillsd77": "curse - monsters run away in fear",
+        "skillld77": "causing them to flee in terror\ncurses a group of monsters,",
+        "skillan77": "Terror"
+    },
+    "skillname78": {
+        "skillname78": "Bone Wall",
+        "skillsd78": "creates an impassable barrier",
+        "skillld78": "of bone and debris\ncreates an impassable barrier",
+        "skillan78": "Bone Wall"
+    },
+    "skillname79": {
+        "skillname79": "Golem Mastery",
+        "skillsd79": "Enhances Speed and Life of Golems",
+        "skillld79": "Enhances Speed and Life of all your Golems",
+        "skillan79": "Golem Mastery"
+    },
+    "skillname80": {
+        "skillname80": "Raise Skeletal Mage",
+        "skillsd80": "reanimate skeletal mage from target corpse",
+        "skillld80": "fights for you\nthis raises a skeleton mage that\ncast on the corpse of a slain monster,",
+        "skillan80": "Skeletal Mage"
+    },
+    "skillname81": {
+        "skillname81": "Confuse",
+        "skillsd81": "curse - monster attacks random targets",
+        "skillld81": "curses a monster to force it to attack random targets",
+        "skillan81": "Confuse"
+    },
+    "skillname82": {
+        "skillname82": "Life Tap",
+        "skillsd82": "curse - enemies return life to attacker",
+        "skillld82": "damaging them gives the attacker life\ncurses a group of monsters so that",
+        "skillan82": "Life Tap"
+    },
+    "skillname83": {
+        "skillname83": "Poison Explosion",
+        "skillsd83": "turns a corpse into a poison gas bomb",
+        "skillld83": "that poisons nearby monsters\ntoxic gas is released\ncast on the corpse of a slain monster,",
+        "skillan83": "Poison Exp."
+    },
+    "skillname84": {
+        "skillname84": "Bone Spear",
+        "skillsd84": "summons a deadly spike of bone",
+        "skillld84": "summons a deadly spike of bone to impale your enemies",
+        "skillan84": "Bone Spear"
+    },
+    "skillname85": {
+        "skillname85": "Blood Golem",
+        "skillsd85": "a golem that shares life and damage",
+        "skillld85": "it steals and damage it receives\ncreates a golem that shares with you the life",
+        "skillan85": "Blood Golem"
+    },
+    "skillname86": {
+        "skillname86": "Attract",
+        "skillsd86": "curse - monster becomes universal target",
+        "skillld86": "this curse may not be overridden by another curse\ntarget of all nearby monsters\ncurses a monster to becomes the",
+        "skillan86": "Attract"
+    },
+    "skillname87": {
+        "skillname87": "Decrepify",
+        "skillsd87": "curse - greatly slows and weakens enemies",
+        "skillld87": "slow, weak and take amplified damage\ncurses a group of enemies to make them",
+        "skillan87": "Decrepify"
+    },
+    "skillname88": {
+        "skillname88": "Bone Prison",
+        "skillsd88": "creates a barrier of bone around target",
+        "skillld88": "creates a barrier of fossilized bone around your target",
+        "skillan88": "Bone Prison"
+    },
+    "skillname89": {
+        "skillname89": "Summon Resist",
+        "skillsd89": "passive - summoned monsters gain resistances",
+        "skillld89": "of all summoned creatures\npassive - increases the resistances",
+        "skillan89": "Summon Resist"
+    },
+    "skillname90": {
+        "skillname90": "Iron Golem",
+        "skillsd90": "creates a golem from an item",
+        "skillld90": "the properties of the item\ntransforms a metallic item into a golem that gains",
+        "skillan90": "Iron Golem"
+    },
+    "skillname91": {
+        "skillname91": "Lower Resist",
+        "skillsd91": "curse - lowers enemies resistance to magic",
+        "skillld91": "lowers maximum resistances of hostile players\nlowers resistances of monsters\ncurses an enemy to take more damage from all magical attacks",
+        "skillan91": "Lower Resist"
+    },
+    "skillname92": {
+        "skillname92": "Poison Nova",
+        "skillsd92": "emits an expanding ring of poison",
+        "skillld92": "emits an expanding ring of concentrated poison",
+        "skillan92": "Poison Nova"
+    },
+    "skillname93": {
+        "skillname93": "Bone Spirit",
+        "skillsd93": "releases an undead specter",
+        "skillld93": "tracks its target or finds one of its own\nreleases a spirit of the restless undead that",
+        "skillan93": "Bone Spirit"
+    },
+    "skillname94": {
+        "skillname94": "Fire Golem",
+        "skillsd94": "creates a golem of fire",
+        "skillld94": "it receives from fire into life\ncreates a golem that converts the damage",
+        "skillan94": "Fire Golem"
+    },
+    "skillname95": {
+        "skillname95": "Revive",
+        "skillsd95": "raises a monster to fight for you",
+        "skillld95": "to fight by your side\nreturns a monster to life",
+        "skillan95": "Revive"
+    },
+    "skillname96": {
+        "skillname96": "Sacrifice",
+        "skillsd96": "increased accuracy and damage",
+        "skillld96": "at the cost of life\nincreased accuracy and damage",
+        "skillan96": "Sacrifice"
+    },
+    "skillname97": {
+        "skillname97": "Smite",
+        "skillsd97": "shield bash",
+        "skillld97": "by bashing it with your shield\ntemporarily stun your enemy",
+        "skillan97": "Smite"
+    },
+    "skillname98": {
+        "skillname98": "Might",
+        "skillsd98": "aura - increases damage",
+        "skillld98": "done by you and your party\nwhen active, aura increases the damage",
+        "skillan98": "Might"
+    },
+    "skillname99": {
+        "skillname99": "Prayer",
+        "skillsd99": "aura - regenerates life",
+        "skillld99": "the life of you and your party\nwhen active, aura slowly regenerates",
+        "skillan99": "Prayer"
+    },
+    "skillname100": {
+        "skillname100": "Resist Fire",
+        "skillsd100": "aura - protects against fire damage",
+        "skillld100": "done to you and your party\nwhen active, aura decreases fire damage",
+        "skillan100": "Resist Fire"
+    },
+    "skillname101": {
+        "skillname101": "Holy Bolt",
+        "skillsd101": "divine energy that damages undead",
+        "skillld101": "or heals allies\nthat damages undead enemies\na bolt of divine energy",
+        "skillan101": "Holy Bolt"
+    },
+    "skillname102": {
+        "skillname102": "Holy Fire",
+        "skillsd102": "aura - flames damage nearby enemies",
+        "skillld102": "with heavenly flames\nwhen active, aura damages nearby enemies",
+        "skillan102": "Holy Fire"
+    },
+    "skillname103": {
+        "skillname103": "Thorns",
+        "skillsd103": "aura - reflects damage back at enemies",
+        "skillld103": "back at your attacker\nwhen active, aura reflects damage done to you",
+        "skillan103": "Thorns"
+    },
+    "skillname104": {
+        "skillname104": "Defiance",
+        "skillsd104": "aura - increases defense",
+        "skillld104": "of you and your party\nwhen active, aura increases the defense rating",
+        "skillan104": "Defiance"
+    },
+    "skillname105": {
+        "skillname105": "Resist Cold",
+        "skillsd105": "aura - protects against cold damage",
+        "skillld105": "done to you and your party\nwhen active, aura decreases cold damage",
+        "skillan105": "Resist Cold"
+    },
+    "skillname106": {
+        "skillname106": "Zeal",
+        "skillsd106": "attacks multiple adjacent enemies",
+        "skillld106": "with a single attack\nallows you to attack multiple adjacent enemies",
+        "skillan106": "Zeal"
+    },
+    "skillname107": {
+        "skillname107": "Charge",
+        "skillsd107": "charge and attack target",
+        "skillld107": "charge into battle and attack an enemy",
+        "skillan107": "Charge"
+    },
+    "skillname108": {
+        "skillname108": "Blessed Aim",
+        "skillsd108": "aura - increases your attack rating",
+        "skillld108": "for you and your party\nwhen active, aura increases the attack rating",
+        "skillan108": "Blessed Aim"
+    },
+    "skillname109": {
+        "skillname109": "Cleansing",
+        "skillsd109": "aura - reduces poison and curse duration",
+        "skillld109": "will remain poisoned or cursed\nof time you and your party\nwhen active, aura reduces the length",
+        "skillan109": "Cleansing"
+    },
+    "skillname110": {
+        "skillname110": "Resist Lightning",
+        "skillsd110": "aura - protects against lightning damage",
+        "skillld110": "done to you and your party\nwhen active, aura decreases lightning damage",
+        "skillan110": "R. Lightning"
+    },
+    "skillname111": {
+        "skillname111": "Vengeance",
+        "skillsd111": "attacks add elemental damage",
+        "skillld111": "to each successful attack\nfire, lightning and cold damage are added",
+        "skillan111": "Vengeance"
+    },
+    "skillname112": {
+        "skillname112": "Blessed Hammer",
+        "skillsd112": "summon a spiraling magic hammer",
+        "skillld112": "150 Percent Damage to Undead\nspirals outwards damaging enemies it hits\nsummons an ethereal hammer that",
+        "skillan112": "B. Hammer"
+    },
+    "skillname113": {
+        "skillname113": "Concentration",
+        "skillsd113": "aura - increases your attack ability",
+        "skillld113": "that the attack will be interrupted for you and your party \nwhen active, aura increases the damage and decreases the chance",
+        "skillan113": "Concentration"
+    },
+    "skillname114": {
+        "skillname114": "Holy Freeze",
+        "skillsd114": "aura - freezes nearby monsters",
+        "skillld114": "when active, aura freezes nearby monsters",
+        "skillan114": "Holy Freeze"
+    },
+    "skillname115": {
+        "skillname115": "Vigor",
+        "skillsd115": "aura - increases speed and stamina recovery",
+        "skillld115": "and movement speed for you and your party\nwhen active, aura increases stamina recovery rate, maximum stamina",
+        "skillan115": "Vigor"
+    },
+    "skillname116": {
+        "skillname116": "Conversion",
+        "skillsd116": "Change allegiance of monsters",
+        "skillld116": "other foul demons and beasts\nconverts monsters to fight against",
+        "skillan116": "Conversion"
+    },
+    "skillname117": {
+        "skillname117": "Holy Shield",
+        "skillsd117": "enhances your shield",
+        "skillld117": "enhances your shield with divine power",
+        "skillan117": "Holy Shield"
+    },
+    "skillname118": {
+        "skillname118": "Holy Shock",
+        "skillsd118": "aura - lightning damages nearby enemies",
+        "skillld118": "to damage nearby enemies\nwhen active, aura causes pulses of electricity",
+        "skillan118": "Holy Shock"
+    },
+    "skillname119": {
+        "skillname119": "Sanctuary",
+        "skillsd119": "aura - repels and damages undead",
+        "skillld119": "and knocks them back\nwhen active, aura damages the undead",
+        "skillan119": "Sanctuary"
+    },
+    "skillname120": {
+        "skillname120": "Meditation",
+        "skillsd120": "aura - increases mana recovery",
+        "skillld120": "for you and your party\nwhen active, aura increases mana recovery",
+        "skillan120": "Meditation"
+    },
+    "skillname121": {
+        "skillname121": "Fist of the Heavens",
+        "skillsd121": "target is banished",
+        "skillld121": "seek out nearby enemies\nlightning strikes your target as holy bolts",
+        "skillan121": "Heaven's Fist"
+    },
+    "skillname122": {
+        "skillname122": "Fanaticism",
+        "skillsd122": "aura - increases attack speed",
+        "skillld122": "and attack rating for you and your party\nwhen active, aura increases attack speed",
+        "skillan122": "Fanaticism"
+    },
+    "skillname123": {
+        "skillname123": "Conviction",
+        "skillsd123": "aura  - weakens enemies",
+        "skillld123": "and resistances of nearby enemies\nwhen active, aura reduces the defenses",
+        "skillan123": "Conviction"
+    },
+    "skillname124": {
+        "skillname124": "Redemption",
+        "skillsd124": "aura - redeems the dead for mana and life",
+        "skillld124": "life and mana to you and your party\nthe souls of slain enemies to give\nwhen active, aura attempts to redeem",
+        "skillan124": "Redemption"
+    },
+    "skillname125": {
+        "skillname125": "Salvation",
+        "skillsd125": "aura - protects against elemental damage",
+        "skillld125": "done to you and your party\nwhen active, aura decreases fire, cold and lightning damage",
+        "skillan125": "Salvation"
+    },
+    "skillname126": {
+        "skillname126": "Bash",
+        "skillsd126": "powerful blow that increases damage",
+        "skillld126": "to enemies and knocks them back\npowerful blow that increases the damage done",
+        "skillan126": "Bash"
+    },
+    "skillname127": {
+        "skillname127": "Sword Mastery",
+        "skillsd127": "passive - improves sword fighting skill",
+        "skillld127": "passive - improves sword fighting skill",
+        "skillan127": "Sword Mastery"
+    },
+    "skillname128": {
+        "skillname128": "Axe Mastery",
+        "skillsd128": "passive - improves axe fighting skill",
+        "skillld128": "passive - improves axe fighting skill",
+        "skillan128": "Axe Mastery"
+    },
+    "skillname129": {
+        "skillname129": "Mace Mastery",
+        "skillsd129": "passive - improves mace fighting skill",
+        "skillld129": "passive - improves mace fighting skill",
+        "skillan129": "Mace Mastery"
+    },
+    "skillname130": {
+        "skillname130": "Howl",
+        "skillsd130": "frightens nearby monsters",
+        "skillld130": "scrambling away in fear\nsends nearby monsters",
+        "skillan130": "Howl"
+    },
+    "skillname131": {
+        "skillname131": "Find Potion",
+        "skillsd131": "targets corpses to find potions",
+        "skillld131": "for a chance to find a potion\nuse on the corpse of a slain monster",
+        "skillan131": "Find Potion"
+    },
+    "skillname132": {
+        "skillname132": "Leap",
+        "skillsd132": "jumps over obstacles",
+        "skillld132": "or into the fray\nleaps away from danger",
+        "skillan132": "Leap"
+    },
+    "skillname133": {
+        "skillname133": "Double Swing",
+        "skillsd133": "swings two weapons at once",
+        "skillld133": "or one target twice\nattacks two targets if possible,\nwhen two weapons are equipped",
+        "skillan133": "Double Swing"
+    },
+    "skillname134": {
+        "skillname134": "Pole Arm Mastery",
+        "skillsd134": "passive - improves pole arm skill",
+        "skillld134": "passive - improves pole arm skill",
+        "skillan134": "Pole Arm Mastery"
+    },
+    "skillname135": {
+        "skillname135": "Throwing Mastery",
+        "skillsd135": "passive - improves thrown weapon skill",
+        "skillld135": "passive - improves thrown weapon skill",
+        "skillan135": "Throwing Mastery"
+    },
+    "skillname136": {
+        "skillname136": "Spear Mastery",
+        "skillsd136": "passive - improves spear fighting skill",
+        "skillld136": "passive - improves spear fighting skill",
+        "skillan136": "Spear Mastery"
+    },
+    "skillname137": {
+        "skillname137": "Taunt",
+        "skillsd137": "causes a monster to attack",
+        "skillld137": "enrages a monster into relentlessly attacking",
+        "skillan137": "Taunt"
+    },
+    "skillname138": {
+        "skillname138": "Shout",
+        "skillsd138": "alerts party and improves defense",
+        "skillld138": "rating of you and your party\nwarns of impending danger and improves the defense",
+        "skillan138": "Shout"
+    },
+    "skillname139": {
+        "skillname139": "Stun",
+        "skillsd139": "stuns your target",
+        "skillld139": "and increases your attack rating\nstuns your target for a short time",
+        "skillan139": "Stun"
+    },
+    "skillname140": {
+        "skillname140": "Double Throw",
+        "skillsd140": "throw two weapons at once",
+        "skillld140": "throwing weapons at the same time\nallows you to throw two different",
+        "skillan140": "Double Throw"
+    },
+    "skillname141": {
+        "skillname141": "Increased Stamina",
+        "skillsd141": "passive - increases stamina",
+        "skillld141": "passive - increases your stamina",
+        "skillan141": "Increased Stamina"
+    },
+    "skillname142": {
+        "skillname142": "Find Item",
+        "skillsd142": "targets corpses to find items",
+        "skillld142": "to find hidden treasures\nuse on the corpse of a slain monster",
+        "skillan142": "Find Item"
+    },
+    "skillname143": {
+        "skillname143": "Leap Attack",
+        "skillsd143": "leaps and attacks target enemy",
+        "skillld143": "in one swift assault\nleaps to and attacks target enemy",
+        "skillan143": "Leap Attack"
+    },
+    "skillname144": {
+        "skillname144": "Concentrate",
+        "skillsd144": "attack that is not interruptible",
+        "skillld144": "improves attack and defense rating\nattack that is not interruptible and",
+        "skillan144": "Concentrate"
+    },
+    "skillname145": {
+        "skillname145": "Iron Skin",
+        "skillsd145": "passive - improves defense rating",
+        "skillld145": "passive - improves defense rating",
+        "skillan145": "Iron Skin"
+    },
+    "skillname146": {
+        "skillname146": "Battle Cry",
+        "skillsd146": "reduces enemy effectiveness",
+        "skillld146": "enemies defense rating and damage\nfearsome cry that decreases",
+        "skillan146": "Battle Cry"
+    },
+    "skillname147": {
+        "skillname147": "Frenzy",
+        "skillsd147": "successful double swing hit increases speed",
+        "skillld147": "requires you to equip two weapons\neach successful attack increases your overall speed\nallows you to swing two weapons at once",
+        "skillan147": "Frenzy"
+    },
+    "skillname148": {
+        "skillname148": "Increased Speed",
+        "skillsd148": "passive - increases walk and run speed",
+        "skillld148": "passive - increases walk and run speed",
+        "skillan148": "Increased Speed"
+    },
+    "skillname149": {
+        "skillname149": "Battle Orders",
+        "skillsd149": "improves life, mana and stamina of party",
+        "skillld149": "stamina of you and your party\nimproves the maximum mana, life and",
+        "skillan149": "Battle Orders"
+    },
+    "skillname150": {
+        "skillname150": "Grim Ward",
+        "skillsd150": "creates a frightening totem",
+        "skillld150": "that causes nearby monsters to flee\nto create a frightening totem\nuse on the corpse of a slain monster",
+        "skillan150": "Grim Ward"
+    },
+    "skillname151": {
+        "skillname151": "Whirlwind",
+        "skillsd151": "whirling dance of death",
+        "skillld151": "legions of your enemies\nthat cuts a path through the\na whirling dance of death",
+        "skillan151": "Whirlwind"
+    },
+    "skillname152": {
+        "skillname152": "Berserk",
+        "skillsd152": "powerful but reckless attack",
+        "skillld152": "but decreases defense rating\nthat increases damage and attack rating\na powerful but reckless attack",
+        "skillan152": "Berserk"
+    },
+    "skillname153": {
+        "skillname153": "Natural Resistance",
+        "skillsd153": "passive - increases natural resistances",
+        "skillld153": "to elemental and poison damage\npassive - increases natural resistances",
+        "skillan153": "Natural Resistance"
+    },
+    "skillname154": {
+        "skillname154": "War Cry",
+        "skillsd154": "injures and stuns nearby enemies",
+        "skillld154": "injures and stuns all nearby enemies",
+        "skillan154": "War Cry"
+    },
+    "skillname155": {
+        "skillname155": "Battle Command",
+        "skillsd155": "increases skill levels",
+        "skillld155": "increases all current skill levels for you and your party",
+        "skillan155": "Battle Cmd"
+    },
+    "skillname217": {
+        "skillname217": "Scroll of Identify",
+        "skillsd217": "identify a magic item's properties",
+        "skillld217": "identify a magic item's properties",
+        "skillan217": "Identify"
+    },
+    "skillname218": {
+        "skillname218": "Tome of Identify",
+        "skillsd218": "identify a magic item's properties",
+        "skillld218": "identify a magic item's properties",
+        "skillan218": "Identify"
+    },
+    "skillname219": {
+        "skillname219": "Scroll of Townportal",
+        "skillsd219": "create a magic portal to the nearest town",
+        "skillld219": "create a magic portal to the nearest town",
+        "skillan219": "Townportal"
+    },
+    "skillname220": {
+        "skillname220": "Tome of Townportal",
+        "skillsd220": "create a magic portal to the nearest town",
+        "skillld220": "create a magic portal to the nearest town",
+        "skillan220": "Townportal"
+    },
+    "Skillname222": {
+        "Skillname222": "Raven",
+        "Skillsd222": "summon ravens",
+        "Skillld222": "the eyes of your enemies\nsummon ravens to peck out",
+        "Skillan222": "Raven"
+    },
+    "Skillname223": {
+        "Skillname223": "Poison Creeper",
+        "Skillsd223": "summon disease spreading vine",
+        "Skillld223": "disease to all it contacts\nsummon a vine that spreads",
+        "Skillan223": "Psn Creep"
+    },
+    "Skillname224": {
+        "Skillname224": "Werewolf",
+        "Skillsd224": "transform into a werewolf",
+        "Skillld224": "transform into a werewolf",
+        "Skillan224": "Werewolf"
+    },
+    "Skillname225": {
+        "Skillname225": "Lycanthropy",
+        "Skillsd225": "passive - improves shape-shifting ability",
+        "Skillld225": "when in werewolf or werebear form\npassive - improves duration and life",
+        "Skillan225": "Lycanthropy"
+    },
+    "Skillname226": {
+        "Skillname226": "Firestorm",
+        "Skillsd226": "unleash fiery chaos",
+        "Skillld226": "unleash fiery chaos to burn your enemies",
+        "Skillan226": "Firestorm"
+    },
+    "Skillname227": {
+        "Skillname227": "Oak Sage",
+        "Skillsd227": "summon the spirit of the oak",
+        "Skillld227": "life for you and your party\nsummon a spirit pet that increases",
+        "Skillan227": "Oak Sage"
+    },
+    "Skillname228": {
+        "Skillname228": "Summon Spirit Wolf",
+        "Skillsd228": "summon a wolf",
+        "Skillld228": "to fight by your side\nsummon a wolf with teleporting ability",
+        "Skillan228": "Sum Spt Wolf"
+    },
+    "Skillname229": {
+        "Skillname229": "Werebear",
+        "Skillsd229": "transform into a werebear",
+        "Skillld229": "transform into a werebear",
+        "Skillan229": "Werebear"
+    },
+    "Skillname230": {
+        "Skillname230": "Molten Boulder",
+        "Skillsd230": "launch a molten boulder",
+        "Skillld230": "that knocks back your enemies\nlaunch a boulder of flaming hot magma",
+        "Skillan230": "Molten Boulder"
+    },
+    "Skillname231": {
+        "Skillname231": "Arctic Blast",
+        "Skillsd231": "shoot a jet of ice",
+        "Skillld231": "to burn your enemies with frost\nblast a continuous jet of ice",
+        "Skillan231": "Arctic Blast"
+    },
+    "Skillname232": {
+        "Skillname232": "Carrion Vine",
+        "Skillsd232": "summon corpse eating vine",
+        "Skillld232": "and replenishes your life\nsummon a vine that eats corpses",
+        "Skillan232": "Carrion Vine"
+    },
+    "Skillname233": {
+        "Skillname233": "Feral Rage",
+        "Skillsd233": "life-stealing rage attack - werewolf form",
+        "Skillld233": "with successive hits\nincreasing amounts of life from your enemies\ngo into a frenzied rage to steal\nwhen in werewolf form,",
+        "Skillan233": "Feral Rage"
+    },
+    "Skillname234": {
+        "Skillname234": "Maul",
+        "Skillsd234": "maul your enemies - werebear form",
+        "Skillld234": "with successive hits\nfor increasing extra damage\nmaul your enemies\nwhen in werebear form,",
+        "Skillan234": "Maul"
+    },
+    "Skillname235": {
+        "Skillname235": "Fissure",
+        "Skillsd235": "open the earth to burn enemies",
+        "Skillld235": "burning them to a crisp\nopen volcanic vents below your enemies,",
+        "Skillan235": "Fissure"
+    },
+    "Skillname236": {
+        "Skillname236": "Cyclone Armor",
+        "Skillsd236": "shield from elemental damage",
+        "Skillld236": "fire, cold, and lightning\nshield yourself from damage caused by",
+        "Skillan236": "Cyclone Armor"
+    },
+    "Skillname237": {
+        "Skillname237": "Heart of Wolverine",
+        "Skillsd237": "summon a wolverine spirit",
+        "Skillld237": "of you and your party\nto the damage and attack rating\nsummon a spirit pet that adds",
+        "Skillan237": "Wolverine Hrt"
+    },
+    "Skillname238": {
+        "Skillname238": "Summon Dire Wolf",
+        "Skillsd238": "summon an enraged wolf",
+        "Skillld238": "it does to enemies\neating corpses to increase damage\nsummon a wolf that becomes enraged,",
+        "Skillan238": "Summon D Wolf"
+    },
+    "Skillname239": {
+        "Skillname239": "Rabies",
+        "Skillsd239": "bite causes disease - werewolf form",
+        "Skillld239": "that spreads to other monsters\nto inflict them with disease\nbite your enemies\nwhen in werewolf form,",
+        "Skillan239": "Rabies"
+    },
+    "Skillname240": {
+        "Skillname240": "Fire Claws",
+        "Skillsd240": "fiery, mauling attack",
+        "Skillld240": "with a fiery claw attack\nform, maul your enemies\nwhen in werewolf or werebear",
+        "Skillan240": "Fire Claws"
+    },
+    "Skillname241": {
+        "Skillname241": "Twister",
+        "Skillsd241": "release several small whirlwinds",
+        "Skillld241": "cut a path through your enemies\nrelease several small whirlwinds that",
+        "Skillan241": "Twister"
+    },
+    "Skillname242": {
+        "Skillname242": "Solar Creeper",
+        "Skillsd242": "summon corpse eating vine",
+        "Skillld242": "and replenishes your mana\nsummon a vine that eats corpses",
+        "Skillan242": "Sol Creep"
+    },
+    "Skillname243": {
+        "Skillname243": "Hunger",
+        "Skillsd243": "life-and-mana-stealing bite",
+        "Skillld243": "to gain life and mana\nform, bite your enemies\nwhen in werewolf or werebear",
+        "Skillan243": "Hunger"
+    },
+    "Skillname244": {
+        "Skillname244": "Shock Wave",
+        "Skillsd244": "create shock waves - werebear form",
+        "Skillld244": "that stuns nearby enemies\nstomp to create a shock wave\nwhen in werebear form,",
+        "Skillan244": "Shock Wave"
+    },
+    "Skillname245": {
+        "Skillname245": "Volcano",
+        "Skillsd245": "create a volcano",
+        "Skillld245": "and destruction over your enemies\nsummon forth a volcano to rain death",
+        "Skillan245": "Volcano"
+    },
+    "Skillname246": {
+        "Skillname246": "Tornado",
+        "Skillsd246": "create a tornado",
+        "Skillld246": "to blast your enemies\ncreate a funnel of wind and debris",
+        "Skillan246": "Tornado"
+    },
+    "Skillname247": {
+        "Skillname247": "Spirit of Barbs",
+        "Skillsd247": "summon a spirit pet of thorns",
+        "Skillld247": "back at your enemies\ntaken by you and your party\nsummon spirit pet that reflects damage",
+        "Skillan247": "Spirit Barbs"
+    },
+    "Skillname248": {
+        "Skillname248": "Summon Grizzly",
+        "Skillsd248": "summon a grizzly bear",
+        "Skillld248": "summon a ferocious grizzly bear",
+        "Skillan248": "Summon Grizzly"
+    },
+    "Skillname249": {
+        "Skillname249": "Fury",
+        "Skillsd249": "multiple attacks - werewolf Form",
+        "Skillld249": "or one target multiple times\neither multiple adjacent targets\nwhen in werewolf form, attack",
+        "Skillan249": "Fury"
+    },
+    "Skillname250": {
+        "Skillname250": "Armageddon",
+        "Skillsd250": "rain fire on your enemies",
+        "Skillld250": "destruction on nearby enemies\ncreate a meteor shower to rain fiery",
+        "Skillan250": "Armageddon"
+    },
+    "Skillname251": {
+        "Skillname251": "Hurricane",
+        "Skillsd251": "create a massive wind storm",
+        "Skillld251": "debris to pound your enemies to bits\ncreate a massive storm of wind and",
+        "Skillan251": "Hurricane"
+    },
+    "Skillname252": {
+        "Skillname252": "Fire Blast",
+        "Skillsd252": "throw a fire bomb",
+        "Skillld252": "to blast your enemies to bits\nthrow a fire bomb",
+        "Skillan252": "Fire Blast"
+    },
+    "Skillname253": {
+        "Skillname253": "Claw Mastery",
+        "Skillsd253": "passive - improves claw-class weapons ability",
+        "Skillld253": "with claw-class weapons\npassive - improves your skill",
+        "Skillan253": "Claw Mastery"
+    },
+    "Skillname254": {
+        "Skillname254": "Psychic Hammer",
+        "Skillsd254": "a mind blast to crush your enemies",
+        "Skillld254": "to crush and knock back your enemies\nto create a psychic blast\nuse the power of your mind",
+        "Skillan254": "Psyc Hammer"
+    },
+    "Skillname255": {
+        "Skillname255": "Tiger Strike",
+        "Skillsd255": "increases damage of finishing moves\n\nCharge-up Skill",
+        "Skillld255": "normal attack to release charges\nmust use a dragon finishing move or\nto finishing moves\nconsecutive hits add damage bonuses\n\nCharge-up Skill","Skillan255": "Tiger Strike"
+    },
+    "Skillname256": {
+        "Skillname256": "Dragon Talon",
+        "Skillsd256": "kick your enemies\n\nFinishing Move",
+        "Skillld256": "adds charged-up bonuses to the kick\nkick your enemies out of your way\n\nFinishing Move",
+        "Skillan256": "Dragon Talon"
+    },
+    "Skillname257": {
+        "Skillname257": "Shock Web",
+        "Skillsd257": "throw a web of lightning",
+        "Skillld257": "to shock your enemies\nthrow a web of lightning",
+        "Skillan257": "Shock Web"
+    },
+    "Skillname258": {
+        "Skillname258": "Blade Sentinel",
+        "Skillsd258": "set a spinning blade",
+        "Skillld258": "between you and target point\nset a spinning blade to patrol",
+        "Skillan258": "Blade Sentinel"
+    },
+    "Skillname259": {
+        "Skillname259": "Burst of Speed",
+        "Skillsd259": "increases attack and movement speed",
+        "Skillld259": "for a period of time\nincreases attack and movement speed",
+        "Skillan259": "Burst of Speed"
+    },
+    "Skillname260": {
+        "Skillname260": "Fists of Fire",
+        "Skillsd260": "adds fire damage to finishing moves\n\nCharge-up Skill",
+        "Skillld260": "normal attack to release charges\nmust use a dragon finishing move or\ncan only be used with claw-class weapons\nto finishing moves\nconsecutive hits add fire damage\n\nCharge-up Skill",
+        "Skillan260": "Fists of Fire"
+    },
+    "Skillname261": {
+        "Skillname261": "Dragon Claw",
+        "Skillsd261": "double claw attack\n\nFinishing Move",
+        "Skillld261": "adds charged-up bonuses to both claw attacks\nwith your dual claw-class weapons\nslice and dice your enemies\n\nFinishing Move",
+        "Skillan261": "Dragon Claw"
+    },
+    "Skillname262": {
+        "Skillname262": "Charged Bolt Sentry",
+        "Skillsd262": "a trap that emits charged bolts",
+        "Skillld262": "at enemies that pass near\na trap that emits charged bolts",
+        "Skillan262": "Charged Bolt"
+    },
+    "Skillname263": {
+        "Skillname263": "Wake of Fire",
+        "Skillsd263": "a trap that emits waves of fire",
+        "Skillld263": "a trap that emits waves of fire",
+        "Skillan263": "Wake of Fire"
+    },
+    "Skillname264": {
+        "Skillname264": "Weapon Block",
+        "Skillsd264": "passive - block with two claw-class weapons",
+        "Skillld264": "you are using dual claw-class weapons\npassive - chance to block when",
+        "Skillan264": "Wpn Block"
+    },
+    "Skillname265": {
+        "Skillname265": "Cloak of Shadows",
+        "Skillsd265": "blind your enemies",
+        "Skillld265": "lowering their defenses for a period of time\ncast a shadow to blind nearby enemies",
+        "Skillan265": "Cloak of Shdws"
+    },
+    "Skillname266": {
+        "Skillname266": "Cobra Strike",
+        "Skillsd266": " adds life and mana stealing to finishing moves\n\nCharge-up Skill",
+        "Skillld266": "normal attack to release charges\nmust use a dragon finishing move or\nto finishing moves\nconsecutive hits add life and mana stealing\n\nCharge-up Skill\n",
+        "Skillan266": "Cobra Strike"
+    },
+    "Skillname267": {
+        "Skillname267": "Blade Fury",
+        "Skillsd267": "throw spinning blades",
+        "Skillld267": "to slice up your enemies\nthrow spinning blades",
+        "Skillan267": "Blade Fury"
+    },
+    "Skillname268": {
+        "Skillname268": "Fade",
+        "Skillsd268": "temporary resist all",
+        "Skillld268": "for a period of time\nraise all resistances and resist curses",
+        "Skillan268": "Fade"
+    },
+    "Skillname269": {
+        "Skillname269": "Shadow Warrior",
+        "Skillsd269": "summon a shadow of yourself",
+        "Skillld269": "your skills and fights by your side\nsummon a shadow of yourself that mimics",
+        "Skillan269": "Shdw Warrior"
+    },
+    "Skillname270": {
+        "Skillname270": "Claws of Thunder",
+        "Skillsd270": "adds lightning damage to finishing moves\n\nCharge-up Skill",
+        "Skillld270": "normal attack to release charges\nmust use a dragon finishing move or\ncan only be used with claw-class weapons\nto finishing moves\nconsecutive hits add lightning damage\nCharge-up Skill\n",
+        "Skillan270": "Thunder Claws"
+    },
+    "Skillname271": {
+        "Skillname271": "Dragon Tail",
+        "Skillsd271": "explosive kick\nFinishing Move",
+        "Skillld271": "adds charged-up bonuses to the kick\nknock back your enemies with an explosive kick\nFinishing Move\n",
+        "Skillan271": "Dragon Tail"
+    },
+    "Skillname272": {
+        "Skillname272": "Lightning Sentry",
+        "Skillsd272": "a trap that emits lightning",
+        "Skillld272": "to scorch passing enemies\na trap that shoots lightning",
+        "Skillan272": "Lightning Sentry"
+    },
+    "Skillname273": {
+        "Skillname273": "Wake of Inferno",
+        "Skillsd273": "trap that sprays fire",
+        "Skillld273": "trap that sprays fire at passing enemies",
+        "Skillan273": "Wake of Inferno"
+    },
+    "Skillname274": {
+        "Skillname274": "Mind Blast",
+        "Skillsd274": "compelling psionic blast",
+        "Skillld274": "and convert the feeble-minded\nstun a group of enemies\nusing the power of your mind",
+        "Skillan274": "Mind Blast"
+    },
+    "Skillname275": {
+        "Skillname275": "Blades of Ice",
+        "Skillsd275": "adds cold damage to finishing moves\nCharge-up Skill",
+        "Skillld275": "normal attack to release charges\nmust use a dragon finishing move or\ncan only be used with claw-class weapons\nto finishing moves\nconsecutive hits add cold damage\nCharge-up Skill\n",
+        "Skillan275": "Blades of Ice"
+    },
+    "Skillname276": {
+        "Skillname276": "Dragon Flight",
+        "Skillsd276": "teleport and kick enemies\nFinishing Move",
+        "Skillld276": "adds charged-up bonuses to the kick\nand destroy them with a kick\nteleport to your enemies\nFinishing Move\n",
+        "Skillan276": "Dragon Flight"
+    },
+    "Skillname277": {
+        "Skillname277": "Death Sentry",
+        "Skillsd277": "trap that explodes nearby corpses",
+        "Skillld277": "or explodes nearby corpses laying waste to more enemies\ntrap that shoots lightning at your enemies",
+        "Skillan277": "Death Sentry"
+    },
+    "Skillname278": {
+        "Skillname278": "Blade Shield",
+        "Skillsd278": "spinning blades of defense",
+        "Skillld278": "who stray too close\nspinning blades slice enemies",
+        "Skillan278": "Blade Shield"
+    },
+    "Skillname279": {
+        "Skillname279": "Venom",
+        "Skillsd279": "poison your weapon",
+        "Skillld279": "add poison damage to your weapons",
+        "Skillan279": "Venom"
+    },
+    "Skillname280": {
+        "Skillname280": "Shadow Master",
+        "Skillsd280": "summon your shadow",
+        "Skillld280": "to fight by your side\nsummon a powerful shadow of yourself",
+        "Skillan280": "Shdw Master"
+    },
+    "Skillname281": {
+        "Skillname281": "Phoenix Strike",
+        "Skillsd281": "adds elemental novas to finishing moves\nCharge-up Skill",
+        "Skillld281": "normal attack to release charges\nmust use a dragon finishing move or\nadds elemental novas to finishing moves\nCharge-up Skill\n",
+        "Skillan281": "Phnx Strike"
+    }
+}

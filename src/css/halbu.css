@@ -100,9 +100,14 @@ svg {
     align-items:start;
     justify-content: space-between;
 }
+
 .spaced > *:not(:last-child) {
     margin-right: 20px; 
-} 
+}
+
+.vspaced > *:not(:last-child) {
+    margin-bottom: 20px; 
+}
 
 input[type="number"]{
     text-align: right;

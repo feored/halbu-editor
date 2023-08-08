@@ -3,7 +3,8 @@
         ValidSave: Symbol("Valid Save" ),
         CharacterPicked: Symbol("Character Picked"),
         CharacterUnpicked: Symbol("Character Unpicked"),
-        SaveFile: Symbol("Save File")
+        SaveFile: Symbol("Save File"),
+        SkillPointChange: Symbol("SkillPointChange")
     };
 
     
