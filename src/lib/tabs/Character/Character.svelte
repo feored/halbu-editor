@@ -1,10 +1,9 @@
 <script>
     import { invoke } from "@tauri-apps/api/tauri";
     import { InfoIcon} from "lucide-svelte";
-    import { Tooltip } from "@svelte-plugins/tooltips";
     import { Message, buildMessage} from "../../utils/Message.svelte";
     import { createEventDispatcher } from 'svelte';
-    import { enforceMinMax } from "../../utils/actions.js";
+    import { enforceMinMax, tooltip } from "../../utils/actions.js";
 
     import titles from "./titles.json";
     import experienceTable from "./experience.json";
@@ -124,26 +123,44 @@
         validName = true;
         save.character.name = nameRef.value;
     }
+
+    async function changeClass(){
+        let newSave = await invoke("new_save", {class: save.character.class});
+        save.skills = newSave.skills;
+        newSave.attributes.newskills.value = save.attributes.newskills.value;
+        newSave.attributes.experience.value = save.attributes.experience.value;
+        newSave.attributes.level.value = save.attributes.level.value;
+        newSave.attributes.gold.value = save.attributes.gold.value;
+        newSave.attributes.goldbank.value = save.attributes.goldbank.value;
+        save.attributes = newSave.attributes
+    }
 </script>
 
 
 <fieldset id="info" class="row spaced">
     <legend>Information</legend>
         <div class="col">
-            <label for="name" >
+            <label for="name">
                 Name
                 &nbsp;
-                <Tooltip content="<ul><li>2-15 characters</li><li>Only 1 _ and - allowed</li><li>Must begin with a letter</li><li>No numbers</li><li>No mixing languages</li></ul>" position={"bottom"}>
-                    <InfoIcon size={18}/>
-                </Tooltip>
+                <span use:tooltip={{
+                    content: "<h4>Naming Restrictions</h4><ul style='text-align:left;'><li>2-15 characters</li><li>Only 1 _ and - allowed</li><li>Must begin with a letter</li><li>No numbers</li><li>No mixing languages</li></ul>",
+                    allowHTML: true,
+                    placement: "bottom",
+                    theme: 'halbu',
+                    arrow:true,
+                    animation: 'shift-toward',
+                    hideOnClick: false
+                }}>
+                    <InfoIcon size={18}/></span>
             </label>
-                <input class={validName == false ? "invalid" : ""} on:keydown={validateName} on:input={validateName} on:change={validateName}
+                <input class={validName == false ? "error-bg" : ""} on:keydown={validateName} on:input={validateName} on:change={validateName}
                 title="2-15 characters" bind:this = {nameRef} type="text" id="name" placeholder="default" name="name" required minlength="2"
                 maxlength="15" size="15" value="{save.character.name}" style="width:15em;"/>
         </div>
         <div class="col">
             <label for="class">Class</label>
-            <select bind:value={save.character.class} name="class" id="class" on:change={updateTitle} >
+            <select bind:value={save.character.class} name="class" id="class" on:change={() => {changeClass(); updateTitle();}} >
                 <option value="{Class.Amazon}">Amazon</option>
                 <option value="{Class.Assassin}">Assassin</option>
                 <option value="{Class.Barbarian}">Barbarian</option>

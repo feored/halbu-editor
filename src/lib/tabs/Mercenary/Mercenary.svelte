@@ -1,11 +1,10 @@
 <script>
     import { invoke } from "@tauri-apps/api/tauri";
     import { InfoIcon} from "lucide-svelte";
-    import { Tooltip } from "@svelte-plugins/tooltips";
     import names from "./names.json";
     import variants from "./variants.json";
     import {Difficulty, Act, u32MAX} from "../../utils/Constants.svelte";
-    import { enforceMinMax } from "../../utils/actions.js";
+    import { enforceMinMax, tooltip } from "../../utils/actions.js";
 
     export let save;
 
@@ -118,9 +117,17 @@
         <legend>Level</legend>
         <div class="col">
             <label for="level">Level&nbsp;
-                <Tooltip content="<p style='text-align:center'>Hirelings need different amounts of XP per level depending on their class.</p>" position={"bottom"}>
+                <span use:tooltip={{
+                    content: "<p style='text-align:center'>Hirelings need different amounts of XP per level depending on their class and the difficulty they were hired in.</p>",
+                    allowHTML: true,
+                    placement: "bottom",
+                    theme: 'halbu',
+                    arrow:true,
+                    animation: 'shift-toward',
+                    hideOnClick: false
+                }}>
                     <InfoIcon size={18}/>
-                </Tooltip></label>
+                </span></label>
             <input use:enforceMinMax type="number" name="id" min="1" max="98" step="1" bind:value="{mercLevel}" on:input={changeLevel} disabled={!isHired}>
         </div>
     

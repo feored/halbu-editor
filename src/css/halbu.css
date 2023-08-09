@@ -16,24 +16,36 @@
 
 :root{
     --col-size: 100px;
-    --panel: rgb(68, 84, 101);
+    --transparent: rgba(255, 255, 255,  0.15);
+    --error-bg: #381010;
+    --error-front:#c64e26;
 }
 
-.halbu-tooltip {
-    /* Overrides for svelte-tooltip css */
-    --tooltip-background-color: var(--background-alt);
-    --tooltip-border-radius: 6px;
-    --tooltip-box-shadow: 0 1px 20px rgba(0, 0, 0, 0.25);
-    --tooltip-font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;
-    --tooltip-font-size: 1em;
-    --tooltip-font-weight: 500;
-    --tooltip-line-height: 1.4;
-    --tooltip-color: var(--text-main)
-    --tooltip-offset-x: 12px;
-    --tooltip-offset-y: 12px;
-    --tooltip-padding: 12px;
-    --tooltip-z-index: 100;
-    --tooltip-arrow-size: 10px;
+.disabled{
+    opacity: 0.5;
+}
+
+.tippy-box[data-theme~='halbu'] {
+    background-color: var(--button-base);
+    color: var(--text-muted);
+    border-radius: 6px;
+    border:1px solid var(--border);
+    font-weight:normal;
+    font-size:medium;
+    padding: 12px;
+    text-align:center;
+    line-height: 1.4;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;
+  }
+
+.tippy-box[data-theme~='halbu'] #skillTitle {
+    font-weight: bold;
+    color:chartreuse;
+}
+
+.tippy-box[data-theme~='halbu'] p#levelreq{
+    font-weight:bold;
+    text-align:center;
 }
 
 .grid {
@@ -131,6 +143,10 @@ input[type="number"]{
     text-align: right;
 }   
 
-.invalid {
-    background-color: #271616;
+.error-bg {
+    background-color: var(--error-bg);
+}
+
+.error{
+    color:var(--error-front);
 }

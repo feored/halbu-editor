@@ -32,7 +32,7 @@
     const skillRows = 6;
     const skillCols = 3;
 
-    const classSkillDesc = skilldesc.slice(skillDescOffset[save.character.class], skillDescOffset[save.character.class] + 30);
+    $: updatePage(3);
     
     let skillPageRef;
     let pageSkills = [];
@@ -59,8 +59,9 @@
         return prereqsFulfilled;
     }
 
-    function updatePage(pageID){        
+    function updatePage(pageID){    
         let tempData = [];
+        let classSkillDesc = skilldesc.slice(skillDescOffset[save.character.class], skillDescOffset[save.character.class] + 30);
         let skill_descs = classSkillDesc.filter((skill) => skill.SkillPage == pageID);
         skill_descs.forEach((skilldescRow) => {
             let id = save.skills.find((currentSkill) => currentSkill.skilldesc == skilldescRow.skilldesc).id;
@@ -77,15 +78,14 @@
     }
 
     function updateClickableSkills(){
+        console.log(save.skills);
         let tempClickableSkills = {};
         pageSkills.forEach((skillInfo) => {
             tempClickableSkills[skillInfo["id"]] = isSkillClickable(skillInfo["id"]);
+            console.log(skillInfo["id"] + " : "  + isSkillClickable(skillInfo["id"]));
         });
         clickableSkills = tempClickableSkills;
-        console.log(clickableSkills);
     }
-
-    updatePage(3);
 
 
     function refund(){
@@ -101,9 +101,11 @@
                 let skillNum = skillNumFromId(event.detail.data.id);
                 if (event.detail.data["value"] > 0 && isSkillClickable(event.detail.data.id)){
                     save.skills[skillNum].points += event.detail.data.value;
+                    save.attributes.newskills.value -= event.detail.data.value;
                     updateClickableSkills();
                 } else if (save.skills[skillNum].points > 0 && save.skills[skillNum].points >= event.detail.data.value){
                     save.skills[skillNum].points += event.detail.data.value;
+                    save.attributes.newskills.value -= event.detail.data.value;
                     updateClickableSkills();
                 }
                 //save.attributes.newskills.value += event.detail.data;
@@ -117,41 +119,61 @@
 
 </script>
 
-<div class="grid-3">
-    {#each [...skillpages[save.character.class]].reverse() as page, index}
-    <!-- D2 displays the pages in reverse order for whatever reason-->
-        <button class={(2-index+1) == activeSkillPage ? "selected-page-btn" : "unselected-page-btn"} on:click={() => updatePage((2-index)+1)}>{page}</button>
-    {/each}
+<div id="skillTree">
+    <div id="pageSelection">
+        {#each [...skillpages[save.character.class]].reverse() as page, index}
+        <!-- D2 displays the pages in reverse order for whatever reason-->
+            <button class={(2-index+1) == activeSkillPage ? "selected-page-btn" : "unselected-page-btn"} on:click={() => updatePage((2-index)+1)}>{page}</button>
+        {/each}
+    </div>
+    <div class="grid-3 selected-page" style="padding:10px;" bind:this={skillPageRef}>
+        {#each pageSkills as skill}
+            <Skill
+            id={skill.id}
+            skillInfo={skill}
+            skillPoints={save.skills[skill["id"] - skillOffset[save.character.class]].points}
+            isClickable={clickableSkills[skill["id"]]}
+            charLevel={save.attributes.level.value}
+            on:message={handleSkillChanges}/>
+        {/each}
+    </div>
 </div>
-<div class="grid-3 selected-page" style="padding:10px;" bind:this={skillPageRef}>
-    {#each pageSkills as skill}
-        <Skill
-        id={skill.id}
-        skillInfo={skill}
-        skillPoints={save.skills[skill["id"] - skillOffset[save.character.class]].points}
-        isClickable={clickableSkills[skill["id"]]}
-        on:message={handleSkillChanges}/>
-    {/each}
-</div>
-
 <div class="row spaced" style="margin-top:10px">
     <button on:click={refund}>Refund All Points</button>
     <p>Points Left: {save.attributes.newskills.value}</p>
 </div>
 
+
 <style>
 .selected-page-btn {
-    background-color:var(--panel);
+    background-color:var(--transparent);
     width:100%;
 }
 
 .selected-page {
     border-radius: 6px;
-    background-color:var(--panel);
+    background-color:var(--transparent);
 }
 
 .unselected-page-btn {
     color:var(--text-muted);
     width:100%;
 }
+
+#skillTree{
+    width:500px;
+}
+
+#skillTree #pageSelection{
+    margin:auto;
+    justify-content: space-between;
+    align-items: center;
+    display:flex;
+    flex-direction:row;
+}
+
+#skillTree #pageSelection button{
+    height:60px;
+}
+
 </style>

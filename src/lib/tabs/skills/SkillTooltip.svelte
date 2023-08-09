@@ -1,12 +1,10 @@
-<svelte:options accessors />
-
 <script>
-    export let title = "";
-    export let description = "";
-    export let reqLevel = 1;
+    export let title;
+    export let description;
+    export let reqLevel;
     export let skillLevel;
-    export let baseLevel = 0;
-    export let content = "";
+    export let baseLevel;
+    export let content;
     //export let synergies;
 
     let formattedDescription = description.split("\n").reverse().join("\n");
@@ -14,7 +12,7 @@
 </script>
 
 <div class="col flex-center">
-    <h4>{title}</h4>
+    <h4 id="title">{title}</h4>
     <p>{formattedDescription}</p>
     <p>Required Level: {reqLevel}</p>
     <p>{skillLevel > 0 ? "Current Skill Level: " + skillLevel + " (Base: " + baseLevel + ")" : "First Level"}</p>
@@ -24,7 +22,6 @@
 <style>
     #title {
         font-weight: bold;
-        color:var(--focus);
     }
     p {
         text-align:center;

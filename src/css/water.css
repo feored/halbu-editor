@@ -449,7 +449,7 @@ input:disabled,
 select:disabled,
 button:disabled,
 textarea:disabled {
-  cursor: not-allowed;
+  /* cursor: not-allowed; */
   opacity: 0.5;
 }
 

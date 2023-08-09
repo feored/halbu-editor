@@ -25,7 +25,6 @@ pub fn get_character_from_path(path : String) -> Result<Save, String> {
 pub fn new_save(class: halbu::Class) -> Save {
     Save::default_class(class)
 }
-
 #[tauri::command]
 pub fn save_file(path: String, save:Save) -> Result<String, String> {
     let path: &Path = Path::new(&path);
