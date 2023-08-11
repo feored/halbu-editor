@@ -2,7 +2,7 @@
 
 import csv
 import json
-from calcs import expandExpression
+from calcs import expandExpression, replaceLookup
 
 SKILLS_CSV = "./skills.txt"
 SKILLDESC_CSV = "./skilldesc.txt"
@@ -65,11 +65,6 @@ def getClassName(classString):
         case "ass":
             return "Assassin"
         
-def toSkillsParName(descPar):
-    """From shorthand parameter name to skills.txt column name"""
-    ## example: par8 from skilldesc.txt becomes Param8 in skill.txt col
-    return "Param" + descPar[3:]
-
 def getStringInformation(id, charClass):
     """Get name/description from skills.json (formerly tbl files)"""
     ### Special cases (typos and mistakes in strings file)
@@ -119,11 +114,13 @@ def fillDescLines(skilldescRow, skillsRow, finalRow ):
                 calcA = headers[linenum] + "calca" + str(i)
                 if len(skilldescRow[calcA]) > 0:
                     descline["base_calca"] = skilldescRow[calcA]
-                    descline["calca"] = expandExpression(skilldescRow[calcA], skillsRow)
+                    descline["expanded_calca"] = expandExpression(skilldescRow[calcA], skillsRow)
+                    descline["calca"] = replaceLookup(descline["expanded_calca"], skillsRow)
                 calcB = headers[linenum] + "calcb" + str(i)
                 if len(skilldescRow[calcB]) > 0:
                     descline["base_calcb"] = skilldescRow[calcB]
-                    descline["calcb"] = expandExpression(skilldescRow[calcB], skillsRow)
+                    descline["expanded_calcb"] = expandExpression(skilldescRow[calcB], skillsRow)
+                    descline["calb"] = replaceLookup(descline["expanded_calcb"], skillsRow)
                 finalRow[desc_name].append(descline)
 
 def makeRow(skillsRow):
