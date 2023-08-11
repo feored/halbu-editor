@@ -2,6 +2,7 @@
 
 import csv
 import json
+from calcs import expandExpression
 
 SKILLS_CSV = "./skills.txt"
 SKILLDESC_CSV = "./skilldesc.txt"
@@ -15,30 +16,6 @@ skills = []
 skilldesc = []
 skillcalc = []
 strings = {}
-
-expandDict = {
-    "ln12" : "par1 + (lvl - 1) * par2",
-    "dm12" : "((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1",
-    "ln34" : "par3 + (lvl - 1) * par4",
-    "dm32" : "((110 * lvl) * (par4 - par3)) / (100 * (lvl + 6)) + par3",
-    "ln56" : "par5 + (lvl - 1) * par6",
-    "dm56" : "((110 * lvl) * (par6 - par5)) / (100 * (lvl + 6)) + par5",
-    "ln78" : "par7 + (lvl - 1) * par8",
-    "dm78" : "((110 * lvl) * (par8 - par7)) / (100 * (lvl + 6)) + par7",
-}
-
-expandKeys = expandDict.keys()
-
-def expandExpression(expression):
-    canExpand = True
-    while canExpand:
-        canExpand = False
-        for key in expandKeys:
-            if key in expression:
-                expression = expression.replace(key, expandDict[key])
-                canExpand = True
-    return expression
-        
 
 def setupData():
     """Load all csvs/json files from the game into global variables for easy access"""
@@ -122,7 +99,7 @@ def fillBasicInfo(skillsRow, finalRow):
         if len(prereq) > 0:
             finalRow["reqskills"].append(prereq)
             
-def fillDescLines(skilldescRow, finalRow):
+def fillDescLines(skilldescRow, skillsRow, finalRow ):
     headers = ["desc", "dsc2", "dsc3"]
     maxLines = [7, 6, 8]
     for linenum in range(len(headers)):
@@ -142,11 +119,11 @@ def fillDescLines(skilldescRow, finalRow):
                 calcA = headers[linenum] + "calca" + str(i)
                 if len(skilldescRow[calcA]) > 0:
                     descline["base_calca"] = skilldescRow[calcA]
-                    descline["calca"] = expandExpression(skilldescRow[calcA])
+                    descline["calca"] = expandExpression(skilldescRow[calcA], skillsRow)
                 calcB = headers[linenum] + "calcb" + str(i)
                 if len(skilldescRow[calcB]) > 0:
                     descline["base_calcb"] = skilldescRow[calcB]
-                    descline["calcb"] = expandExpression(skilldescRow[calcB])
+                    descline["calcb"] = expandExpression(skilldescRow[calcB], skillsRow)
                 finalRow[desc_name].append(descline)
 
 def makeRow(skillsRow):
@@ -161,7 +138,7 @@ def makeRow(skillsRow):
     
     ##skilldesc
     skilldescRow = skilldesc[idToSkilldescId(id)]
-    fillDescLines(skilldescRow, finalRow)
+    fillDescLines(skilldescRow, skillsRow, finalRow)
     
     finalRow["column"]  = skilldescRow["SkillColumn"]
     finalRow["row"]  = skilldescRow["SkillRow"]

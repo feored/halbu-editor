@@ -12,7 +12,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "max(usmc, 0)",
-                "calca": "max(usmc, 0)",
+                "calca": "max((max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana)), 0)",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -20,13 +20,13 @@
                 "id": "74",
                 "texta": "Damage: %+d",
                 "base_calca": "pnma",
-                "calca": "pnma"
+                "calca": "((MinDam + (MinLevDam1 * (min(lvl, 8) - 1)) + (MinLevDam2 * (max(min(lvl, 16) - 8), 0)) + (MinLevDam3 * (max(min(lvl, 22) - 16), 0)) + (MinLevDam4 * (max(min(lvl, 28) - 22), 0)) + (MinLevDam5 * (max(lvl - 28), 0)) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100)"
             },
             {
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             },
             {
                 "id": "74",
@@ -54,7 +54,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -70,7 +70,7 @@
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             },
             {
                 "id": "74",
@@ -114,7 +114,7 @@
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4",
+                "calca": "(par3 + (lvl - 1) * par4)",
                 "base_calcb": "25",
                 "calcb": "25"
             },
@@ -130,7 +130,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -139,7 +139,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln56*2",
-                "calca": "par5 + (lvl - 1) * par6*2",
+                "calca": "(par5 + (lvl - 1) * par6)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             }
@@ -162,7 +162,7 @@
                 "id": "74",
                 "texta": "%d%% chance",
                 "base_calca": "dm12",
-                "calca": "((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1"
+                "calca": "(((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1)"
             }
         ],
         "dsc2lines": [],
@@ -184,7 +184,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -192,13 +192,13 @@
                 "id": "74",
                 "texta": "Damage: %+d%%",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4"
+                "calca": "(par3 + (lvl - 1) * par4)"
             },
             {
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             }
         ],
         "dsc2lines": [
@@ -225,7 +225,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -250,7 +250,7 @@
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             },
             {
                 "id": "74",
@@ -295,7 +295,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -303,7 +303,7 @@
                 "id": "74",
                 "texta": "%d arrows",
                 "base_calca": "min(24,ln12)",
-                "calca": "min(24,par1 + (lvl - 1) * par2)"
+                "calca": "min(24,(par1 + (lvl - 1) * par2))"
             }
         ],
         "dsc2lines": [
@@ -347,7 +347,7 @@
                 "id": "74",
                 "texta": "%d%% chance",
                 "base_calca": "dm12",
-                "calca": "((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1"
+                "calca": "(((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1)"
             }
         ],
         "dsc2lines": [],
@@ -371,7 +371,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -387,7 +387,7 @@
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             }
         ],
         "dsc2lines": [],
@@ -438,7 +438,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -507,7 +507,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -523,7 +523,7 @@
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             }
         ],
         "dsc2lines": [],
@@ -563,7 +563,7 @@
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4",
+                "calca": "(par3 + (lvl - 1) * par4)",
                 "base_calcb": "25",
                 "calcb": "25"
             }
@@ -573,7 +573,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -582,7 +582,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln56*2",
-                "calca": "par5 + (lvl - 1) * par6*2",
+                "calca": "(par5 + (lvl - 1) * par6)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             },
@@ -590,13 +590,13 @@
                 "id": "74",
                 "texta": "Physical Damage Received Reduced by %d%%",
                 "base_calca": "dm78",
-                "calca": "((110 * lvl) * (par8 - par7)) / (100 * (lvl + 6)) + par7"
+                "calca": "(((110 * lvl) * (par8 - par7)) / (100 * (lvl + 6)) + par7)"
             },
             {
                 "id": "74",
                 "texta": "Ranged attacks slowed to %d%%",
                 "base_calca": "100-dm12",
-                "calca": "100-((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1"
+                "calca": "100-(((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1)"
             }
         ],
         "dsc3lines": [],
@@ -619,7 +619,7 @@
                 "id": "74",
                 "texta": "%d%% chance",
                 "base_calca": "dm12",
-                "calca": "((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1"
+                "calca": "(((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1)"
             }
         ],
         "dsc2lines": [],
@@ -649,13 +649,13 @@
                 "id": "74",
                 "texta": "Slows Enemies: %d%%",
                 "base_calca": "dm78",
-                "calca": "((110 * lvl) * (par8 - par7)) / (100 * (lvl + 6)) + par7"
+                "calca": "(((110 * lvl) * (par8 - par7)) / (100 * (lvl + 6)) + par7)"
             },
             {
                 "id": "74",
                 "texta": "Damage: %+d%%",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2"
+                "calca": "(par1 + (lvl - 1) * par2)"
             }
         ],
         "dsc2lines": [
@@ -663,7 +663,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -696,7 +696,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -779,7 +779,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -804,7 +804,7 @@
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             }
         ],
         "dsc2lines": [],
@@ -851,7 +851,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "max(usmc, 1)",
-                "calca": "max(usmc, 1)",
+                "calca": "max((max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana)), 1)",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -859,7 +859,7 @@
                 "id": "74",
                 "texta": "Damage: %+d%%",
                 "base_calca": "ln34 + (skill('Multiple Shot'.blvl)*par8)",
-                "calca": "par3 + (lvl - 1) * par4 + (skill('Multiple Shot'.blvl)*par8)"
+                "calca": "(par3 + (lvl - 1) * par4) + (skill('Multiple Shot'.blvl)*par8)"
             }
         ],
         "dsc2lines": [
@@ -903,7 +903,7 @@
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2"
+                "calca": "(par1 + (lvl - 1) * par2)"
             }
         ],
         "dsc2lines": [],
@@ -928,7 +928,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -997,7 +997,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -1022,7 +1022,7 @@
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             }
         ],
         "dsc2lines": [
@@ -1071,7 +1071,7 @@
                 "id": "74",
                 "texta": "Damage: %+d%%",
                 "base_calca": "ln12 + (skill('Guided Arrow'.blvl)*par8) + (skill('Multiple Shot'.blvl)*par9)",
-                "calca": "par1 + (lvl - 1) * par2 + (skill('Guided Arrow'.blvl)*par8) + (skill('Multiple Shot'.blvl)*par9)"
+                "calca": "(par1 + (lvl - 1) * par2) + (skill('Guided Arrow'.blvl)*par8) + (skill('Multiple Shot'.blvl)*par9)"
             },
             {
                 "id": "74",
@@ -1083,7 +1083,7 @@
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             }
         ],
         "dsc2lines": [
@@ -1091,7 +1091,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -1138,7 +1138,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -1171,7 +1171,7 @@
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             }
         ],
         "dsc2lines": [
@@ -1227,7 +1227,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "max(usmc, 1)",
-                "calca": "max(usmc, 1)",
+                "calca": "max((max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana)), 1)",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -1236,7 +1236,7 @@
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2",
+                "calca": "(par1 + (lvl - 1) * par2)",
                 "base_calcb": "25",
                 "calcb": "25"
             },
@@ -1268,7 +1268,7 @@
                 "id": "74",
                 "texta": "%d%% chance",
                 "base_calca": "dm12",
-                "calca": "((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1"
+                "calca": "(((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1)"
             }
         ],
         "dsc2lines": [],
@@ -1292,13 +1292,13 @@
                 "id": "74",
                 "texta": "Damage: %+d%%",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4"
+                "calca": "(par3 + (lvl - 1) * par4)"
             },
             {
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             }
         ],
         "dsc2lines": [
@@ -1306,7 +1306,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -1331,7 +1331,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -1356,7 +1356,7 @@
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             }
         ],
         "dsc2lines": [
@@ -1413,7 +1413,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -1433,7 +1433,7 @@
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHitCalc)"
             },
             {
                 "id": "13",
@@ -1511,7 +1511,7 @@
                 "id": "74",
                 "texta": "%d%% chance",
                 "base_calca": "dm12",
-                "calca": "((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1"
+                "calca": "(((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1)"
             }
         ],
         "dsc2lines": [],
@@ -1543,7 +1543,7 @@
                 "id": "74",
                 "texta": "%d hits",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4"
+                "calca": "(par3 + (lvl - 1) * par4)"
             }
         ],
         "dsc2lines": [
@@ -1551,7 +1551,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -1605,7 +1605,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -1621,7 +1621,7 @@
                 "id": "74",
                 "texta": "Releases %d bolts",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2"
+                "calca": "(par1 + (lvl - 1) * par2)"
             }
         ],
         "dsc2lines": [],
@@ -1689,7 +1689,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -1734,7 +1734,7 @@
                 "id": "74",
                 "texta": "Mana Recovery Rate: %+d%%",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2"
+                "calca": "(par1 + (lvl - 1) * par2)"
             }
         ],
         "dsc2lines": [],
@@ -1756,7 +1756,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -1772,7 +1772,7 @@
                 "id": "74",
                 "texta": "%d bolts",
                 "base_calca": "min(24,ln12)",
-                "calca": "min(24,par1 + (lvl - 1) * par2)"
+                "calca": "min(24,(par1 + (lvl - 1) * par2))"
             }
         ],
         "dsc2lines": [],
@@ -1828,7 +1828,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -1895,7 +1895,7 @@
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
                 "base_calca": "ln34+(skill('Shiver Armor'.blvl)+skill('Chilling Armor'.blvl))*par7",
-                "calca": "par3 + (lvl - 1) * par4+(skill('Shiver Armor'.blvl)+skill('Chilling Armor'.blvl))*par7",
+                "calca": "(par3 + (lvl - 1) * par4)+(skill('Shiver Armor'.blvl)+skill('Chilling Armor'.blvl))*par7",
                 "base_calcb": "25",
                 "calcb": "25"
             },
@@ -1904,7 +1904,7 @@
                 "texta": "Freezes for %d second",
                 "textb": "Freezes for %d seconds",
                 "base_calca": "ln56*(100+((skill('Shiver Armor'.blvl)+skill('Chilling Armor'.blvl))*par8))/100",
-                "calca": "par5 + (lvl - 1) * par6*(100+((skill('Shiver Armor'.blvl)+skill('Chilling Armor'.blvl))*par8))/100",
+                "calca": "(par5 + (lvl - 1) * par6)*(100+((skill('Shiver Armor'.blvl)+skill('Chilling Armor'.blvl))*par8))/100",
                 "base_calcb": "25",
                 "calcb": "25"
             },
@@ -1912,7 +1912,7 @@
                 "id": "74",
                 "texta": "Defense: %+d%%",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2"
+                "calca": "(par1 + (lvl - 1) * par2)"
             }
         ],
         "dsc2lines": [
@@ -1920,7 +1920,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -1986,7 +1986,7 @@
                 "texta": "Range: %d yard",
                 "textb": "Range: %d yards",
                 "base_calca": "ln12/4*2",
-                "calca": "par1 + (lvl - 1) * par2/4*2",
+                "calca": "(par1 + (lvl - 1) * par2)/4*2",
                 "base_calcb": "3",
                 "calcb": "3"
             },
@@ -2041,7 +2041,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln12*2",
-                "calca": "par1 + (lvl - 1) * par2*2",
+                "calca": "(par1 + (lvl - 1) * par2)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             }
@@ -2051,7 +2051,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -2090,7 +2090,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -2113,7 +2113,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -2178,7 +2178,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -2257,7 +2257,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -2266,7 +2266,7 @@
                 "texta": "Blaze Duration: %d seconds",
                 "textb": "Blaze Duration: %d seconds",
                 "base_calca": "dm12",
-                "calca": "((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1",
+                "calca": "(((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1)",
                 "base_calcb": "25",
                 "calcb": "25"
             },
@@ -2274,7 +2274,7 @@
                 "id": "74",
                 "texta": "Run/Walk Speed: %+d%%",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4"
+                "calca": "(par3 + (lvl - 1) * par4)"
             },
             {
                 "id": "36",
@@ -2330,7 +2330,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -2396,7 +2396,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -2445,7 +2445,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -2510,7 +2510,7 @@
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
                 "base_calca": "ln34+(skill('Frozen Armor'.blvl)+skill('Chilling Armor'.blvl))*par7",
-                "calca": "par3 + (lvl - 1) * par4+(skill('Frozen Armor'.blvl)+skill('Chilling Armor'.blvl))*par7",
+                "calca": "(par3 + (lvl - 1) * par4)+(skill('Frozen Armor'.blvl)+skill('Chilling Armor'.blvl))*par7",
                 "base_calcb": "25",
                 "calcb": "25"
             },
@@ -2535,7 +2535,7 @@
                 "id": "74",
                 "texta": "Defense: %+d%%",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2"
+                "calca": "(par1 + (lvl - 1) * par2)"
             }
         ],
         "dsc2lines": [
@@ -2543,7 +2543,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -2604,7 +2604,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -2689,7 +2689,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -2698,7 +2698,7 @@
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2",
+                "calca": "(par1 + (lvl - 1) * par2)",
                 "base_calcb": "25",
                 "calcb": "25"
             },
@@ -2714,7 +2714,7 @@
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             }
         ],
         "dsc2lines": [],
@@ -2753,7 +2753,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -2769,7 +2769,7 @@
                 "id": "74",
                 "texta": "%d hits",
                 "base_calca": "ln34/par5",
-                "calca": "par3 + (lvl - 1) * par4/par5"
+                "calca": "(par3 + (lvl - 1) * par4)/par5"
             }
         ],
         "dsc2lines": [],
@@ -2822,7 +2822,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "max(usmc, 1)",
-                "calca": "max(usmc, 1)",
+                "calca": "max((max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana)), 1)",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -2848,7 +2848,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -2857,7 +2857,7 @@
                 "texta": "Freezes for %d second",
                 "textb": "Freeze Length: %d seconds",
                 "base_calca": "ln34 * (100 + skill('Blizzard'.blvl) * par7) / 100",
-                "calca": "par3 + (lvl - 1) * par4 * (100 + skill('Blizzard'.blvl) * par7) / 100",
+                "calca": "(par3 + (lvl - 1) * par4) * (100 + skill('Blizzard'.blvl) * par7) / 100",
                 "base_calcb": "25",
                 "calcb": "25"
             },
@@ -2876,7 +2876,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln12*2",
-                "calca": "par1 + (lvl - 1) * par2*2",
+                "calca": "(par1 + (lvl - 1) * par2)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             }
@@ -2938,7 +2938,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -2974,7 +2974,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln12*2",
-                "calca": "par1 + (lvl - 1) * par2*2",
+                "calca": "(par1 + (lvl - 1) * par2)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             }
@@ -3030,7 +3030,7 @@
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2",
+                "calca": "(par1 + (lvl - 1) * par2)",
                 "base_calcb": "25",
                 "calcb": "25"
             },
@@ -3048,7 +3048,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -3099,7 +3099,7 @@
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2",
+                "calca": "(par1 + (lvl - 1) * par2)",
                 "base_calcb": "25",
                 "calcb": "25"
             },
@@ -3115,7 +3115,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -3162,7 +3162,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -3245,7 +3245,7 @@
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
                 "base_calca": "ln34+(skill('Frozen Armor'.blvl)+skill('Shiver Armor'.blvl))*par7",
-                "calca": "par3 + (lvl - 1) * par4+(skill('Frozen Armor'.blvl)+skill('Shiver Armor'.blvl))*par7",
+                "calca": "(par3 + (lvl - 1) * par4)+(skill('Frozen Armor'.blvl)+skill('Shiver Armor'.blvl))*par7",
                 "base_calcb": "25",
                 "calcb": "25"
             },
@@ -3261,7 +3261,7 @@
                 "id": "74",
                 "texta": "Defense: %+d%%",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2"
+                "calca": "(par1 + (lvl - 1) * par2)"
             }
         ],
         "dsc2lines": [
@@ -3269,7 +3269,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -3328,7 +3328,7 @@
                 "id": "74",
                 "texta": "Fire Damage: %+d%%",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2"
+                "calca": "(par1 + (lvl - 1) * par2)"
             }
         ],
         "dsc2lines": [],
@@ -3352,7 +3352,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -3371,7 +3371,7 @@
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2",
+                "calca": "(par1 + (lvl - 1) * par2)",
                 "base_calcb": "25",
                 "calcb": "25"
             },
@@ -3422,7 +3422,7 @@
                 "id": "74",
                 "texta": "Lightning Damage: %+d%%",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2"
+                "calca": "(par1 + (lvl - 1) * par2)"
             }
         ],
         "dsc2lines": [],
@@ -3446,7 +3446,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -3512,7 +3512,7 @@
                 "id": "74",
                 "texta": "-%d%% to Enemy Cold Resistance",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2"
+                "calca": "(par1 + (lvl - 1) * par2)"
             }
         ],
         "dsc2lines": [],
@@ -3535,7 +3535,7 @@
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4",
+                "calca": "(par3 + (lvl - 1) * par4)",
                 "base_calcb": "25",
                 "calcb": "25"
             },
@@ -3544,7 +3544,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln12*2",
-                "calca": "par1 + (lvl - 1) * par2*2",
+                "calca": "(par1 + (lvl - 1) * par2)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             }
@@ -3554,7 +3554,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -3583,7 +3583,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -3599,7 +3599,7 @@
                 "id": "74",
                 "texta": "%d teeth",
                 "base_calca": "min(ln12,24)",
-                "calca": "min(par1 + (lvl - 1) * par2,24)"
+                "calca": "min((par1 + (lvl - 1) * par2),24)"
             }
         ],
         "dsc2lines": [],
@@ -3657,7 +3657,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -3665,7 +3665,7 @@
                 "id": "74",
                 "texta": "Absorbs %d damage",
                 "base_calca": "(ln12 + (skill('Bone Wall'.blvl) + skill('Bone Prison'.blvl)) * par8)",
-                "calca": "(par1 + (lvl - 1) * par2 + (skill('Bone Wall'.blvl) + skill('Bone Prison'.blvl)) * par8)"
+                "calca": "((par1 + (lvl - 1) * par2) + (skill('Bone Wall'.blvl) + skill('Bone Prison'.blvl)) * par8)"
             }
         ],
         "dsc2lines": [],
@@ -3764,7 +3764,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -3843,7 +3843,7 @@
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4",
+                "calca": "(par3 + (lvl - 1) * par4)",
                 "base_calcb": "25",
                 "calcb": "25"
             },
@@ -3852,7 +3852,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln12*2",
-                "calca": "par1 + (lvl - 1) * par2*2",
+                "calca": "(par1 + (lvl - 1) * par2)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             }
@@ -3862,7 +3862,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -3888,7 +3888,7 @@
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4",
+                "calca": "(par3 + (lvl - 1) * par4)",
                 "base_calcb": "25",
                 "calcb": "25"
             },
@@ -3897,7 +3897,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln12*2",
-                "calca": "par1 + (lvl - 1) * par2*2",
+                "calca": "(par1 + (lvl - 1) * par2)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             },
@@ -3905,7 +3905,7 @@
                 "id": "74",
                 "texta": "Enemy Damage: %+d%%",
                 "base_calca": "ln56",
-                "calca": "par5 + (lvl - 1) * par6"
+                "calca": "(par5 + (lvl - 1) * par6)"
             }
         ],
         "dsc2lines": [
@@ -3913,7 +3913,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -3936,7 +3936,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -3961,7 +3961,7 @@
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             }
         ],
         "dsc2lines": [],
@@ -4007,7 +4007,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -4016,7 +4016,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4",
+                "calca": "(par3 + (lvl - 1) * par4)",
                 "base_calcb": "3",
                 "calcb": "3"
             }
@@ -4049,7 +4049,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -4073,7 +4073,7 @@
                 "id": "13",
                 "texta": "Life: %d",
                 "base_calca": "(100+(par1 * (lvl - 1)))*(100+skill('Golem Mastery'.ln12) + (skill('BloodGolem'.blvl)*skill('BloodGolem'.par8)))/100-100",
-                "calca": "(100+(par1 * (lvl - 1)))*(100+skill('Golem Mastery'.par1 + (lvl - 1) * par2) + (skill('BloodGolem'.blvl)*skill('BloodGolem'.par8)))/100-100"
+                "calca": "(100+(par1 * (lvl - 1)))*(100+skill('Golem Mastery'.(par1 + (lvl - 1) * par2)) + (skill('BloodGolem'.blvl)*skill('BloodGolem'.par8)))/100-100"
             }
         ],
         "dsc2lines": [
@@ -4087,7 +4087,7 @@
                 "id": "74",
                 "texta": "Attack Rating: %d",
                 "base_calca": "40 + skill('Golem Mastery'.ln56) + (lvl*par8)",
-                "calca": "40 + skill('Golem Mastery'.par5 + (lvl - 1) * par6) + (lvl*par8)"
+                "calca": "40 + skill('Golem Mastery'.(par5 + (lvl - 1) * par6)) + (lvl*par8)"
             }
         ],
         "dsc3lines": [
@@ -4148,7 +4148,7 @@
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4",
+                "calca": "(par3 + (lvl - 1) * par4)",
                 "base_calcb": "25",
                 "calcb": "25"
             },
@@ -4156,7 +4156,7 @@
                 "id": "74",
                 "texta": "%d%% damage returned",
                 "base_calca": "ln56",
-                "calca": "par5 + (lvl - 1) * par6"
+                "calca": "(par5 + (lvl - 1) * par6)"
             }
         ],
         "dsc2lines": [
@@ -4164,7 +4164,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -4173,7 +4173,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln12*2",
-                "calca": "par1 + (lvl - 1) * par2*2",
+                "calca": "(par1 + (lvl - 1) * par2)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             }
@@ -4199,7 +4199,7 @@
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4",
+                "calca": "(par3 + (lvl - 1) * par4)",
                 "base_calcb": "25",
                 "calcb": "25"
             }
@@ -4209,7 +4209,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -4218,7 +4218,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln12*2",
-                "calca": "par1 + (lvl - 1) * par2*2",
+                "calca": "(par1 + (lvl - 1) * par2)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             }
@@ -4251,7 +4251,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -4313,7 +4313,7 @@
                 "id": "74",
                 "texta": "Attack Rating: %+d",
                 "base_calca": "ln56",
-                "calca": "par5 + (lvl - 1) * par6"
+                "calca": "(par5 + (lvl - 1) * par6)"
             },
             {
                 "id": "74",
@@ -4343,7 +4343,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -4407,7 +4407,7 @@
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4",
+                "calca": "(par3 + (lvl - 1) * par4)",
                 "base_calcb": "25",
                 "calcb": "25"
             },
@@ -4416,7 +4416,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln12*2",
-                "calca": "par1 + (lvl - 1) * par2*2",
+                "calca": "(par1 + (lvl - 1) * par2)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             }
@@ -4426,7 +4426,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -4452,7 +4452,7 @@
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4",
+                "calca": "(par3 + (lvl - 1) * par4)",
                 "base_calcb": "25",
                 "calcb": "25"
             },
@@ -4461,7 +4461,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln12*2",
-                "calca": "par1 + (lvl - 1) * par2*2",
+                "calca": "(par1 + (lvl - 1) * par2)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             }
@@ -4471,7 +4471,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -4479,7 +4479,7 @@
                 "id": "74",
                 "texta": "Heals: %d%% of attack damage",
                 "base_calca": "ln56",
-                "calca": "par5 + (lvl - 1) * par6"
+                "calca": "(par5 + (lvl - 1) * par6)"
             }
         ],
         "dsc3lines": [],
@@ -4522,7 +4522,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -4569,7 +4569,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -4639,7 +4639,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -4651,13 +4651,13 @@
                 "id": "74",
                 "texta": "Converts %d%% damage to life",
                 "base_calca": "dm12",
-                "calca": "((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1"
+                "calca": "(((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1)"
             },
             {
                 "id": "13",
                 "texta": "Life: %d",
                 "base_calca": "(100 + (par7 * (lvl - 1)))*(100 + skill('Golem Mastery'.ln12))/100 - 100",
-                "calca": "(100 + (par7 * (lvl - 1)))*(100 + skill('Golem Mastery'.par1 + (lvl - 1) * par2))/100 - 100"
+                "calca": "(100 + (par7 * (lvl - 1)))*(100 + skill('Golem Mastery'.(par1 + (lvl - 1) * par2)))/100 - 100"
             }
         ],
         "dsc2lines": [
@@ -4671,7 +4671,7 @@
                 "id": "74",
                 "texta": "Attack Rating: %d",
                 "base_calca": "60 + skill('Golem Mastery'.ln56)+skill('Clay Golem'.blvl)*skill('Clay Golem'.par8)",
-                "calca": "60 + skill('Golem Mastery'.par5 + (lvl - 1) * par6)+skill('Clay Golem'.blvl)*skill('Clay Golem'.par8)"
+                "calca": "60 + skill('Golem Mastery'.(par5 + (lvl - 1) * par6))+skill('Clay Golem'.blvl)*skill('Clay Golem'.par8)"
             }
         ],
         "dsc3lines": [
@@ -4732,7 +4732,7 @@
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4",
+                "calca": "(par3 + (lvl - 1) * par4)",
                 "base_calcb": "25",
                 "calcb": "25"
             }
@@ -4742,7 +4742,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -4751,7 +4751,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln12*2",
-                "calca": "par1 + (lvl - 1) * par2*2",
+                "calca": "(par1 + (lvl - 1) * par2)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             }
@@ -4776,7 +4776,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -4785,7 +4785,7 @@
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4",
+                "calca": "(par3 + (lvl - 1) * par4)",
                 "base_calcb": "25",
                 "calcb": "25"
             }
@@ -4796,7 +4796,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln12*2",
-                "calca": "par1 + (lvl - 1) * par2*2",
+                "calca": "(par1 + (lvl - 1) * par2)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             },
@@ -4846,7 +4846,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "max(usmc, 1)",
-                "calca": "max(usmc, 1)",
+                "calca": "max((max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana)), 1)",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -4910,7 +4910,7 @@
                 "id": "74",
                 "texta": "Resist All: %+d%%",
                 "base_calca": "dm12",
-                "calca": "((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1"
+                "calca": "(((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1)"
             }
         ],
         "dsc2lines": [],
@@ -4940,7 +4940,7 @@
                 "id": "74",
                 "texta": "%d%% damage returned",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2"
+                "calca": "(par1 + (lvl - 1) * par2)"
             },
             {
                 "id": "18",
@@ -4952,7 +4952,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -4970,13 +4970,13 @@
                 "id": "74",
                 "texta": "Attack Rating: %d",
                 "base_calca": "80 + skill('Golem Mastery'.ln56)+skill('Clay Golem'.blvl)*skill('Clay Golem'.par8)",
-                "calca": "80 + skill('Golem Mastery'.par5 + (lvl - 1) * par6)+skill('Clay Golem'.blvl)*skill('Clay Golem'.par8)"
+                "calca": "80 + skill('Golem Mastery'.(par5 + (lvl - 1) * par6))+skill('Clay Golem'.blvl)*skill('Clay Golem'.par8)"
             },
             {
                 "id": "13",
                 "texta": "Life: %d",
                 "base_calca": "skill('Golem Mastery'.ln12) + (skill('BloodGolem'.blvl)*skill('BloodGolem'.par8))",
-                "calca": "skill('Golem Mastery'.par1 + (lvl - 1) * par2) + (skill('BloodGolem'.blvl)*skill('BloodGolem'.par8))"
+                "calca": "skill('Golem Mastery'.(par1 + (lvl - 1) * par2)) + (skill('BloodGolem'.blvl)*skill('BloodGolem'.par8))"
             }
         ],
         "dsc3lines": [
@@ -5038,7 +5038,7 @@
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4",
+                "calca": "(par3 + (lvl - 1) * par4)",
                 "base_calcb": "25",
                 "calcb": "25"
             },
@@ -5047,7 +5047,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln12*2",
-                "calca": "par1 + (lvl - 1) * par2*2",
+                "calca": "(par1 + (lvl - 1) * par2)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             },
@@ -5055,7 +5055,7 @@
                 "id": "74",
                 "texta": "Resist All: %+d%%",
                 "base_calca": "-dm56",
-                "calca": "-((110 * lvl) * (par6 - par5)) / (100 * (lvl + 6)) + par5"
+                "calca": "-(((110 * lvl) * (par6 - par5)) / (100 * (lvl + 6)) + par5)"
             }
         ],
         "dsc2lines": [
@@ -5063,7 +5063,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -5107,7 +5107,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -5154,7 +5154,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -5224,7 +5224,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -5232,23 +5232,23 @@
                 "id": "75",
                 "texta": "Holy Fire: %d-%d",
                 "base_calca": "sklvl('Holy Fire'.ln56.edmn)",
-                "calca": "sklvl('Holy Fire'.par5 + (lvl - 1) * par6.edmn)",
+                "calca": "sklvl('Holy Fire'.(par5 + (lvl - 1) * par6).edmn)",
                 "base_calcb": "sklvl('Holy Fire'.ln56.edmx)*((100+sklvl('Holy Fire'.ln56.par6))/100)",
-                "calcb": "sklvl('Holy Fire'.par5 + (lvl - 1) * par6.edmx)*((100+sklvl('Holy Fire'.par5 + (lvl - 1) * par6.par6))/100)"
+                "calcb": "sklvl('Holy Fire'.(par5 + (lvl - 1) * par6).edmx)*((100+sklvl('Holy Fire'.(par5 + (lvl - 1) * par6).par6))/100)"
             },
             {
                 "id": "41",
                 "texta": "Fire Damage: %d-%d",
                 "base_calca": "edmn+sklvl('Holy Fire'.ln56.edmn)*sklvl('Holy Fire'.ln56.par5)",
-                "calca": "edmn+sklvl('Holy Fire'.par5 + (lvl - 1) * par6.edmn)*sklvl('Holy Fire'.par5 + (lvl - 1) * par6.par5)",
+                "calca": "edmn+sklvl('Holy Fire'.(par5 + (lvl - 1) * par6).edmn)*sklvl('Holy Fire'.(par5 + (lvl - 1) * par6).par5)",
                 "base_calcb": "edmx+sklvl('Holy Fire'.ln56.edmx)*sklvl('Holy Fire'.ln56.par5)",
-                "calcb": "edmx+sklvl('Holy Fire'.par5 + (lvl - 1) * par6.edmx)*sklvl('Holy Fire'.par5 + (lvl - 1) * par6.par5)"
+                "calcb": "edmx+sklvl('Holy Fire'.(par5 + (lvl - 1) * par6).edmx)*sklvl('Holy Fire'.(par5 + (lvl - 1) * par6).par5)"
             },
             {
                 "id": "74",
                 "texta": "Absorbs %d%% fire damage",
                 "base_calca": "dm12",
-                "calca": "((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1"
+                "calca": "(((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1)"
             }
         ],
         "dsc2lines": [
@@ -5262,13 +5262,13 @@
                 "id": "74",
                 "texta": "Attack Rating: %d",
                 "base_calca": "120 + skill('Golem Mastery'.ln56)+skill('Clay Golem'.blvl)*skill('Clay Golem'.par8)",
-                "calca": "120 + skill('Golem Mastery'.par5 + (lvl - 1) * par6)+skill('Clay Golem'.blvl)*skill('Clay Golem'.par8)"
+                "calca": "120 + skill('Golem Mastery'.(par5 + (lvl - 1) * par6))+skill('Clay Golem'.blvl)*skill('Clay Golem'.par8)"
             },
             {
                 "id": "13",
                 "texta": "Life: %d",
                 "base_calca": "skill('Golem Mastery'.ln12) + (skill('BloodGolem'.blvl)*skill('BloodGolem'.par8))",
-                "calca": "skill('Golem Mastery'.par1 + (lvl - 1) * par2) + (skill('BloodGolem'.blvl)*skill('BloodGolem'.par8))"
+                "calca": "skill('Golem Mastery'.(par1 + (lvl - 1) * par2)) + (skill('BloodGolem'.blvl)*skill('BloodGolem'.par8))"
             }
         ],
         "dsc3lines": [
@@ -5337,7 +5337,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -5346,7 +5346,7 @@
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4",
+                "calca": "(par3 + (lvl - 1) * par4)",
                 "base_calcb": "25",
                 "calcb": "25"
             },
@@ -5397,13 +5397,13 @@
                 "id": "74",
                 "texta": "Damage: %+d%%",
                 "base_calca": "ln12+skill('Redemption'.blvl)*par8+skill('Fanaticism'.blvl)*par7",
-                "calca": "par1 + (lvl - 1) * par2+skill('Redemption'.blvl)*par8+skill('Fanaticism'.blvl)*par7"
+                "calca": "(par1 + (lvl - 1) * par2)+skill('Redemption'.blvl)*par8+skill('Fanaticism'.blvl)*par7"
             },
             {
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             }
         ],
         "dsc2lines": [
@@ -5455,7 +5455,7 @@
                 "texta": "Stun Length: %d second",
                 "textb": "Stun Length: %d seconds",
                 "base_calca": "min(250,ln12)",
-                "calca": "min(250,par1 + (lvl - 1) * par2)",
+                "calca": "min(250,(par1 + (lvl - 1) * par2))",
                 "base_calcb": "25",
                 "calcb": "25"
             },
@@ -5463,7 +5463,7 @@
                 "id": "74",
                 "texta": "Damage: %+d%%",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4"
+                "calca": "(par3 + (lvl - 1) * par4)"
             }
         ],
         "dsc2lines": [
@@ -5471,7 +5471,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -5499,7 +5499,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln12*2",
-                "calca": "par1 + (lvl - 1) * par2*2",
+                "calca": "(par1 + (lvl - 1) * par2)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             },
@@ -5507,7 +5507,7 @@
                 "id": "74",
                 "texta": "Damage: %+d%%",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4"
+                "calca": "(par3 + (lvl - 1) * par4)"
             }
         ],
         "dsc2lines": [],
@@ -5529,7 +5529,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d per second",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -5538,7 +5538,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln12*2",
-                "calca": "par1 + (lvl - 1) * par2*2",
+                "calca": "(par1 + (lvl - 1) * par2)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             },
@@ -5569,7 +5569,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln12*2",
-                "calca": "par1 + (lvl - 1) * par2*2",
+                "calca": "(par1 + (lvl - 1) * par2)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             },
@@ -5614,7 +5614,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -5622,9 +5622,9 @@
                 "id": "75",
                 "texta": "Heals: %d-%d",
                 "base_calca": "ln12 * (100 + skill('Prayer'.blvl) * par7) / 100",
-                "calca": "par1 + (lvl - 1) * par2 * (100 + skill('Prayer'.blvl) * par7) / 100",
+                "calca": "(par1 + (lvl - 1) * par2) * (100 + skill('Prayer'.blvl) * par7) / 100",
                 "base_calcb": "ln34 * (100 + skill('Prayer'.blvl) * par7) / 100",
-                "calcb": "par3 + (lvl - 1) * par4 * (100 + skill('Prayer'.blvl) * par7) / 100"
+                "calcb": "(par3 + (lvl - 1) * par4) * (100 + skill('Prayer'.blvl) * par7) / 100"
             },
             {
                 "id": "75",
@@ -5679,7 +5679,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln12*2",
-                "calca": "par1 + (lvl - 1) * par2*2",
+                "calca": "(par1 + (lvl - 1) * par2)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             },
@@ -5747,7 +5747,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln12*2",
-                "calca": "par1 + (lvl - 1) * par2*2",
+                "calca": "(par1 + (lvl - 1) * par2)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             },
@@ -5761,7 +5761,7 @@
                 "id": "74",
                 "texta": "%d%% damage returned",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4"
+                "calca": "(par3 + (lvl - 1) * par4)"
             }
         ],
         "dsc2lines": [],
@@ -5784,7 +5784,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln12*2",
-                "calca": "par1 + (lvl - 1) * par2*2",
+                "calca": "(par1 + (lvl - 1) * par2)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             },
@@ -5792,7 +5792,7 @@
                 "id": "74",
                 "texta": "Defense: %+d%%",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4"
+                "calca": "(par3 + (lvl - 1) * par4)"
             }
         ],
         "dsc2lines": [],
@@ -5815,7 +5815,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln12*2",
-                "calca": "par1 + (lvl - 1) * par2*2",
+                "calca": "(par1 + (lvl - 1) * par2)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             },
@@ -5868,7 +5868,7 @@
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             },
             {
                 "id": "74",
@@ -5882,7 +5882,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -5922,13 +5922,13 @@
                 "id": "74",
                 "texta": "Damage: %+d%%",
                 "base_calca": "ln34+(skill('Vigor'.blvl)+skill('Might'.blvl))*par8",
-                "calca": "par3 + (lvl - 1) * par4+(skill('Vigor'.blvl)+skill('Might'.blvl))*par8"
+                "calca": "(par3 + (lvl - 1) * par4)+(skill('Vigor'.blvl)+skill('Might'.blvl))*par8"
             },
             {
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             }
         ],
         "dsc2lines": [
@@ -5936,7 +5936,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -5984,7 +5984,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln12*2",
-                "calca": "par1 + (lvl - 1) * par2*2",
+                "calca": "(par1 + (lvl - 1) * par2)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             },
@@ -5998,7 +5998,7 @@
                 "id": "74",
                 "texta": "Attack Rating: +%d%% (Active)",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4"
+                "calca": "(par3 + (lvl - 1) * par4)"
             }
         ],
         "dsc2lines": [],
@@ -6023,7 +6023,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln12*2",
-                "calca": "par1 + (lvl - 1) * par2*2",
+                "calca": "(par1 + (lvl - 1) * par2)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             },
@@ -6074,7 +6074,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln12*2",
-                "calca": "par1 + (lvl - 1) * par2*2",
+                "calca": "(par1 + (lvl - 1) * par2)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             },
@@ -6121,7 +6121,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -6129,7 +6129,7 @@
                 "id": "74",
                 "texta": "Lightning Damage: %+d%%",
                 "base_calca": "ln12+skill('Resist Lightning'.blvl)*par8+skill('Salvation'.blvl)*par7",
-                "calca": "par1 + (lvl - 1) * par2+skill('Resist Lightning'.blvl)*par8+skill('Salvation'.blvl)*par7"
+                "calca": "(par1 + (lvl - 1) * par2)+skill('Resist Lightning'.blvl)*par8+skill('Salvation'.blvl)*par7"
             },
             {
                 "id": "36",
@@ -6144,19 +6144,19 @@
                 "id": "74",
                 "texta": "Cold Damage: %+d%%",
                 "base_calca": "ln12+skill('Resist Cold'.blvl)*par8+skill('Salvation'.blvl)*par7",
-                "calca": "par1 + (lvl - 1) * par2+skill('Resist Cold'.blvl)*par8+skill('Salvation'.blvl)*par7"
+                "calca": "(par1 + (lvl - 1) * par2)+skill('Resist Cold'.blvl)*par8+skill('Salvation'.blvl)*par7"
             },
             {
                 "id": "74",
                 "texta": "Fire Damage: %+d%%",
                 "base_calca": "ln12+skill('Resist Fire'.blvl)*par8+skill('Salvation'.blvl)*par7",
-                "calca": "par1 + (lvl - 1) * par2+skill('Resist Fire'.blvl)*par8+skill('Salvation'.blvl)*par7"
+                "calca": "(par1 + (lvl - 1) * par2)+skill('Resist Fire'.blvl)*par8+skill('Salvation'.blvl)*par7"
             },
             {
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             }
         ],
         "dsc2lines": [],
@@ -6216,7 +6216,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -6280,7 +6280,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln12*2",
-                "calca": "par1 + (lvl - 1) * par2*2",
+                "calca": "(par1 + (lvl - 1) * par2)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             },
@@ -6288,7 +6288,7 @@
                 "id": "74",
                 "texta": "Damage: %+d%%",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4"
+                "calca": "(par3 + (lvl - 1) * par4)"
             }
         ],
         "dsc2lines": [
@@ -6320,7 +6320,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln12*2",
-                "calca": "par1 + (lvl - 1) * par2*2",
+                "calca": "(par1 + (lvl - 1) * par2)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             },
@@ -6397,7 +6397,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln12*2",
-                "calca": "par1 + (lvl - 1) * par2*2",
+                "calca": "(par1 + (lvl - 1) * par2)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             },
@@ -6405,19 +6405,19 @@
                 "id": "74",
                 "texta": "Stamina Recovery Rate: %+d%%",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4"
+                "calca": "(par3 + (lvl - 1) * par4)"
             },
             {
                 "id": "74",
                 "texta": "Max Stamina: %+d%%",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4"
+                "calca": "(par3 + (lvl - 1) * par4)"
             },
             {
                 "id": "74",
                 "texta": "Run/Walk Speed: %+d%%",
                 "base_calca": "dm56",
-                "calca": "((110 * lvl) * (par6 - par5)) / (100 * (lvl + 6)) + par5"
+                "calca": "(((110 * lvl) * (par6 - par5)) / (100 * (lvl + 6)) + par5)"
             }
         ],
         "dsc2lines": [],
@@ -6449,7 +6449,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -6458,7 +6458,7 @@
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2",
+                "calca": "(par1 + (lvl - 1) * par2)",
                 "base_calcb": "25",
                 "calcb": "25"
             }
@@ -6485,7 +6485,7 @@
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2",
+                "calca": "(par1 + (lvl - 1) * par2)",
                 "base_calcb": "25",
                 "calcb": "25"
             },
@@ -6493,21 +6493,21 @@
                 "id": "74",
                 "texta": "Successful Blocking: %+d%%",
                 "base_calca": "dm56",
-                "calca": "((110 * lvl) * (par6 - par5)) / (100 * (lvl + 6)) + par5"
+                "calca": "(((110 * lvl) * (par6 - par5)) / (100 * (lvl + 6)) + par5)"
             },
             {
                 "id": "74",
                 "texta": "Defense: %+d%%",
                 "base_calca": "ln34+skill('Defiance'.blvl)*par8",
-                "calca": "par3 + (lvl - 1) * par4+skill('Defiance'.blvl)*par8"
+                "calca": "(par3 + (lvl - 1) * par4)+skill('Defiance'.blvl)*par8"
             },
             {
                 "id": "75",
                 "texta": "Smite Damage: %+d-%d",
                 "base_calca": "pnma",
-                "calca": "pnma",
+                "calca": "((MinDam + (MinLevDam1 * (min(lvl, 8) - 1)) + (MinLevDam2 * (max(min(lvl, 16) - 8), 0)) + (MinLevDam3 * (max(min(lvl, 22) - 16), 0)) + (MinLevDam4 * (max(min(lvl, 28) - 22), 0)) + (MinLevDam5 * (max(lvl - 28), 0)) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100)",
                 "base_calcb": "pxma",
-                "calcb": "pxma"
+                "calcb": "((MaxDam + (MaxLevDam1 * (min(lvl, 8) - 1)) + (MaxLevDam2 * (max(min(lvl, 16) - 8), 0)) + (MaxLevDam3 * (max(min(lvl, 22) - 16), 0)) + (MaxLevDam4 * (max(min(lvl, 28) - 22), 0)) + (MaxLevDam5 * (max(lvl - 28), 0)) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100)"
             }
         ],
         "dsc2lines": [
@@ -6515,7 +6515,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -6556,7 +6556,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln12*2",
-                "calca": "par1 + (lvl - 1) * par2*2",
+                "calca": "(par1 + (lvl - 1) * par2)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             },
@@ -6627,7 +6627,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln12*2",
-                "calca": "par1 + (lvl - 1) * par2*2",
+                "calca": "(par1 + (lvl - 1) * par2)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             },
@@ -6643,7 +6643,7 @@
                 "id": "74",
                 "texta": "Damage to Undead: %+d%%",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4"
+                "calca": "(par3 + (lvl - 1) * par4)"
             }
         ],
         "dsc2lines": [
@@ -6688,7 +6688,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln12*2",
-                "calca": "par1 + (lvl - 1) * par2*2",
+                "calca": "(par1 + (lvl - 1) * par2)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             },
@@ -6696,7 +6696,7 @@
                 "id": "74",
                 "texta": "Mana Recovery Rate: %+d%%",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4"
+                "calca": "(par3 + (lvl - 1) * par4)"
             }
         ],
         "dsc2lines": [
@@ -6759,7 +6759,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -6816,7 +6816,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln12*2",
-                "calca": "par1 + (lvl - 1) * par2*2",
+                "calca": "(par1 + (lvl - 1) * par2)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             },
@@ -6830,19 +6830,19 @@
                 "id": "74",
                 "texta": "Party Damage: %+d%%",
                 "base_calca": "ln56/2",
-                "calca": "par5 + (lvl - 1) * par6/2"
+                "calca": "(par5 + (lvl - 1) * par6)/2"
             },
             {
                 "id": "74",
                 "texta": "Your Damage: %+d%%",
                 "base_calca": "ln56",
-                "calca": "par5 + (lvl - 1) * par6"
+                "calca": "(par5 + (lvl - 1) * par6)"
             },
             {
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             }
         ],
         "dsc2lines": [],
@@ -6867,7 +6867,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln12*2",
-                "calca": "par1 + (lvl - 1) * par2*2",
+                "calca": "(par1 + (lvl - 1) * par2)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             },
@@ -6875,13 +6875,13 @@
                 "id": "74",
                 "texta": "Resist All: %+d%%",
                 "base_calca": "-min(ln34,150)",
-                "calca": "-min(par3 + (lvl - 1) * par4,150)"
+                "calca": "-min((par3 + (lvl - 1) * par4),150)"
             },
             {
                 "id": "74",
                 "texta": "Defense: %+d%%",
                 "base_calca": "-dm56",
-                "calca": "-((110 * lvl) * (par6 - par5)) / (100 * (lvl + 6)) + par5"
+                "calca": "-(((110 * lvl) * (par6 - par5)) / (100 * (lvl + 6)) + par5)"
             }
         ],
         "dsc2lines": [],
@@ -6905,7 +6905,7 @@
                 "id": "74",
                 "texta": "Life/Mana Recovered: %d",
                 "base_calca": "ln56",
-                "calca": "par5 + (lvl - 1) * par6"
+                "calca": "(par5 + (lvl - 1) * par6)"
             },
             {
                 "id": "74",
@@ -6920,7 +6920,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln12*2",
-                "calca": "par1 + (lvl - 1) * par2*2",
+                "calca": "(par1 + (lvl - 1) * par2)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             }
@@ -6944,7 +6944,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln12*2",
-                "calca": "par1 + (lvl - 1) * par2*2",
+                "calca": "(par1 + (lvl - 1) * par2)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             },
@@ -6974,7 +6974,7 @@
                 "id": "74",
                 "texta": "Damage: %+d",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4"
+                "calca": "(par3 + (lvl - 1) * par4)"
             },
             {
                 "id": "74",
@@ -6986,7 +6986,7 @@
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHitCalc)"
             }
         ],
         "dsc2lines": [
@@ -6994,7 +6994,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -7142,7 +7142,7 @@
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
                 "base_calca": "ln56",
-                "calca": "par5 + (lvl - 1) * par6",
+                "calca": "(par5 + (lvl - 1) * par6)",
                 "base_calcb": "25",
                 "calcb": "25"
             },
@@ -7150,7 +7150,7 @@
                 "id": "36",
                 "texta": "Monster runs up to %d yards",
                 "base_calca": "ln34*2",
-                "calca": "par3 + (lvl - 1) * par4*2",
+                "calca": "(par3 + (lvl - 1) * par4)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             },
@@ -7159,7 +7159,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "(ln12-3)/2*2",
-                "calca": "(par1 + (lvl - 1) * par2-3)/2*2",
+                "calca": "((par1 + (lvl - 1) * par2)-3)/2*2",
                 "base_calcb": "3",
                 "calcb": "3"
             }
@@ -7169,7 +7169,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -7192,7 +7192,7 @@
                 "id": "74",
                 "texta": "%d%% chance",
                 "base_calca": "dm12",
-                "calca": "((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1"
+                "calca": "(((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1)"
             }
         ],
         "dsc2lines": [
@@ -7200,7 +7200,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -7224,7 +7224,7 @@
                 "texta": "Knockback Radius: %d yards",
                 "textb": "Knockback Radius: %d yards",
                 "base_calca": "ln34*2",
-                "calca": "par3 + (lvl - 1) * par4*2",
+                "calca": "(par3 + (lvl - 1) * par4)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             },
@@ -7233,7 +7233,7 @@
                 "texta": "Range Radius: %d yards",
                 "textb": "Range Radius: %d yards",
                 "base_calca": "dm12*2",
-                "calca": "((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1*2",
+                "calca": "(((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             }
@@ -7243,7 +7243,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -7268,7 +7268,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "max(0, usmc*2)",
-                "calca": "max(0, usmc*2)",
+                "calca": "max(0, (max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))*2)",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -7276,7 +7276,7 @@
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             }
         ],
         "dsc2lines": [
@@ -7440,13 +7440,13 @@
                 "id": "74",
                 "texta": "Enemy Damage: %+d%%",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4"
+                "calca": "(par3 + (lvl - 1) * par4)"
             },
             {
                 "id": "74",
                 "texta": "Target's Attack Rating: %+d%%",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2"
+                "calca": "(par1 + (lvl - 1) * par2)"
             }
         ],
         "dsc2lines": [
@@ -7454,7 +7454,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -7488,7 +7488,7 @@
                 "id": "74",
                 "texta": "Defense: %+d%%",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2"
+                "calca": "(par1 + (lvl - 1) * par2)"
             },
             {
                 "id": "36",
@@ -7505,7 +7505,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -7561,7 +7561,7 @@
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHitCalc)"
             }
         ],
         "dsc2lines": [
@@ -7569,7 +7569,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -7635,7 +7635,7 @@
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             }
         ],
         "dsc2lines": [
@@ -7643,7 +7643,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc*2",
-                "calca": "usmc*2",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))*2",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -7681,7 +7681,7 @@
                 "id": "74",
                 "texta": "Max Stamina: %+d%%",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2"
+                "calca": "(par1 + (lvl - 1) * par2)"
             }
         ],
         "dsc2lines": [],
@@ -7705,7 +7705,7 @@
                 "id": "74",
                 "texta": "%d%% chance",
                 "base_calca": "dm12+skill('Find Potion'.blvl)*par8",
-                "calca": "((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1+skill('Find Potion'.blvl)*par8"
+                "calca": "(((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1)+skill('Find Potion'.blvl)*par8"
             }
         ],
         "dsc2lines": [
@@ -7713,7 +7713,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -7759,15 +7759,15 @@
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             },
             {
                 "id": "75",
                 "texta": "Damage: %d-%d",
                 "base_calca": "pnma",
-                "calca": "pnma",
+                "calca": "((MinDam + (MinLevDam1 * (min(lvl, 8) - 1)) + (MinLevDam2 * (max(min(lvl, 16) - 8), 0)) + (MinLevDam3 * (max(min(lvl, 22) - 16), 0)) + (MinLevDam4 * (max(min(lvl, 28) - 22), 0)) + (MinLevDam5 * (max(lvl - 28), 0)) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100)",
                 "base_calcb": "pxma",
-                "calcb": "pxma"
+                "calcb": "((MaxDam + (MaxLevDam1 * (min(lvl, 8) - 1)) + (MaxLevDam2 * (max(min(lvl, 16) - 8), 0)) + (MaxLevDam3 * (max(min(lvl, 22) - 16), 0)) + (MaxLevDam4 * (max(min(lvl, 28) - 22), 0)) + (MaxLevDam5 * (max(lvl - 28), 0)) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100)"
             },
             {
                 "id": "36",
@@ -7784,7 +7784,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -7824,7 +7824,7 @@
                 "id": "74",
                 "texta": "Defense: %+d%%",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4"
+                "calca": "(par3 + (lvl - 1) * par4)"
             },
             {
                 "id": "74",
@@ -7836,7 +7836,7 @@
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             }
         ],
         "dsc2lines": [
@@ -7844,7 +7844,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -7902,7 +7902,7 @@
                 "id": "74",
                 "texta": "Defense: %+d%%",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2"
+                "calca": "(par1 + (lvl - 1) * par2)"
             }
         ],
         "dsc2lines": [],
@@ -7927,7 +7927,7 @@
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2",
+                "calca": "(par1 + (lvl - 1) * par2)",
                 "base_calcb": "25",
                 "calcb": "25"
             },
@@ -7935,13 +7935,13 @@
                 "id": "74",
                 "texta": "Enemy Defense: %+d%%",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4"
+                "calca": "(par3 + (lvl - 1) * par4)"
             },
             {
                 "id": "74",
                 "texta": "Enemy Damage: %+d%%",
                 "base_calca": "ln56",
-                "calca": "par5 + (lvl - 1) * par6"
+                "calca": "(par5 + (lvl - 1) * par6)"
             },
             {
                 "id": "36",
@@ -7958,7 +7958,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -7993,7 +7993,7 @@
                 "base_calca": "15*(par6-par5)/100+par5",
                 "calca": "15*(par6-par5)/100+par5",
                 "base_calcb": "dm56",
-                "calcb": "((110 * lvl) * (par6 - par5)) / (100 * (lvl + 6)) + par5"
+                "calcb": "(((110 * lvl) * (par6 - par5)) / (100 * (lvl + 6)) + par5)"
             },
             {
                 "id": "74",
@@ -8005,7 +8005,7 @@
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             }
         ],
         "dsc2lines": [
@@ -8013,7 +8013,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc*2",
-                "calca": "usmc*2",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))*2",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -8091,7 +8091,7 @@
                 "id": "74",
                 "texta": "Run/Walk Speed: %+d%%",
                 "base_calca": "dm12",
-                "calca": "((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1"
+                "calca": "(((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1)"
             }
         ],
         "dsc2lines": [],
@@ -8124,19 +8124,19 @@
                 "id": "74",
                 "texta": "Max Stamina: %+d%%",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4"
+                "calca": "(par3 + (lvl - 1) * par4)"
             },
             {
                 "id": "74",
                 "texta": "Max Mana: %+d%%",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4"
+                "calca": "(par3 + (lvl - 1) * par4)"
             },
             {
                 "id": "74",
                 "texta": "Max Life: %+d%%",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4"
+                "calca": "(par3 + (lvl - 1) * par4)"
             },
             {
                 "id": "36",
@@ -8153,7 +8153,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -8200,14 +8200,14 @@
                 "id": "74",
                 "texta": "Slows Enemies: %d%%",
                 "base_calca": "dm78",
-                "calca": "((110 * lvl) * (par8 - par7)) / (100 * (lvl + 6)) + par7"
+                "calca": "(((110 * lvl) * (par8 - par7)) / (100 * (lvl + 6)) + par7)"
             },
             {
                 "id": "36",
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln12*2",
-                "calca": "par1 + (lvl - 1) * par2*2",
+                "calca": "(par1 + (lvl - 1) * par2)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             }
@@ -8217,7 +8217,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -8273,7 +8273,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -8287,7 +8287,7 @@
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             }
         ],
         "dsc2lines": [],
@@ -8326,7 +8326,7 @@
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             }
         ],
         "dsc2lines": [
@@ -8334,7 +8334,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -8381,7 +8381,7 @@
                 "id": "74",
                 "texta": "Resist All: %+d%%",
                 "base_calca": "dm12",
-                "calca": "((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1"
+                "calca": "(((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1)"
             }
         ],
         "dsc2lines": [],
@@ -8406,7 +8406,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -8415,7 +8415,7 @@
                 "texta": "Stun Length: %d second",
                 "textb": "Stun Length: %d seconds",
                 "base_calca": "min(250,ln12)",
-                "calca": "min(250,par1 + (lvl - 1) * par2)",
+                "calca": "min(250,(par1 + (lvl - 1) * par2))",
                 "base_calcb": "25",
                 "calcb": "25"
             },
@@ -8423,9 +8423,9 @@
                 "id": "75",
                 "texta": "Damage: %d-%d",
                 "base_calca": "pnma",
-                "calca": "pnma",
+                "calca": "((MinDam + (MinLevDam1 * (min(lvl, 8) - 1)) + (MinLevDam2 * (max(min(lvl, 16) - 8), 0)) + (MinLevDam3 * (max(min(lvl, 22) - 16), 0)) + (MinLevDam4 * (max(min(lvl, 28) - 22), 0)) + (MinLevDam5 * (max(lvl - 28), 0)) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100)",
                 "base_calcb": "pxma",
-                "calcb": "pxma"
+                "calcb": "((MaxDam + (MaxLevDam1 * (min(lvl, 8) - 1)) + (MaxLevDam2 * (max(min(lvl, 16) - 8), 0)) + (MaxLevDam3 * (max(min(lvl, 22) - 16), 0)) + (MaxLevDam4 * (max(min(lvl, 28) - 22), 0)) + (MaxLevDam5 * (max(lvl - 28), 0)) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100)"
             },
             {
                 "id": "36",
@@ -8507,7 +8507,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -8558,21 +8558,21 @@
                 "id": "74",
                 "texta": "%d hits",
                 "base_calca": "ln56",
-                "calca": "par5 + (lvl - 1) * par6"
+                "calca": "(par5 + (lvl - 1) * par6)"
             },
             {
                 "id": "75",
                 "texta": "Damage: %d-%d",
                 "base_calca": "pnma",
-                "calca": "pnma",
+                "calca": "((MinDam + (MinLevDam1 * (min(lvl, 8) - 1)) + (MinLevDam2 * (max(min(lvl, 16) - 8), 0)) + (MinLevDam3 * (max(min(lvl, 22) - 16), 0)) + (MinLevDam4 * (max(min(lvl, 28) - 22), 0)) + (MinLevDam5 * (max(lvl - 28), 0)) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100)",
                 "base_calcb": "pxma",
-                "calcb": "pxma"
+                "calcb": "((MaxDam + (MaxLevDam1 * (min(lvl, 8) - 1)) + (MaxLevDam2 * (max(min(lvl, 16) - 8), 0)) + (MaxLevDam3 * (max(min(lvl, 22) - 16), 0)) + (MaxLevDam4 * (max(min(lvl, 28) - 22), 0)) + (MaxLevDam5 * (max(lvl - 28), 0)) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100)"
             },
             {
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             }
         ],
         "dsc2lines": [
@@ -8580,7 +8580,7 @@
                 "id": "36",
                 "texta": "Mana Cost Per Raven: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -8657,7 +8657,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -8701,7 +8701,7 @@
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             }
         ],
         "dsc2lines": [
@@ -8709,7 +8709,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -8727,7 +8727,7 @@
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
                 "base_calca": "1000+skill('shape shifting'.ln12)",
-                "calca": "1000+skill('shape shifting'.par1 + (lvl - 1) * par2)",
+                "calca": "1000+skill('shape shifting'.(par1 + (lvl - 1) * par2))",
                 "base_calcb": "25",
                 "calcb": "25"
             },
@@ -8741,7 +8741,7 @@
                 "id": "74",
                 "texta": "Max Life: %+d%%",
                 "base_calca": "par2+skill('shape shifting'.ln34)",
-                "calca": "par2+skill('shape shifting'.par3 + (lvl - 1) * par4)"
+                "calca": "par2+skill('shape shifting'.(par3 + (lvl - 1) * par4))"
             }
         ],
         "dsc3lines": [
@@ -8776,7 +8776,7 @@
                 "id": "36",
                 "texta": "Duration: %+d seconds",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2",
+                "calca": "(par1 + (lvl - 1) * par2)",
                 "base_calcb": "25",
                 "calcb": "25"
             },
@@ -8784,7 +8784,7 @@
                 "id": "74",
                 "texta": "Max Life: %+d%%",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4"
+                "calca": "(par3 + (lvl - 1) * par4)"
             }
         ],
         "dsc2lines": [],
@@ -8816,7 +8816,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -8870,7 +8870,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -8879,7 +8879,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln78*2",
-                "calca": "par7 + (lvl - 1) * par8*2",
+                "calca": "(par7 + (lvl - 1) * par8)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             },
@@ -8887,7 +8887,7 @@
                 "id": "74",
                 "texta": "Max Life: %+d%%",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2"
+                "calca": "(par1 + (lvl - 1) * par2)"
             },
             {
                 "id": "13",
@@ -8917,13 +8917,13 @@
                 "id": "74",
                 "texta": "Defense: %+d%%",
                 "base_calca": "ln56",
-                "calca": "par5 + (lvl - 1) * par6"
+                "calca": "(par5 + (lvl - 1) * par6)"
             },
             {
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2"
+                "calca": "(par1 + (lvl - 1) * par2)"
             },
             {
                 "id": "74",
@@ -8951,7 +8951,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -8996,13 +8996,13 @@
                 "id": "74",
                 "texta": "Defense: %+d%%",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4"
+                "calca": "(par3 + (lvl - 1) * par4)"
             },
             {
                 "id": "74",
                 "texta": "Damage: %+d%%",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2"
+                "calca": "(par1 + (lvl - 1) * par2)"
             }
         ],
         "dsc2lines": [
@@ -9010,7 +9010,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -9028,7 +9028,7 @@
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
                 "base_calca": "1000+skill('shape shifting'.ln12)",
-                "calca": "1000+skill('shape shifting'.par1 + (lvl - 1) * par2)",
+                "calca": "1000+skill('shape shifting'.(par1 + (lvl - 1) * par2))",
                 "base_calcb": "25",
                 "calcb": "25"
             },
@@ -9036,7 +9036,7 @@
                 "id": "74",
                 "texta": "Max Life: %+d%%",
                 "base_calca": "par5 + skill('Shape Shifting'.ln34)",
-                "calca": "par5 + skill('Shape Shifting'.par3 + (lvl - 1) * par4)"
+                "calca": "par5 + skill('Shape Shifting'.(par3 + (lvl - 1) * par4))"
             }
         ],
         "dsc3lines": [
@@ -9071,7 +9071,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -9095,9 +9095,9 @@
                 "id": "75",
                 "texta": "Damage: %d-%d",
                 "base_calca": "pnma",
-                "calca": "pnma",
+                "calca": "((MinDam + (MinLevDam1 * (min(lvl, 8) - 1)) + (MinLevDam2 * (max(min(lvl, 16) - 8), 0)) + (MinLevDam3 * (max(min(lvl, 22) - 16), 0)) + (MinLevDam4 * (max(min(lvl, 28) - 22), 0)) + (MinLevDam5 * (max(lvl - 28), 0)) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100)",
                 "base_calcb": "pxma",
-                "calcb": "pxma"
+                "calcb": "((MaxDam + (MaxLevDam1 * (min(lvl, 8) - 1)) + (MaxLevDam2 * (max(min(lvl, 16) - 8), 0)) + (MaxLevDam3 * (max(min(lvl, 22) - 16), 0)) + (MaxLevDam4 * (max(min(lvl, 28) - 22), 0)) + (MaxLevDam5 * (max(lvl - 28), 0)) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100)"
             }
         ],
         "dsc2lines": [
@@ -9158,7 +9158,7 @@
                 "texta": "Range: %d yard",
                 "textb": "Range: %d yards",
                 "base_calca": "ln12/4*2",
-                "calca": "par1 + (lvl - 1) * par2/4*2",
+                "calca": "(par1 + (lvl - 1) * par2)/4*2",
                 "base_calcb": "3",
                 "calcb": "3"
             },
@@ -9223,7 +9223,7 @@
                 "id": "74",
                 "texta": "Heals: %+d%%",
                 "base_calca": "ln56",
-                "calca": "par5 + (lvl - 1) * par6"
+                "calca": "(par5 + (lvl - 1) * par6)"
             },
             {
                 "id": "13",
@@ -9237,7 +9237,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -9262,7 +9262,7 @@
                 "id": "74",
                 "texta": "Damage: %+d%%",
                 "base_calca": "ln56",
-                "calca": "par5 + (lvl - 1) * par6"
+                "calca": "(par5 + (lvl - 1) * par6)"
             },
             {
                 "id": "75",
@@ -9284,7 +9284,7 @@
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             }
         ],
         "dsc2lines": [
@@ -9301,7 +9301,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -9327,7 +9327,7 @@
                 "texta": "Stun Length: %d second",
                 "textb": "Stun Length: %d seconds",
                 "base_calca": "min(250,dm56)",
-                "calca": "min(250,((110 * lvl) * (par6 - par5)) / (100 * (lvl + 6)) + par5)",
+                "calca": "min(250,(((110 * lvl) * (par6 - par5)) / (100 * (lvl + 6)) + par5))",
                 "base_calcb": "25",
                 "calcb": "25"
             },
@@ -9351,7 +9351,7 @@
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             }
         ],
         "dsc2lines": [
@@ -9368,7 +9368,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -9403,7 +9403,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -9468,7 +9468,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -9476,7 +9476,7 @@
                 "id": "74",
                 "texta": "Absorbs %d damage",
                 "base_calca": "(ln12*(100+(skill('Twister'.blvl)+skill('Tornado'.blvl)+skill('Hurricane'.blvl))*par8)/100)",
-                "calca": "(par1 + (lvl - 1) * par2*(100+(skill('Twister'.blvl)+skill('Tornado'.blvl)+skill('Hurricane'.blvl))*par8)/100)"
+                "calca": "((par1 + (lvl - 1) * par2)*(100+(skill('Twister'.blvl)+skill('Tornado'.blvl)+skill('Hurricane'.blvl))*par8)/100)"
             }
         ],
         "dsc2lines": [],
@@ -9529,7 +9529,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -9538,7 +9538,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln78*2",
-                "calca": "par7 + (lvl - 1) * par8*2",
+                "calca": "(par7 + (lvl - 1) * par8)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             },
@@ -9546,13 +9546,13 @@
                 "id": "74",
                 "texta": "Damage: %+d%%",
                 "base_calca": "ln56",
-                "calca": "par5 + (lvl - 1) * par6"
+                "calca": "(par5 + (lvl - 1) * par6)"
             },
             {
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4"
+                "calca": "(par3 + (lvl - 1) * par4)"
             },
             {
                 "id": "13",
@@ -9589,7 +9589,7 @@
                 "id": "74",
                 "texta": "Max Life: %+d%%",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2"
+                "calca": "(par1 + (lvl - 1) * par2)"
             },
             {
                 "id": "74",
@@ -9601,15 +9601,15 @@
                 "id": "75",
                 "texta": "Damage: %d-%d",
                 "base_calca": "pnma*(100+skill('Summon Grizzly'.ln12))/100",
-                "calca": "pnma*(100+skill('Summon Grizzly'.par1 + (lvl - 1) * par2))/100",
+                "calca": "((MinDam + (MinLevDam1 * (min(lvl, 8) - 1)) + (MinLevDam2 * (max(min(lvl, 16) - 8), 0)) + (MinLevDam3 * (max(min(lvl, 22) - 16), 0)) + (MinLevDam4 * (max(min(lvl, 28) - 22), 0)) + (MinLevDam5 * (max(lvl - 28), 0)) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100)*(100+skill('Summon Grizzly'.(par1 + (lvl - 1) * par2)))/100",
                 "base_calcb": "pxma*(100+skill('Summon Grizzly'.ln12))/100",
-                "calcb": "pxma*(100+skill('Summon Grizzly'.par1 + (lvl - 1) * par2))/100"
+                "calcb": "((MaxDam + (MaxLevDam1 * (min(lvl, 8) - 1)) + (MaxLevDam2 * (max(min(lvl, 16) - 8), 0)) + (MaxLevDam3 * (max(min(lvl, 22) - 16), 0)) + (MaxLevDam4 * (max(min(lvl, 28) - 22), 0)) + (MaxLevDam5 * (max(lvl - 28), 0)) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100)*(100+skill('Summon Grizzly'.(par1 + (lvl - 1) * par2)))/100"
             },
             {
                 "id": "13",
                 "texta": "Life: %d",
                 "base_calca": "(par7 * lvl) + ln12",
-                "calca": "(par7 * lvl) + par1 + (lvl - 1) * par2"
+                "calca": "(par7 * lvl) + (par1 + (lvl - 1) * par2)"
             }
         ],
         "dsc2lines": [
@@ -9623,7 +9623,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -9694,7 +9694,7 @@
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             }
         ],
         "dsc2lines": [
@@ -9702,7 +9702,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -9751,7 +9751,7 @@
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             }
         ],
         "dsc2lines": [
@@ -9759,7 +9759,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -9806,9 +9806,9 @@
                 "id": "75",
                 "texta": "Damage: %d-%d",
                 "base_calca": "pnma",
-                "calca": "pnma",
+                "calca": "((MinDam + (MinLevDam1 * (min(lvl, 8) - 1)) + (MinLevDam2 * (max(min(lvl, 16) - 8), 0)) + (MinLevDam3 * (max(min(lvl, 22) - 16), 0)) + (MinLevDam4 * (max(min(lvl, 28) - 22), 0)) + (MinLevDam5 * (max(lvl - 28), 0)) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100)",
                 "base_calcb": "pxma",
-                "calcb": "pxma"
+                "calcb": "((MaxDam + (MaxLevDam1 * (min(lvl, 8) - 1)) + (MaxLevDam2 * (max(min(lvl, 16) - 8), 0)) + (MaxLevDam3 * (max(min(lvl, 22) - 16), 0)) + (MaxLevDam4 * (max(min(lvl, 28) - 22), 0)) + (MaxLevDam5 * (max(lvl - 28), 0)) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100)"
             }
         ],
         "dsc2lines": [
@@ -9816,7 +9816,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -9879,7 +9879,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -9887,7 +9887,7 @@
                 "id": "74",
                 "texta": "Mana Recovery Rate: %+d%%",
                 "base_calca": "ln56",
-                "calca": "par5 + (lvl - 1) * par6"
+                "calca": "(par5 + (lvl - 1) * par6)"
             },
             {
                 "id": "13",
@@ -9923,13 +9923,13 @@
                 "id": "74",
                 "texta": "Life Steal: %+d%%",
                 "base_calca": "dm12",
-                "calca": "((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1"
+                "calca": "(((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1)"
             },
             {
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             }
         ],
         "dsc2lines": [
@@ -9937,7 +9937,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -9969,7 +9969,7 @@
                 "texta": "Stun Length: %d second",
                 "textb": "Stun Length: %d seconds",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2",
+                "calca": "(par1 + (lvl - 1) * par2)",
                 "base_calcb": "25",
                 "calcb": "25"
             },
@@ -9977,9 +9977,9 @@
                 "id": "75",
                 "texta": "Damage: %d-%d",
                 "base_calca": "pnma",
-                "calca": "pnma",
+                "calca": "((MinDam + (MinLevDam1 * (min(lvl, 8) - 1)) + (MinLevDam2 * (max(min(lvl, 16) - 8), 0)) + (MinLevDam3 * (max(min(lvl, 22) - 16), 0)) + (MinLevDam4 * (max(min(lvl, 28) - 22), 0)) + (MinLevDam5 * (max(lvl - 28), 0)) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100)",
                 "base_calcb": "pxma",
-                "calcb": "pxma"
+                "calcb": "((MaxDam + (MaxLevDam1 * (min(lvl, 8) - 1)) + (MaxLevDam2 * (max(min(lvl, 16) - 8), 0)) + (MaxLevDam3 * (max(min(lvl, 22) - 16), 0)) + (MaxLevDam4 * (max(min(lvl, 28) - 22), 0)) + (MaxLevDam5 * (max(lvl - 28), 0)) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100)"
             }
         ],
         "dsc2lines": [
@@ -9987,7 +9987,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -10035,9 +10035,9 @@
                 "id": "75",
                 "texta": "Damage: %d-%d",
                 "base_calca": "pnma",
-                "calca": "pnma",
+                "calca": "((MinDam + (MinLevDam1 * (min(lvl, 8) - 1)) + (MinLevDam2 * (max(min(lvl, 16) - 8), 0)) + (MinLevDam3 * (max(min(lvl, 22) - 16), 0)) + (MinLevDam4 * (max(min(lvl, 28) - 22), 0)) + (MinLevDam5 * (max(lvl - 28), 0)) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100)",
                 "base_calcb": "pxma",
-                "calcb": "pxma"
+                "calcb": "((MaxDam + (MaxLevDam1 * (min(lvl, 8) - 1)) + (MaxLevDam2 * (max(min(lvl, 16) - 8), 0)) + (MaxLevDam3 * (max(min(lvl, 22) - 16), 0)) + (MaxLevDam4 * (max(min(lvl, 28) - 22), 0)) + (MaxLevDam5 * (max(lvl - 28), 0)) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100)"
             }
         ],
         "dsc2lines": [
@@ -10045,7 +10045,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -10117,9 +10117,9 @@
                 "id": "75",
                 "texta": "Damage: %d-%d",
                 "base_calca": "pnma",
-                "calca": "pnma",
+                "calca": "((MinDam + (MinLevDam1 * (min(lvl, 8) - 1)) + (MinLevDam2 * (max(min(lvl, 16) - 8), 0)) + (MinLevDam3 * (max(min(lvl, 22) - 16), 0)) + (MinLevDam4 * (max(min(lvl, 28) - 22), 0)) + (MinLevDam5 * (max(lvl - 28), 0)) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100)",
                 "base_calcb": "pxma",
-                "calcb": "pxma"
+                "calcb": "((MaxDam + (MaxLevDam1 * (min(lvl, 8) - 1)) + (MaxLevDam2 * (max(min(lvl, 16) - 8), 0)) + (MaxLevDam3 * (max(min(lvl, 22) - 16), 0)) + (MaxLevDam4 * (max(min(lvl, 28) - 22), 0)) + (MaxLevDam5 * (max(lvl - 28), 0)) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100)"
             }
         ],
         "dsc2lines": [
@@ -10127,7 +10127,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -10181,7 +10181,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -10190,7 +10190,7 @@
                 "texta": "Radius: %d yard",
                 "textb": "Radius: %d yards",
                 "base_calca": "ln78*2",
-                "calca": "par7 + (lvl - 1) * par8*2",
+                "calca": "(par7 + (lvl - 1) * par8)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             },
@@ -10198,7 +10198,7 @@
                 "id": "74",
                 "texta": "Attacker Takes Damage of %d",
                 "base_calca": "pnma",
-                "calca": "pnma"
+                "calca": "((MinDam + (MinLevDam1 * (min(lvl, 8) - 1)) + (MinLevDam2 * (max(min(lvl, 16) - 8), 0)) + (MinLevDam3 * (max(min(lvl, 22) - 16), 0)) + (MinLevDam4 * (max(min(lvl, 28) - 22), 0)) + (MinLevDam5 * (max(lvl - 28), 0)) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100)"
             },
             {
                 "id": "13",
@@ -10228,15 +10228,15 @@
                 "id": "74",
                 "texta": "Damage: %+d%%",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2"
+                "calca": "(par1 + (lvl - 1) * par2)"
             },
             {
                 "id": "75",
                 "texta": "Damage: %d-%d",
                 "base_calca": "pnma*(100+ln12)/100",
-                "calca": "pnma*(100+par1 + (lvl - 1) * par2)/100",
+                "calca": "((MinDam + (MinLevDam1 * (min(lvl, 8) - 1)) + (MinLevDam2 * (max(min(lvl, 16) - 8), 0)) + (MinLevDam3 * (max(min(lvl, 22) - 16), 0)) + (MinLevDam4 * (max(min(lvl, 28) - 22), 0)) + (MinLevDam5 * (max(lvl - 28), 0)) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100)*(100+(par1 + (lvl - 1) * par2))/100",
                 "base_calcb": "pxma*(100+ln12)/100",
-                "calcb": "pxma*(100+par1 + (lvl - 1) * par2)/100"
+                "calcb": "((MaxDam + (MaxLevDam1 * (min(lvl, 8) - 1)) + (MaxLevDam2 * (max(min(lvl, 16) - 8), 0)) + (MaxLevDam3 * (max(min(lvl, 22) - 16), 0)) + (MaxLevDam4 * (max(min(lvl, 28) - 22), 0)) + (MaxLevDam5 * (max(lvl - 28), 0)) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100)*(100+(par1 + (lvl - 1) * par2))/100"
             },
             {
                 "id": "13",
@@ -10262,7 +10262,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -10316,13 +10316,13 @@
                 "id": "74",
                 "texta": "Damage: %+d%%",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4"
+                "calca": "(par3 + (lvl - 1) * par4)"
             },
             {
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             },
             {
                 "id": "74",
@@ -10336,7 +10336,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -10377,9 +10377,9 @@
                 "id": "75",
                 "texta": "Damage: %d-%d",
                 "base_calca": "pnma",
-                "calca": "pnma",
+                "calca": "((MinDam + (MinLevDam1 * (min(lvl, 8) - 1)) + (MinLevDam2 * (max(min(lvl, 16) - 8), 0)) + (MinLevDam3 * (max(min(lvl, 22) - 16), 0)) + (MinLevDam4 * (max(min(lvl, 28) - 22), 0)) + (MinLevDam5 * (max(lvl - 28), 0)) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100)",
                 "base_calcb": "pxma",
-                "calcb": "pxma"
+                "calcb": "((MaxDam + (MaxLevDam1 * (min(lvl, 8) - 1)) + (MaxLevDam2 * (max(min(lvl, 16) - 8), 0)) + (MaxLevDam3 * (max(min(lvl, 22) - 16), 0)) + (MaxLevDam4 * (max(min(lvl, 28) - 22), 0)) + (MaxLevDam5 * (max(lvl - 28), 0)) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100)"
             }
         ],
         "dsc2lines": [
@@ -10387,7 +10387,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -10405,7 +10405,7 @@
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
                 "base_calca": "ln12 + skill('Eruption'.blvl) * par7",
-                "calca": "par1 + (lvl - 1) * par2 + skill('Eruption'.blvl) * par7",
+                "calca": "(par1 + (lvl - 1) * par2) + skill('Eruption'.blvl) * par7",
                 "base_calcb": "25",
                 "calcb": "25"
             }
@@ -10476,7 +10476,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -10494,7 +10494,7 @@
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
                 "base_calca": "ln12 + skill('Cyclone Armor'.blvl) * par7",
-                "calca": "par1 + (lvl - 1) * par2 + skill('Cyclone Armor'.blvl) * par7",
+                "calca": "(par1 + (lvl - 1) * par2) + skill('Cyclone Armor'.blvl) * par7",
                 "base_calcb": "25",
                 "calcb": "25"
             }
@@ -10546,7 +10546,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -10665,7 +10665,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -10681,9 +10681,9 @@
                 "id": "75",
                 "texta": "Damage: %d-%d",
                 "base_calca": "pnma",
-                "calca": "pnma",
+                "calca": "((MinDam + (MinLevDam1 * (min(lvl, 8) - 1)) + (MinLevDam2 * (max(min(lvl, 16) - 8), 0)) + (MinLevDam3 * (max(min(lvl, 22) - 16), 0)) + (MinLevDam4 * (max(min(lvl, 28) - 22), 0)) + (MinLevDam5 * (max(lvl - 28), 0)) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100)",
                 "base_calcb": "pxma",
-                "calcb": "pxma"
+                "calcb": "((MaxDam + (MaxLevDam1 * (min(lvl, 8) - 1)) + (MaxLevDam2 * (max(min(lvl, 16) - 8), 0)) + (MaxLevDam3 * (max(min(lvl, 22) - 16), 0)) + (MaxLevDam4 * (max(min(lvl, 28) - 22), 0)) + (MaxLevDam5 * (max(lvl - 28), 0)) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100)"
             }
         ],
         "dsc2lines": [],
@@ -10705,25 +10705,25 @@
                 "id": "74",
                 "texta": "Charge 3 - Damage: %+d%%",
                 "base_calca": "3*ln12",
-                "calca": "3*par1 + (lvl - 1) * par2"
+                "calca": "3*(par1 + (lvl - 1) * par2)"
             },
             {
                 "id": "74",
                 "texta": "Charge 2 - Damage: %+d%%",
                 "base_calca": "2*ln12",
-                "calca": "2*par1 + (lvl - 1) * par2"
+                "calca": "2*(par1 + (lvl - 1) * par2)"
             },
             {
                 "id": "74",
                 "texta": "Charge 1 - Damage: %+d%%",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2"
+                "calca": "(par1 + (lvl - 1) * par2)"
             },
             {
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             }
         ],
         "dsc2lines": [
@@ -10731,7 +10731,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -10754,13 +10754,13 @@
                 "id": "74",
                 "texta": "Kick Damage: %+d%%",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2"
+                "calca": "(par1 + (lvl - 1) * par2)"
             },
             {
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             },
             {
                 "id": "36",
@@ -10775,7 +10775,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -10825,7 +10825,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -10889,7 +10889,7 @@
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2",
+                "calca": "(par1 + (lvl - 1) * par2)",
                 "base_calcb": "25",
                 "calcb": "25"
             },
@@ -10897,9 +10897,9 @@
                 "id": "75",
                 "texta": "Damage: %d-%d",
                 "base_calca": "pnma",
-                "calca": "pnma",
+                "calca": "((MinDam + (MinLevDam1 * (min(lvl, 8) - 1)) + (MinLevDam2 * (max(min(lvl, 16) - 8), 0)) + (MinLevDam3 * (max(min(lvl, 22) - 16), 0)) + (MinLevDam4 * (max(min(lvl, 28) - 22), 0)) + (MinLevDam5 * (max(lvl - 28), 0)) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100)",
                 "base_calcb": "pxma",
-                "calcb": "pxma"
+                "calcb": "((MaxDam + (MaxLevDam1 * (min(lvl, 8) - 1)) + (MaxLevDam2 * (max(min(lvl, 16) - 8), 0)) + (MaxLevDam3 * (max(min(lvl, 22) - 16), 0)) + (MaxLevDam4 * (max(min(lvl, 28) - 22), 0)) + (MaxLevDam5 * (max(lvl - 28), 0)) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100)"
             }
         ],
         "dsc2lines": [
@@ -10907,7 +10907,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -10970,7 +10970,7 @@
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
                 "base_calca": "ln56",
-                "calca": "par5 + (lvl - 1) * par6",
+                "calca": "(par5 + (lvl - 1) * par6)",
                 "base_calcb": "25",
                 "calcb": "25"
             },
@@ -10978,7 +10978,7 @@
                 "id": "74",
                 "texta": "Run/Walk Speed: %+d%%",
                 "base_calca": "dm12",
-                "calca": "((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1"
+                "calca": "(((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1)"
             },
             {
                 "id": "74",
@@ -10992,7 +10992,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -11037,7 +11037,7 @@
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             }
         ],
         "dsc2lines": [
@@ -11045,7 +11045,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -11085,13 +11085,13 @@
                 "id": "74",
                 "texta": "Damage: %+d%%",
                 "base_calca": "ln12 + (skill('Claw Mastery'.blvl) * par7)",
-                "calca": "par1 + (lvl - 1) * par2 + (skill('Claw Mastery'.blvl) * par7)"
+                "calca": "(par1 + (lvl - 1) * par2) + (skill('Claw Mastery'.blvl) * par7)"
             },
             {
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             }
         ],
         "dsc2lines": [
@@ -11099,7 +11099,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -11149,7 +11149,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -11157,7 +11157,7 @@
                 "id": "74",
                 "texta": "Releases %d charged bolts",
                 "base_calca": "ln34 + skill('Shock Field'.blvl)/3",
-                "calca": "par3 + (lvl - 1) * par4 + skill('Shock Field'.blvl)/3"
+                "calca": "(par3 + (lvl - 1) * par4) + skill('Shock Field'.blvl)/3"
             },
             {
                 "id": "74",
@@ -11236,7 +11236,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -11289,7 +11289,7 @@
                 "id": "74",
                 "texta": "%d%% chance",
                 "base_calca": "dm12",
-                "calca": "((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1"
+                "calca": "(((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1)"
             }
         ],
         "dsc2lines": [],
@@ -11314,7 +11314,7 @@
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
                 "base_calca": "ln34",
-                "calca": "par3 + (lvl - 1) * par4",
+                "calca": "(par3 + (lvl - 1) * par4)",
                 "base_calcb": "25",
                 "calcb": "25"
             },
@@ -11322,13 +11322,13 @@
                 "id": "74",
                 "texta": "Enemy Defense: %+d%%",
                 "base_calca": "-min(ln56,95)",
-                "calca": "-min(par5 + (lvl - 1) * par6,95)"
+                "calca": "-min((par5 + (lvl - 1) * par6),95)"
             },
             {
                 "id": "74",
                 "texta": "Defense: %+d%%",
                 "base_calca": "ln78",
-                "calca": "par7 + (lvl - 1) * par8"
+                "calca": "(par7 + (lvl - 1) * par8)"
             }
         ],
         "dsc2lines": [
@@ -11336,7 +11336,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -11345,7 +11345,7 @@
                 "texta": "Range: %d yard",
                 "textb": "Range: %d yards",
                 "base_calca": "dm12*2",
-                "calca": "((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1*2",
+                "calca": "(((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1)*2",
                 "base_calcb": "3",
                 "calcb": "3"
             }
@@ -11370,25 +11370,25 @@
                 "id": "74",
                 "texta": "Charge 3 - Life and Mana Steal: %+d%%",
                 "base_calca": "2*ln12",
-                "calca": "2*par1 + (lvl - 1) * par2"
+                "calca": "2*(par1 + (lvl - 1) * par2)"
             },
             {
                 "id": "74",
                 "texta": "Charge 2 - Life and Mana Steal: %+d%%",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2"
+                "calca": "(par1 + (lvl - 1) * par2)"
             },
             {
                 "id": "74",
                 "texta": "Charge 1 - Life Steal: %+d%%",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2"
+                "calca": "(par1 + (lvl - 1) * par2)"
             },
             {
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             }
         ],
         "dsc2lines": [
@@ -11396,7 +11396,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -11422,7 +11422,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d per blade",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -11430,15 +11430,15 @@
                 "id": "75",
                 "texta": "Damage: %d-%d",
                 "base_calca": "pnma",
-                "calca": "pnma",
+                "calca": "((MinDam + (MinLevDam1 * (min(lvl, 8) - 1)) + (MinLevDam2 * (max(min(lvl, 16) - 8), 0)) + (MinLevDam3 * (max(min(lvl, 22) - 16), 0)) + (MinLevDam4 * (max(min(lvl, 28) - 22), 0)) + (MinLevDam5 * (max(lvl - 28), 0)) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100)",
                 "base_calcb": "pxma",
-                "calcb": "pxma"
+                "calcb": "((MaxDam + (MaxLevDam1 * (min(lvl, 8) - 1)) + (MaxLevDam2 * (max(min(lvl, 16) - 8), 0)) + (MaxLevDam3 * (max(min(lvl, 22) - 16), 0)) + (MaxLevDam4 * (max(min(lvl, 28) - 22), 0)) + (MaxLevDam5 * (max(lvl - 28), 0)) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100)"
             },
             {
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHitCalc)"
             }
         ],
         "dsc2lines": [
@@ -11498,7 +11498,7 @@
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
                 "base_calca": "ln56",
-                "calca": "par5 + (lvl - 1) * par6",
+                "calca": "(par5 + (lvl - 1) * par6)",
                 "base_calcb": "25",
                 "calcb": "25"
             },
@@ -11506,13 +11506,13 @@
                 "id": "74",
                 "texta": "Resist All: %+d%%",
                 "base_calca": "dm12",
-                "calca": "((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1"
+                "calca": "(((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1)"
             },
             {
                 "id": "74",
                 "texta": "Physical Damage Received Reduced by %d%%",
                 "base_calca": "ln78",
-                "calca": "par7 + (lvl - 1) * par8"
+                "calca": "(par7 + (lvl - 1) * par8)"
             },
             {
                 "id": "74",
@@ -11526,7 +11526,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -11552,7 +11552,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -11630,7 +11630,7 @@
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             }
         ],
         "dsc2lines": [
@@ -11638,7 +11638,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -11678,13 +11678,13 @@
                 "id": "74",
                 "texta": "Fire Damage: %+d%%",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2"
+                "calca": "(par1 + (lvl - 1) * par2)"
             },
             {
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             }
         ],
         "dsc2lines": [
@@ -11692,7 +11692,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -11736,7 +11736,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -11799,7 +11799,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -11808,7 +11808,7 @@
                 "texta": "Range: %d yard",
                 "textb": "Range: %d yards",
                 "base_calca": "(ln34/2 + skill('Wake of Fire Sentry'.blvl)",
-                "calca": "(par3 + (lvl - 1) * par4/2 + skill('Wake of Fire Sentry'.blvl)",
+                "calca": "((par3 + (lvl - 1) * par4)/2 + skill('Wake of Fire Sentry'.blvl)",
                 "base_calcb": "3",
                 "calcb": "3"
             },
@@ -11870,7 +11870,7 @@
                 "id": "74",
                 "texta": "Chance to convert: %d%%",
                 "base_calca": "dm56",
-                "calca": "((110 * lvl) * (par6 - par5)) / (100 * (lvl + 6)) + par5"
+                "calca": "(((110 * lvl) * (par6 - par5)) / (100 * (lvl + 6)) + par5)"
             },
             {
                 "id": "36",
@@ -11885,9 +11885,9 @@
                 "id": "75",
                 "texta": "Damage: %d-%d",
                 "base_calca": "pnma",
-                "calca": "pnma",
+                "calca": "((MinDam + (MinLevDam1 * (min(lvl, 8) - 1)) + (MinLevDam2 * (max(min(lvl, 16) - 8), 0)) + (MinLevDam3 * (max(min(lvl, 22) - 16), 0)) + (MinLevDam4 * (max(min(lvl, 28) - 22), 0)) + (MinLevDam5 * (max(lvl - 28), 0)) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100)",
                 "base_calcb": "pxma",
-                "calcb": "pxma"
+                "calcb": "((MaxDam + (MaxLevDam1 * (min(lvl, 8) - 1)) + (MaxLevDam2 * (max(min(lvl, 16) - 8), 0)) + (MaxLevDam3 * (max(min(lvl, 22) - 16), 0)) + (MaxLevDam4 * (max(min(lvl, 28) - 22), 0)) + (MaxLevDam5 * (max(lvl - 28), 0)) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100)"
             }
         ],
         "dsc2lines": [
@@ -11895,7 +11895,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -11952,7 +11952,7 @@
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             }
         ],
         "dsc2lines": [
@@ -11960,7 +11960,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -12000,13 +12000,13 @@
                 "id": "74",
                 "texta": "Kick Damage: %+d%%",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2"
+                "calca": "(par1 + (lvl - 1) * par2)"
             },
             {
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             }
         ],
         "dsc2lines": [
@@ -12014,7 +12014,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -12058,7 +12058,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -12121,7 +12121,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -12130,7 +12130,7 @@
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2",
+                "calca": "(par1 + (lvl - 1) * par2)",
                 "base_calcb": "25",
                 "calcb": "25"
             },
@@ -12138,9 +12138,9 @@
                 "id": "75",
                 "texta": "Damage: %d-%d",
                 "base_calca": "pnma",
-                "calca": "pnma",
+                "calca": "((MinDam + (MinLevDam1 * (min(lvl, 8) - 1)) + (MinLevDam2 * (max(min(lvl, 16) - 8), 0)) + (MinLevDam3 * (max(min(lvl, 22) - 16), 0)) + (MinLevDam4 * (max(min(lvl, 28) - 22), 0)) + (MinLevDam5 * (max(lvl - 28), 0)) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100)",
                 "base_calcb": "pxma",
-                "calcb": "pxma"
+                "calcb": "((MaxDam + (MaxLevDam1 * (min(lvl, 8) - 1)) + (MaxLevDam2 * (max(min(lvl, 16) - 8), 0)) + (MaxLevDam3 * (max(min(lvl, 22) - 16), 0)) + (MaxLevDam4 * (max(min(lvl, 28) - 22), 0)) + (MaxLevDam5 * (max(lvl - 28), 0)) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100)"
             }
         ],
         "dsc2lines": [
@@ -12203,7 +12203,7 @@
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
                 "base_calca": "ln12",
-                "calca": "par1 + (lvl - 1) * par2",
+                "calca": "(par1 + (lvl - 1) * par2)",
                 "base_calcb": "25",
                 "calcb": "25"
             },
@@ -12230,7 +12230,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
@@ -12255,7 +12255,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             },
@@ -12342,7 +12342,7 @@
                 "id": "74",
                 "texta": "Attack Rating: %+d%%",
                 "base_calca": "toht",
-                "calca": "toht"
+                "calca": "(ToHit + (lvl - 1) * LevToHit)"
             }
         ],
         "dsc2lines": [
@@ -12350,7 +12350,7 @@
                 "id": "36",
                 "texta": "Mana Cost: %d",
                 "base_calca": "usmc",
-                "calca": "usmc",
+                "calca": "(max(( mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana))",
                 "base_calcb": "256",
                 "calcb": "256"
             }
