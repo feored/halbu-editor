@@ -18,7 +18,7 @@ LOOKUP_VALUES = [
     "ToHitCalc",
     "LevToHit",
     "ToHit",
-    "HitShift"
+    "HitShift",
     "MinDam",
     "MinLevDam1",
     "MinLevDam2",
@@ -48,13 +48,19 @@ LOOKUP_VALUES = [
     "ELevLen1",
     "ELevLen2",
     "ELevLen3",
-    "ELenSymPerCalc"
+    "ELenSymPerCalc",
     "ELen",
+    "startmana",
     "minmana",
     "manashift",
     "lvlmana",
     "mana",
-    
+    "calc1",
+    "calc2",
+    "calc3",
+    "calc4",
+    "calc5",
+    "calc6"
 ]
 
 def isEmptyCell(cell):
@@ -157,6 +163,9 @@ def calcEDmgLen(skillsRow):
     return skillLen
 
 
+### Left to add
+## mps, macr, madm, math, manc, mapi, m3en, m3ex, m2en, m2ex, m1en, m1ex
+
 expandDict = {
     "par1": {
         "static": True,
@@ -206,6 +215,30 @@ expandDict = {
         "static": True,
         "value": "Param12"
     },
+    "clc1": {
+        "static": True,
+        "value": "calc1"
+    },
+    "clc2": {
+        "static": True,
+        "value": "calc2"
+    },
+    "clc3": {
+        "static": True,
+        "value": "calc3"
+    },
+    "clc4": {
+        "static": True,
+        "value": "calc4"
+    },
+    "clc5": {
+        "static": True,
+        "value": "calc5"
+    },
+    "clc6": {
+        "static": True,
+        "value": "calc6"
+    },
     "ln12": {
         "static": True,
         "value": "par1 + (lvl - 1) * par2"
@@ -218,7 +251,7 @@ expandDict = {
         "static": True,
         "value": "par3 + (lvl - 1) * par4"
     },
-    "dm32": {
+    "dm34": {
         "static": True,
         "value": "((110 * lvl) * (par4 - par3)) / (100 * (lvl + 6)) + par3"
     },
@@ -274,6 +307,10 @@ expandDict = {
         "static": False,
         "value": calcEDmgMaxMastery
     },
+    "mps": {
+        "static": True,
+        "value": "max((mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana)"
+    },
 }
 
 expandKeys = expandDict.keys()
@@ -295,4 +332,6 @@ def replaceLookup(expression, skillsRow):
     for lookupExp in LOOKUP_VALUES:
         if lookupExp in expression:
             expression = expression.replace(lookupExp, skillsRow[lookupExp])
+    if len(expression) < 5 and not expression.isnumeric() and not expression[0] == "(":
+        print(expression)
     return expression

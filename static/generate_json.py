@@ -155,7 +155,6 @@ def main():
     format_json = json.dumps(final_json, indent=4)
     with open("skills_complete.json", "w") as f:
         f.write(format_json)
-    print(format_json)
 
 if __name__ == "__main__":
     main()
