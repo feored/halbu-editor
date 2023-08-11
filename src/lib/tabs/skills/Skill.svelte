@@ -2,11 +2,9 @@
     import { createEventDispatcher } from "svelte";
     import { Message, buildMessage } from "../../utils/Message.svelte";
     import { tooltip } from "../../utils/actions.js";
-    
-    import 'tippy.js/dist/tippy.css';
-    import 'tippy.js/animations/shift-toward.css';
 
-
+    import "tippy.js/dist/tippy.css";
+    import "tippy.js/animations/shift-toward.css";
 
     export let id;
     export let skillInfo;
@@ -35,20 +33,27 @@
     }
 
     // Tooltip
-    let formattedDescription = skillInfo["description"]
-        .split("\n")
-        .reverse()
-        .join("\n");
-    formattedDescription =
-        formattedDescription.charAt(0).toUpperCase() +
-        formattedDescription.slice(1);
+    let formattedDescription;
+    $: {
+        formattedDescription = skillInfo["description"]
+            .split("\n")
+            .reverse()
+            .join("\n");
+        formattedDescription =
+            formattedDescription.charAt(0).toUpperCase() +
+            formattedDescription.slice(1) + ".";
+    }
 
     $: tooltipContent = `<div class='col flex-center tooltip'>
                         <h4 id='skillTitle'>${skillInfo["name"]}</h4>
                         <p class='descripton'>${formattedDescription}</p>
-                        <p id='levelreq' class='${charLevel < skillInfo["skilldata"]["reqlevel"] ? "error" : ""}'>Required Level: ${
-                            skillInfo["skilldata"]["reqlevel"]
-                        }</p>
+                        <p id='levelreq' class='${
+                            charLevel < skillInfo["skilldata"]["reqlevel"]
+                                ? "error"
+                                : ""
+                        }'>Required Level: ${
+        skillInfo["skilldata"]["reqlevel"]
+    }</p>
                         <p class='desc'>${
                             skillPoints > 0
                                 ? "Current Skill Level: " +
@@ -62,17 +67,20 @@
     console.log(charLevel < skillInfo["skilldata"]["reqlevel"] ? "error" : "");
 </script>
 
-<div style="grid-row: {skillInfo['row']}; grid-column: {skillInfo['col']};" class="{isClickable ? "" : "disabled"}">
+<div
+    style="grid-row: {skillInfo['row']}; grid-column: {skillInfo['col']};"
+    class={isClickable ? "" : "disabled"}
+>
     <div class="row">
         <button
             use:tooltip={{
                 content: tooltipContent,
                 allowHTML: true,
                 placement: "bottom",
-                theme: 'halbu',
-                arrow:true,
-                animation: 'shift-toward',
-                hideOnClick: false
+                theme: "halbu",
+                arrow: true,
+                animation: "shift-toward",
+                hideOnClick: false,
             }}
             class={invested_style}
             on:click={handleClick}
@@ -107,7 +115,4 @@
     .no-points {
         color: var(--text-muted);
     }
-
-    
-
 </style>
