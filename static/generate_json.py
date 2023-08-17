@@ -6,7 +6,7 @@ from calcs import expandExpression, replaceLookup
 
 SKILLS_CSV = "./skills.txt"
 SKILLDESC_CSV = "./skilldesc.txt"
-SKILLCALC = "./skillcalc.txt"
+MISSILES_CSV = "./missiles.txt"
 STRINGS = ["./skills.json", "./item-modifiers.json"]
 ## D2R has .tbl files but doesn't use them,
 ## instead the strings are located in
@@ -15,6 +15,7 @@ STRINGS = ["./skills.json", "./item-modifiers.json"]
 skills = []
 skilldesc = []
 skillcalc = []
+missiles = []
 strings = {}
 
 def setupData():
@@ -27,7 +28,7 @@ def setupData():
                 
     loadData(skills, SKILLS_CSV, "\t")
     loadData(skilldesc, SKILLDESC_CSV, "\t")
-    ## loadData(skillcalc, SKILLCALC_CSV, "\t")
+    loadData(missiles, MISSILES_CSV, "\t")
     for filename in STRINGS:
         with open(filename, encoding='utf-8-sig') as jsonFile:
             for row in json.load(jsonFile):
@@ -115,12 +116,12 @@ def fillDescLines(skilldescRow, skillsRow, finalRow ):
                 if len(skilldescRow[calcA]) > 0:
                     descline["base_calca"] = skilldescRow[calcA]
                     descline["expanded_calca"] = expandExpression(skilldescRow[calcA], skillsRow)
-                    descline["calca"] = replaceLookup(descline["expanded_calca"], skillsRow)
+                    descline["calca"] = replaceLookup(descline["expanded_calca"], skillsRow, skilldescRow, missiles)
                 calcB = headers[linenum] + "calcb" + str(i)
                 if len(skilldescRow[calcB]) > 0:
                     descline["base_calcb"] = skilldescRow[calcB]
                     descline["expanded_calcb"] = expandExpression(skilldescRow[calcB], skillsRow)
-                    descline["calb"] = replaceLookup(descline["expanded_calcb"], skillsRow)
+                    descline["calb"] = replaceLookup(descline["expanded_calcb"], skillsRow, skilldescRow, missiles)
                 finalRow[desc_name].append(descline)
 
 def makeRow(skillsRow):
