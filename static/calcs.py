@@ -41,6 +41,9 @@ MISSILES_LOOKUP_VALUES = [
 
 ## mana always after lvlmana, so as not to replace lvlmana into lvl34 if skillsrow["mana"] == 34
 SKILLS_LOOKUP_VALUES = [
+    "Param10",
+    "Param11",
+    "Param12",
     "Param1",
     "Param2",
     "Param3",
@@ -50,9 +53,6 @@ SKILLS_LOOKUP_VALUES = [
     "Param7",
     "Param8",
     "Param9",
-    "Param10",
-    "Param11",
-    "Param12",
     "ToHitCalc",
     "LevToHit",
     "ToHit",
@@ -98,7 +98,8 @@ SKILLS_LOOKUP_VALUES = [
     "calc3",
     "calc4",
     "calc5",
-    "calc6"
+    "calc6",
+    "auralencalc"
 ]
 
 def isEmptyCell(cell):
@@ -224,11 +225,39 @@ def calcMissileEMax(skillsRow, descmissile):
     skillDamage = f"{missilePrefix}({baseDamage}) * (2 ** (HitShift - 8)) * (100 + EDmgSymPerCalc)/100{MISSILE_SUFFIX}"
     return skillDamage
 
-
-### Left to add
-## mps, macr, madm, math, manc, mapi, m3en, m3ex, m2en, m2ex, m1en, m1ex
+def diminishing(skillsRow, whichDm):
+    a, b = "", ""
+    match whichDm:
+        case 12:
+            a = "par1"
+            b = "par2"
+        case 34:
+            a = "par3"
+            b = "par4"
+        case 56:
+            a = "par5"
+            b = "par6"
+        case 78:
+            a = "par7"
+            b = "par8"
+        case 91:
+            a = "par9"
+            b = "par10"
+    return f"floor(floor((110 * lvl) / (lvl + 6)) * (({b} - {a}) / 100)) + {a}"
 
 expandDict = {
+    "par10": {
+        "static": True,
+        "value": "Param10"
+    },
+    "par11": {
+        "static": True,
+        "value": "Param11"
+    },
+    "par12": {
+        "static": True,
+        "value": "Param12"
+    },
     "par1": {
         "static": True,
         "value": "Param1"
@@ -265,18 +294,6 @@ expandDict = {
         "static": True,
         "value": "Param9"
     },
-    "par10": {
-        "static": True,
-        "value": "Param10"
-    },
-    "par11": {
-        "static": True,
-        "value": "Param11"
-    },
-    "par12": {
-        "static": True,
-        "value": "Param12"
-    },
     "clc1": {
         "static": True,
         "value": "calc1"
@@ -306,32 +323,41 @@ expandDict = {
         "value": "par1 + (lvl - 1) * par2"
     },
     "dm12": {
-        "static": True,
-        "value": "((110 * lvl) * (par2 - par1)) / (100 * (lvl + 6)) + par1"
+        "static": False,
+        "value": diminishing,
+        "arg": 12
     },
     "ln34": {
         "static": True,
         "value": "par3 + (lvl - 1) * par4"
     },
     "dm34": {
-        "static": True,
-        "value": "((110 * lvl) * (par4 - par3)) / (100 * (lvl + 6)) + par3"
+        "static": False,
+        "value": diminishing,
+        "arg": 34
     },
     "ln56": {
         "static": True,
         "value": "par5 + (lvl - 1) * par6"
     },
     "dm56": {
-        "static": True,
-        "value": "((110 * lvl) * (par6 - par5)) / (100 * (lvl + 6)) + par5"
+        "static": False,
+        "value": diminishing,
+        "arg": 56
     },
     "ln78": {
         "static": True,
         "value": "par7 + (lvl - 1) * par8"
     },
     "dm78": {
-        "static": True,
-        "value": "((110 * lvl) * (par8 - par7)) / (100 * (lvl + 6)) + par7"
+        "static": False,
+        "value": diminishing,
+        "arg": 78
+    },
+    "dm91": {
+        "static": False,
+        "value": diminishing,
+        "arg": 91
     },
     "usmc": {
         "static": True,
@@ -404,6 +430,31 @@ expandDict = {
         "value": calcMissileEMax,
         "arg" : 3
     },
+    ## Use @ symbol to avoid looping over len -> auralencalc -> auraauralencalccalc -> ...
+    "len": {
+        "static": True,
+        "value": "aurale@ncalc"
+    },
+    "macr": {
+        "static": True,
+        "value": "dm56"
+    },
+    "madm": {
+        "static": True,
+        "value": "ln34"
+    },
+    "math": {
+        "static": True,
+        "value": "ln12"
+    },
+    "manc": {
+        "static": True,
+        "value": "dm91"
+    },
+    "mapi": {
+        "static": True,
+        "value":"dm78"
+    }
     
 }
 
@@ -423,6 +474,7 @@ def expandExpression(expression, skillsRow):
                     else:
                         expression = expression.replace(key, parenthesize(expandDict[key]["value"](skillsRow)))
                 canExpand = True
+    expression = expression.replace("@", "")
     return expression
 
 
@@ -457,10 +509,7 @@ def replaceLookup(expression, skillsRow, skilldescRow, missiles):
         endMissileIndex = expression.index(MISSILE_SUFFIX) + len(MISSILE_SUFFIX)
         expression = expression[0:startMissileIndex] + replaceLookupMissile(expression[startMissileIndex:endMissileIndex], skilldescRow, missiles) + expression[endMissileIndex::]
         
-    replaceLookupExpression(expression, SKILLS_LOOKUP_VALUES, skillsRow)
-    
-    if len(expression) < 5 and not expression.isnumeric() and not expression[0] == "(":
-        print(expression)
+    expression = replaceLookupExpression(expression, SKILLS_LOOKUP_VALUES, skillsRow)
     return expression
 
 
