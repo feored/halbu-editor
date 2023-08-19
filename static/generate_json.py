@@ -2,15 +2,29 @@
 
 import csv
 import json
-from calcs import expandExpression, replaceLookup
+import sys
+
+from calcs import expandExpression, replaceLookup, skillIdFromName, replaceSynergies
+
+DEBUG = False
 
 SKILLS_CSV = "./skills.txt"
 SKILLDESC_CSV = "./skilldesc.txt"
 MISSILES_CSV = "./missiles.txt"
 STRINGS = ["./skills.json", "./item-modifiers.json"]
-## D2R has .tbl files but doesn't use them,
-## instead the strings are located in
-## Data\data\data\local\lng\strings
+CLASS_OFFSET = {
+    "Amazon": 6,
+    "Sorceress": 36,
+    "Necromancer": 66,
+    "Paladin": 96,
+    "Barbarian": 126,
+    "Druid": 221,
+    "Assassin": 251
+}
+
+# D2R has .tbl files but doesn't use them,
+# instead the strings are located in
+# Data\data\data\local\lng\strings
 
 skills = []
 skilldesc = []
@@ -18,14 +32,15 @@ skillcalc = []
 missiles = []
 strings = {}
 
+
 def setupData():
     """Load all csvs/json files from the game into global variables for easy access"""
     def loadData(receiver, filename, csvdelimiter):
-         with open(filename) as csvfile:
+        with open(filename) as csvfile:
             reader = csv.DictReader(csvfile, delimiter=csvdelimiter)
             for row in reader:
                 receiver.append(row)
-                
+
     loadData(skills, SKILLS_CSV, "\t")
     loadData(skilldesc, SKILLDESC_CSV, "\t")
     loadData(missiles, MISSILES_CSV, "\t")
@@ -33,21 +48,25 @@ def setupData():
         with open(filename, encoding='utf-8-sig') as jsonFile:
             for row in json.load(jsonFile):
                 strings[row["Key"]] = row["enUS"]
-    
+
+
 def idToSkilldescId(id):
     """From skills.txt row number to skilldesc.txt row number"""
     if id <= 155:
         return id
     else:
-        return id-61 
-    
+        return id-61
+
+
 def isUsableRow(skillsRow):
     """Only keep skills used by playable characters"""
     return len(skillsRow["charclass"]) > 0
 
+
 def isExpansion(charClass):
     """Skill added with expansion or in base game"""
     return charClass == "Assassin" or charClass == "Druid"
+
 
 def getClassName(classString):
     match classString:
@@ -65,10 +84,11 @@ def getClassName(classString):
             return "Druid"
         case "ass":
             return "Assassin"
-        
+
+
 def getStringInformation(id, charClass):
     """Get name/description from skills.json (formerly tbl files)"""
-    ### Special cases (typos and mistakes in strings file)
+    # Special cases (typos and mistakes in strings file)
     if id == 61:
         return (strings["skillsname" + str(id)], strings["skillld" + str(id)])
     elif id == 222:
@@ -83,7 +103,7 @@ def getStringInformation(id, charClass):
         name_base = name_base.capitalize()
         desc_base = desc_base.capitalize()
     return (strings[name_base + str(row_id)], strings[desc_base + str(row_id)])
-    
+
 
 def fillBasicInfo(skillsRow, finalRow):
     finalRow["skilldesc"] = skillsRow["skilldesc"]
@@ -93,9 +113,10 @@ def fillBasicInfo(skillsRow, finalRow):
     for i in range(1, 4):
         prereq = skillsRow["reqskill" + str(i)]
         if len(prereq) > 0:
-            finalRow["reqskills"].append(prereq)
-            
-def fillDescLines(skilldescRow, skillsRow, finalRow ):
+            finalRow["reqskills"].append(skillIdFromName(prereq, skills))
+
+
+def fillDescLines(skilldescRow, skillsRow, finalRow):
     headers = ["desc", "dsc2", "dsc3"]
     maxLines = [7, 6, 8]
     for linenum in range(len(headers)):
@@ -114,40 +135,53 @@ def fillDescLines(skilldescRow, skillsRow, finalRow ):
                     descline["textb"] = strings[skilldescRow[textB]]
                 calcA = headers[linenum] + "calca" + str(i)
                 if len(skilldescRow[calcA]) > 0:
-                    descline["base_calca"] = skilldescRow[calcA]
-                    descline["expanded_calca"] = expandExpression(skilldescRow[calcA], skillsRow)
-                    descline["calca"] = replaceLookup(descline["expanded_calca"], skillsRow, skilldescRow, missiles)
+                    expandedCalcA = expandExpression(
+                        skilldescRow[calcA], skillsRow)
+                    descline["calca"] = replaceSynergies(replaceLookup(
+                        expandedCalcA, skillsRow, skilldescRow, missiles), skills)
+                    if DEBUG:
+                        descline["base_calca"] = skilldescRow[calcA]
+                        descline["expanded_calca"] = expandedCalcA
                 calcB = headers[linenum] + "calcb" + str(i)
                 if len(skilldescRow[calcB]) > 0:
-                    descline["base_calcb"] = skilldescRow[calcB]
-                    descline["expanded_calcb"] = expandExpression(skilldescRow[calcB], skillsRow)
-                    descline["calb"] = replaceLookup(descline["expanded_calcb"], skillsRow, skilldescRow, missiles)
+                    expandedCalcB = expandExpression(
+                        skilldescRow[calcB], skillsRow)
+                    descline["calb"] = replaceSynergies(replaceLookup(
+                        expandedCalcB, skillsRow, skilldescRow, missiles), skills)
+                    if DEBUG:
+                        descline["base_calcb"] = skilldescRow[calcB]
+                        descline["expanded_calcb"] = expandedCalcB
                 finalRow[desc_name].append(descline)
+
 
 def makeRow(skillsRow):
     finalRow = {}
     id = int(skillsRow["*Id"])
     finalRow["id"] = id
     fillBasicInfo(skillsRow, finalRow)
-            
-    ## strings
-    (finalRow["name"], finalRow["description"]) = getStringInformation(id, finalRow["class"])
-    
-    
-    ##skilldesc
+    finalRow["saveId"] = id - CLASS_OFFSET[finalRow["class"]]
+
+    # strings
+    (finalRow["name"], finalRow["description"]
+     ) = getStringInformation(id, finalRow["class"])
+
+    # skilldesc
     skilldescRow = skilldesc[idToSkilldescId(id)]
     fillDescLines(skilldescRow, skillsRow, finalRow)
-    
-    finalRow["column"]  = skilldescRow["SkillColumn"]
-    finalRow["row"]  = skilldescRow["SkillRow"]
-    finalRow["page"]  = skilldescRow["SkillPage"]
-    
-    ## data necessary from skills.txt for damage calculation
-    
-            
+
+    finalRow["column"] = int(skilldescRow["SkillColumn"])
+    finalRow["row"] = int(skilldescRow["SkillRow"])
+    finalRow["page"] = int(skilldescRow["SkillPage"])
+
+    # data necessary from skills.txt for damage calculation
+
     return finalRow
 
+
 def main():
+    global DEBUG
+    if len(sys.argv) > 1 and (str(sys.argv[1]).lower() == "--debug" or str(sys.argv[1]).lower() == "-d"):
+        DEBUG = True
     setupData()
     final_json = []
     for row in skills:
@@ -156,6 +190,7 @@ def main():
     format_json = json.dumps(final_json, indent=4)
     with open("skills_complete.json", "w") as f:
         f.write(format_json)
+
 
 if __name__ == "__main__":
     main()

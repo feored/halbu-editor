@@ -1,3 +1,5 @@
+import re
+
 FRAMES_PER_SECOND = 25
 MISSILE_PREFIX = "_MISSILE_"
 MISSILE_SUFFIX = "_ENDMISSILE_"
@@ -102,6 +104,7 @@ SKILLS_LOOKUP_VALUES = [
     "auralencalc"
 ]
 
+
 def isEmptyCell(cell):
     return len(cell) == 0
 
@@ -167,27 +170,26 @@ def calcEDmgMax(skillsRow):
     skillDamage = f"({baseDamage}) * (2 ** (HitShift - 8)) * (100 + EDmgSymPerCalc)/100"
     return skillDamage
 
+def getMastery(etype):
+    if etype.lower() == "fire":
+        return "firemastery"
+    elif etype.lower() == "ltng":
+        return "lightningmastery"
+    else:
+        return None
 
 def calcEDmgMinMastery(skillsRow):
     dmgBeforeMastery = calcEDmgMin(skillsRow)
-    mastery = ""
-    if skillsRow["EType"] == "fire":
-        mastery = "firemastery"
-    elif skillsRow["EType"] == "ltng":
-        mastery = "lightningmastery"
-    else:
+    mastery = getMastery(skillsRow["EType"])
+    if not mastery:
         return dmgBeforeMastery
     return parenthesize(dmgBeforeMastery) + f" * ((100 + {mastery})/100)"
 
 
 def calcEDmgMaxMastery(skillsRow):
     dmgBeforeMastery = calcEDmgMax(skillsRow)
-    mastery = ""
-    if skillsRow["EType"] == "fire":
-        mastery = "firemastery"
-    elif skillsRow["EType"] == "ltng":
-        mastery = "lightningmastery"
-    else:
+    mastery = getMastery(skillsRow["EType"])
+    if not mastery:
         return dmgBeforeMastery
     return parenthesize(dmgBeforeMastery) + f" * ((100 + {mastery})/100)"
 
@@ -224,6 +226,9 @@ def calcMissileEMax(skillsRow, descmissile):
     baseDamage = f"EMax + ({maxELev1}) + ({maxELev2}) + ({maxELev3}) + ({maxELev4}) + ({maxELev5})"
     skillDamage = f"{missilePrefix}({baseDamage}) * (2 ** (HitShift - 8)) * (100 + EDmgSymPerCalc)/100{MISSILE_SUFFIX}"
     return skillDamage
+
+def calcMael(skillsRow):
+    return
 
 def diminishing(skillsRow, whichDm):
     a, b = "", ""
@@ -454,7 +459,11 @@ expandDict = {
     "mapi": {
         "static": True,
         "value":"dm78"
-    }
+    },
+    # "mael": {
+    #     "static": False,
+    #     "value": ge
+    # }
     
 }
 
@@ -477,6 +486,28 @@ def expandExpression(expression, skillsRow):
     expression = expression.replace("@", "")
     return expression
 
+
+def skillIdFromName(skillName, skills):
+    for row in skills:
+        if row["skill"] == skillName:
+            return int(row["*Id"]) 
+    return -1
+
+def replaceSynergies(expression, skills):
+    def extractName(syn):
+        startIndex = syn.index("'") + 1
+        endIndex = syn[startIndex:].index("'")
+        return syn[startIndex:startIndex+endIndex]
+    blvlSynergies = re.findall(r"skill\('.*?'\.blvl\)", expression)
+    for synergy in blvlSynergies:
+        newSynergy = "blvl(" + str(skillIdFromName(extractName(synergy), skills)) + ")"
+        expression = expression.replace(synergy, newSynergy)
+    blvlSynergies = re.findall(r"skill\('.*?'\.lvl\)", expression)
+    for synergy in blvlSynergies:
+        newSynergy = "slvl(" + str(skillIdFromName(extractName(synergy), skills)) + ")"
+        expression = expression.replace(synergy, newSynergy)
+    return expression
+        
 
 def getMissilesRow(missiles, name):
     return [row for row in missiles if row["Missile"] == name][0]
