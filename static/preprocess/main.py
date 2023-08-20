@@ -4,51 +4,10 @@ import csv
 import json
 import sys
 
-from calcs import expandExpression, replaceLookup, skillIdFromName, replaceSynergies
+from data import skills, skilldesc, strings, CLASS_OFFSET, setupData, saveData
+from calcs import expandExpression, replaceLookup, skillIdFromName, replaceLookupSynergies
 
 DEBUG = False
-
-SKILLS_CSV = "./skills.txt"
-SKILLDESC_CSV = "./skilldesc.txt"
-MISSILES_CSV = "./missiles.txt"
-STRINGS = ["./skills.json", "./item-modifiers.json"]
-CLASS_OFFSET = {
-    "Amazon": 6,
-    "Sorceress": 36,
-    "Necromancer": 66,
-    "Paladin": 96,
-    "Barbarian": 126,
-    "Druid": 221,
-    "Assassin": 251
-}
-
-# D2R has .tbl files but doesn't use them,
-# instead the strings are located in
-# Data\data\data\local\lng\strings
-
-skills = []
-skilldesc = []
-skillcalc = []
-missiles = []
-strings = {}
-
-
-def setupData():
-    """Load all csvs/json files from the game into global variables for easy access"""
-    def loadData(receiver, filename, csvdelimiter):
-        with open(filename) as csvfile:
-            reader = csv.DictReader(csvfile, delimiter=csvdelimiter)
-            for row in reader:
-                receiver.append(row)
-
-    loadData(skills, SKILLS_CSV, "\t")
-    loadData(skilldesc, SKILLDESC_CSV, "\t")
-    loadData(missiles, MISSILES_CSV, "\t")
-    for filename in STRINGS:
-        with open(filename, encoding='utf-8-sig') as jsonFile:
-            for row in json.load(jsonFile):
-                strings[row["Key"]] = row["enUS"]
-
 
 def idToSkilldescId(id):
     """From skills.txt row number to skilldesc.txt row number"""
@@ -113,7 +72,7 @@ def fillBasicInfo(skillsRow, finalRow):
     for i in range(1, 4):
         prereq = skillsRow["reqskill" + str(i)]
         if len(prereq) > 0:
-            finalRow["reqskills"].append(skillIdFromName(prereq, skills))
+            finalRow["reqskills"].append(skillIdFromName(prereq))
 
 
 def fillDescLines(skilldescRow, skillsRow, finalRow):
@@ -137,8 +96,8 @@ def fillDescLines(skilldescRow, skillsRow, finalRow):
                 if len(skilldescRow[calcA]) > 0:
                     expandedCalcA = expandExpression(
                         skilldescRow[calcA], skillsRow)
-                    descline["calca"] = replaceSynergies(replaceLookup(
-                        expandedCalcA, skillsRow, skilldescRow, missiles), skills)
+                    descline["calca"] = replaceLookup(
+                        expandedCalcA, skillsRow, skilldescRow)
                     if DEBUG:
                         descline["base_calca"] = skilldescRow[calcA]
                         descline["expanded_calca"] = expandedCalcA
@@ -146,8 +105,8 @@ def fillDescLines(skilldescRow, skillsRow, finalRow):
                 if len(skilldescRow[calcB]) > 0:
                     expandedCalcB = expandExpression(
                         skilldescRow[calcB], skillsRow)
-                    descline["calb"] = replaceSynergies(replaceLookup(
-                        expandedCalcB, skillsRow, skilldescRow, missiles), skills)
+                    descline["calb"] = replaceLookup(
+                        expandedCalcB, skillsRow, skilldescRow)
                     if DEBUG:
                         descline["base_calcb"] = skilldescRow[calcB]
                         descline["expanded_calcb"] = expandedCalcB
@@ -187,9 +146,7 @@ def main():
     for row in skills:
         if isUsableRow(row):
             final_json.append(makeRow(row))
-    format_json = json.dumps(final_json, indent=4)
-    with open("skills_complete.json", "w") as f:
-        f.write(format_json)
+    saveData("skills_complete", final_json)
 
 
 if __name__ == "__main__":

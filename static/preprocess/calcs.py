@@ -1,11 +1,19 @@
 import re
 
+from data import skills, skilldesc, missiles
+
 FRAMES_PER_SECOND = 25
 MISSILE_PREFIX = "_MISSILE_"
 MISSILE_SUFFIX = "_ENDMISSILE_"
 M1_PREFIX = f"{MISSILE_PREFIX}1_"
 M2_PREFIX = f"{MISSILE_PREFIX}2_"
 M3_PREFIX = f"{MISSILE_PREFIX}3_"
+
+EXPANDABLE_LOOKUP_VALUES = [
+    "EDmgSymPerCalc",
+    "DmgSymPerCalc",
+    "ELenSymPerCalc"
+]
 
 MISSILES_LOOKUP_VALUES = [
     "HitShift",
@@ -105,13 +113,17 @@ SKILLS_LOOKUP_VALUES = [
 ]
 
 
+def getRow(name, table, tableNameCol):
+    for row in table:
+        if row[tableNameCol] == name:
+            return row
+    return None
+
 def isEmptyCell(cell):
     return len(cell) == 0
 
-
 def parenthesize(formula):
     return "(" + formula + ")"
-
 
 def calcToHit(skillsRow):
     if len(skillsRow["ToHitCalc"]) > 0:
@@ -132,7 +144,7 @@ def calcPhysDmgMin(skillsRow):
 
     baseDamage = f"MinDam + ({minLevDam1}) + ({minLevDam2}) + ({minLevDam3}) + ({minLevDam4}) + ({minLevDam5})"
     skillDamage = f"({baseDamage}) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100"
-    return skillDamage
+    return parenthesize(skillDamage)
 
 
 def calcPhysDmgMax(skillsRow):
@@ -144,7 +156,7 @@ def calcPhysDmgMax(skillsRow):
 
     baseDamage = f"MaxDam + ({maxLevDam1}) + ({maxLevDam2}) + ({maxLevDam3}) + ({maxLevDam4}) + ({maxLevDam5})"
     skillDamage = f"({baseDamage}) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100"
-    return skillDamage
+    return parenthesize(skillDamage)
 
 
 def calcEDmgMin(skillsRow):
@@ -156,7 +168,7 @@ def calcEDmgMin(skillsRow):
 
     baseDamage = f"EMin + ({eMinLev1}) + ({eMinLev2}) + ({eMinLev3}) + ({eMinLev4}) + ({eMinLev5})"
     skillDamage = f"({baseDamage}) * (2 ** (HitShift - 8)) * (100 + EDmgSymPerCalc)/100"
-    return skillDamage
+    return parenthesize(skillDamage)
 
 
 def calcEDmgMax(skillsRow):
@@ -168,7 +180,7 @@ def calcEDmgMax(skillsRow):
 
     baseDamage = f"EMax + ({eMaxLev1}) + ({eMaxLev2}) + ({eMaxLev3}) + ({eMaxLev4}) + ({eMaxLev5})"
     skillDamage = f"({baseDamage}) * (2 ** (HitShift - 8)) * (100 + EDmgSymPerCalc)/100"
-    return skillDamage
+    return parenthesize(skillDamage)
 
 def getMastery(etype):
     if etype.lower() == "fire":
@@ -183,7 +195,7 @@ def calcEDmgMinMastery(skillsRow):
     mastery = getMastery(skillsRow["EType"])
     if not mastery:
         return dmgBeforeMastery
-    return parenthesize(dmgBeforeMastery) + f" * ((100 + {mastery})/100)"
+    return parenthesize(parenthesize(dmgBeforeMastery) + f" * ((100 + {mastery})/100)")
 
 
 def calcEDmgMaxMastery(skillsRow):
@@ -191,7 +203,7 @@ def calcEDmgMaxMastery(skillsRow):
     mastery = getMastery(skillsRow["EType"])
     if not mastery:
         return dmgBeforeMastery
-    return parenthesize(dmgBeforeMastery) + f" * ((100 + {mastery})/100)"
+    return parenthesize(parenthesize(dmgBeforeMastery) + f" * ((100 + {mastery})/100)")
 
 
 def calcEDmgLen(skillsRow):
@@ -201,7 +213,7 @@ def calcEDmgLen(skillsRow):
 
     baseLen = f"ELen + ({eLevLen1}) + ({eLevLen2}) + ({eLevLen3})"
     skillLen = f"({baseLen}) * (2 ** (HitShift - 8)) * (100 + ELenSymPerCalc)/100"
-    return skillLen
+    return parenthesize(skillLen)
 
 def calcMissileEMin(skillsRow, descmissile):
     missilePrefix = M1_PREFIX if descmissile == 1 else M2_PREFIX if descmissile == 2 else M3_PREFIX
@@ -213,7 +225,7 @@ def calcMissileEMin(skillsRow, descmissile):
 
     baseDamage = f"EMin + ({minELev1}) + ({minELev2}) + ({minELev3}) + ({minELev4}) + ({minELev5})"
     skillDamage = f"{missilePrefix}({baseDamage}) * (2 ** (HitShift - 8)) * (100 + EDmgSymPerCalc)/100{MISSILE_SUFFIX}"
-    return skillDamage
+    return parenthesize(skillDamage)
 
 def calcMissileEMax(skillsRow, descmissile):
     missilePrefix = M1_PREFIX if descmissile == 1 else M2_PREFIX if descmissile == 2 else M3_PREFIX
@@ -225,7 +237,7 @@ def calcMissileEMax(skillsRow, descmissile):
 
     baseDamage = f"EMax + ({maxELev1}) + ({maxELev2}) + ({maxELev3}) + ({maxELev4}) + ({maxELev5})"
     skillDamage = f"{missilePrefix}({baseDamage}) * (2 ** (HitShift - 8)) * (100 + EDmgSymPerCalc)/100{MISSILE_SUFFIX}"
-    return skillDamage
+    return parenthesize(skillDamage)
 
 def calcMael(skillsRow):
     return
@@ -460,85 +472,112 @@ expandDict = {
         "static": True,
         "value":"dm78"
     },
-    # "mael": {
-    #     "static": False,
-    #     "value": ge
-    # }
+    "edns":  {
+        "static": True,
+        "value": "edmn"
+    },
+    "edxs": {
+        "static": True,
+        "value": "edmx"
+    },
+    "rang": {
+        "static": True,
+        "value": f"((Range + lvl * LevRange) / {FRAMES_PER_SECOND})"
+    }
+    
     
 }
 
 expandKeys = expandDict.keys()
 
 def expandExpression(expression, skillsRow):
+    
     canExpand = True
     while canExpand:
         canExpand = False
         for key in expandKeys:
             if key in expression:
                 if expandDict[key]["static"]:
-                     expression = expression.replace(key, parenthesize(expandDict[key]["value"]))
+                     expression = expression.replace(key, expandDict[key]["value"])
                 else:
                     if "arg" in expandDict[key]:   
-                        expression = expression.replace(key, parenthesize(expandDict[key]["value"](skillsRow, expandDict[key]["arg"])))
+                        expression = expression.replace(key, expandDict[key]["value"](skillsRow, expandDict[key]["arg"]))
                     else:
-                        expression = expression.replace(key, parenthesize(expandDict[key]["value"](skillsRow)))
+                        expression = expression.replace(key, expandDict[key]["value"](skillsRow))
+                canExpand = True
+        for key in EXPANDABLE_LOOKUP_VALUES:
+            if key in expression:
+                ## also replace expressions that need to be expanded (e.g synergies)
+                expression = replaceLookupExpression(expression, EXPANDABLE_LOOKUP_VALUES, skillsRow)
                 canExpand = True
     expression = expression.replace("@", "")
     return expression
 
 
-def skillIdFromName(skillName, skills):
+def skillIdFromName(skillName):
     for row in skills:
         if row["skill"] == skillName:
             return int(row["*Id"]) 
     return -1
 
-def replaceSynergies(expression, skills):
-    def extractName(syn):
-        startIndex = syn.index("'") + 1
-        endIndex = syn[startIndex:].index("'")
-        return syn[startIndex:startIndex+endIndex]
-    blvlSynergies = re.findall(r"skill\('.*?'\.blvl\)", expression)
-    for synergy in blvlSynergies:
-        newSynergy = "blvl(" + str(skillIdFromName(extractName(synergy), skills)) + ")"
-        expression = expression.replace(synergy, newSynergy)
-    blvlSynergies = re.findall(r"skill\('.*?'\.lvl\)", expression)
-    for synergy in blvlSynergies:
-        newSynergy = "slvl(" + str(skillIdFromName(extractName(synergy), skills)) + ")"
-        expression = expression.replace(synergy, newSynergy)
+def replaceLookupSynergies(expression):
+    extractedSynergies = re.findall(r"skill\('.*?'\..*?\)", expression)
+    for synergy in extractedSynergies:
+        nameStartIndex = synergy.index("'") + 1
+        nameEndIndex = nameStartIndex + synergy[nameStartIndex:].index("'")
+        synergyName = synergy[nameStartIndex:nameEndIndex]
+        synergyId = skillIdFromName(synergyName)
+        replacedSynergy = synergy[nameEndIndex+2:-1] ## turn skill('Golem Mastery'.ln56) into ln56
+        replacedSynergy = replaceLookupExpression(replacedSynergy, SKILLS_LOOKUP_VALUES, skills[synergyId])
+        if replacedSynergy == "lvl":
+            replacedSynergy = f"slvl({synergyId})"
+        elif replacedSynergy == "blvl":
+            replacedSynergy = f"blvl({synergyId})"
+        expression = expression.replace(synergy, replacedSynergy)
+    ## Ex Edmgsympercalc = (skill('Lightning Strike'.blvl)+skill('Lightning Bolt'.blvl)+skill('Charged Strike'.blvl)) * par8
     return expression
-        
 
-def getMissilesRow(missiles, name):
-    return [row for row in missiles if row["Missile"] == name][0]
+def replaceLookupSpecificMissile(expression):
+    """ Replace expressions of type miss('skill'.rang) with values from missiles.txt"""
+    
+    return
+        
 
 def replaceLookupExpression(expression, lookupValues, fromRow):
     for lookupExp in lookupValues:
         if lookupExp in expression:
-            expression = expression.replace(lookupExp, fromRow[lookupExp])
+            if lookupExp in EXPANDABLE_LOOKUP_VALUES:
+                expression = expression.replace(lookupExp, expandExpression(fromRow[lookupExp], fromRow))
+            else:
+                expression = expression.replace(lookupExp, fromRow[lookupExp])
     return expression
 
-def replaceLookupMissile(expression, skilldescRow, missiles):
+
+
+def replaceLookupMissile(expression, skilldescRow):
+    """ Replace missiles from descmissile1/2/3 """
     missilesRow = {}
     if M3_PREFIX in expression:
-        missilesRow = getMissilesRow(missiles, skilldescRow["descmissile3"])
+        missilesRow = getRow(skilldescRow["descmissile3"], missiles, "Missile")
         expression = expression.replace(M3_PREFIX, "")
     elif M2_PREFIX in expression:
-        missilesRow = getMissilesRow(missiles, skilldescRow["descmissile2"])
+        missilesRow = getRow(skilldescRow["descmissile2"], missiles, "Missile")
         expression = expression.replace(M2_PREFIX, "")
     else:
-        missilesRow = getMissilesRow(missiles, skilldescRow["descmissile1"])
+        missilesRow = getRow(skilldescRow["descmissile1"], missiles, "Missile")
         expression = expression.replace(M1_PREFIX, "")
     expression = replaceLookupExpression(expression, MISSILES_LOOKUP_VALUES, missilesRow)
     expression = expression.replace(MISSILE_SUFFIX, "")
     return expression
 
-def replaceLookup(expression, skillsRow, skilldescRow, missiles):
+def replaceLookup(expression, skillsRow, skilldescRow):
+    ## replace synergies
+    expression = replaceLookupSynergies(expression)
     ## Replace missile expressions first
     while MISSILE_PREFIX in expression:
         startMissileIndex = expression.index(MISSILE_PREFIX)
         endMissileIndex = expression.index(MISSILE_SUFFIX) + len(MISSILE_SUFFIX)
-        expression = expression[0:startMissileIndex] + replaceLookupMissile(expression[startMissileIndex:endMissileIndex], skilldescRow, missiles) + expression[endMissileIndex::]
+        expression = expression[0:startMissileIndex] + replaceLookupMissile(expression[startMissileIndex:endMissileIndex], skilldescRow) + expression[endMissileIndex::]
         
     expression = replaceLookupExpression(expression, SKILLS_LOOKUP_VALUES, skillsRow)
     return expression
