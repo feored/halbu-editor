@@ -12,7 +12,14 @@ M3_PREFIX = f"{MISSILE_PREFIX}3_"
 EXPANDABLE_LOOKUP_VALUES = [
     "EDmgSymPerCalc",
     "DmgSymPerCalc",
-    "ELenSymPerCalc"
+    "ELenSymPerCalc",
+    "calc1",
+    "calc2",
+    "calc3",
+    "calc4",
+    "calc5",
+    "calc6",
+    "auralencalc"
 ]
 
 MISSILES_LOOKUP_VALUES = [
@@ -197,7 +204,7 @@ def calcEDmgMinMastery(skillsRow):
     mastery = getMastery(skillsRow["EType"])
     if not mastery:
         return dmgBeforeMastery
-    return parenthesize(parenthesize(dmgBeforeMastery) + f" * ((100 + {mastery})/100)")
+    return parenthesize(dmgBeforeMastery + f" * ((100 + {mastery})/100)")
 
 
 def calcEDmgMaxMastery(skillsRow):
@@ -205,8 +212,14 @@ def calcEDmgMaxMastery(skillsRow):
     mastery = getMastery(skillsRow["EType"])
     if not mastery:
         return dmgBeforeMastery
-    return parenthesize(parenthesize(dmgBeforeMastery) + f" * ((100 + {mastery})/100)")
+    return parenthesize(dmgBeforeMastery + f" * ((100 + {mastery})/100)")
 
+def calcEDmgMinGen(skillsRow, expression):
+    if "miss(" in expression:
+        ## it's a missile
+        return calcMissileEMin(skillsRow)
+    else:
+        return calcEDmgMin(skillsRow)
 
 def calcEDmgLen(skillsRow):
     eLevLen1 = "ELevLen1 * (min(lvl, 8) - 1)"
@@ -217,8 +230,7 @@ def calcEDmgLen(skillsRow):
     skillLen = f"({baseLen}) * (2 ** (HitShift - 8)) * (100 + ELenSymPerCalc)/100"
     return parenthesize(skillLen)
 
-def calcMissileEMin(skillsRow, descmissile):
-    missilePrefix = M1_PREFIX if descmissile == 1 else M2_PREFIX if descmissile == 2 else M3_PREFIX
+def calcMissileEMin(skillsRow):
     minELev1 = f"MinELev1 * (min(lvl, 8) - 1)"
     minELev2 = f"MinELev2 * (max(min(lvl, 16) - 8, 0))"
     minELev3 = f"MinELev3 * (max(min(lvl, 22) - 16, 0))"
@@ -226,11 +238,10 @@ def calcMissileEMin(skillsRow, descmissile):
     minELev5 = f"MinELev5 * (max(lvl - 28, 0))"
 
     baseDamage = f"EMin + ({minELev1}) + ({minELev2}) + ({minELev3}) + ({minELev4}) + ({minELev5})"
-    skillDamage = f"{missilePrefix}({baseDamage}) * (2 ** (HitShift - 8)) * (100 + EDmgSymPerCalc)/100{MISSILE_SUFFIX}"
+    skillDamage = f"({baseDamage}) * (2 ** (HitShift - 8)) * (100 + EDmgSymPerCalc)/100"
     return parenthesize(skillDamage)
 
-def calcMissileEMax(skillsRow, descmissile):
-    missilePrefix = M1_PREFIX if descmissile == 1 else M2_PREFIX if descmissile == 2 else M3_PREFIX
+def calcMissileEMax(skillsRow):
     maxELev1 = f"MaxELev1 * (min(lvl, 8) - 1)"
     maxELev2 = f"MaxELev2 * (max(min(lvl, 16) - 8, 0))"
     maxELev3 = f"MaxELev3 * (max(min(lvl, 22) - 16, 0))"
@@ -238,14 +249,44 @@ def calcMissileEMax(skillsRow, descmissile):
     maxELev5 = f"MaxELev5 * (max(lvl - 28, 0))"
 
     baseDamage = f"EMax + ({maxELev1}) + ({maxELev2}) + ({maxELev3}) + ({maxELev4}) + ({maxELev5})"
-    skillDamage = f"{missilePrefix}({baseDamage}) * (2 ** (HitShift - 8)) * (100 + EDmgSymPerCalc)/100{MISSILE_SUFFIX}"
+    skillDamage = f"({baseDamage}) * (2 ** (HitShift - 8)) * (100 + EDmgSymPerCalc)/100"
     return parenthesize(skillDamage)
 
-def calcMael(skillsRow):
-    return
+def calcDescMissileEMin(skillsRow, descmissile):
+    missilePrefix = M1_PREFIX if descmissile == 1 else M2_PREFIX if descmissile == 2 else M3_PREFIX
+    damage = calcMissileEMin(skillsRow)
+    return parenthesize(f"{missilePrefix}{damage}{MISSILE_SUFFIX}")
 
-def calcRange(skillsRow):
-    return
+def calcDescMissileEMax(skillsRow, descmissile):
+    missilePrefix = M1_PREFIX if descmissile == 1 else M2_PREFIX if descmissile == 2 else M3_PREFIX
+    damage = calcMissileEMax(skillsRow)
+    return parenthesize(f"{missilePrefix}{damage}{MISSILE_SUFFIX}")
+
+def calcEDNS(skillsRow):
+    return parenthesize(calcMissileEMin(skillsRow) + " * 256")
+
+def calcEDXS(skillsRow):
+    return parenthesize(calcMissileEMax(skillsRow) + " * 256")
+
+def linear(skillsRow, whichLn):
+    a, b = "", ""
+    match whichLn:
+        case 12:
+            a = "par1"
+            b = "par2"
+        case 34:
+            a = "par3"
+            b = "par4"
+        case 56:
+            a = "par5"
+            b = "par6"
+        case 78:
+            a = "par7"
+            b = "par8"
+        case 91:
+            a = "par9"
+            b = "par10"
+    return parenthesize(f"{a} + (lvl - 1) * {b}")
 
 def diminishing(skillsRow, whichDm):
     a, b = "", ""
@@ -265,7 +306,7 @@ def diminishing(skillsRow, whichDm):
         case 91:
             a = "par9"
             b = "par10"
-    return f"floor(floor((110 * lvl) / (lvl + 6)) * (({b} - {a}) / 100)) + {a}"
+    return parenthesize(f"floor(floor((110 * lvl) / (lvl + 6)) * (({b} - {a}) / 100)) + {a}")
 
 expandDict = {
     "par10": {
@@ -341,8 +382,9 @@ expandDict = {
         "value": "calc6"
     },
     "ln12": {
-        "static": True,
-        "value": "par1 + (lvl - 1) * par2"
+        "static": False,
+        "value": linear,
+        "arg": 12
     },
     "dm12": {
         "static": False,
@@ -350,8 +392,9 @@ expandDict = {
         "arg": 12
     },
     "ln34": {
-        "static": True,
-        "value": "par3 + (lvl - 1) * par4"
+        "static": False,
+        "value": linear,
+        "arg": 34
     },
     "dm34": {
         "static": False,
@@ -359,8 +402,9 @@ expandDict = {
         "arg": 34
     },
     "ln56": {
-        "static": True,
-        "value": "par5 + (lvl - 1) * par6"
+        "static": False,
+        "value": linear,
+        "arg": 56
     },
     "dm56": {
         "static": False,
@@ -368,8 +412,9 @@ expandDict = {
         "arg": 56
     },
     "ln78": {
-        "static": True,
-        "value": "par7 + (lvl - 1) * par8"
+        "static": False,
+        "value": linear,
+        "arg": 78
     },
     "dm78": {
         "static": False,
@@ -424,32 +469,32 @@ expandDict = {
     },
     "m1en":{
         "static": False,
-        "value": calcMissileEMin,
+        "value": calcDescMissileEMin,
         "arg" : 1
     },
     "m1ex": {
         "static": False,
-        "value": calcMissileEMax,
+        "value": calcDescMissileEMax,
         "arg" : 1
     },
     "m2en":{
         "static": False,
-        "value": calcMissileEMin,
+        "value": calcDescMissileEMin,
         "arg" : 2
     },
     "m2ex": {
         "static": False,
-        "value": calcMissileEMax,
+        "value": calcDescMissileEMax,
         "arg" : 2
     },
     "m3en":{
         "static": False,
-        "value": calcMissileEMin,
+        "value": calcDescMissileEMin,
         "arg" : 3
     },
     "m3ex": {
         "static": False,
-        "value": calcMissileEMax,
+        "value": calcDescMissileEMax,
         "arg" : 3
     },
     ## Use @ symbol to avoid looping over len -> auralencalc -> auraauralencalccalc -> ...
@@ -479,53 +524,84 @@ expandDict = {
     },
     "edns":  {
         "static": True,
-        "value": "edmn"
+        "value": "(edmn * 256)"
     },
     "edxs": {
         "static": True,
-        "value": "edmx"
+        "value": "(edmx * 256)"
     },
     "rang": {
         "static": True,
         "value": f"((Range + lvl * LevRange) / {FRAMES_PER_SECOND})"
     },
+    "mael": {
+        "static": True,
+        "value": f"{M1_PREFIX}ma@el{MISSILE_SUFFIX}"
+    },
+    "m1rn": {
+        "static": True,
+        "value": f"{M1_PREFIX}rang{MISSILE_SUFFIX}"
+    },
+    "m2rn": {
+        "static": True,
+        "value": f"{M2_PREFIX}rang{MISSILE_SUFFIX}"
+    },
+    "m3rn": {
+        "static": True,
+        "value": f"{M3_PREFIX}rang{MISSILE_SUFFIX}"
+    },
     "m1eo": {
         "static": True,
-        "value": "m1en / 256"
+        "value": "(m1en * 256)"
     },
     "m1ey": {
         "static": True,
-        "value": "m1ex / 256"
+        "value": "(m1ex * 256)"
     },
     "m2eo": {
         "static": True,
-        "value": "m2en / 256"
+        "value": "(m2en * 256)"
     },
     "m2ey": {
         "static": True,
-        "value": "m2ex / 256"
+        "value": "(m2ex * 256)"
     },
     "m3eo": { ## is actually described as me3o in skillcalc but no examples to go off so probably a typo
         "static": True,
-        "value": "m3en / 256"
+        "value": "(m3en * 256)"
     },
     "m3ey": { ## same as above
         "static": True,
-        "value": "m3ex / 256"
+        "value": "(m3ex * 256)"
     },
+    "enms" : {
+        "static": True,
+        "value": "(enma * 256)"
+    },
+    "exms": {
+        "static": True,
+        "value": "(exma * 256)"
+    },
+    ## custom values
+    "EDNS": {
+        "static": False,
+        "value": calcEDNS
+    },
+    "EDXS":{
+        "static": False,
+        "value": calcEDXS
+    },    
     "eruption center": {
         "static": True,
         "value": "erruption center" ## typo in game files...
     }
-    
-    
 }
 
 expandKeys = expandDict.keys()
 
 
 def expand(expression, skillsRow):
-    """ Exp"""
+    """ Expand expression and replace expressions skill() and miss()"""
     expression = replaceLookupSpecificMissile(expression, skillsRow)
     expression = expandExpression(expression, skillsRow)
     expression = replaceLookupSynergies(expression, skillsRow)
@@ -545,8 +621,14 @@ def expandExpression(expression, skillsRow):
                     else:
                         expression = expression.replace(key, expandDict[key]["value"](skillsRow))
                 canExpand = True
-    expression = replaceLookupExpression(expression, EXPANDABLE_LOOKUP_VALUES, skillsRow)
+        for key in EXPANDABLE_LOOKUP_VALUES:
+            if key in expression:
+                expression = replaceLookupExpression(expression, EXPANDABLE_LOOKUP_VALUES, skillsRow)
+                canExpand = True
     expression = expression.replace("@", "")
+    for key in EXPANDABLE_LOOKUP_VALUES:
+            if key in expression:
+                expression = replaceLookupExpression(expression, EXPANDABLE_LOOKUP_VALUES, skillsRow)
     return expression
 
 
@@ -591,10 +673,10 @@ def replaceLookupSpecificMissile(expression, skillsRow):
 def replaceLookupExpression(expression, lookupValues, fromRow):
     for lookupExp in lookupValues:
         if lookupExp in expression:
+            toReplace = fromRow[lookupExp]
             if lookupExp in EXPANDABLE_LOOKUP_VALUES:
-                expression = expression.replace(lookupExp, expandExpression(fromRow[lookupExp], fromRow))
+                expression = expression.replace(lookupExp, expandExpression("0" if toReplace == "" else toReplace, fromRow))
             else:
-                toReplace = fromRow[lookupExp]
                 expression = expression.replace(lookupExp, "0" if toReplace == "" else toReplace)
     return expression
 
@@ -617,9 +699,6 @@ def replaceLookupMissile(expression, skilldescRow):
     return expression
 
 def replaceLookup(expression, skillsRow, skilldescRow):
-    ## hack for mael since it's a dynamic value (mastery depending on EType),
-    ## but in practice is only used for missdesc1
-    expression = expression.replace("mael", f"{M1_PREFIX}mael{MISSILE_SUFFIX}")
     ## Replace descmissile missiles
     while MISSILE_PREFIX in expression:
         startMissileIndex = expression.index(MISSILE_PREFIX)

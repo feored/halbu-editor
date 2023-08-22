@@ -34,7 +34,7 @@
     font-size:medium;
     padding: 12px;
     text-align:center;
-    line-height: 1.4;
+    line-height: normal;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;
   }
 

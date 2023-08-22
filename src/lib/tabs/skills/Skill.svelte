@@ -2,12 +2,14 @@
     import { createEventDispatcher } from "svelte";
     import { Message, buildMessage } from "../../utils/Message.svelte";
     import { tooltip } from "../../utils/actions.js";
+    import { countOccurrences } from "../../utils/Utils.svelte";
 
     import "tippy.js/dist/tippy.css";
     import "tippy.js/animations/shift-toward.css";
 
+
     export let id;
-    export let skillInfo;
+    export let skillData;
     export let skillPoints;
     export let isClickable = false;
     export let charLevel;
@@ -32,43 +34,102 @@
         dispatchMessage(Message.SkillPointChange, { id: id, value: value });
     }
 
-    // Tooltip
-    let formattedDescription;
-    $: {
-        formattedDescription = skillInfo["description"]
-            .split("\n")
-            .reverse()
-            .join("\n");
-        formattedDescription =
-            formattedDescription.charAt(0).toUpperCase() +
-            formattedDescription.slice(1) + ".";
+    function blvl(x){
+        return 0;
     }
 
-    $: tooltipContent = `<div class='col flex-center tooltip'>
-                        <h4 id='skillTitle'>${skillInfo["name"]}</h4>
-                        <p class='descripton'>${formattedDescription}</p>
-                        <p id='levelreq' class='${
-                            charLevel < skillInfo["skilldata"]["reqlevel"]
-                                ? "error"
-                                : ""
-                        }'>Required Level: ${
-        skillInfo["skilldata"]["reqlevel"]
-    }</p>
-                        <p class='desc'>${
-                            skillPoints > 0
-                                ? "Current Skill Level: " +
-                                  skillPoints +
-                                  " (Base: " +
-                                  skillPoints +
-                                  ")"
-                                : "First Level"
-                        }</p> </div>`;
+    function slvl(x){
+        return 0;
+    }
 
-    console.log(charLevel < skillInfo["skilldata"]["reqlevel"] ? "error" : "");
+    function evalCalc(calc){
+
+        console.log("Evaluating " + calc);
+        let endCalc = calc;
+        let lvl = skillPoints;
+        let firemastery = 0;
+        let lightningmastery = 0;
+        endCalc = endCalc.replaceAll("floor", "Math.floor");
+        endCalc = endCalc.replaceAll("min", "Math.min");
+        endCalc = endCalc.replaceAll("max", "Math.max");
+        console.log("Evaluating2 " + endCalc);
+        return eval(endCalc);
+        //return endCalc
+    }
+
+    function replaceFirstNumber(line, number){
+        let signedIndex = line.indexOf("%+d");
+        let genIndex = line.indexOf("%d");
+        console.log("Signed index: " + signedIndex + ", Gen index " + genIndex);
+        if (signedIndex != -1 && (genIndex == -1 || signedIndex < genIndex))
+        {
+            line = line.replace("%+d", number.toString())
+        } else {
+            line = line.replace("%d", number.toString())
+        }
+        return line
+    }
+
+    function descLine(descLine){
+        let endLine = descLine['texta'];
+        let calcs = countOccurrences(descLine["texta"], "%d") + countOccurrences(descLine["texta"], "%+d")
+        console.log("Calcs: " + calcs);
+        if (calcs > 0) {
+            let calcA = evalCalc(descLine["calca"])
+            endLine = replaceFirstNumber(endLine, calcA);
+        }
+        if (calcs > 1) {
+            let calcB = evalCalc(descLine["calcb"])
+            endLine = replaceFirstNumber(endLine, calcB);
+        }
+
+        if (countOccurrences(descLine["texta"], "%s") > 0){
+            endLine = endLine.replace("%s", descLine["textb"])
+        }
+
+        endLine = endLine.replaceAll("%%", "%");
+        console.log(endLine);
+        return endLine
+        
+    }
+
+    // Tooltip
+    let formattedDescription =
+        skillData["description"].charAt(0).toUpperCase() +
+        skillData["description"].slice(1) +
+        ".";
+
+    $: tooltipContent = `
+    <div class='col flex-center'>
+        <h4 id='skillTitle'>${skillData["name"]}</h4>
+        <p class='descripton'>${formattedDescription}</p>
+        <p id='levelreq' class='${
+            charLevel < skillData["reqlevel"] ? "error" : ""
+        }'>
+            Required Level: ${skillData["reqlevel"]}
+        </p>
+        
+            ${skillData["dsc2lines"].map((line) => "<span class='desc'>" + descLine(line) + "</span></br>").join("\n")}
+        <p class='desc'>${
+            skillPoints > 0
+                ? "Current Skill Level: " +
+                    skillPoints +
+                    " (Base: " +
+                    skillPoints +
+                    ")"
+                : "First Level"
+        }
+        </p>
+            ${skillData["desclines"].map((line) => "<span class='desc'>" + descLine(line) + "</span></br>").join("\n")}
+            ${skillData["dsc3lines"].map((line) => "<span class='desc' style='color:green'>" + descLine(line) + "</span></br>").join("\n")}
+    </div>
+    `;
 </script>
 
+
+
 <div
-    style="grid-row: {skillInfo['row']}; grid-column: {skillInfo['col']};"
+    style="grid-row: {skillData['row']}; grid-column: {skillData['column']};"
     class={isClickable ? "" : "disabled"}
 >
     <div class="row">
@@ -85,7 +146,7 @@
             class={invested_style}
             on:click={handleClick}
             on:contextmenu|preventDefault={handleClick}
-            >{skillInfo["name"]}
+            >{skillData["name"]}
         </button>
         <input
             style="width:30px; height:30px; align-self:flex-end; padding:2px;"

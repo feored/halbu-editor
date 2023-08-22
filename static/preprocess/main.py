@@ -9,6 +9,23 @@ from calcs import expandExpression, replaceLookup, skillIdFromName, expand
 
 DEBUG = False
 
+typos = {
+    # dsc2calca2 infernosentry
+    "(ln34/2 + skill('Wake of Fire Sentry'.blvl)": "ln34/2 + skill('Wake of Fire Sentry'.blvl)",
+    # using edns for a missile, use custom EDNS value instead
+    "miss('royalstrikemeteorfire'.edns)*3*25*(mael+100)/100/256" : "miss('royalstrikemeteorfire'.EDNS)*3*25*(mael+100)/100/256",
+    # using edxs for a missile, use custom EDXS value instead
+    "miss('royalstrikemeteorfire'.edxs)*3*25*(mael+100)/100/256" : "miss('royalstrikemeteorfire'.EDXS)*3*25*(mael+100)/100/256"
+}
+
+
+def fixTypos(line):
+    if line in typos.keys():
+        return typos[line]
+    else:
+        return line
+
+
 def idToSkilldescId(id):
     """From skills.txt row number to skilldesc.txt row number"""
     if id <= 155:
@@ -85,7 +102,7 @@ def fillDescLines(skilldescRow, skillsRow, finalRow):
             descLineText = headers[linenum] + "line" + str(i)
             if len(skilldescRow[descLineText]) > 0:
                 descline = {}
-                descline["id"] = skilldescRow[descLineText]
+                descline["id"] = int(skilldescRow[descLineText])
                 textA = headers[linenum] + "texta" + str(i)
                 if len(skilldescRow[textA]) > 0:
                     descline["texta"] = strings[skilldescRow[textA]]
@@ -94,31 +111,33 @@ def fillDescLines(skilldescRow, skillsRow, finalRow):
                     descline["textb"] = strings[skilldescRow[textB]]
                 calcA = headers[linenum] + "calca" + str(i)
                 if len(skilldescRow[calcA]) > 0:
+                    baseCalcA = fixTypos(skilldescRow[calcA])
                     expandedCalcA = expand(
-                        skilldescRow[calcA], skillsRow)
-                    descline["calca"] = replaceLookup(
+                        baseCalcA, skillsRow)
+                    descline["calca"]= replaceLookup(
                         expandedCalcA, skillsRow, skilldescRow)
                     if DEBUG:
-                        descline["base_calca"] = skilldescRow[calcA]
-                        descline["expanded_calca"] = expandedCalcA
-                calcB = headers[linenum] + "calcb" + str(i)
+                        descline["base_calca"]=skilldescRow[calcA]
+                        descline["expanded_calca"]=expandedCalcA
+                calcB=headers[linenum] + "calcb" + str(i)
                 if len(skilldescRow[calcB]) > 0:
-                    expandedCalcB = expand(
-                        skilldescRow[calcB], skillsRow)
-                    descline["calcb"] = replaceLookup(
+                    baseCalcB=fixTypos(skilldescRow[calcB])
+                    expandedCalcB=expand(
+                        baseCalcB, skillsRow)
+                    descline["calcb"]=replaceLookup(
                         expandedCalcB, skillsRow, skilldescRow)
                     if DEBUG:
-                        descline["base_calcb"] = skilldescRow[calcB]
-                        descline["expanded_calcb"] = expandedCalcB
+                        descline["base_calcb"]=skilldescRow[calcB]
+                        descline["expanded_calcb"]=expandedCalcB
                 finalRow[desc_name].append(descline)
 
 
 def makeRow(skillsRow):
-    finalRow = {}
-    id = int(skillsRow["*Id"])
-    finalRow["id"] = id
+    finalRow={}
+    id=int(skillsRow["*Id"])
+    finalRow["id"]=id
     fillBasicInfo(skillsRow, finalRow)
-    finalRow["saveId"] = id - CLASS_OFFSET[finalRow["class"]]
+    finalRow["saveId"]=id - CLASS_OFFSET[finalRow["class"]]
 
     # strings
     (finalRow["name"], finalRow["description"]
