@@ -4666,9 +4666,9 @@
             {
                 "id": 13,
                 "texta": "Life: %d",
-                "calca": "(100+(35 * (lvl - 1)))*(100+(20 + (lvl - 1 * 35)) + (blvl(85)*5))/100-100",
+                "calca": "(100+(35 * (lvl - 1)))*(100+(20 + (lvl - 1) * 20) + (blvl(85)*5))/100-100",
                 "base_calca": "(100+(par1 * (lvl - 1)))*(100+skill('Golem Mastery'.ln12) + (skill('BloodGolem'.blvl)*skill('BloodGolem'.par8)))/100-100",
-                "expanded_calca": "(100+(Param1 * (lvl - 1)))*(100+(20 + (lvl - 1 * Param2)) + (blvl(85)*5))/100-100"
+                "expanded_calca": "(100+(Param1 * (lvl - 1)))*(100+(20 + (lvl - 1) * 20) + (blvl(85)*5))/100-100"
             }
         ],
         "dsc2lines": [
@@ -4682,9 +4682,9 @@
             {
                 "id": 74,
                 "texta": "Attack Rating: %d",
-                "calca": "40 + (25 + (lvl - 1 * 0)) + (lvl*20)",
+                "calca": "40 + (25 + (lvl - 1) * 25) + (lvl*20)",
                 "base_calca": "40 + skill('Golem Mastery'.ln56) + (lvl*par8)",
-                "expanded_calca": "40 + (25 + (lvl - 1 * Param6)) + (lvl*Param8)"
+                "expanded_calca": "40 + (25 + (lvl - 1) * 25) + (lvl*Param8)"
             }
         ],
         "dsc3lines": [
@@ -5332,9 +5332,9 @@
             {
                 "id": 13,
                 "texta": "Life: %d",
-                "calca": "(100 + (20 * (lvl - 1)))*(100 + (20 + (lvl - 1 * 150)))/100 - 100",
+                "calca": "(100 + (20 * (lvl - 1)))*(100 + (20 + (lvl - 1) * 20))/100 - 100",
                 "base_calca": "(100 + (par7 * (lvl - 1)))*(100 + skill('Golem Mastery'.ln12))/100 - 100",
-                "expanded_calca": "(100 + (Param7 * (lvl - 1)))*(100 + (20 + (lvl - 1 * Param2)))/100 - 100"
+                "expanded_calca": "(100 + (Param7 * (lvl - 1)))*(100 + (20 + (lvl - 1) * 20))/100 - 100"
             }
         ],
         "dsc2lines": [
@@ -5348,9 +5348,9 @@
             {
                 "id": 74,
                 "texta": "Attack Rating: %d",
-                "calca": "60 + (25 + (lvl - 1 * 25))+blvl(75)*20",
+                "calca": "60 + (25 + (lvl - 1) * 25)+blvl(75)*20",
                 "base_calca": "60 + skill('Golem Mastery'.ln56)+skill('Clay Golem'.blvl)*skill('Clay Golem'.par8)",
-                "expanded_calca": "60 + (25 + (lvl - 1 * Param6))+blvl(75)*20"
+                "expanded_calca": "60 + (25 + (lvl - 1) * 25)+blvl(75)*20"
             }
         ],
         "dsc3lines": [
@@ -5687,16 +5687,16 @@
             {
                 "id": 74,
                 "texta": "Attack Rating: %d",
-                "calca": "80 + (25 + (lvl - 1 * 0))+blvl(75)*20",
+                "calca": "80 + (25 + (lvl - 1) * 25)+blvl(75)*20",
                 "base_calca": "80 + skill('Golem Mastery'.ln56)+skill('Clay Golem'.blvl)*skill('Clay Golem'.par8)",
-                "expanded_calca": "80 + (25 + (lvl - 1 * Param6))+blvl(75)*20"
+                "expanded_calca": "80 + (25 + (lvl - 1) * 25)+blvl(75)*20"
             },
             {
                 "id": 13,
                 "texta": "Life: %d",
-                "calca": "(20 + (lvl - 1 * 0)) + (blvl(85)*5)",
+                "calca": "(20 + (lvl - 1) * 20) + (blvl(85)*5)",
                 "base_calca": "skill('Golem Mastery'.ln12) + (skill('BloodGolem'.blvl)*skill('BloodGolem'.par8))",
-                "expanded_calca": "(20 + (lvl - 1 * Param2)) + (blvl(85)*5)"
+                "expanded_calca": "(20 + (lvl - 1) * 20) + (blvl(85)*5)"
             }
         ],
         "dsc3lines": [
@@ -6022,16 +6022,16 @@
             {
                 "id": 74,
                 "texta": "Attack Rating: %d",
-                "calca": "120 + (25 + (lvl - 1 * 1))+blvl(75)*20",
+                "calca": "120 + (25 + (lvl - 1) * 25)+blvl(75)*20",
                 "base_calca": "120 + skill('Golem Mastery'.ln56)+skill('Clay Golem'.blvl)*skill('Clay Golem'.par8)",
-                "expanded_calca": "120 + (25 + (lvl - 1 * Param6))+blvl(75)*20"
+                "expanded_calca": "120 + (25 + (lvl - 1) * 25)+blvl(75)*20"
             },
             {
                 "id": 13,
                 "texta": "Life: %d",
-                "calca": "(20 + (lvl - 1 * 100)) + (blvl(85)*5)",
+                "calca": "(20 + (lvl - 1) * 20) + (blvl(85)*5)",
                 "base_calca": "skill('Golem Mastery'.ln12) + (skill('BloodGolem'.blvl)*skill('BloodGolem'.par8))",
-                "expanded_calca": "(20 + (lvl - 1 * Param2)) + (blvl(85)*5)"
+                "expanded_calca": "(20 + (lvl - 1) * 20) + (blvl(85)*5)"
             }
         ],
         "dsc3lines": [
@@ -6906,9 +6906,9 @@
                 "id": 76,
                 "texta": "%s: %+d Life Healed Every 2 Seconds",
                 "textb": "Prayer",
-                "calca": "((2 + (1 * (min(lvl, 8 - 1)) + (0 * (max(min(lvl, 16) - 8, 0))) + (0 * (max(min(lvl, 22) - 16, 0))) + (0 * (max(min(lvl, 28) - 22, 0))) + (0 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + 0)/100))",
+                "calca": "((2 + (1 * (min(lvl, 8) - 1)) + (1 * (max(min(lvl, 16) - 8, 0))) + (2 * (max(min(lvl, 22) - 16, 0))) + (2 * (max(min(lvl, 28) - 22, 0))) + (3 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + 0)/100)",
                 "base_calca": "skill('Prayer'.edmn)",
-                "expanded_calca": "((2 + (1 * (min(lvl, 8 - 1)) + (EMinLev2 * (max(min(lvl, 16) - 8, 0))) + (EMinLev3 * (max(min(lvl, 22) - 16, 0))) + (EMinLev4 * (max(min(lvl, 28) - 22, 0))) + (EMinLev5 * (max(lvl - 28, 0)))) * (2 ** (HitShift - 8)) * (100 + 0)/100))"
+                "expanded_calca": "((2 + (1 * (min(lvl, 8) - 1)) + (1 * (max(min(lvl, 16) - 8, 0))) + (2 * (max(min(lvl, 22) - 16, 0))) + (2 * (max(min(lvl, 28) - 22, 0))) + (3 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + 0)/100)"
             }
         ],
         "dsc3lines": [
@@ -7664,9 +7664,9 @@
                 "id": 76,
                 "texta": "%s: %+d Life Healed Every 2 Seconds",
                 "textb": "Prayer",
-                "calca": "((2 + (1 * (min(lvl, 8 - 1)) + (0 * (max(min(lvl, 16) - 8, 0))) + (0 * (max(min(lvl, 22) - 16, 0))) + (0 * (max(min(lvl, 28) - 22, 0))) + (0 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + 0)/100))",
+                "calca": "((2 + (1 * (min(lvl, 8) - 1)) + (1 * (max(min(lvl, 16) - 8, 0))) + (2 * (max(min(lvl, 22) - 16, 0))) + (2 * (max(min(lvl, 28) - 22, 0))) + (3 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + 0)/100)",
                 "base_calca": "skill('Prayer'.edmn)",
-                "expanded_calca": "((2 + (1 * (min(lvl, 8 - 1)) + (EMinLev2 * (max(min(lvl, 16) - 8, 0))) + (EMinLev3 * (max(min(lvl, 22) - 16, 0))) + (EMinLev4 * (max(min(lvl, 28) - 22, 0))) + (EMinLev5 * (max(lvl - 28, 0)))) * (2 ** (HitShift - 8)) * (100 + 0)/100))"
+                "expanded_calca": "((2 + (1 * (min(lvl, 8) - 1)) + (1 * (max(min(lvl, 16) - 8, 0))) + (2 * (max(min(lvl, 22) - 16, 0))) + (2 * (max(min(lvl, 28) - 22, 0))) + (3 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + 0)/100)"
             }
         ],
         "dsc3lines": [
@@ -9971,9 +9971,9 @@
                 "id": 36,
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
-                "calca": "1000+(30 + (lvl - 1 * 25))",
+                "calca": "1000+(30 + (lvl - 1) * 40)",
                 "base_calca": "1000+skill('shape shifting'.ln12)",
-                "expanded_calca": "1000+(30 + (lvl - 1 * Param2))",
+                "expanded_calca": "1000+(30 + (lvl - 1) * 40)",
                 "calcb": "25",
                 "base_calcb": "25",
                 "expanded_calcb": "25"
@@ -9988,9 +9988,9 @@
             {
                 "id": 74,
                 "texta": "Max Life: %+d%%",
-                "calca": "25+(0 + (lvl - 1 * 80))",
+                "calca": "25+(0 + (lvl - 1) * 0)",
                 "base_calca": "par2+skill('shape shifting'.ln34)",
-                "expanded_calca": "Param2+(0 + (lvl - 1 * Param4))"
+                "expanded_calca": "Param2+(0 + (lvl - 1) * 0)"
             }
         ],
         "dsc3lines": [
@@ -10209,12 +10209,12 @@
             {
                 "id": 75,
                 "texta": "Cold Damage: %d-%d",
-                "calca": "((2 + (1 * (min(lvl, 8) - 1)) + (3 * (max(min(lvl, 16) - 8, 0))) + (4 * (max(min(lvl, 22) - 16, 0))) + (5 * (max(min(lvl, 28) - 22, 0))) + (8 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + (25 + (lvl - 1 * 25)))/100)",
+                "calca": "((2 + (1 * (min(lvl, 8) - 1)) + (3 * (max(min(lvl, 16) - 8, 0))) + (4 * (max(min(lvl, 22) - 16, 0))) + (5 * (max(min(lvl, 28) - 22, 0))) + (8 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + (25 + (lvl - 1) * 10))/100)",
                 "base_calca": "enma",
-                "expanded_calca": "((EMin + (EMinLev1 * (min(lvl, 8) - 1)) + (EMinLev2 * (max(min(lvl, 16) - 8, 0))) + (EMinLev3 * (max(min(lvl, 22) - 16, 0))) + (EMinLev4 * (max(min(lvl, 28) - 22, 0))) + (EMinLev5 * (max(lvl - 28, 0)))) * (2 ** (HitShift - 8)) * (100 + (25 + (lvl - 1 * Param2)))/100)",
-                "calcb": "((6 + (1 * (min(lvl, 8) - 1)) + (3 * (max(min(lvl, 16) - 8, 0))) + (4 * (max(min(lvl, 22) - 16, 0))) + (5 * (max(min(lvl, 28) - 22, 0))) + (8 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + (25 + (lvl - 1 * 25)))/100)",
+                "expanded_calca": "((EMin + (EMinLev1 * (min(lvl, 8) - 1)) + (EMinLev2 * (max(min(lvl, 16) - 8, 0))) + (EMinLev3 * (max(min(lvl, 22) - 16, 0))) + (EMinLev4 * (max(min(lvl, 28) - 22, 0))) + (EMinLev5 * (max(lvl - 28, 0)))) * (2 ** (HitShift - 8)) * (100 + (25 + (lvl - 1) * 10))/100)",
+                "calcb": "((6 + (1 * (min(lvl, 8) - 1)) + (3 * (max(min(lvl, 16) - 8, 0))) + (4 * (max(min(lvl, 22) - 16, 0))) + (5 * (max(min(lvl, 28) - 22, 0))) + (8 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + (25 + (lvl - 1) * 10))/100)",
                 "base_calcb": "exma",
-                "expanded_calcb": "((EMax + (EMaxLev1 * (min(lvl, 8) - 1)) + (EMaxLev2 * (max(min(lvl, 16) - 8, 0))) + (EMaxLev3 * (max(min(lvl, 22) - 16, 0))) + (EMaxLev4 * (max(min(lvl, 28) - 22, 0))) + (EMaxLev5 * (max(lvl - 28, 0)))) * (2 ** (HitShift - 8)) * (100 + (25 + (lvl - 1 * Param2)))/100)"
+                "expanded_calcb": "((EMax + (EMaxLev1 * (min(lvl, 8) - 1)) + (EMaxLev2 * (max(min(lvl, 16) - 8, 0))) + (EMaxLev3 * (max(min(lvl, 22) - 16, 0))) + (EMaxLev4 * (max(min(lvl, 28) - 22, 0))) + (EMaxLev5 * (max(lvl - 28, 0)))) * (2 ** (HitShift - 8)) * (100 + (25 + (lvl - 1) * 10))/100)"
             },
             {
                 "id": 13,
@@ -10317,9 +10317,9 @@
                 "id": 36,
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
-                "calca": "1000+(30 + (lvl - 1 * 15))",
+                "calca": "1000+(30 + (lvl - 1) * 40)",
                 "base_calca": "1000+skill('shape shifting'.ln12)",
-                "expanded_calca": "1000+(30 + (lvl - 1 * Param2))",
+                "expanded_calca": "1000+(30 + (lvl - 1) * 40)",
                 "calcb": "25",
                 "base_calcb": "25",
                 "expanded_calcb": "25"
@@ -10327,9 +10327,9 @@
             {
                 "id": 74,
                 "texta": "Max Life: %+d%%",
-                "calca": "75 + (20 + (lvl - 1 * 10))",
+                "calca": "75 + (20 + (lvl - 1) * 5)",
                 "base_calca": "par5 + skill('Shape Shifting'.ln34)",
-                "expanded_calca": "Param5 + (20 + (lvl - 1 * Param4))"
+                "expanded_calca": "Param5 + (20 + (lvl - 1) * 5)"
             }
         ],
         "dsc3lines": [
@@ -10979,12 +10979,12 @@
             {
                 "id": 75,
                 "texta": "Damage: %d-%d",
-                "calca": "((7 + (2 * (min(lvl, 8) - 1)) + (4 * (max(min(lvl, 16) - 8, 0))) + (8 * (max(min(lvl, 22) - 16, 0))) + (10 * (max(min(lvl, 28) - 22, 0))) + (12 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + 0)/100)*(100+(25 + (lvl - 1 * 15)))/100",
+                "calca": "((7 + (2 * (min(lvl, 8) - 1)) + (4 * (max(min(lvl, 16) - 8, 0))) + (8 * (max(min(lvl, 22) - 16, 0))) + (10 * (max(min(lvl, 28) - 22, 0))) + (12 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + 0)/100)*(100+(25 + (lvl - 1) * 10))/100",
                 "base_calca": "pnma*(100+skill('Summon Grizzly'.ln12))/100",
-                "expanded_calca": "((MinDam + (MinLevDam1 * (min(lvl, 8) - 1)) + (MinLevDam2 * (max(min(lvl, 16) - 8, 0))) + (MinLevDam3 * (max(min(lvl, 22) - 16, 0))) + (MinLevDam4 * (max(min(lvl, 28) - 22, 0))) + (MinLevDam5 * (max(lvl - 28, 0)))) * (2 ** (HitShift - 8)) * (100 + 0)/100)*(100+(25 + (lvl - 1 * Param2)))/100",
-                "calcb": "((12 + (3 * (min(lvl, 8) - 1)) + (5 * (max(min(lvl, 16) - 8, 0))) + (9 * (max(min(lvl, 22) - 16, 0))) + (11 * (max(min(lvl, 28) - 22, 0))) + (13 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + 0)/100)*(100+(25 + (lvl - 1 * 15)))/100",
+                "expanded_calca": "((MinDam + (MinLevDam1 * (min(lvl, 8) - 1)) + (MinLevDam2 * (max(min(lvl, 16) - 8, 0))) + (MinLevDam3 * (max(min(lvl, 22) - 16, 0))) + (MinLevDam4 * (max(min(lvl, 28) - 22, 0))) + (MinLevDam5 * (max(lvl - 28, 0)))) * (2 ** (HitShift - 8)) * (100 + 0)/100)*(100+(25 + (lvl - 1) * 10))/100",
+                "calcb": "((12 + (3 * (min(lvl, 8) - 1)) + (5 * (max(min(lvl, 16) - 8, 0))) + (9 * (max(min(lvl, 22) - 16, 0))) + (11 * (max(min(lvl, 28) - 22, 0))) + (13 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + 0)/100)*(100+(25 + (lvl - 1) * 10))/100",
                 "base_calcb": "pxma*(100+skill('Summon Grizzly'.ln12))/100",
-                "expanded_calcb": "((MaxDam + (MaxLevDam1 * (min(lvl, 8) - 1)) + (MaxLevDam2 * (max(min(lvl, 16) - 8, 0))) + (MaxLevDam3 * (max(min(lvl, 22) - 16, 0))) + (MaxLevDam4 * (max(min(lvl, 28) - 22, 0))) + (MaxLevDam5 * (max(lvl - 28, 0)))) * (2 ** (HitShift - 8)) * (100 + 0)/100)*(100+(25 + (lvl - 1 * Param2)))/100"
+                "expanded_calcb": "((MaxDam + (MaxLevDam1 * (min(lvl, 8) - 1)) + (MaxLevDam2 * (max(min(lvl, 16) - 8, 0))) + (MaxLevDam3 * (max(min(lvl, 22) - 16, 0))) + (MaxLevDam4 * (max(min(lvl, 28) - 22, 0))) + (MaxLevDam5 * (max(lvl - 28, 0)))) * (2 ** (HitShift - 8)) * (100 + 0)/100)*(100+(25 + (lvl - 1) * 10))/100"
             },
             {
                 "id": 13,

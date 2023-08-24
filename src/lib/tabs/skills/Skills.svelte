@@ -3,6 +3,7 @@
     import Skill from "./Skill.svelte";
     import { Message } from "../../utils/Message.svelte";
     import { Rows } from "lucide-svelte";
+    import { skillIdToSaveId } from "../../utils/Utils.svelte";
     import allSkillsData from "../../../../static/skills_complete.json";
     import { onMount } from "svelte";
 
@@ -11,20 +12,6 @@
     const skillRows = 6;
     const skillCols = 3;
 
-    const skillOffset = {
-        "Amazon": 6,
-        "Sorceress": 36,
-        "Necromancer": 66,
-        "Paladin": 96,
-        "Barbarian": 126,
-        "Druid": 221,
-        "Assassin": 251
-    }
-
-    function skillIdToSaveId(id){
-        return id-skillOffset[save.character.class];
-    }
-
     let skillsData = allSkillsData.filter(
         (skillData) => skillData.class == save.character.class
     );
@@ -32,8 +19,8 @@
     let clickableSkills = new Array(30);
 
     onMount(() => {
-		updateClickableSkills();
-	});
+        updateClickableSkills();
+    });
 
     function isSkillClickable(id) {
         let skillData = skillsData.find((skill) => skill["id"] == id);
@@ -44,7 +31,7 @@
         // check prereqs
         let prereqsFulfilled = true;
         skillData["reqskills"].forEach((skillId) => {
-            let skillSaveId = skillIdToSaveId(skillId);
+            let skillSaveId = skillIdToSaveId(skillId, save.character.class);
             if (save.skills[skillSaveId].points < 1) {
                 prereqsFulfilled = false;
             }
@@ -52,21 +39,30 @@
         return prereqsFulfilled;
     }
 
-    function updateClickableSkills(){
-        clickableSkills = save.skills.map((skill) => isSkillClickable(skill.id));
+    function updateClickableSkills() {
+        clickableSkills = save.skills.map((skill) =>
+            isSkillClickable(skill.id)
+        );
     }
 
     updateClickableSkills();
 
-    function handleSkillChanges(event){
-        switch (event.detail.id){
+    function handleSkillChanges(event) {
+        console.log(event.detail);
+        switch (event.detail.id) {
             case Message.SkillPointChange:
-                let skillNum = skillIdToSaveId(event.detail.data.id);
-                if (event.detail.data["value"] > 0 && isSkillClickable(event.detail.data.id)){
+                let skillNum = skillIdToSaveId(event.detail.data.id, save.character.class);
+                if (
+                    event.detail.data["value"] > 0 &&
+                    isSkillClickable(event.detail.data.id)
+                ) {
                     save.skills[skillNum].points += event.detail.data.value;
                     save.attributes.newskills.value -= event.detail.data.value;
                     updateClickableSkills();
-                } else if (save.skills[skillNum].points > 0 && save.skills[skillNum].points >= event.detail.data.value){
+                } else if (
+                    save.skills[skillNum].points > 0 &&
+                    save.skills[skillNum].points >= event.detail.data.value
+                ) {
                     save.skills[skillNum].points += event.detail.data.value;
                     save.attributes.newskills.value -= event.detail.data.value;
                     updateClickableSkills();
@@ -74,20 +70,21 @@
                 //save.attributes.newskills.value += event.detail.data;
                 break;
             default:
-                console.error("Skills page received message that was not skill point change: " + event.detail.id.description);
+                console.error(
+                    "Skills page received message that was not skill point change: " +
+                        event.detail.id.description
+                );
                 break;
         }
     }
 
-
-    function refund(){
+    function refund() {
         save.skills.map((skill) => {
             save.attributes.newskills.value += skill.points;
             skill.points = 0;
         });
         save.skills = [...save.skills];
     }
-
 </script>
 
 <div id="skillTree">
@@ -102,9 +99,9 @@
                     <Skill
                         id={skill.id}
                         skillData={skill}
-                        skillPoints={save.skills[skill["saveId"]].points}
+                        skills={save.skills}
+                        character={save.character}
                         isClickable={clickableSkills[skill["saveId"]]}
-                        charLevel={save.attributes.level.value}
                         on:message={handleSkillChanges}
                     />
                 {/each}
@@ -119,9 +116,9 @@
                     <Skill
                         id={skill.id}
                         skillData={skill}
-                        skillPoints={save.skills[skill["saveId"]].points}
+                        skills={save.skills}
+                        character={save.character}
                         isClickable={clickableSkills[skill["saveId"]]}
-                        charLevel={save.attributes.level.value}
                         on:message={handleSkillChanges}
                     />
                 {/each}
@@ -136,9 +133,9 @@
                     <Skill
                         id={skill.id}
                         skillData={skill}
-                        skillPoints={save.skills[skill["saveId"]].points}
+                        skills={save.skills}
+                        character={save.character}
                         isClickable={clickableSkills[skill["saveId"]]}
-                        charLevel={save.attributes.level.value}
                         on:message={handleSkillChanges}
                     />
                 {/each}

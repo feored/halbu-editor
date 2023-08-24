@@ -3,24 +3,28 @@
     import { Message, buildMessage } from "../../utils/Message.svelte";
     import { tooltip } from "../../utils/actions.js";
     import { countOccurrences } from "../../utils/Utils.svelte";
+    import { skillIdToSaveId } from "../../utils/Utils.svelte";
+
 
     import "tippy.js/dist/tippy.css";
     import "tippy.js/animations/shift-toward.css";
+    import { save } from "@tauri-apps/api/dialog";
 
 
     export let id;
     export let skillData;
-    export let skillPoints;
     export let isClickable = false;
-    export let charLevel;
+    export let character;
+    export let skills;
 
-    let skillLevel = skillPoints;
+    const currentId = skillData["saveId"];
+
     const dispatch = createEventDispatcher();
     function dispatchMessage(id, data) {
         dispatch("message", buildMessage(id, data));
     }
 
-    $: invested_style = skillPoints > 0 ? "invested-points" : "no-points";
+    $: invested_style = skills[currentId].points > 0 ? "invested-points" : "no-points";
 
     function handleClick(event) {
         if (event.button == 0) {
@@ -34,27 +38,42 @@
         dispatchMessage(Message.SkillPointChange, { id: id, value: value });
     }
 
-    function blvl(x){
-        return 0;
+    function blvl(skillId){
+        return slvl(skillId);
     }
 
-    function slvl(x){
-        return 0;
+    function slvl(skillId){
+        let saveSkillId = skillIdToSaveId(skillId, character.class);
+        if (saveSkillId >= 0 && saveSkillId < 30){
+            return skills[saveSkillId].points;
+        } else {
+            return 0;
+        }
     }
 
     function evalCalc(calc){
-
-        console.log("Evaluating " + calc);
+        console.log("Evaluating: " + calc);
         let endCalc = calc;
-        let lvl = skillPoints;
+        let lvl = skills[currentId].points;
         let firemastery = 0;
         let lightningmastery = 0;
         endCalc = endCalc.replaceAll("floor", "Math.floor");
         endCalc = endCalc.replaceAll("min", "Math.min");
         endCalc = endCalc.replaceAll("max", "Math.max");
-        console.log("Evaluating2 " + endCalc);
+        console.log("Evaluated: " + endCalc + " = " + eval(endCalc));
         return eval(endCalc);
         //return endCalc
+    }
+
+    function descLine(descline){
+        // Only values used within the skilldesc.txt file are [36, 74, 75, 40, 76, 18, 13, 34, 31, 41, 77]
+        switch (descline["id"]){
+
+            case 36:
+            default:
+                return descLineGeneral(descline);
+                break;
+        }
     }
 
     function replaceFirstNumber(line, number){
@@ -63,17 +82,17 @@
         console.log("Signed index: " + signedIndex + ", Gen index " + genIndex);
         if (signedIndex != -1 && (genIndex == -1 || signedIndex < genIndex))
         {
-            line = line.replace("%+d", number.toString())
+            line = line.replace("%+d", (number < 0 ? "-" : "+") + number.toString())
         } else {
             line = line.replace("%d", number.toString())
         }
         return line
     }
 
-    function descLine(descLine){
+    function descLineGeneral(descLine){
         let endLine = descLine['texta'];
         let calcs = countOccurrences(descLine["texta"], "%d") + countOccurrences(descLine["texta"], "%+d")
-        console.log("Calcs: " + calcs);
+        console.log("Calcs in '''" + descLine['texta'] + "''': "  + calcs);
         if (calcs > 0) {
             let calcA = evalCalc(descLine["calca"])
             endLine = replaceFirstNumber(endLine, calcA);
@@ -104,23 +123,23 @@
         <h4 id='skillTitle'>${skillData["name"]}</h4>
         <p class='descripton'>${formattedDescription}</p>
         <p id='levelreq' class='${
-            charLevel < skillData["reqlevel"] ? "error" : ""
+            character.Level < skillData["reqlevel"] ? "error" : ""
         }'>
             Required Level: ${skillData["reqlevel"]}
         </p>
         
-            ${skillData["dsc2lines"].map((line) => "<span class='desc'>" + descLine(line) + "</span></br>").join("\n")}
+            ${skillData["dsc2lines"].map((line) => "<span class='desc'>" + descLine(line) + "</span></br>").reverse().join("\n")}
         <p class='desc'>${
-            skillPoints > 0
+            skills[currentId].points > 0
                 ? "Current Skill Level: " +
-                    skillPoints +
+                skills[currentId].points +
                     " (Base: " +
-                    skillPoints +
+                    skills[currentId].points +
                     ")"
                 : "First Level"
         }
         </p>
-            ${skillData["desclines"].map((line) => "<span class='desc'>" + descLine(line) + "</span></br>").join("\n")}
+            ${skillData["desclines"].map((line) => "<span class='desc'>" + descLine(line) + "</span></br>").reverse().join("\n")}
             ${skillData["dsc3lines"].map((line) => "<span class='desc' style='color:green'>" + descLine(line) + "</span></br>").join("\n")}
     </div>
     `;
@@ -155,7 +174,7 @@
             min="0"
             max="99"
             step="1"
-            bind:value={skillPoints}
+            bind:value={skills[currentId].points}
             readonly
         />
     </div>

@@ -91,7 +91,6 @@ def fillBasicInfo(skillsRow, finalRow):
         if len(prereq) > 0:
             finalRow["reqskills"].append(skillIdFromName(prereq))
 
-
 def fillDescLines(skilldescRow, skillsRow, finalRow):
     headers = ["desc", "dsc2", "dsc3"]
     maxLines = [7, 6, 8]

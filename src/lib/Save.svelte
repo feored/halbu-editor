@@ -30,16 +30,16 @@
     
 </script>
 
-<div class="row" style="align-self: flex-start">
-    <div class="col tabs" style="position: -webkit-sticky; position:sticky; top:20px;">
-        <button class="tab-btn icon-btn flex-center" on:click={()=> dispatchMessage(Message.CharacterUnpicked)}><ArrowLeftIcon />&nbsp;Back</button>
-        <button class="tab" class:selected={currentTab == TabID.Character} on:click={() => {currentTab = TabID.Character}}><UserSquare2Icon /><p>Character</p></button>
-        <button class="tab" class:selected={currentTab == TabID.Mercenary} on:click={() => {currentTab = TabID.Mercenary}}><PersonStandingIcon /><p>Mercenary</p></button>
-        <button class="tab" class:selected={currentTab == TabID.Skills} on:click={() => {currentTab = TabID.Skills}}><BookPlusIcon /><p>Skills</p></button>
-        <button class="tab" class:selected={currentTab == TabID.Waypoints} on:click={() => {currentTab = TabID.Waypoints}}><LocateIcon /><p>Waypoints</p></button>
-        <button class="tab" class:selected={currentTab == TabID.Quests} on:click={() => {currentTab = TabID.Quests}}><ScrollIcon /><p>Quests</p></button>
-        <button class="tab" class:selected={currentTab == TabID.Items} on:click={() => {currentTab = TabID.Items}}><SwordIcon /><p>Items</p></button>
-        <button class="tab-btn icon-btn flex-center" on:click={()=> dispatchMessage(Message.SaveFile)} disabled={!validSave}><SaveIcon />&nbsp;Save</button>
+<div class="row" style="align-self: flex-start; height:100%;">
+    <div class="col tabs" style="position: -webkit-sticky; position:sticky; top:0px;">
+        <button class="tab" on:click={()=> dispatchMessage(Message.CharacterUnpicked)}><ArrowLeftIcon /></button>
+        <button class="tab" class:selected={currentTab == TabID.Character} on:click={() => {currentTab = TabID.Character}}><PersonStandingIcon /></button>
+        <button class="tab" class:selected={currentTab == TabID.Mercenary} on:click={() => {currentTab = TabID.Mercenary}}><UserSquare2Icon /></button>
+        <button class="tab" class:selected={currentTab == TabID.Skills} on:click={() => {currentTab = TabID.Skills}}><BookPlusIcon /></button>
+        <button class="tab" class:selected={currentTab == TabID.Waypoints} on:click={() => {currentTab = TabID.Waypoints}}><LocateIcon /></button>
+        <button class="tab" class:selected={currentTab == TabID.Quests} on:click={() => {currentTab = TabID.Quests}}><ScrollIcon /></button>
+        <button class="tab" class:selected={currentTab == TabID.Items} on:click={() => {currentTab = TabID.Items}}><SwordIcon /></button>
+        <button class="tab" on:click={()=> dispatchMessage(Message.SaveFile)} disabled={!validSave}><SaveIcon /></button>
     </div>
     <div class="col" style="margin-left:20px;">
         {#if currentTab == TabID.Character}
@@ -56,26 +56,21 @@
 
 <style>
     .tabs {
-        justify-content: space-between;
+        justify-content:flex-start;
         align-items: center;
-        width : 140px;
         height:100%;
+        background-color: var(--background);
     }
 
     .tab {
-        flex:0 0 auto;
-        width:100%;
+        /* width:100%; */
+        display:flex;
+        flex-direction: row;
         align-items: center;
-    }
-    .tab-btn {
-        flex:0 0 auto;
-        width:100%;
-        text-align: center;
-        align-items: center;
-    }
-    .tab p {
+        justify-content:space-between;
         font-weight:lighter;
     }
+
     .selected{
         background-color: var(--button-hover);
         border: 1px var(--focus) solid;

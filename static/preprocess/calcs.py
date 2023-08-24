@@ -286,7 +286,7 @@ def linear(skillsRow, whichLn):
         case 91:
             a = "par9"
             b = "par10"
-    return parenthesize(f"{a} + (lvl - 1) * {b}")
+    return f"({a} + (lvl - 1) * {b})"
 
 def diminishing(skillsRow, whichDm):
     a, b = "", ""
@@ -639,7 +639,25 @@ def skillIdFromName(skillName):
     return -1
 
 def replaceLookupSynergies(expression, skillsRow):
-    extractedSynergies = re.findall(r"skill\('.*?'\..*?\)", expression)
+    currentIndex = 0
+    extractedSynergies = []
+    while "skill(" in expression[currentIndex:]:
+        synIndex = currentIndex + expression[currentIndex:].index("skill(")
+        openPar, closedPar = 0, 0
+        endIndex = 0
+        for char in expression[synIndex:]:
+            endIndex += 1
+            if char == "(":
+                openPar += 1
+            elif char == ")":
+                closedPar += 1
+                if openPar > 0 and openPar == closedPar:
+                    break
+        extractedSynergies.append(expression[synIndex:synIndex+endIndex])
+        currentIndex = synIndex+endIndex
+    print(extractedSynergies)
+                    
+    # extractedSynergies = re.findall(r"skill\('.*?'\..*?\)", expression)
     for synergy in extractedSynergies:
         nameStartIndex = synergy.index("'") + 1
         nameEndIndex = nameStartIndex + synergy[nameStartIndex:].index("'")
