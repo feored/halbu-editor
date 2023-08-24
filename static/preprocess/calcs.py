@@ -9,18 +9,6 @@ M1_PREFIX = f"{MISSILE_PREFIX}1_"
 M2_PREFIX = f"{MISSILE_PREFIX}2_"
 M3_PREFIX = f"{MISSILE_PREFIX}3_"
 
-EXPANDABLE_LOOKUP_VALUES = [
-    "EDmgSymPerCalc",
-    "DmgSymPerCalc",
-    "ELenSymPerCalc",
-    "calc1",
-    "calc2",
-    "calc3",
-    "calc4",
-    "calc5",
-    "calc6",
-    "auralencalc"
-]
 
 MISSILES_LOOKUP_VALUES = [
     "HitShift",
@@ -536,6 +524,7 @@ expandDict = {
     },
     "mael": {
         "static": True,
+        ## Avoid infinte loop of mael replacement
         "value": f"{M1_PREFIX}ma@el{MISSILE_SUFFIX}"
     },
     "m1rn": {
@@ -600,41 +589,50 @@ expandDict = {
 expandKeys = expandDict.keys()
 
 
-def expand(expression, skillsRow):
-    """ Expand expression and replace expressions skill() and miss()"""
-    expression = replaceLookupSpecificMissile(expression, skillsRow)
-    expression = expandExpression(expression, skillsRow)
-    expression = replaceLookupSynergies(expression, skillsRow)
-    return expression
-    
-def expandExpression(expression, skillsRow):
+def expandExpressionMax(expression, skillsRow):
+    oldExpression = expression
     canExpand = True
     while canExpand:
-        canExpand = False
-        for key in expandKeys:
-            if key in expression:
-                if expandDict[key]["static"]:
-                     expression = expression.replace(key, expandDict[key]["value"])
+        expression = expandExpressionOnce(expression, skillsRow)
+        if expression == oldExpression:
+            canExpand = False
+        else:
+            oldExpression = expression
+    return expression
+
+def expandExpressionOnce(expression, skillsRow):
+    for key in expandKeys:
+        if key in expression:
+            if expandDict[key]["static"]:
+                    expression = expression.replace(key, expandDict[key]["value"])
+            else:
+                if "arg" in expandDict[key]:   
+                    expression = expression.replace(key, expandDict[key]["value"](skillsRow, expandDict[key]["arg"]))
                 else:
-                    if "arg" in expandDict[key]:   
-                        expression = expression.replace(key, expandDict[key]["value"](skillsRow, expandDict[key]["arg"]))
-                    else:
-                        expression = expression.replace(key, expandDict[key]["value"](skillsRow))
-                canExpand = True
-        for key in EXPANDABLE_LOOKUP_VALUES:
-            if key in expression:
-                expression = replaceLookupExpression(expression, EXPANDABLE_LOOKUP_VALUES, skillsRow)
-                canExpand = True
+                    expression = expression.replace(key, expandDict[key]["value"](skillsRow))
+    return expression
+
+    
+def expand(expression, skillsRow, skilldescRow):
+    oldExpression = expression
+    canExpand = True
+    while canExpand:
+        expression = expandExpressionOnce(expression, skillsRow)
+        expression = replaceLookupSpecificMissile(expression, skillsRow)
+        expression = replaceLookupSynergies(expression, skillsRow)
+        expression = replaceLookup(expression, skillsRow, skilldescRow)
+        if expression == oldExpression:
+            canExpand = False
+        else:
+            oldExpression = expression
     expression = expression.replace("@", "")
-    for key in EXPANDABLE_LOOKUP_VALUES:
-            if key in expression:
-                expression = replaceLookupExpression(expression, EXPANDABLE_LOOKUP_VALUES, skillsRow)
     return expression
 
 
 def skillIdFromName(skillName):
+    skillName = skillName.lower()
     for row in skills:
-        if row["skill"] == skillName:
+        if row["skill"].lower() == skillName:
             return int(row["*Id"]) 
     return -1
 
@@ -656,10 +654,19 @@ def findParenthesesMatchedExpressions(expression, starterPattern):
         extractedExpressions.append(expression[patternIndex:currentIndex])
     return extractedExpressions
         
-    
-
 def replaceLookupSynergies(expression, skillsRow):
-    
+    def replaceLevel(syn, skillId):
+        ## Replace lvl with slvl(x) and blvl with blvl(x)
+        extractedLevels = re.findall(r"(^lvl)", syn)
+        for x in extractedLevels:
+            syn = syn.replace(x, f"slvl({skillId})")
+        extractedLevels = re.findall(r"([^bs])(lvl)", syn)
+        for x in extractedLevels:
+            syn = syn.replace(x[0] + x[1], x[0] + f"slvl({skillId})")
+        extractedBaseLevels = re.findall(r"(blvl)", syn)
+        for x in extractedBaseLevels:
+            syn = syn.replace(x, f"blvl({skillId})")
+        return syn
     extractedSynergies = findParenthesesMatchedExpressions(expression, "skill(")
                     
     for synergy in extractedSynergies:
@@ -668,13 +675,11 @@ def replaceLookupSynergies(expression, skillsRow):
         synergyName = synergy[nameStartIndex:nameEndIndex]
         synergyId = skillIdFromName(synergyName)
         replacedSynergy = synergy[nameEndIndex+2:-1] ## turn skill('Golem Mastery'.ln56) into ln56
-        replacedSynergy = expandExpression(replacedSynergy, skillsRow)
+        replacedSynergy = expandExpressionMax(replacedSynergy, skillsRow)
         replacedSynergy = replaceLookupExpression(replacedSynergy, SKILLS_LOOKUP_VALUES, skills[synergyId])
-        if replacedSynergy == "lvl":
-            replacedSynergy = f"slvl({synergyId})"
-        elif replacedSynergy == "blvl":
-            replacedSynergy = f"blvl({synergyId})"
-        expression = expression.replace(synergy, replacedSynergy)
+        replacedSynergy = replaceLevel(replacedSynergy, synergyId)
+        finalSynergy = f"synergy('{replacedSynergy}')"
+        expression = expression.replace(synergy, finalSynergy)
     ## Ex Edmgsympercalc = (skill('Lightning Strike'.blvl)+skill('Lightning Bolt'.blvl)+skill('Charged Strike'.blvl)) * par8
     return expression
 
@@ -684,11 +689,10 @@ def replaceLookupSpecificMissile(expression, skillsRow):
     # don't use regex, we need to match parentheses to match miss('blabla'.(par8 + par7))
     extractedMissiles = findParenthesesMatchedExpressions(expression, "miss(")
     for missile in extractedMissiles:
-        replacedMissile = expandExpression(missile, skillsRow)
-        nameStartIndex = replacedMissile.index("'") + 1
-        nameEndIndex = nameStartIndex + replacedMissile[nameStartIndex:].index("'")
-        missileName = replacedMissile[nameStartIndex:nameEndIndex]
-        replacedMissile = replacedMissile[nameEndIndex+2:-1]
+        nameStartIndex = missile.index("'") + 1
+        nameEndIndex = nameStartIndex + missile[nameStartIndex:].index("'")
+        missileName = missile[nameStartIndex:nameEndIndex]
+        replacedMissile = missile[nameEndIndex+2:-1]
         replacedMissile = replaceLookupExpression(replacedMissile, MISSILES_LOOKUP_VALUES, getRow(missileName, missiles, "Missile"))
         expression = expression.replace(missile, replacedMissile)
     return expression
@@ -698,10 +702,7 @@ def replaceLookupExpression(expression, lookupValues, fromRow):
     for lookupExp in lookupValues:
         if lookupExp in expression:
             toReplace = fromRow[lookupExp]
-            if lookupExp in EXPANDABLE_LOOKUP_VALUES:
-                expression = expression.replace(lookupExp, expandExpression("0" if toReplace == "" else toReplace, fromRow))
-            else:
-                expression = expression.replace(lookupExp, "0" if toReplace == "" else toReplace)
+            expression = expression.replace(lookupExp, "0" if toReplace == "" else toReplace)
     return expression
 
 def replaceLookupMissile(expression, skilldescRow):
@@ -717,8 +718,8 @@ def replaceLookupMissile(expression, skilldescRow):
         missilesRow = getRow(skilldescRow["descmissile1"], missiles, "Missile")
         expression = expression.replace(M1_PREFIX, "")
     expression = replaceLookupExpression(expression, MISSILES_LOOKUP_VALUES, missilesRow)
-    if "mael" in expression:
-        expression = expression.replace("mael", getMastery(missilesRow["EType"]))
+    if "ma@el" in expression:
+        expression = expression.replace("ma@el", getMastery(missilesRow["EType"]))
     expression = expression.replace(MISSILE_SUFFIX, "")
     return expression
 

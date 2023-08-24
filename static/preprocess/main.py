@@ -5,7 +5,7 @@ import json
 import sys
 
 from data import skills, skilldesc, strings, CLASS_OFFSET, setupData, saveData
-from calcs import expandExpression, replaceLookup, skillIdFromName, expand
+from calcs import replaceLookup, skillIdFromName, expand
 
 DEBUG = False
 
@@ -111,23 +111,17 @@ def fillDescLines(skilldescRow, skillsRow, finalRow):
                 calcA = headers[linenum] + "calca" + str(i)
                 if len(skilldescRow[calcA]) > 0:
                     baseCalcA = fixTypos(skilldescRow[calcA])
-                    expandedCalcA = expand(
-                        baseCalcA, skillsRow)
-                    descline["calca"]= replaceLookup(
-                        expandedCalcA, skillsRow, skilldescRow)
+                    descline["calca"]= expand(
+                        baseCalcA, skillsRow, skilldescRow)
                     if DEBUG:
                         descline["base_calca"]=skilldescRow[calcA]
-                        descline["expanded_calca"]=expandedCalcA
                 calcB=headers[linenum] + "calcb" + str(i)
                 if len(skilldescRow[calcB]) > 0:
                     baseCalcB=fixTypos(skilldescRow[calcB])
-                    expandedCalcB=expand(
-                        baseCalcB, skillsRow)
-                    descline["calcb"]=replaceLookup(
-                        expandedCalcB, skillsRow, skilldescRow)
+                    descline["calcb"]=expand(
+                        baseCalcB, skillsRow, skilldescRow)
                     if DEBUG:
                         descline["base_calcb"]=skilldescRow[calcB]
-                        descline["expanded_calcb"]=expandedCalcB
                 finalRow[desc_name].append(descline)
 
 

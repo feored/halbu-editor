@@ -5,11 +5,9 @@
     import { countOccurrences } from "../../utils/Utils.svelte";
     import { skillIdToSaveId } from "../../utils/Utils.svelte";
 
-
     import "tippy.js/dist/tippy.css";
     import "tippy.js/animations/shift-toward.css";
     import { save } from "@tauri-apps/api/dialog";
-
 
     export let id;
     export let skillData;
@@ -24,7 +22,8 @@
         dispatch("message", buildMessage(id, data));
     }
 
-    $: invested_style = skills[currentId].points > 0 ? "invested-points" : "no-points";
+    $: invested_style =
+        skills[currentId].points > 0 ? "invested-points" : "no-points";
 
     function handleClick(event) {
         if (event.button == 0) {
@@ -38,20 +37,39 @@
         dispatchMessage(Message.SkillPointChange, { id: id, value: value });
     }
 
-    function blvl(skillId){
+    function synergy(calc){
+        // This function is needed because for some reason the entire synergy line is set to 0 if the variable
+        // (slvl/blvl) is 0 i.e the skill is not set, even the parts of the line that are constant
+        // ie (synergy(1000+ (lvl-1) * 500 )) should return 0 if the skill level is 0, not 500
+        const foundSlvl = calc.match(/slvl\([^\)]*\)/g);
+
+        if (foundSlvl != null && slvl(foundSlvl[0].slice(5, -1)) == 0){
+            return 0;
+        }
+
+        const foundBlvl = calc.match(/blvl\([^\)]*\)/g);
+        if (foundBlvl != null && blvl(foundBlvl[0].slice(5, -1)) == 0){
+            return 0;
+        }
+        
+        return eval(calc);
+
+    }
+
+    function blvl(skillId) {
         return slvl(skillId);
     }
 
-    function slvl(skillId){
+    function slvl(skillId) {
         let saveSkillId = skillIdToSaveId(skillId, character.class);
-        if (saveSkillId >= 0 && saveSkillId < 30){
+        if (saveSkillId >= 0 && saveSkillId < 30) {
             return skills[saveSkillId].points;
         } else {
             return 0;
         }
     }
 
-    function evalCalc(calc){
+    function evalCalc(calc) {
         console.log("Evaluating: " + calc);
         let endCalc = calc;
         let lvl = skills[currentId].points == 0 ? 1 : skills[currentId].points;
@@ -61,55 +79,82 @@
         endCalc = endCalc.replaceAll("min", "Math.min");
         endCalc = endCalc.replaceAll("max", "Math.max");
         console.log("Evaluated: " + endCalc + " = " + eval(endCalc));
-        return eval(endCalc);
+        return eval(endCalc);//Math.round(eval(endCalc) * 10) / 10;
         //return endCalc
     }
 
-    function descLine(descline){
+    function descLine(descline) {
         // Only values used within the skilldesc.txt file are [36, 74, 75, 40, 76, 18, 13, 34, 31, 41, 77]
-        switch (descline["id"]){
-
+        switch (descline["id"]) {
+            case 18:
+                return descline["texta"];
+                break;
+            case 31:
             case 36:
+                let value =
+                    "calcb" in descline
+                        ? evalCalc(descline["calca"]) /
+                          evalCalc(descline["calcb"])
+                        : evalCalc(descline["calca"]);
+                if ("textb" in descline && value != 1) {
+                    return replaceFirstNumber(descline["textb"], value);
+                } else {
+                    return replaceFirstNumber(descline["texta"], value);
+                }
+                break;
+            case 40:
+                return (
+                    "<span style='color:green'>" +
+                    descLineGeneral(descline) +
+                    "</span>"
+                );
+                break;
+            case 74:
+            case 75:
+            case 76:
             default:
                 return descLineGeneral(descline);
                 break;
         }
     }
 
-    function replaceFirstNumber(line, number){
+    function replaceFirstNumber(line, number) {
         let signedIndex = line.indexOf("%+d");
         let genIndex = line.indexOf("%d");
         console.log("Signed index: " + signedIndex + ", Gen index " + genIndex);
-        if (signedIndex != -1 && (genIndex == -1 || signedIndex < genIndex))
-        {
-            line = line.replace("%+d", (number < 0 ? "-" : "+") + number.toString())
+        if (signedIndex != -1 && (genIndex == -1 || signedIndex < genIndex)) {
+            line = line.replace(
+                "%+d",
+                (number < 0 ? "-" : "+") + number.toString()
+            );
         } else {
-            line = line.replace("%d", number.toString())
+            line = line.replace("%d", number.toString());
         }
-        return line
+        return line;
     }
 
-    function descLineGeneral(descLine){
-        let endLine = descLine['texta'];
-        let calcs = countOccurrences(descLine["texta"], "%d") + countOccurrences(descLine["texta"], "%+d")
-        console.log("Calcs in '''" + descLine['texta'] + "''': "  + calcs);
+    function descLineGeneral(descLine) {
+        let endLine = descLine["texta"];
+        let calcs =
+            countOccurrences(descLine["texta"], "%d") +
+            countOccurrences(descLine["texta"], "%+d");
+        console.log("Calcs in '''" + descLine["texta"] + "''': " + calcs);
         if (calcs > 0) {
-            let calcA = evalCalc(descLine["calca"])
+            let calcA = evalCalc(descLine["calca"]);
             endLine = replaceFirstNumber(endLine, calcA);
         }
         if (calcs > 1) {
-            let calcB = evalCalc(descLine["calcb"])
+            let calcB = evalCalc(descLine["calcb"]);
             endLine = replaceFirstNumber(endLine, calcB);
         }
 
-        if (countOccurrences(descLine["texta"], "%s") > 0){
-            endLine = endLine.replace("%s", descLine["textb"])
+        if (countOccurrences(descLine["texta"], "%s") > 0) {
+            endLine = endLine.replace("%s", descLine["textb"]);
         }
 
         endLine = endLine.replaceAll("%%", "%");
         console.log(endLine);
-        return endLine
-        
+        return endLine;
     }
 
     // Tooltip
@@ -128,24 +173,36 @@
             Required Level: ${skillData["reqlevel"]}
         </p>
         
-            ${skillData["dsc2lines"].map((line) => "<span class='desc'>" + descLine(line) + "</span></br>").reverse().join("\n")}
+            ${skillData["dsc2lines"]
+                .map(
+                    (line) =>
+                        "<span class='desc'>" + descLine(line) + "</span></br>"
+                )
+                .reverse()
+                .join("\n")}
         <p class='desc'>${
             skills[currentId].points > 0
                 ? "Current Skill Level: " +
-                skills[currentId].points +
-                    " (Base: " +
-                    skills[currentId].points +
-                    ")"
+                  skills[currentId].points
                 : "First Level"
         }
         </p>
-            ${skillData["desclines"].map((line) => "<span class='desc'>" + descLine(line) + "</span></br>").reverse().join("\n")}
-            ${skillData["dsc3lines"].map((line) => "<span class='desc' style='color:green'>" + descLine(line) + "</span></br>").join("\n")}
+            ${skillData["desclines"]
+                .map(
+                    (line) =>
+                        "<span class='desc'>" + descLine(line) + "</span></br>"
+                )
+                .reverse()
+                .join("\n")}
+            ${skillData["dsc3lines"]
+                .map(
+                    (line) =>
+                        "<span class='desc'>" + descLine(line) + "</span></br>"
+                )
+                .join("\n")}
     </div>
     `;
 </script>
-
-
 
 <div
     style="grid-row: {skillData['row']}; grid-column: {skillData['column']};"
