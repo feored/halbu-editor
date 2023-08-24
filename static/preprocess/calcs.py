@@ -638,26 +638,30 @@ def skillIdFromName(skillName):
             return int(row["*Id"]) 
     return -1
 
-def replaceLookupSynergies(expression, skillsRow):
+
+def findParenthesesMatchedExpressions(expression, starterPattern):
     currentIndex = 0
-    extractedSynergies = []
-    while "skill(" in expression[currentIndex:]:
-        synIndex = currentIndex + expression[currentIndex:].index("skill(")
+    extractedExpressions = []
+    while starterPattern in expression[currentIndex:]:
+        patternIndex = currentIndex + expression[currentIndex:].index(starterPattern)
         openPar, closedPar = 0, 0
-        endIndex = 0
-        for char in expression[synIndex:]:
-            endIndex += 1
-            if char == "(":
+        for i in range(len(expression[patternIndex:])):
+            if expression[patternIndex:][i] == "(":
                 openPar += 1
-            elif char == ")":
+            elif expression[patternIndex:][i] == ")":
                 closedPar += 1
                 if openPar > 0 and openPar == closedPar:
                     break
-        extractedSynergies.append(expression[synIndex:synIndex+endIndex])
-        currentIndex = synIndex+endIndex
-    print(extractedSynergies)
+        currentIndex = patternIndex+i+1
+        extractedExpressions.append(expression[patternIndex:currentIndex])
+    return extractedExpressions
+        
+    
+
+def replaceLookupSynergies(expression, skillsRow):
+    
+    extractedSynergies = findParenthesesMatchedExpressions(expression, "skill(")
                     
-    # extractedSynergies = re.findall(r"skill\('.*?'\..*?\)", expression)
     for synergy in extractedSynergies:
         nameStartIndex = synergy.index("'") + 1
         nameEndIndex = nameStartIndex + synergy[nameStartIndex:].index("'")
@@ -676,7 +680,9 @@ def replaceLookupSynergies(expression, skillsRow):
 
 def replaceLookupSpecificMissile(expression, skillsRow):
     """ Replace expressions of type miss('skill'.rang) with values from missiles.txt"""
-    extractedMissiles = re.findall(r"miss\('.*?'\..*?\)", expression)
+    # extractedMissiles = re.findall(r"miss\('.*?'\..*?\)", expression)
+    # don't use regex, we need to match parentheses to match miss('blabla'.(par8 + par7))
+    extractedMissiles = findParenthesesMatchedExpressions(expression, "miss(")
     for missile in extractedMissiles:
         replacedMissile = expandExpression(missile, skillsRow)
         nameStartIndex = replacedMissile.index("'") + 1

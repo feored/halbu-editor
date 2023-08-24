@@ -54,7 +54,7 @@
     function evalCalc(calc){
         console.log("Evaluating: " + calc);
         let endCalc = calc;
-        let lvl = skills[currentId].points;
+        let lvl = skills[currentId].points == 0 ? 1 : skills[currentId].points;
         let firemastery = 0;
         let lightningmastery = 0;
         endCalc = endCalc.replaceAll("floor", "Math.floor");
