@@ -68,7 +68,7 @@ def setupData():
     loadData(skills, SKILLS_CSV, "\t")
     skills = fixTypos("skills", skills)
     loadData(skilldesc, SKILLDESC_CSV, "\t")
-    skilldesc = fixTypos("skilldesc", skills)
+    skilldesc = fixTypos("skilldesc", skilldesc)
     loadData(missiles, MISSILES_CSV, "\t")
     for filename in STRINGS:
         with open(BASE_FOLDER / filename, encoding='utf-8-sig') as jsonFile:

@@ -10499,7 +10499,7 @@
                 "id": 36,
                 "texta": "Range: %d yard",
                 "textb": "Range: %d yards",
-                "calca": "((40 + (lvl - 1) * 0)/2 + synergy('blvl(262)')",
+                "calca": "(40 + (lvl - 1) * 0)/2 + synergy('blvl(262)')",
                 "calcb": "3"
             },
             {
@@ -10949,8 +10949,8 @@
             {
                 "id": 75,
                 "texta": "Average Fire Damage: %d-%d per second",
-                "calca": "(((6 + (6Lev1 * (min(lvl, 8) - 1)) + (6Lev2 * (max(min(lvl, 16) - 8, 0))) + (6Lev3 * (max(min(lvl, 22) - 16, 0))) + (6Lev4 * (max(min(lvl, 28) - 22, 0))) + (6Lev5 * (max(lvl - 28, 0)))) * (2 ** (3 - 8)) * (100 + (synergy('blvl(259)')) * 6)/100) * 256)*3*25*(firemastery+100)/100/256",
-                "calcb": "(((10 + (10Lev1 * (min(lvl, 8) - 1)) + (10Lev2 * (max(min(lvl, 16) - 8, 0))) + (10Lev3 * (max(min(lvl, 22) - 16, 0))) + (10Lev4 * (max(min(lvl, 28) - 22, 0))) + (10Lev5 * (max(lvl - 28, 0)))) * (2 ** (3 - 8)) * (100 + (synergy('blvl(259)')) * 6)/100) * 256)*3*25*(firemastery+100)/100/256"
+                "calca": "(((6 + (5 * (min(lvl, 8) - 1)) + (10 * (max(min(lvl, 16) - 8, 0))) + (16 * (max(min(lvl, 22) - 16, 0))) + (22 * (max(min(lvl, 28) - 22, 0))) + (30 * (max(lvl - 28, 0)))) * (2 ** (3 - 8)) * (100 + (synergy('blvl(259)')) * 6)/100) * 256)*3*25*(firemastery+100)/100/256",
+                "calcb": "(((10 + (5 * (min(lvl, 8) - 1)) + (10 * (max(min(lvl, 16) - 8, 0))) + (17 * (max(min(lvl, 22) - 16, 0))) + (24 * (max(min(lvl, 28) - 22, 0))) + (32 * (max(lvl - 28, 0)))) * (2 ** (3 - 8)) * (100 + (synergy('blvl(259)')) * 6)/100) * 256)*3*25*(firemastery+100)/100/256"
             },
             {
                 "id": 75,
