@@ -41,9 +41,9 @@ html, body, #app {
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;
   }
 
-.tippy-box[data-theme~='halbu'] #skillTitle {
+.tippy-box[data-theme~='halbu'] #skillTitle, #synTitle {
     font-weight: bold;
-    color:chartreuse;
+    color:green;
 }
 
 .tippy-box[data-theme~='halbu'] p#levelreq{

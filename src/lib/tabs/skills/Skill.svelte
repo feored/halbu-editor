@@ -69,12 +69,30 @@
         }
     }
 
-    function evalCalc(calc) {
+    function evalMastery(mastery){
+        if (character.class != "Sorceress"){
+            return 0;
+        }
+        if (mastery === "ltng"){
+            return (50 + (skills[27].points - 1) * 12)
+        }
+
+        if (mastery === "fire"){
+            return (30 + (skills[25].points - 1) * 7)
+        }
+
+        return 0;
+    }
+
+    function evalCalc(calc, next = false) {
         console.log("Evaluating: " + calc);
         let endCalc = calc;
         let lvl = skills[currentId].points == 0 ? 1 : skills[currentId].points;
-        let firemastery = 0;
-        let lightningmastery = 0;
+        if (next){
+            lvl++;
+        }
+        let firemastery = evalMastery("fire");
+        let lightningmastery = evalMastery("ltng");
         endCalc = endCalc.replaceAll("floor", "Math.floor");
         endCalc = endCalc.replaceAll("min", "Math.min");
         endCalc = endCalc.replaceAll("max", "Math.max");
@@ -83,7 +101,8 @@
         //return endCalc
     }
 
-    function descLine(descline) {
+
+    function descLine(descline, next = false) {
         // Only values used within the skilldesc.txt file are [36, 74, 75, 40, 76, 18, 13, 34, 31, 41, 77]
         switch (descline["id"]) {
             case 18:
@@ -93,9 +112,9 @@
             case 36:
                 let value =
                     "calcb" in descline
-                        ? evalCalc(descline["calca"]) /
-                          evalCalc(descline["calcb"])
-                        : evalCalc(descline["calca"]);
+                        ? evalCalc(descline["calca"], next) /
+                          evalCalc(descline["calcb"], next)
+                        : evalCalc(descline["calca"], next);
                 if ("textb" in descline && value != 1) {
                     return replaceFirstNumber(descline["textb"], value);
                 } else {
@@ -104,8 +123,8 @@
                 break;
             case 40:
                 return (
-                    "<span style='color:green'>" +
-                    descLineGeneral(descline) +
+                    "<span id='synTitle'>" +
+                    descLineGeneral(descline, next) +
                     "</span>"
                 );
                 break;
@@ -113,7 +132,7 @@
             case 75:
             case 76:
             default:
-                return descLineGeneral(descline);
+                return descLineGeneral(descline, next);
                 break;
         }
     }
@@ -121,11 +140,10 @@
     function replaceFirstNumber(line, number) {
         let signedIndex = line.indexOf("%+d");
         let genIndex = line.indexOf("%d");
-        console.log("Signed index: " + signedIndex + ", Gen index " + genIndex);
         if (signedIndex != -1 && (genIndex == -1 || signedIndex < genIndex)) {
             line = line.replace(
                 "%+d",
-                (number < 0 ? "-" : "+") + number.toString()
+                (number > 0 ? "+" : "") + number.toString()
             );
         } else {
             line = line.replace("%d", number.toString());
@@ -133,18 +151,17 @@
         return line;
     }
 
-    function descLineGeneral(descLine) {
+    function descLineGeneral(descLine, next = false) {
         let endLine = descLine["texta"];
         let calcs =
             countOccurrences(descLine["texta"], "%d") +
             countOccurrences(descLine["texta"], "%+d");
-        console.log("Calcs in '''" + descLine["texta"] + "''': " + calcs);
         if (calcs > 0) {
-            let calcA = evalCalc(descLine["calca"]);
+            let calcA = evalCalc(descLine["calca"], next);
             endLine = replaceFirstNumber(endLine, calcA);
         }
         if (calcs > 1) {
-            let calcB = evalCalc(descLine["calcb"]);
+            let calcB = evalCalc(descLine["calcb"], next);
             endLine = replaceFirstNumber(endLine, calcB);
         }
 
@@ -153,7 +170,6 @@
         }
 
         endLine = endLine.replaceAll("%%", "%");
-        console.log(endLine);
         return endLine;
     }
 
@@ -165,10 +181,10 @@
 
     $: tooltipContent = `
     <div class='col flex-center'>
-        <h4 id='skillTitle'>${skillData["name"]}</h4>
+        <h3 id='skillTitle'>${skillData["name"]}</h3>
         <p class='descripton'>${formattedDescription}</p>
         <p id='levelreq' class='${
-            character.Level < skillData["reqlevel"] ? "error" : ""
+            character.level < skillData["reqlevel"] ? "error" : ""
         }'>
             Required Level: ${skillData["reqlevel"]}
         </p>
@@ -187,6 +203,7 @@
                 : "First Level"
         }
         </p>
+        <p>
             ${skillData["desclines"]
                 .map(
                     (line) =>
@@ -194,12 +211,28 @@
                 )
                 .reverse()
                 .join("\n")}
+        </p>
+        <p>
+            ${
+                skills[currentId].points < 1
+                ? "" : "<span class='desc'>Next Level</span><br>" +
+                skillData["desclines"]
+                .map(
+                    (line) =>
+                        "<span class='desc'>" + descLine(line, true) + "</span></br>"
+                )
+                .reverse()
+                .join("\n")
+            }
+        </p>
+        <p>
             ${skillData["dsc3lines"]
                 .map(
                     (line) =>
                         "<span class='desc'>" + descLine(line) + "</span></br>"
                 )
                 .join("\n")}
+        </p>
     </div>
     `;
 </script>
@@ -232,7 +265,7 @@
             max="99"
             step="1"
             bind:value={skills[currentId].points}
-            readonly
+            
         />
     </div>
 </div>

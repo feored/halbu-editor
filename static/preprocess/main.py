@@ -9,22 +9,6 @@ from calcs import replaceLookup, skillIdFromName, expand
 
 DEBUG = False
 
-typos = {
-    # dsc2calca2 infernosentry
-    "(ln34/2 + skill('Wake of Fire Sentry'.blvl)": "ln34/2 + skill('Wake of Fire Sentry'.blvl)",
-    # using edns for a missile, use custom EDNS value instead
-    "miss('royalstrikemeteorfire'.edns)*3*25*(mael+100)/100/256" : "miss('royalstrikemeteorfire'.EDNS)*3*25*(mael+100)/100/256",
-    # using edxs for a missile, use custom EDXS value instead
-    "miss('royalstrikemeteorfire'.edxs)*3*25*(mael+100)/100/256" : "miss('royalstrikemeteorfire'.EDXS)*3*25*(mael+100)/100/256"
-}
-
-
-def fixTypos(line):
-    if line in typos.keys():
-        return typos[line]
-    else:
-        return line
-
 
 def idToSkilldescId(id):
     """From skills.txt row number to skilldesc.txt row number"""
@@ -110,14 +94,14 @@ def fillDescLines(skilldescRow, skillsRow, finalRow):
                     descline["textb"] = strings[skilldescRow[textB]]
                 calcA = headers[linenum] + "calca" + str(i)
                 if len(skilldescRow[calcA]) > 0:
-                    baseCalcA = fixTypos(skilldescRow[calcA])
+                    baseCalcA = skilldescRow[calcA]
                     descline["calca"]= expand(
                         baseCalcA, skillsRow, skilldescRow)
                     if DEBUG:
                         descline["base_calca"]=skilldescRow[calcA]
                 calcB=headers[linenum] + "calcb" + str(i)
                 if len(skilldescRow[calcB]) > 0:
-                    baseCalcB=fixTypos(skilldescRow[calcB])
+                    baseCalcB=skilldescRow[calcB]
                     descline["calcb"]=expand(
                         baseCalcB, skillsRow, skilldescRow)
                     if DEBUG:

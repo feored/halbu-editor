@@ -31,7 +31,7 @@
 </script>
 
 <div class="row" style="align-self: flex-start; height:100%;">
-    <div class="col tabs" style="position: -webkit-sticky; position:sticky; top:0px;">
+    <div class="col tabs" style="position: -webkit-sticky; position:sticky; top:0px; width:150px">
         <button class="tab" on:click={()=> dispatchMessage(Message.CharacterUnpicked)}><ArrowLeftIcon /></button>
         <button class="tab" class:selected={currentTab == TabID.Character} on:click={() => {currentTab = TabID.Character}}><PersonStandingIcon /></button>
         <button class="tab" class:selected={currentTab == TabID.Mercenary} on:click={() => {currentTab = TabID.Mercenary}}><UserSquare2Icon /></button>

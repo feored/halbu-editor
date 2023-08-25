@@ -416,7 +416,7 @@ expandDict = {
     },
     "usmc": {
         "static": True,
-        "value": "max((mana + lvlmana * (lvl - 1)) * (2 ** (manashift - 8)), minmana)"
+        "value": "max((mana + lvlmana * (lvl - 1)) * (2 ** manashift), minmana * 256)"
     },
     "toht": {
         "static": False,
@@ -485,10 +485,9 @@ expandDict = {
         "value": calcDescMissileEMax,
         "arg" : 3
     },
-    ## Use @ symbol to avoid looping over len -> auralencalc -> auraauralencalccalc -> ...
     "len": {
         "static": True,
-        "value": "aurale@ncalc"
+        "value": "auralencalc"
     },
     "macr": {
         "static": True,
@@ -524,8 +523,7 @@ expandDict = {
     },
     "mael": {
         "static": True,
-        ## Avoid infinte loop of mael replacement
-        "value": f"{M1_PREFIX}ma@el{MISSILE_SUFFIX}"
+        "value": f"{M1_PREFIX}mael{MISSILE_SUFFIX}"
     },
     "m1rn": {
         "static": True,
@@ -693,7 +691,16 @@ def replaceLookupSpecificMissile(expression, skillsRow):
         nameEndIndex = nameStartIndex + missile[nameStartIndex:].index("'")
         missileName = missile[nameStartIndex:nameEndIndex]
         replacedMissile = missile[nameEndIndex+2:-1]
-        replacedMissile = replaceLookupExpression(replacedMissile, MISSILES_LOOKUP_VALUES, getRow(missileName, missiles, "Missile"))
+        replacedMissile = expandExpressionMax(replacedMissile, skillsRow)
+        oldMissile = replacedMissile
+        ## Keep expanding/looking up values as long as possible
+        while True:
+            replacedMissile = replaceLookupExpression(replacedMissile, MISSILES_LOOKUP_VALUES, getRow(missileName, missiles, "Missile"))
+            replacedMissile = expandExpressionOnce(replacedMissile, skillsRow)
+            if oldMissile == replacedMissile:
+                break
+            else:
+                oldMissile = replacedMissile
         expression = expression.replace(missile, replacedMissile)
     return expression
         
@@ -717,9 +724,18 @@ def replaceLookupMissile(expression, skilldescRow):
     else:
         missilesRow = getRow(skilldescRow["descmissile1"], missiles, "Missile")
         expression = expression.replace(M1_PREFIX, "")
-    expression = replaceLookupExpression(expression, MISSILES_LOOKUP_VALUES, missilesRow)
-    if "ma@el" in expression:
-        expression = expression.replace("ma@el", getMastery(missilesRow["EType"]))
+    oldMissile = expression
+    ## Keep expanding/looking up values as long as possible
+    while True:
+        if "mael" in expression:
+            expression = expression.replace("mael", getMastery(missilesRow["EType"]))
+        expression = replaceLookupExpression(expression, MISSILES_LOOKUP_VALUES, missilesRow)
+        expression = expandExpressionOnce(expression, [])
+        if oldMissile == expression:
+            break
+        else:
+            oldMissile = expression
+    
     expression = expression.replace(MISSILE_SUFFIX, "")
     return expression
 
