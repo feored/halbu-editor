@@ -618,6 +618,7 @@ def expand(expression, skillsRow, skilldescRow):
         expression = expandExpressionOnce(expression, skillsRow)
         expression = replaceLookupSpecificMissile(expression, skillsRow)
         expression = replaceLookupSynergies(expression, skillsRow)
+        expression = replaceLookupSklvl(expression, skillsRow)
         expression = replaceLookup(expression, skillsRow, skilldescRow)
         if expression == oldExpression:
             canExpand = False
@@ -651,6 +652,25 @@ def findParenthesesMatchedExpressions(expression, starterPattern):
         currentIndex = patternIndex+i+1
         extractedExpressions.append(expression[patternIndex:currentIndex])
     return extractedExpressions
+
+def replaceLookupSklvl(expression, skillsRow):
+    extractedSklvls = findParenthesesMatchedExpressions(expression, "sklvl(")
+    for sklvl in extractedSklvls:
+        nameStartIndex = sklvl.index("'") + 1
+        nameEndIndex = nameStartIndex + sklvl[nameStartIndex:].index("'")
+        sklvlName = sklvl[nameStartIndex:nameEndIndex]
+        sklvlId = skillIdFromName(sklvlName)
+        replacedSklvl = sklvl[nameEndIndex+2:-1]
+        sklvlRow = getRow(sklvlName, skills, "skill")
+        parts = replacedSklvl.split(".", 1)
+        parts[0] = expandExpressionMax(parts[0], sklvlRow)
+        parts[0] = replaceLookupExpression(parts[0], SKILLS_LOOKUP_VALUES, skillsRow)
+        parts[1] = expandExpressionMax(parts[1], sklvlRow)
+        parts[1] = parts[1].replace("lvl", parenthesize(parts[0]))
+        parts[1] = replaceLookupExpression(parts[1], SKILLS_LOOKUP_VALUES, sklvlRow)
+        expression = expression.replace(sklvl, parts[1])
+    return expression
+        
         
 def replaceLookupSynergies(expression, skillsRow):
     def replaceLevel(syn, skillId):

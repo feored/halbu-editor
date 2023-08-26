@@ -55,7 +55,6 @@
         return eval(calc);
 
     }
-
     function blvl(skillId) {
         return slvl(skillId);
     }
@@ -104,7 +103,13 @@
 
     function descLine(descline, next = false) {
         // Only values used within the skilldesc.txt file are [36, 74, 75, 40, 76, 18, 13, 34, 31, 41, 77]
+        console.log("Now handling: " + JSON.stringify(descline));
         switch (descline["id"]) {
+            case 34:
+            case 39:
+            case 41:
+                return descline["texta"];
+                break;
             case 18:
                 return descline["texta"];
                 break;
