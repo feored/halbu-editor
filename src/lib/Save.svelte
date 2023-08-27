@@ -30,40 +30,60 @@
     
 </script>
 
-<div class="row" style="align-self: flex-start; height:100%;">
-    <div class="col tabs" style="position: -webkit-sticky; position:sticky; top:0px; width:150px">
-        <button class="tab" on:click={()=> dispatchMessage(Message.CharacterUnpicked)}><ArrowLeftIcon /></button>
-        <button class="tab" class:selected={currentTab == TabID.Character} on:click={() => {currentTab = TabID.Character}}><PersonStandingIcon /></button>
-        <button class="tab" class:selected={currentTab == TabID.Mercenary} on:click={() => {currentTab = TabID.Mercenary}}><UserSquare2Icon /></button>
-        <button class="tab" class:selected={currentTab == TabID.Skills} on:click={() => {currentTab = TabID.Skills}}><BookPlusIcon /></button>
-        <button class="tab" class:selected={currentTab == TabID.Waypoints} on:click={() => {currentTab = TabID.Waypoints}}><LocateIcon /></button>
-        <button class="tab" class:selected={currentTab == TabID.Quests} on:click={() => {currentTab = TabID.Quests}}><ScrollIcon /></button>
-        <button class="tab" class:selected={currentTab == TabID.Items} on:click={() => {currentTab = TabID.Items}}><SwordIcon /></button>
-        <button class="tab" on:click={()=> dispatchMessage(Message.SaveFile)} disabled={!validSave}><SaveIcon /></button>
-    </div>
-    <div class="col" style="margin-left:20px;">
-        {#if currentTab == TabID.Character}
-            <Character save={save} on:message/>
-        {:else if currentTab == TabID.Mercenary}
-            <Mercenary save={save} />
-        {:else if currentTab == TabID.Skills}
-            <Skills save={save} />
-        {:else if currentTab == TabID.Waypoints}
-            <Waypoints save={save} />
-        {/if}
-    </div>
+<div class="full-height full-width">
+        <nav class="container-fluid" style="margin-bottom: var(--pico-block-spacing-vertical); position:sticky; top: 0px;;">
+            <ul>
+                <li>
+                    <button class="tab outline" on:click={()=> dispatchMessage(Message.CharacterUnpicked)}><ArrowLeftIcon /> Back</button>
+                </li>
+            </ul>
+            <ul>
+                <li>
+                    <button class="tab" class:outline={currentTab == TabID.Character} on:click={() => {currentTab = TabID.Character}}><PersonStandingIcon /> Character</button>
+                </li>
+                <li>
+                    <button class="tab" class:outline={currentTab == TabID.Mercenary} on:click={() => {currentTab = TabID.Mercenary}}><UserSquare2Icon /> Hireling</button>
+                </li>
+                <li>
+                    <button class="tab" class:outline={currentTab == TabID.Skills} on:click={() => {currentTab = TabID.Skills}}><BookPlusIcon /> Skills</button>
+                </li>
+                <li>
+                    <button class="tab" class:outline={currentTab == TabID.Waypoints} on:click={() => {currentTab = TabID.Waypoints}}><LocateIcon /> Waypoints</button>
+                </li>
+                <li>
+                    <button class="tab" class:outline={currentTab == TabID.Quests} on:click={() => {currentTab = TabID.Quests}}><ScrollIcon /> Quests</button>
+                </li>
+                <li>
+                    <button class="tab" class:outline={currentTab == TabID.Items} on:click={() => {currentTab = TabID.Items}}><SwordIcon /> Items</button>  
+                </li>
+            </ul>
+            <ul>
+                <li>
+                    <button class="tab outline" on:click={()=> dispatchMessage(Message.SaveFile)} disabled={!validSave}><SaveIcon /> Save</button>
+                </li>
+            </ul>
+        </nav>
+        <div class="container">
+            {#if currentTab == TabID.Character}
+                <Character save={save} on:message/>
+            {:else if currentTab == TabID.Mercenary}
+                <Mercenary save={save} />
+            {:else if currentTab == TabID.Skills}
+                <Skills save={save} />
+            {:else if currentTab == TabID.Waypoints}
+                <Waypoints save={save} />
+            {/if}
+        </div>
 </div>
 
+
+
 <style>
-    .tabs {
-        justify-content:flex-start;
-        align-items: center;
-        height:100%;
-        background-color: var(--background);
+    nav {
+        background-color: #0e1117;
     }
 
     .tab {
-        /* width:100%; */
         display:flex;
         flex-direction: row;
         align-items: center;
@@ -71,12 +91,4 @@
         font-weight:lighter;
     }
 
-    .selected{
-        background-color: var(--button-hover);
-        border: 1px var(--focus) solid;
-    }
-
-    /* .tabContent {
-        margin: 20px auto;
-    } */
 </style>

@@ -87,98 +87,81 @@
     }
 </script>
 
-<div id="skillTree">
-    <div id="pageSelection" />
-    <div class="row spaced">
-        <div class="col">
-            <h3>
-                {skillpages[save.character.class][2]}
-            </h3>
-            <div class="grid-3 selected-page" style="padding:10px;">
-                {#each skillsData.filter((skill) => skill.page == 3) as skill}
-                    <Skill
-                        id={skill.id}
-                        skillData={skill}
-                        skills={save.skills}
-                        character={save.character}
-                        isClickable={clickableSkills[skill["saveId"]]}
-                        on:message={handleSkillChanges}
-                    />
-                {/each}
-            </div>
+<div class="grid" style="margin-bottom:1rem;">
+    <div>
+        <h5 class="page-title">
+            {skillpages[save.character.class][2]}
+        </h5>
+        <div class="grid-3 page">
+            {#each skillsData.filter((skill) => skill.page == 3) as skill}
+                <Skill
+                    id={skill.id}
+                    skillData={skill}
+                    skills={save.skills}
+                    character={save.character}
+                    isClickable={clickableSkills[skill["saveId"]]}
+                    on:message={handleSkillChanges}
+                />
+            {/each}
         </div>
-        <div class="col">
-            <h3>
-                {skillpages[save.character.class][1]}
-            </h3>
-            <div class="grid-3 selected-page" style="padding:10px;">
-                {#each skillsData.filter((skill) => skill.page == 2) as skill}
-                    <Skill
-                        id={skill.id}
-                        skillData={skill}
-                        skills={save.skills}
-                        character={save.character}
-                        isClickable={clickableSkills[skill["saveId"]]}
-                        on:message={handleSkillChanges}
-                    />
-                {/each}
-            </div>
+    </div>
+    <div>
+        <h5 class="page-title">
+            {skillpages[save.character.class][1]}
+        </h5>
+        <div class="grid-3 page">
+            {#each skillsData.filter((skill) => skill.page == 2) as skill}
+                <Skill
+                    id={skill.id}
+                    skillData={skill}
+                    skills={save.skills}
+                    character={save.character}
+                    isClickable={clickableSkills[skill["saveId"]]}
+                    on:message={handleSkillChanges}
+                />
+            {/each}
         </div>
-        <div class="col">
-            <h3>
-                {skillpages[save.character.class][0]}
-            </h3>
-            <div class="grid-3 selected-page" style="padding:10px;">
-                {#each skillsData.filter((skill) => skill.page == 1) as skill}
-                    <Skill
-                        id={skill.id}
-                        skillData={skill}
-                        skills={save.skills}
-                        character={save.character}
-                        isClickable={clickableSkills[skill["saveId"]]}
-                        on:message={handleSkillChanges}
-                    />
-                {/each}
-            </div>
+    </div>
+    <div>
+        <h5 class="page-title">
+            {skillpages[save.character.class][0]}
+        </h5>
+        <div class="grid-3 page">
+            {#each skillsData.filter((skill) => skill.page == 1) as skill}
+                <Skill
+                    id={skill.id}
+                    skillData={skill}
+                    skills={save.skills}
+                    character={save.character}
+                    isClickable={clickableSkills[skill["saveId"]]}
+                    on:message={handleSkillChanges}
+                />
+            {/each}
         </div>
     </div>
 </div>
-<div class="row spaced" style="margin-top:10px">
+<div class="row spaced">
     <button on:click={refund}>Refund All Points</button>
     <p>Points Left: {save.attributes.newskills.value}</p>
 </div>
 
 <style>
-    .selected-page-btn {
-        background-color: var(--transparent);
-        width: 100%;
+
+    .grid-3 {
+        display:grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-gap: var(--pico-spacing);
     }
 
-    .selected-page {
+    .page-title{
+        text-align:center;
+    }
+
+    .page {
         border-radius: 6px;
-        width: 450px;
-        height: 600px;
-        background-color: var(--transparent);
+        background-color: var(--pico-contrast-background);
+        padding: var(--pico-spacing);
     }
 
-    .unselected-page-btn {
-        color: var(--text-muted);
-        width: 100%;
-    }
 
-    #skillTree {
-        width: 450px;
-    }
-
-    #skillTree #pageSelection {
-        margin: auto;
-        justify-content: space-between;
-        align-items: center;
-        display: flex;
-        flex-direction: row;
-    }
-
-    #skillTree #pageSelection button {
-        height: 60px;
-    }
 </style>

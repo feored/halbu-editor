@@ -33,30 +33,27 @@
         });
     }
 </script>
-
-{#each difficulties as difficulty}
-    <div class="row spaced" style="align-items:center;">
-        <h3 style="flex-grow:1;">{difficulty.display}</h3>
-        <div class="row spaced">
+    {#each difficulties as difficulty}
+        <div class="row spaced" style="align-items:baseline;">
+            <h3>{difficulty.display}</h3>
             <input type="checkbox" name="allWaypoints" on:change={() => checkAllWaypoints(difficulty)} />
-            <label for="allWaypoints">Toggle All</label>
         </div>
-    </div>
-    <div class="grid-5">
-        {#each acts as act}
-            <fieldset class="col spaced">
-                <legend>{act.display}</legend>
-                {#each save.waypoints[difficulty.id][act.id] as wp}
-                    <div class="row">
-                        <input type="checkbox" id={wp.act+wp.id} name={wp.act+wp.id}
-                        bind:checked="{wp.acquired}" disabled={wp.id===ROGUE_ENCAMPMENT}>
-                        <label for={wp.act+wp.id}>{wp.name}</label>
-                    </div>
-                {/each}
-            </fieldset>
-        {/each}
-    </div>  
-{/each}
+        <div class="grid" style="width:100%;">
+            {#each acts as act}
+                <fieldset>
+                    <legend>{act.display}</legend>
+                    {#each save.waypoints[difficulty.id][act.id] as wp}
+                        <div>
+                            <input type="checkbox" id={wp.act+wp.id} name={wp.act+wp.id}
+                            bind:checked="{wp.acquired}" disabled={wp.id===ROGUE_ENCAMPMENT}>
+                            <label for={wp.act+wp.id}>{wp.name}</label>
+                        </div>
+                    {/each}
+                </fieldset>
+            {/each}
+        </div>
+        <hr />
+    {/each}
 
 <style>
 

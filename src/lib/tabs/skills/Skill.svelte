@@ -188,8 +188,8 @@
     <div class='col flex-center'>
         <h3 id='skillTitle'>${skillData["name"]}</h3>
         <p class='descripton'>${formattedDescription}</p>
-        <p id='levelreq' class='${
-            character.level < skillData["reqlevel"] ? "error" : ""
+        <p id='levelreq' style='${
+            character.level < skillData["reqlevel"] ? "color:var(--pico-del-color)" : ""
         }'>
             Required Level: ${skillData["reqlevel"]}
         </p>
@@ -263,7 +263,6 @@
             >{skillData["name"]}
         </button>
         <input
-            style="width:30px; height:30px; align-self:flex-end; padding:2px;"
             type="number"
             name="id"
             min="0"
@@ -278,16 +277,23 @@
 <style>
     button {
         font-size: small;
-        height: 80px;
-        width: 80px;
-        padding: 2px;
+        height: 4rem;
+        width: 4rem;
+        padding: 0.2rem;
+    }
+
+    input {
+        width:1.5rem;
+        height:1.5rem;
+        padding:0.2rem;
     }
 
     .invested-points {
-        background-color: var(--focus);
-        color: var(--text-bright);
+        background-color: var(--pico-primary);
+        color: var(--pico-primary-inverse);
     }
     .no-points {
-        color: var(--text-muted);
+        color: var(--pico-muted-color);
+        background-color: var(--pico-form-element-background-color);
     }
 </style>

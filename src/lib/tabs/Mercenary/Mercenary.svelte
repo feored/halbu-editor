@@ -85,26 +85,24 @@
 
 </script>
 
-<div class="row flex-center spaced">
-    <fieldset id="status" class="row flex-center spaced">
-        <legend>Status</legend>
+<h6>Status</h6>
+<div class="grid" style="align-items:center">
 
-        <div class="row">
-            <input bind:this={hiredRef} type="checkbox" id="hired" name="hired" on:change="{hire}" bind:checked={isHired}>
-            <label style="font-weight:bold" for="hired">Hired</label>
+        <div>
+            <input aria-invalid={!isHired} role="switch" bind:this={hiredRef} type="checkbox" id="hired" name="hired" on:change="{hire}" bind:checked={isHired}>
+            <label for="hired"><b>{isHired ? "Hired" : "Not Hired"}</b></label>
         </div>
 
-        <div class="row">
-            <input type="checkbox" id="dead" name="dead" bind:checked="{save.character.mercenary.dead}" disabled={!isHired}>
-            <label for="dead">Dead</label>
+        <div>
+            <input role="switch" type="checkbox" id="dead" name="dead" bind:checked="{save.character.mercenary.dead}" disabled={!isHired}>
+            <label for="dead">{save.character.mercenary.dead ? "Dead" : "Alive"}</label>
         </div>
 
-        <div class="col">
+        <div>
             <label for="id">ID</label>
             <input type="number" name="id" min="0" max={u32MAX} step="1" bind:value="{save.character.mercenary.id}" readonly>
         </div>
-
-        <div class="col">
+        <div>
             <label for="name">Name</label>
             <select bind:value={save.character.mercenary.name_id} name="name_id" id="name_id" disabled={!isHired}>
                 {#each variantNames as name, index}
@@ -112,10 +110,10 @@
                 {/each}
             </select>
         </div>
-    </fieldset>
-    <fieldset id="level" class="row flex-center">
-        <legend>Level</legend>
-        <div class="col">
+</div>
+<div class="grid" style="align-items:center">
+        
+        <div>
             <label for="level">Level&nbsp;
                 <span use:tooltip={{
                     content: "<p style='text-align:center'>Hirelings need different amounts of XP per level depending on their class and the difficulty they were hired in.</p>",
@@ -132,16 +130,15 @@
         </div>
     
     
-        <div class="col">
+        <div>
             <label for="experience">Experience</label>
             <input use:enforceMinMax type="number" name="id" min="0" max={u32MAX} step="1" bind:value="{save.character.mercenary.experience}" on:input={changeExperience} disabled={!isHired}>
         </div>
-    </fieldset>
 </div>
-
-<fieldset id="variant" class="grid-3 flex-center">
-    <legend>Mercenary Type</legend>
-    <div class="col">
+<h6>Mercenary Type</h6>
+<fieldset id="variant" class="grid">
+    
+    <div>
         <label for="difficultyHired">Difficulty Hired</label>
         <select bind:value={mercVariant.difficulty} name="difficultyHired" id="difficultyHired"  on:change={updateVariant} disabled={!isHired}>
             <option value={Difficulty.Normal}>Normal</option>
@@ -151,7 +148,7 @@
         </select>
     </div>
 
-    <div class="col">
+    <div>
         <label for="class">Class</label>
         <select bind:value={mercVariant.type} name="class" id="class" on:change={() => {updateVariant(); updateName(); }} disabled={!isHired}>
             <option value={MercenaryClass.Rogue}>Rogue</option>
@@ -162,7 +159,7 @@
         </select>
     </div>
 
-    <div class="col">
+    <div>
         <label for="variant">Variant</label>
             <select bind:value={mercVariant.variant} name="variant" id="mercVariant" on:change={() => {updateVariant(); }} disabled={!isHired}>
                 {#each possibleVariants as merc}

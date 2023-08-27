@@ -12,6 +12,15 @@ html, body, #app {
     flex-direction: column;
 }
 
+.full-height {
+    height:100%;
+}
+
+.full-width{
+    width:100%;
+}
+
+
 .flex-center {
     align-items: center;
     justify-content: center;
@@ -20,8 +29,6 @@ html, body, #app {
 :root{
     --col-size: 100px;
     --transparent: rgba(255, 255, 255,  0.15);
-    --error-bg: #381010;
-    --error-front:#c64e26;
 }
 
 .disabled{
@@ -29,10 +36,10 @@ html, body, #app {
 }
 
 .tippy-box[data-theme~='halbu'] {
-    background-color: var(--button-base);
+    background-color: var(--pico-background-color);
     color: var(--text-muted);
     border-radius: 6px;
-    border:1px solid var(--border);
+    border:var(--pico-border-width) solid var(--pico-contrast);
     font-weight:normal;
     font-size:medium;
     padding: 12px;
@@ -50,106 +57,20 @@ html, body, #app {
     font-weight:bold;
     text-align:center;
 }
-
-.grid {
-    display: grid;
-    grid-gap: 10px;
-}
-
-.grid-1{
-    display: grid;
-    grid-template-columns: 1fr;
-    grid-gap: 10px;
-}
-
-.grid-2{
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    grid-gap: 10px;
-}
-
-.grid-3{
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-gap: 10px;
-}
-
-.grid-4{
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    grid-gap: 10px;
-}
-
-.grid-5{
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    grid-gap: 10px;
-}
-
-.grid-6{
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    grid-gap: 10px;
-}
-
-.grid-7{
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    grid-gap: 10px;
-}
-
-.grid-8{
-    display: grid;
-    grid-template-columns: repeat(8, 1fr);
-    grid-gap: 10px;
-}
-
-.grid-9{
-    display: grid;
-    grid-template-columns: repeat(9, 1fr);
-    grid-gap: 10px;
-}
-
-
-:global(svg) {
-    width: 1rem;
-}
-
 .icon-btn {
     align-items: center;
     display: inline-flex;
 }
 
-#app {
-    width:100%;
-    height:100%;
-}
-
-svg {
-    vertical-align:sub;
-}
-
-.apart {
-    align-items:start;
-    justify-content: space-between;
-}
 
 .spaced > *:not(:last-child) {
-    margin-right: 20px; 
+    margin-right: 1%;
 }
 
 .vspaced > *:not(:last-child) {
-    margin-bottom: 20px; 
+    margin-bottom: 1%; 
 }
 
 input[type="number"]{
     text-align: right;
 }   
-
-.error-bg {
-    background-color: var(--error-bg);
-}
-
-.error{
-    color:var(--error-front);
-}
