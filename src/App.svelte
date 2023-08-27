@@ -52,21 +52,17 @@
     
 </script>
 
-<main class="container">
+
     {#if currentSave == null}
+    <main class="container-fluid full-height">
         <h1 id="title">Halbu Editor</h1>
         <SavePicker on:message={handleMessages} />
+    </main>
     {:else}
         <Save save={currentSave} validSave={validSave} on:message={handleMessages}/>
     {/if}
-</main>
 
 <style>
-.container {
-    width:100%;
-    height:100%;
-}
-
 #title {
     text-align:center;
 }
