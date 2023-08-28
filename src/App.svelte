@@ -1,8 +1,8 @@
 <script>
     import { invoke } from "@tauri-apps/api/tauri";
     import { save } from "@tauri-apps/api/dialog";
-    import { Message} from "./lib/utils/Message.svelte";
-    import SavePicker, {CharacterType} from "./lib/SavePicker.svelte";
+    import { Message } from "./lib/utils/Message.svelte";
+    import SavePicker, { CharacterType } from "./lib/SavePicker.svelte";
     import Save from "./lib/Save.svelte";
 
     let currentSave = null;
@@ -10,30 +10,34 @@
 
     async function saveCharacter() {
         const filePath = await save({
-        defaultPath: currentSave.character.name,
-        filters: [{
-            name: 'D2R Save File',
-            extensions: ['d2s']
-        }]
+            defaultPath: currentSave.character.name,
+            filters: [
+                {
+                    name: "D2R Save File",
+                    extensions: ["d2s"],
+                },
+            ],
         });
-        let res = await invoke("save_file", {path:filePath, save: currentSave});
+        let res = await invoke("save_file", {
+            path: filePath,
+            save: currentSave,
+        });
     }
 
     async function handlePickedCharacter(messageContents) {
         currentSave = messageContents.save;
     }
 
-    function unpickCharacter(){
+    function unpickCharacter() {
         currentSave = null;
     }
 
-    function handleSaveValidity(messageContents){
+    function handleSaveValidity(messageContents) {
         validSave = messageContents.valid;
     }
 
-
-    function handleMessages(event){
-        switch (event.detail.id){
+    function handleMessages(event) {
+        switch (event.detail.id) {
             case Message.ValidSave:
                 handleSaveValidity(event.detail.data);
                 break;
@@ -48,22 +52,21 @@
                 break;
         }
     }
-
-    
 </script>
-
-
-    {#if currentSave == null}
-    <main class="container-fluid full-height">
-        <h1 id="title">Halbu Editor</h1>
-        <SavePicker on:message={handleMessages} />
+{#if currentSave == null}
+    <main class="container full-height">
+        <div id="center" class="full-height">
+            <SavePicker on:message={handleMessages} />
+        </div>
     </main>
-    {:else}
-        <Save save={currentSave} validSave={validSave} on:message={handleMessages}/>
-    {/if}
+{:else}
+    <Save save={currentSave} {validSave} on:message={handleMessages} />
+{/if}
 
 <style>
-#title {
-    text-align:center;
-}
+    #center {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
 </style>
