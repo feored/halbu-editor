@@ -37,36 +37,6 @@
         dispatchMessage(Message.SkillPointChange, { id: id, value: value });
     }
 
-    function synergy(calc){
-        // This function is needed because for some reason the entire synergy line is set to 0 if the variable
-        // (slvl/blvl) is 0 i.e the skill is not set, even the parts of the line that are constant
-        // ie (synergy(1000+ (lvl-1) * 500 )) should return 0 if the skill level is 0, not 500
-        const foundSlvl = calc.match(/slvl\([^\)]*\)/g);
-
-        if (foundSlvl != null && slvl(foundSlvl[0].slice(5, -1)) == 0){
-            return 0;
-        }
-
-        const foundBlvl = calc.match(/blvl\([^\)]*\)/g);
-        if (foundBlvl != null && blvl(foundBlvl[0].slice(5, -1)) == 0){
-            return 0;
-        }
-        
-        return eval(calc);
-
-    }
-    function blvl(skillId) {
-        return slvl(skillId);
-    }
-
-    function slvl(skillId) {
-        let saveSkillId = skillIdToSaveId(skillId, character.class);
-        if (saveSkillId >= 0 && saveSkillId < 30) {
-            return skills[saveSkillId].points;
-        } else {
-            return 0;
-        }
-    }
 
     function evalMastery(mastery){
         if (character.class != "Sorceress"){
@@ -84,17 +54,50 @@
     }
 
     function evalCalc(calc, next = false) {
+        function synergy(calc){
+            // This function is needed because for some reason the entire synergy line is set to 0 if the variable
+            // (slvl/blvl) is 0 i.e the skill is not set, even the parts of the line that are constant
+            // ie (synergy(1000+ (lvl-1) * 500 )) should return 0 if the skill level is 0, not 500
+            const foundSlvl = calc.match(/slvl\([^\)]*\)/g);
+
+            if (foundSlvl != null && slvl(foundSlvl[0].slice(5, -1)) == 0){
+                return 0;
+            }
+
+            const foundBlvl = calc.match(/blvl\([^\)]*\)/g);
+            if (foundBlvl != null && blvl(foundBlvl[0].slice(5, -1)) == 0){
+                return 0;
+            }
+        
+            return eval(calc);
+
+        }
+        function blvl(skillId) {
+            return slvl(skillId);
+        }
+
+        function slvl(skillId) {
+            let saveSkillId = skillIdToSaveId(skillId, character.class);
+            if (saveSkillId >= 0 && saveSkillId < 30) {
+                return skills[saveSkillId].points;
+            } else {
+                return 0;
+            }
+        }
         console.log("Evaluating: " + calc);
         let endCalc = calc;
         let lvl = skills[currentId].points == 0 ? 1 : skills[currentId].points;
+        console.log("Lvl: " + lvl);
         if (next){
             lvl++;
         }
+        console.log("2 lvl: " +lvl)
         let firemastery = evalMastery("fire");
         let lightningmastery = evalMastery("ltng");
         endCalc = endCalc.replaceAll("floor", "Math.floor");
         endCalc = endCalc.replaceAll("min", "Math.min");
         endCalc = endCalc.replaceAll("max", "Math.max");
+        console.log("Ready to evaluate")
         console.log("Evaluated: " + endCalc + " = " + eval(endCalc));
         return eval(endCalc);//Math.round(eval(endCalc) * 10) / 10;
         //return endCalc
@@ -283,8 +286,8 @@
     }
 
     input {
-        width:1.5rem;
-        height:1.5rem;
+        width:2rem;
+        height:2rem;
         padding:0.2rem;
     }
 

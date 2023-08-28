@@ -39,22 +39,22 @@
             </ul>
             <ul>
                 <li>
-                    <button class="tab" class:outline={currentTab == TabID.Character} on:click={() => {currentTab = TabID.Character}}><PersonStandingIcon /> Character</button>
+                    <button class="tab" class:outline={currentTab == TabID.Character} on:click={() => {currentTab = TabID.Character}}><PersonStandingIcon />&nbsp;Character</button>
                 </li>
                 <li>
-                    <button class="tab" class:outline={currentTab == TabID.Mercenary} on:click={() => {currentTab = TabID.Mercenary}}><UserSquare2Icon /> Hireling</button>
+                    <button class="tab" class:outline={currentTab == TabID.Mercenary} on:click={() => {currentTab = TabID.Mercenary}}><UserSquare2Icon />&nbsp;Hireling</button>
                 </li>
                 <li>
-                    <button class="tab" class:outline={currentTab == TabID.Skills} on:click={() => {currentTab = TabID.Skills}}><BookPlusIcon /> Skills</button>
+                    <button class="tab" class:outline={currentTab == TabID.Skills} on:click={() => {currentTab = TabID.Skills}}><BookPlusIcon />&nbsp;Skills</button>
                 </li>
                 <li>
-                    <button class="tab" class:outline={currentTab == TabID.Waypoints} on:click={() => {currentTab = TabID.Waypoints}}><LocateIcon /> Waypoints</button>
+                    <button class="tab" class:outline={currentTab == TabID.Waypoints} on:click={() => {currentTab = TabID.Waypoints}}><LocateIcon />&nbsp;Waypoints</button>
                 </li>
                 <li>
-                    <button class="tab" class:outline={currentTab == TabID.Quests} on:click={() => {currentTab = TabID.Quests}}><ScrollIcon /> Quests</button>
+                    <button class="tab" class:outline={currentTab == TabID.Quests} on:click={() => {currentTab = TabID.Quests}}><ScrollIcon />&nbsp;Quests</button>
                 </li>
                 <li>
-                    <button class="tab" class:outline={currentTab == TabID.Items} on:click={() => {currentTab = TabID.Items}}><SwordIcon /> Items</button>  
+                    <button class="tab" class:outline={currentTab == TabID.Items} on:click={() => {currentTab = TabID.Items}}><SwordIcon />&nbsp;Items</button>  
                 </li>
             </ul>
             <ul>
@@ -80,7 +80,7 @@
 
 <style>
     nav {
-        background-color: #0e1117;
+        background-color: var(--pico-alternate-background);
     }
 
     .tab {
@@ -88,7 +88,6 @@
         flex-direction: row;
         align-items: center;
         justify-content:space-between;
-        font-weight:lighter;
     }
 
 </style>

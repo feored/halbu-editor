@@ -88,7 +88,7 @@
         let new_level = 99;
         for (let i = 0; i < 99; i++) {
             if (experienceTable[i] > save.attributes.experience.value) {
-                new_level = i - 1;
+                new_level = i;
                 break;
             }
         }
@@ -293,6 +293,53 @@
         </div>
     </div>
 </fieldset>
+<fieldset id="difficulty" class="grid">
+    <legend><h6>Difficulty</h6></legend>
+    <div>
+        <label for="difficultyBeaten">Difficulty Beaten</label>
+        <select
+            bind:value={difficultyBeaten}
+            on:change={updateTitle}
+            name="currentDifficulty"
+        >
+            <option value="None" selected={difficultyBeaten === "None"}
+                >None</option
+            >
+            <option value="Normal" selected={difficultyBeaten === "Normal"}
+                >Normal</option
+            >
+            <option
+                value="Nightmare"
+                selected={difficultyBeaten === "Nightmare"}>Nightmare</option
+            >
+            <option value="Hell" selected={difficultyBeaten === "Hell"}
+                >Hell</option
+            >
+        </select>
+    </div>
+    <div>
+        <label for="title">Title</label>
+        <input type="text" name="title" size="10" bind:value={title} readonly />
+    </div>
+    <div>
+        <label for="currentDifficulty">Current Difficulty</label>
+        <select bind:value={save.character.difficulty} name="currentDifficulty">
+            <option value={Difficulty.Normal}>Normal</option>
+            <option value={Difficulty.Nightmare}>Nightmare</option>
+            <option value={Difficulty.Hell}>Hell</option>
+        </select>
+    </div>
+    <div>
+        <label for="currentAct">Current Act</label>
+        <select bind:value={save.character.act} name="currentAct">
+            <option value={Act.Act1}>Act I</option>
+            <option value={Act.Act2}>Act II</option>
+            <option value={Act.Act3}>Act III</option>
+            <option value={Act.Act4}>Act IV</option>
+            <option value={Act.Act5}>Act V</option>
+        </select>
+    </div>
+</fieldset>
 <h6>Stats</h6>
 <div id="stats" class="grid">
     <div class="col">
@@ -459,91 +506,33 @@
     </fieldset>
 </div>
 
-    <fieldset id="gold" class="grid">
-        <legend><h6>Gold</h6></legend>
-        <div>
-            <label for="goldInventory">Inventory</label>
-            <input
-                use:enforceMinMax
-                type="number"
-                name="goldInventory"
-                min="0"
-                max={goldInventoryMax}
-                step="1"
-                bind:value={save.attributes.gold.value}
-            />
-        </div>
-        <div>
-            <label for="goldStash">Stash</label>
-            <input
-                use:enforceMinMax
-                type="number"
-                name="goldStash"
-                min="0"
-                max="2500000"
-                step="1"
-                bind:value={save.attributes.goldbank.value}
-            />
-        </div>
-    </fieldset>
-
-    <fieldset id="difficulty" class="grid">
-        <legend><h6>Difficulty</h6></legend>
-        <div>
-            <label for="difficultyBeaten">Difficulty Beaten</label>
-            <select
-                bind:value={difficultyBeaten}
-                on:change={updateTitle}
-                name="currentDifficulty"
-            >
-                <option value="None" selected={difficultyBeaten === "None"}
-                    >None</option
-                >
-                <option value="Normal" selected={difficultyBeaten === "Normal"}
-                    >Normal</option
-                >
-                <option
-                    value="Nightmare"
-                    selected={difficultyBeaten === "Nightmare"}
-                    >Nightmare</option
-                >
-                <option value="Hell" selected={difficultyBeaten === "Hell"}
-                    >Hell</option
-                >
-            </select>
-        </div>
-        <div>
-            <label for="title">Title</label>
-            <input
-                type="text"
-                name="title"
-                size="10"
-                bind:value={title}
-                readonly
-            />
-        </div>
-        <div>
-            <label for="currentDifficulty">Current Difficulty</label>
-            <select
-                bind:value={save.character.difficulty}
-                name="currentDifficulty"
-            >
-                <option value={Difficulty.Normal}>Normal</option>
-                <option value={Difficulty.Nightmare}>Nightmare</option>
-                <option value={Difficulty.Hell}>Hell</option>
-            </select>
-        </div>
-        <div>
-            <label for="currentAct">Current Act</label>
-            <select bind:value={save.character.act} name="currentAct">
-                <option value={Act.Act1}>Act I</option>
-                <option value={Act.Act2}>Act II</option>
-                <option value={Act.Act3}>Act III</option>
-                <option value={Act.Act4}>Act IV</option>
-                <option value={Act.Act5}>Act V</option>
-            </select>
-        </div>
-    </fieldset>
+<fieldset id="gold" class="grid">
+    <legend><h6>Gold</h6></legend>
+    <div>
+        <label for="goldInventory">Inventory</label>
+        <input
+            use:enforceMinMax
+            type="number"
+            name="goldInventory"
+            min="0"
+            max={goldInventoryMax}
+            step="1"
+            bind:value={save.attributes.gold.value}
+        />
+    </div>
+    <div>
+        <label for="goldStash">Stash</label>
+        <input
+            use:enforceMinMax
+            type="number"
+            name="goldStash"
+            min="0"
+            max="2500000"
+            step="1"
+            bind:value={save.attributes.goldbank.value}
+        />
+    </div>
+</fieldset>
 
 <style>
 </style>

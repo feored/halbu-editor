@@ -47,27 +47,27 @@
 }
 @media (min-width: 576px) {
   :root {
-    --pico-font-size: 106.25%;
+    --pico-font-size: 100%;
   }
 }
 @media (min-width: 768px) {
   :root {
-    --pico-font-size: 112.5%;
+    --pico-font-size: 100%;
   }
 }
 @media (min-width: 1024px) {
   :root {
-    --pico-font-size: 118.75%;
+    --pico-font-size: 100%;
   }
 }
 @media (min-width: 1280px) {
   :root {
-    --pico-font-size: 125%;
+    --pico-font-size: 100%;
   }
 }
 @media (min-width: 1536px) {
   :root {
-    --pico-font-size: 131.25%;
+    --pico-font-size: 100%;
   }
 }
 :root details summary[role=button]:not(.outline)::after {
@@ -306,7 +306,10 @@ nav details.dropdown summary:focus-visible {
  */
 [data-theme=light],
 :root:not([data-theme=dark]) {
-  --pico-background-color: #fff;
+    /* Halbu specific colors */
+  --pico-alternate-background:var(--pico-color-light);
+  /* Original picocss colors */
+  --pico-background-color: #f5f5f5;
   --pico-color: #373c44;
   --pico-text-selection-color: rgba(2, 154, 232, 0.25);
   --pico-muted-color: #646b79;
@@ -427,6 +430,9 @@ nav details.dropdown summary:focus-visible {
 
 @media only screen and (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
+    /* Halbu specific colors */
+    --pico-alternate-background:var(--pico-color-slate-800);
+    /* Original picocss colors */
     --pico-background-color: #13171f;
     --pico-color: #c2c7d0;
     --pico-text-selection-color: rgba(1, 170, 255, 0.1875);
@@ -551,6 +557,9 @@ nav details.dropdown summary:focus-visible {
   }
 }
 [data-theme=dark] {
+/* Halbu specific colors */
+  --pico-alternate-background:var(--pico-color-slate-800);
+/* Original picocss colors */
   --pico-background-color: #13171f;
   --pico-color: #c2c7d0;
   --pico-text-selection-color: rgba(1, 170, 255, 0.1875);

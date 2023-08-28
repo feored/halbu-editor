@@ -77,5 +77,5 @@ def setupData():
 
 def saveData(name, data):
     format_json = json.dumps(data, indent=4)
-    with open(BASE_FOLDER / f"{name}.json", "w") as f:
+    with open(BASE_FOLDER.parent / "src" / "res" / f"{name}.json", "w") as f:
         f.write(format_json)
