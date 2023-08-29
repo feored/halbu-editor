@@ -4,8 +4,8 @@
     import { Message, buildMessage } from "../../utils/Message.svelte";
     import { createEventDispatcher } from "svelte";
     import { enforceMinMax, tooltip } from "../../utils/actions.js";
+    import { calcTitle, calcDifficultyBeaten } from "../../utils/Utils.svelte";
 
-    import titles from "./titles.json";
     import experienceTable from "./experience.json";
     import { Class, Difficulty, Act } from "../../utils/Constants.svelte";
 
@@ -46,13 +46,7 @@
     let difficultyBeatenRef;
 
     let difficultiesToBeat = ["None", "Normal", "Nightmare", "Hell"];
-    let difficultyBeaten =
-        difficultiesToBeat[
-            Math.floor(
-                save.character.progression /
-                    (4 + (save.character.expansion ? 1 : 0))
-            )
-        ];
+    let difficultyBeaten = calcDifficultyBeaten(save.character);
 
     let title = "";
     updateTitle();
@@ -61,16 +55,7 @@
         save.character.progression =
             (4 + (save.character.status.expansion ? 1 : 0)) *
             difficultiesToBeat.indexOf(difficultyBeaten);
-        let gender = [Class.Amazon, Class.Assassin, Class.Sorceress].includes(
-            save.character.class
-        )
-            ? "Female"
-            : "Male";
-        let core = save.character.status.hardcore ? "Hardcore" : "Softcore";
-        let expansion = save.character.status.expansion
-            ? "Expansion"
-            : "Classic";
-        title = titles[core][expansion][difficultyBeaten][gender];
+        title = calcTitle(save.character);
     }
 
     // Level & XP
@@ -80,8 +65,7 @@
             return; // if we have changed to the same value, don't erase old xp
         }
         save.character.level = save.attributes.level.value;
-        save.attributes.experience.value =
-            experienceTable[save.attributes.level.value - 1];
+        save.attributes.experience.value = experienceTable[save.attributes.level.value - 1];
     }
 
     async function changeExperience() {
@@ -299,43 +283,22 @@
         <legend><h6>Difficulty</h6></legend>
         <div>
             <label for="difficultyBeaten">Difficulty Beaten</label>
-            <select
-                bind:value={difficultyBeaten}
-                on:change={updateTitle}
-                name="currentDifficulty"
-            >
-                <option value="None" selected={difficultyBeaten === "None"}
-                    >None</option
-                >
-                <option value="Normal" selected={difficultyBeaten === "Normal"}
-                    >Normal</option
-                >
-                <option
-                    value="Nightmare"
-                    selected={difficultyBeaten === "Nightmare"}
+            <select bind:value={difficultyBeaten} on:change={updateTitle} name="currentDifficulty">
+                <option value="None" selected={difficultyBeaten === "None"}>None</option>
+                <option value="Normal" selected={difficultyBeaten === "Normal"}>Normal</option>
+                <option value="Nightmare" selected={difficultyBeaten === "Nightmare"}
                     >Nightmare</option
                 >
-                <option value="Hell" selected={difficultyBeaten === "Hell"}
-                    >Hell</option
-                >
+                <option value="Hell" selected={difficultyBeaten === "Hell"}>Hell</option>
             </select>
         </div>
         <div>
             <label for="title">Title</label>
-            <input
-                type="text"
-                name="title"
-                size="10"
-                bind:value={title}
-                readonly
-            />
+            <input type="text" name="title" size="10" bind:value={title} readonly />
         </div>
         <div>
             <label for="currentDifficulty">Current Difficulty</label>
-            <select
-                bind:value={save.character.difficulty}
-                name="currentDifficulty"
-            >
+            <select bind:value={save.character.difficulty} name="currentDifficulty">
                 <option value={Difficulty.Normal}>Normal</option>
                 <option value={Difficulty.Nightmare}>Nightmare</option>
                 <option value={Difficulty.Hell}>Hell</option>

@@ -9,7 +9,8 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             get_character_from_path,
             save_file,
-            new_save
+            new_save,
+            summary_folder
         ])
         .run(tauri::generate_context!());
 }
