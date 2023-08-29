@@ -70,7 +70,7 @@
         </div>
     </main>
 {:else if currentSave == null}
-    <main class="full-width full-height pad">
+    <main class="pad">
         <SavePicker on:message={handleMessages} />
     </main>
 {:else}
