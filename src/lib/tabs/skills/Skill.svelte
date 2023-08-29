@@ -3,7 +3,7 @@
     import { Message, buildMessage } from "../../utils/Message.svelte";
     import { tooltip } from "../../utils/actions.js";
     import { countOccurrences } from "../../utils/Utils.svelte";
-    import { skillIdToSaveId } from "../../utils/Utils.svelte";
+    import { skillOffset, skillIdToSaveId } from "../../utils/Utils.svelte";
 
     import "tippy.js/dist/tippy.css";
     import "tippy.js/animations/shift-toward.css";
@@ -22,8 +22,7 @@
         dispatch("message", buildMessage(id, data));
     }
 
-    $: invested_style =
-        skills[currentId].points > 0 ? "invested-points" : "no-points";
+    $: invested_style = skills[currentId].points > 0 ? "invested-points" : "no-points";
 
     function handleClick(event) {
         if (event.button == 0) {
@@ -37,72 +36,86 @@
         dispatchMessage(Message.SkillPointChange, { id: id, value: value });
     }
 
+    function synergy(calc) {
+        // This function is needed because for some reason the entire synergy line is set to 0 if the variable
+        // (slvl/blvl) is 0 i.e the skill is not set, even the parts of the line that are constant
+        // ie (synergy(1000+ (lvl-1) * 500 )) should return 0 if the skill level is 0, not 500
+        const foundSlvl = calc.match(/slvl\([^\)]*\)/g);
 
-    function evalMastery(mastery){
-        if (character.class != "Sorceress"){
+        if (foundSlvl != null && slvl(foundSlvl[0].slice(5, -1)) == 0) {
             return 0;
         }
-        if (mastery === "ltng"){
-            return (50 + (skills[27].points - 1) * 12)
+
+        const foundBlvl = calc.match(/blvl\([^\)]*\)/g);
+        if (foundBlvl != null && blvl(foundBlvl[0].slice(5, -1)) == 0) {
+            return 0;
         }
 
-        if (mastery === "fire"){
-            return (30 + (skills[25].points - 1) * 7)
+        return eval(calc);
+    }
+
+    function blvl(skillId) {
+        return slvl(skillId);
+    }
+
+    function slvl(skillId) {
+        let saveSkillId = skillIdToSaveId(skillId, character.class);
+        if (saveSkillId >= 0 && saveSkillId < 30) {
+            return skills[saveSkillId].points;
+        } else {
+            return 0;
+        }
+    }
+
+    function evalMastery(mastery) {
+        if (character.class != "Sorceress") {
+            return 0;
+        }
+        if (mastery === "ltng") {
+            return 50 + (skills[27].points - 1) * 12;
+        }
+
+        if (mastery === "fire") {
+            return 30 + (skills[25].points - 1) * 7;
         }
 
         return 0;
     }
 
     function evalCalc(calc, next = false) {
-        function synergy(calc){
-            // This function is needed because for some reason the entire synergy line is set to 0 if the variable
-            // (slvl/blvl) is 0 i.e the skill is not set, even the parts of the line that are constant
-            // ie (synergy(1000+ (lvl-1) * 500 )) should return 0 if the skill level is 0, not 500
-            const foundSlvl = calc.match(/slvl\([^\)]*\)/g);
-
-            if (foundSlvl != null && slvl(foundSlvl[0].slice(5, -1)) == 0){
-                return 0;
-            }
-
-            const foundBlvl = calc.match(/blvl\([^\)]*\)/g);
-            if (foundBlvl != null && blvl(foundBlvl[0].slice(5, -1)) == 0){
-                return 0;
-            }
-        
-            return eval(calc);
-
-        }
-        function blvl(skillId) {
-            return slvl(skillId);
-        }
-
-        function slvl(skillId) {
-            let saveSkillId = skillIdToSaveId(skillId, character.class);
-            if (saveSkillId >= 0 && saveSkillId < 30) {
-                return skills[saveSkillId].points;
-            } else {
-                return 0;
-            }
-        }
-        console.log("Evaluating: " + calc);
         let endCalc = calc;
         let lvl = skills[currentId].points == 0 ? 1 : skills[currentId].points;
-        console.log("Lvl: " + lvl);
-        if (next){
+
+        if (next) {
             lvl++;
         }
-        console.log("2 lvl: " +lvl)
-        let firemastery = evalMastery("fire");
-        let lightningmastery = evalMastery("ltng");
+
+        let evalScope = {
+            lvl: lvl,
+            skills: skills,
+            skillOffset: skillOffset,
+            character: character,
+        };
+
+        let fns = [slvl, blvl, synergy, evalMastery, skillIdToSaveId];
+
+        endCalc = endCalc.replaceAll("lightningmastery", "evalMastery('ltng')");
+        endCalc = endCalc.replaceAll("firemastery", "evalMastery('fire')");
         endCalc = endCalc.replaceAll("floor", "Math.floor");
         endCalc = endCalc.replaceAll("min", "Math.min");
         endCalc = endCalc.replaceAll("max", "Math.max");
-        console.log("Ready to evaluate")
-        console.log("Evaluated: " + endCalc + " = " + eval(endCalc));
-        return eval(endCalc);//Math.round(eval(endCalc) * 10) / 10;
-        //return endCalc
+
+        return scopedEval(endCalc, evalScope, fns);
     }
 
+    function scopedEval(script, scope, functions) {
+        let fnText = functions.map((fn) => fn.toString()).join(";");
+        let scopeText = "";
+        Object.keys(scope).forEach((key) => {
+            scopeText += "var " + key + " = " + JSON.stringify(scope[key]) + ";";
+        });
+        return Function(`"use strict"; ${scopeText}${fnText} return (${script})`)();
+    }
 
     function descLine(descline, next = false) {
         // Only values used within the skilldesc.txt file are [36, 74, 75, 40, 76, 18, 13, 34, 31, 41, 77]
@@ -120,8 +133,7 @@
             case 36:
                 let value =
                     "calcb" in descline
-                        ? evalCalc(descline["calca"], next) /
-                          evalCalc(descline["calcb"], next)
+                        ? evalCalc(descline["calca"], next) / evalCalc(descline["calcb"], next)
                         : evalCalc(descline["calca"], next);
                 if ("textb" in descline && value != 1) {
                     return replaceFirstNumber(descline["textb"], value);
@@ -130,11 +142,7 @@
                 }
                 break;
             case 40:
-                return (
-                    "<span id='synTitle'>" +
-                    descLineGeneral(descline, next) +
-                    "</span>"
-                );
+                return "<span id='synTitle'>" + descLineGeneral(descline, next) + "</span>";
                 break;
             case 74:
             case 75:
@@ -149,10 +157,7 @@
         let signedIndex = line.indexOf("%+d");
         let genIndex = line.indexOf("%d");
         if (signedIndex != -1 && (genIndex == -1 || signedIndex < genIndex)) {
-            line = line.replace(
-                "%+d",
-                (number > 0 ? "+" : "") + number.toString()
-            );
+            line = line.replace("%+d", (number > 0 ? "+" : "") + number.toString());
         } else {
             line = line.replace("%d", number.toString());
         }
@@ -162,8 +167,7 @@
     function descLineGeneral(descLine, next = false) {
         let endLine = descLine["texta"];
         let calcs =
-            countOccurrences(descLine["texta"], "%d") +
-            countOccurrences(descLine["texta"], "%+d");
+            countOccurrences(descLine["texta"], "%d") + countOccurrences(descLine["texta"], "%+d");
         if (calcs > 0) {
             let calcA = evalCalc(descLine["calca"], next);
             endLine = replaceFirstNumber(endLine, calcA);
@@ -183,9 +187,7 @@
 
     // Tooltip
     let formattedDescription =
-        skillData["description"].charAt(0).toUpperCase() +
-        skillData["description"].slice(1) +
-        ".";
+        skillData["description"].charAt(0).toUpperCase() + skillData["description"].slice(1) + ".";
 
     $: tooltipContent = `
     <div class='col flex-center'>
@@ -198,47 +200,38 @@
         </p>
         
             ${skillData["dsc2lines"]
-                .map(
-                    (line) =>
-                        "<span class='desc'>" + descLine(line) + "</span></br>"
-                )
+                .map((line) => "<span class='desc'>" + descLine(line) + "</span></br>")
                 .reverse()
                 .join("\n")}
         <p class='desc'>${
             skills[currentId].points > 0
-                ? "Current Skill Level: " +
-                  skills[currentId].points
+                ? "Current Skill Level: " + skills[currentId].points
                 : "First Level"
         }
         </p>
         <p>
             ${skillData["desclines"]
-                .map(
-                    (line) =>
-                        "<span class='desc'>" + descLine(line) + "</span></br>"
-                )
+                .map((line) => "<span class='desc'>" + descLine(line) + "</span></br>")
                 .reverse()
                 .join("\n")}
         </p>
         <p>
             ${
                 skills[currentId].points < 1
-                ? "" : "<span class='desc'>Next Level</span><br>" +
-                skillData["desclines"]
-                .map(
-                    (line) =>
-                        "<span class='desc'>" + descLine(line, true) + "</span></br>"
-                )
-                .reverse()
-                .join("\n")
+                    ? ""
+                    : "<span class='desc'>Next Level</span><br>" +
+                      skillData["desclines"]
+                          .map(
+                              (line) =>
+                                  "<span class='desc'>" + descLine(line, true) + "</span></br>"
+                          )
+                          .reverse()
+                          .join("\n")
             }
         </p>
         <p>
             ${skillData["dsc3lines"]
-                .map(
-                    (line) =>
-                        "<span class='desc'>" + descLine(line) + "</span></br>"
-                )
+                .map((line) => "<span class='desc'>" + descLine(line) + "</span></br>")
                 .join("\n")}
         </p>
     </div>
@@ -272,7 +265,6 @@
             max="99"
             step="1"
             bind:value={skills[currentId].points}
-            
         />
     </div>
 </div>
@@ -280,15 +272,15 @@
 <style>
     button {
         font-size: small;
-        height: 4rem;
-        width: 4rem;
+        height: 6rem;
+        width: 6rem;
         padding: 0.2rem;
     }
 
     input {
-        width:2rem;
-        height:2rem;
-        padding:0.2rem;
+        width: 2rem;
+        height: 2rem;
+        padding: 0.2rem;
     }
 
     .invested-points {
