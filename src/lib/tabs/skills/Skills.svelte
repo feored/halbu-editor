@@ -51,7 +51,10 @@
         console.log(event.detail);
         switch (event.detail.id) {
             case Message.SkillPointChange:
-                let skillNum = skillIdToSaveId(event.detail.data.id, save.character.class);
+                let skillNum = skillIdToSaveId(
+                    event.detail.data.id,
+                    save.character.class
+                );
                 if (
                     event.detail.data["value"] > 0 &&
                     isSkillClickable(event.detail.data.id)
@@ -88,10 +91,12 @@
 </script>
 
 <div class="grid" style="margin-bottom:1rem;">
-    <div>
-        <h5 class="page-title">
-            {skillpages[save.character.class][2]}
-        </h5>
+    <article>
+        <header>
+            <h5 class="page-title">
+                {skillpages[save.character.class][2]}
+            </h5>
+        </header>
         <div class="grid-3 page">
             {#each skillsData.filter((skill) => skill.page == 3) as skill}
                 <Skill
@@ -104,11 +109,13 @@
                 />
             {/each}
         </div>
-    </div>
-    <div>
-        <h5 class="page-title">
-            {skillpages[save.character.class][1]}
-        </h5>
+    </article>
+    <article>
+        <header>
+            <h5 class="page-title">
+                {skillpages[save.character.class][1]}
+            </h5>
+        </header>
         <div class="grid-3 page">
             {#each skillsData.filter((skill) => skill.page == 2) as skill}
                 <Skill
@@ -121,11 +128,13 @@
                 />
             {/each}
         </div>
-    </div>
-    <div>
-        <h5 class="page-title">
-            {skillpages[save.character.class][0]}
-        </h5>
+    </article>
+    <article>
+        <header>
+            <h5 class="page-title">
+                {skillpages[save.character.class][0]}
+            </h5>
+        </header>
         <div class="grid-3 page">
             {#each skillsData.filter((skill) => skill.page == 1) as skill}
                 <Skill
@@ -138,7 +147,7 @@
                 />
             {/each}
         </div>
-    </div>
+    </article>
 </div>
 <div class="row spaced">
     <button on:click={refund}>Refund All Points</button>
@@ -146,22 +155,19 @@
 </div>
 
 <style>
-
     .grid-3 {
-        display:grid;
+        display: grid;
         grid-template-columns: repeat(3, 1fr);
         grid-gap: var(--pico-spacing);
     }
 
-    .page-title{
-        text-align:center;
+    .page-title {
+        text-align: center;
     }
 
     .page {
         border-radius: 6px;
-        background-color: var(--pico-contrast-background);
+        background-color: var(--pico-secondary-background);
         padding: var(--pico-spacing);
     }
-
-
 </style>

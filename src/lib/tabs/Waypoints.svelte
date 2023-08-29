@@ -34,25 +34,28 @@
     }
 </script>
     {#each difficulties as difficulty}
-        <div class="row spaced" style="align-items:baseline;">
-            <h3>{difficulty.display}</h3>
-            <input type="checkbox" name="allWaypoints" on:change={() => checkAllWaypoints(difficulty)} />
-        </div>
-        <div class="grid" style="width:100%;">
-            {#each acts as act}
-                <fieldset>
-                    <legend>{act.display}</legend>
-                    {#each save.waypoints[difficulty.id][act.id] as wp}
-                        <div>
-                            <input type="checkbox" id={wp.act+wp.id} name={wp.act+wp.id}
-                            bind:checked="{wp.acquired}" disabled={wp.id===ROGUE_ENCAMPMENT}>
-                            <label for={wp.act+wp.id}>{wp.name}</label>
-                        </div>
-                    {/each}
-                </fieldset>
-            {/each}
-        </div>
-        <hr />
+        <article>
+            <header>
+                <div class="row spaced" style="align-items:baseline;">
+                    <h5>{difficulty.display}</h5>
+                    <input type="checkbox" name="allWaypoints" on:change={() => checkAllWaypoints(difficulty)} />
+                </div>
+            </header>
+            <div class="grid" style="width:100%;">
+                {#each acts as act}
+                    <fieldset>
+                        <legend>{act.display}</legend>
+                        {#each save.waypoints[difficulty.id][act.id] as wp}
+                            <div>
+                                <input type="checkbox" id={wp.act+wp.id} name={wp.act+wp.id}
+                                bind:checked="{wp.acquired}" disabled={wp.id===ROGUE_ENCAMPMENT}>
+                                <label for={wp.act+wp.id}>{wp.name}</label>
+                            </div>
+                        {/each}
+                    </fieldset>
+                {/each}
+            </div>
+        </article>
     {/each}
 
 <style>

@@ -72,7 +72,7 @@ html {
 }
 
 .vspaced > *:not(:last-child) {
-    margin-bottom: 1%; 
+    margin-bottom: var(--pico-block-spacing-vertical);
 }
 
 input[type="number"]{

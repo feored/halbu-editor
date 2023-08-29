@@ -2,11 +2,15 @@
     import { invoke } from "@tauri-apps/api/tauri";
     import { save } from "@tauri-apps/api/dialog";
     import { Message } from "./lib/utils/Message.svelte";
+    import { SettingsIcon } from "lucide-svelte";
     import SavePicker, { CharacterType } from "./lib/SavePicker.svelte";
     import Save from "./lib/Save.svelte";
+    import SettingsPage from "./lib/SettingsPage.svelte";
 
     let currentSave = null;
     let validSave = true;
+
+    let inSettings = false;
 
     async function saveCharacter() {
         const filePath = await save({
@@ -53,11 +57,19 @@
         }
     }
 </script>
-{#if currentSave == null}
-    <main class="container full-height">
-        <div id="center" class="full-height">
-            <SavePicker on:message={handleMessages} />
-        </div>
+
+<div id="option">
+    <button class:outline={inSettings} id="settings" on:click={() => (inSettings = !inSettings)}
+        ><SettingsIcon /></button
+    >
+</div>
+{#if inSettings}
+    <main id="center" class="full-height full-width">
+        <SettingsPage />
+    </main>
+{:else if currentSave == null}
+    <main id="center" class="full-height">
+        <SavePicker on:message={handleMessages} />
     </main>
 {:else}
     <Save save={currentSave} {validSave} on:message={handleMessages} />
@@ -65,8 +77,15 @@
 
 <style>
     #center {
+        justify-content: center;
         display: flex;
         flex-direction: column;
         align-items: center;
+    }
+
+    #option {
+        top: var(--pico-spacing);
+        right: var(--pico-spacing);
+        position: absolute;
     }
 </style>
