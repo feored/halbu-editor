@@ -27,4 +27,5 @@ dist-ssr
 __pycache__
 
 # CSV editing
+static/*.csv
 .~lock.*
