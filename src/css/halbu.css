@@ -1,13 +1,18 @@
-html, body, #app {
-    height:100%;
-    width:100%;
+/* Layout */
+
+html,
+body,
+#app {
+    height: 100%;
+    width: 100%;
 }
 
 html {
     overflow-y: scroll;
 }
+
 .row {
-    display:flex;
+    display: flex;
     flex-direction: row;
 }
 
@@ -17,64 +22,87 @@ html {
 }
 
 .full-height {
-    height:100%;
+    height: 100%;
 }
 
-.full-width{
-    width:100%;
+.full-width {
+    width: 100%;
 }
 
+.container-center {
+    justify-content: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
 
 .flex-center {
     align-items: center;
     justify-content: center;
 }
 
-:root{
-    --col-size: 100px;
-    --transparent: rgba(255, 255, 255,  0.15);
+.grid-variable {
+    display: grid;
+    grid-gap: var(--pico-spacing);
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
 }
 
-.disabled{
+.text-center {
+    text-align: center;
+}
+
+.pad {
+    padding: var(--pico-spacing);
+}
+
+.spaced>*:not(:last-child) {
+    margin-right: 1%;
+}
+
+.vspaced>*:not(:last-child) {
+    margin-bottom: var(--pico-block-spacing-vertical);
+}
+
+.disabled {
     opacity: 0.5;
 }
+
+/* Style */
+
+.red {
+    color: var(--pico-color-red-600);
+}
+
+.muted {
+    color: var(--pico-muted-color);
+}
+
+input[type="number"] {
+    text-align: right;
+}
+
+/* Tooltips */
 
 .tippy-box[data-theme~='halbu'] {
     background-color: var(--pico-background-color);
     color: var(--text-muted);
     border-radius: 6px;
-    border:var(--pico-border-width) solid var(--pico-contrast);
-    font-weight:normal;
-    font-size:medium;
+    border: var(--pico-border-width) solid var(--pico-contrast);
+    font-weight: normal;
+    font-size: medium;
     padding: 12px;
-    text-align:center;
+    text-align: center;
     line-height: normal;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;
-  }
+}
 
-.tippy-box[data-theme~='halbu'] #skillTitle, #synTitle {
+.tippy-box[data-theme~='halbu'] #skillTitle,
+#synTitle {
     font-weight: bold;
-    color:green;
+    color: green;
 }
 
-.tippy-box[data-theme~='halbu'] p#levelreq{
-    font-weight:bold;
-    text-align:center;
+.tippy-box[data-theme~='halbu'] p#levelreq {
+    font-weight: bold;
+    text-align: center;
 }
-.icon-btn {
-    align-items: center;
-    display: inline-flex;
-}
-
-
-.spaced > *:not(:last-child) {
-    margin-right: 1%;
-}
-
-.vspaced > *:not(:last-child) {
-    margin-bottom: var(--pico-block-spacing-vertical);
-}
-
-input[type="number"]{
-    text-align: right;
-}   

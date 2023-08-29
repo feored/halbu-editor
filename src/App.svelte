@@ -58,17 +58,19 @@
     }
 </script>
 
-<div id="option">
+<div id="option-btn">
     <button class:outline={inSettings} id="settings" on:click={() => (inSettings = !inSettings)}
         ><SettingsIcon /></button
     >
 </div>
 {#if inSettings}
-    <main id="center" class="full-height full-width">
-        <SettingsPage />
+    <main class="full-height container-center">
+        <div class="full-width pad">
+            <SettingsPage />
+        </div>
     </main>
 {:else if currentSave == null}
-    <main id="center" class="full-height">
+    <main class="full-width full-height pad">
         <SavePicker on:message={handleMessages} />
     </main>
 {:else}
@@ -76,14 +78,11 @@
 {/if}
 
 <style>
-    #center {
-        justify-content: center;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
+    .pad {
+        padding: var(--pico-spacing);
     }
 
-    #option {
+    #option-btn {
         top: var(--pico-spacing);
         right: var(--pico-spacing);
         position: absolute;

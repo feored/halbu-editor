@@ -12,9 +12,7 @@
     const skillRows = 6;
     const skillCols = 3;
 
-    let skillsData = allSkillsData.filter(
-        (skillData) => skillData.class == save.character.class
-    );
+    let skillsData = allSkillsData.filter((skillData) => skillData.class == save.character.class);
 
     let clickableSkills = new Array(30);
 
@@ -40,9 +38,7 @@
     }
 
     function updateClickableSkills() {
-        clickableSkills = save.skills.map((skill) =>
-            isSkillClickable(skill.id)
-        );
+        clickableSkills = save.skills.map((skill) => isSkillClickable(skill.id));
     }
 
     updateClickableSkills();
@@ -51,14 +47,8 @@
         console.log(event.detail);
         switch (event.detail.id) {
             case Message.SkillPointChange:
-                let skillNum = skillIdToSaveId(
-                    event.detail.data.id,
-                    save.character.class
-                );
-                if (
-                    event.detail.data["value"] > 0 &&
-                    isSkillClickable(event.detail.data.id)
-                ) {
+                let skillNum = skillIdToSaveId(event.detail.data.id, save.character.class);
+                if (event.detail.data["value"] > 0 && isSkillClickable(event.detail.data.id)) {
                     save.skills[skillNum].points += event.detail.data.value;
                     save.attributes.newskills.value -= event.detail.data.value;
                     updateClickableSkills();
@@ -90,71 +80,55 @@
     }
 </script>
 
-<div class="grid" style="margin-bottom:1rem;">
-    <article>
-        <header>
-            <h5 class="page-title">
-                {skillpages[save.character.class][2]}
-            </h5>
-        </header>
-        <div class="grid-3 page">
-            {#each skillsData.filter((skill) => skill.page == 3) as skill}
-                <Skill
-                    id={skill.id}
-                    skillData={skill}
-                    skills={save.skills}
-                    character={save.character}
-                    isClickable={clickableSkills[skill["saveId"]]}
-                    on:message={handleSkillChanges}
-                />
-            {/each}
-        </div>
-    </article>
-    <article>
-        <header>
-            <h5 class="page-title">
-                {skillpages[save.character.class][1]}
-            </h5>
-        </header>
-        <div class="grid-3 page">
-            {#each skillsData.filter((skill) => skill.page == 2) as skill}
-                <Skill
-                    id={skill.id}
-                    skillData={skill}
-                    skills={save.skills}
-                    character={save.character}
-                    isClickable={clickableSkills[skill["saveId"]]}
-                    on:message={handleSkillChanges}
-                />
-            {/each}
-        </div>
-    </article>
-    <article>
-        <header>
-            <h5 class="page-title">
-                {skillpages[save.character.class][0]}
-            </h5>
-        </header>
-        <div class="grid-3 page">
-            {#each skillsData.filter((skill) => skill.page == 1) as skill}
-                <Skill
-                    id={skill.id}
-                    skillData={skill}
-                    skills={save.skills}
-                    character={save.character}
-                    isClickable={clickableSkills[skill["saveId"]]}
-                    on:message={handleSkillChanges}
-                />
-            {/each}
-        </div>
-    </article>
-</div>
-<div class="row spaced">
-    <button on:click={refund}>Refund All Points</button>
-    <p>Points Left: {save.attributes.newskills.value}</p>
+<div class="pad container-center">
+    <div class="grid-skills" style="margin-bottom:1rem;">
+        {#each [2, 1, 0] as skillPageIndex}
+            <article class="container-center">
+                <header>
+                    <h3 class="page-title">
+                        {skillpages[save.character.class][skillPageIndex]}
+                    </h3>
+                </header>
+                <div class="grid-3 skills-page pad">
+                    {#each skillsData.filter((skill) => skill.page == skillPageIndex + 1) as skill}
+                        <Skill
+                            id={skill.id}
+                            skillData={skill}
+                            skills={save.skills}
+                            character={save.character}
+                            isClickable={clickableSkills[skill["saveId"]]}
+                            on:message={handleSkillChanges}
+                        />
+                    {/each}
+                </div>
+            </article>
+        {/each}
+    </div>
+    <div class="row spaced">
+        <button on:click={refund}>Refund All Points</button>
+        <p>Points Left: {save.attributes.newskills.value}</p>
+    </div>
 </div>
 
 <style>
+    article {
+        max-width: 520px;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+    article > header {
+        width: 100%;
+    }
+
+    article > :not(header) {
+        background-color: var(--pico-secondary-background);
+    }
+    .grid-skills {
+        display: grid;
+        grid-gap: var(--pico-spacing);
+        grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+        width: 90%;
+    }
     .grid-3 {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -163,11 +137,5 @@
 
     .page-title {
         text-align: center;
-    }
-
-    .page {
-        border-radius: 6px;
-        background-color: var(--pico-secondary-background);
-        padding: var(--pico-spacing);
     }
 </style>

@@ -1,52 +1,58 @@
 {
-  "build": {
-    "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "npm run build",
-    "devPath": "http://localhost:1420",
-    "distDir": "../dist",
-    "withGlobalTauri": false
-  },
-  "package": {
-    "productName": "Halbu Editor",
-    "version": "0.0.0"
-  },
-  "tauri": {
-    "allowlist": {
-      "all": false,
-      "dialog": {
-        "all" : true
-      },
-      "fs": {
-        "all": true
-      },
-      "shell": {
-        "all": false,
-        "open": true
-      }
+    "build": {
+        "beforeDevCommand": "npm run dev",
+        "beforeBuildCommand": "npm run build",
+        "devPath": "http://localhost:1420",
+        "distDir": "../dist",
+        "withGlobalTauri": false
     },
-    "bundle": {
-      "active": true,
-      "targets": "all",
-      "identifier": "org.feor.halbu",
-      "icon": [
-        "icons/32x32.png",
-        "icons/128x128.png",
-        "icons/128x128@2x.png",
-        "icons/icon.icns",
-        "icons/icon.ico"
-      ]
+    "package": {
+        "productName": "Halbu Editor",
+        "version": "0.0.0"
     },
-    "security": {
-      "csp": null
-    },
-    "windows": [
-      {
-        "fullscreen": false,
-        "resizable": true,
-        "title": "Halbu Editor",
-        "width": 1280,
-        "height": 720
-      }
-    ]
-  }
+    "tauri": {
+        "allowlist": {
+            "all": false,
+            "dialog": {
+                "all": true
+            },
+            "fs": {
+                "createDir": true,
+                "readDir": true,
+                "readFile": true,
+                "writeFile": true,
+                "scope": [
+                    "$APPCONFIG",
+                    "$APPCONFIG/*"
+                ]
+            },
+            "path": {
+                "all": true
+            }
+        },
+        "bundle": {
+            "active": true,
+            "targets": "all",
+            "identifier": "org.feor.halbu",
+            "icon": [
+                "icons/32x32.png",
+                "icons/128x128.png",
+                "icons/128x128@2x.png",
+                "icons/icon.icns",
+                "icons/icon.ico"
+            ]
+        },
+        "security": {
+            "csp": null
+        },
+        "windows": [
+            {
+                "fullscreen": false,
+                "resizable": true,
+                "title": "Halbu Editor",
+                "width": 1280,
+                "height": 720
+            }
+        ]
+    }
 }
