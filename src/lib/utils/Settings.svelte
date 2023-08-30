@@ -1,19 +1,29 @@
 <script context="module">
-    let initialized = false;
-
+    import { type } from "@tauri-apps/api/os";
+    import { resolve, homeDir } from "@tauri-apps/api/path";
     import { SettingsManager } from "tauri-settings";
+
+    let initialized = false;
 
     export const SettingsKey = {
         Theme: "theme",
         SaveFolder: "save_folder",
     };
 
-    const DEFAULT_SETTINGS = {
-        theme: "auto",
-        save_folder: "",
-    };
+    async function getDefaultSettings() {
+        let save_folder = "";
+        const osType = await type();
+        if (osType === "Windows_NT") {
+            const homeDirPath = await homeDir();
+            save_folder = await resolve(homeDirPath, "Saved Games", "Diablo II Resurrected");
+        }
+        return {
+            theme: "auto",
+            save_folder: save_folder,
+        };
+    }
 
-    const settingsManager = new SettingsManager(DEFAULT_SETTINGS, {
+    const settingsManager = new SettingsManager(await getDefaultSettings(), {
         prettify: true,
         numSpaces: 4,
     });
