@@ -8,7 +8,6 @@
     import SettingsPage from "./lib/SettingsPage.svelte";
 
     let currentSave = null;
-    let validSave = true;
 
     let inSettings = false;
 
@@ -36,15 +35,8 @@
         currentSave = null;
     }
 
-    function handleSaveValidity(messageContents) {
-        validSave = messageContents.valid;
-    }
-
     function handleMessages(event) {
         switch (event.detail.id) {
-            case Message.ValidSave:
-                handleSaveValidity(event.detail.data);
-                break;
             case Message.CharacterUnpicked:
                 unpickCharacter();
                 break;
@@ -74,7 +66,7 @@
         <SavePicker on:message={handleMessages} />
     </main>
 {:else}
-    <Save save={currentSave} {validSave} on:message={handleMessages} />
+    <Save save={currentSave} on:message={handleMessages} />
 {/if}
 
 <style>

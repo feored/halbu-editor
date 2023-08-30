@@ -27,7 +27,7 @@
     import SettingsPage from "./SettingsPage.svelte";
 
     export let save;
-    export let validSave = true;
+    let validSave = true;
 
     export const TabID = {
         Character: Symbol("Character"),
@@ -123,7 +123,7 @@
             </li>
             <li>
                 <button
-                    class="tab outline"
+                    class="tab" style="background-color:var(--pico-color-green-500);"
                     on:click={() => dispatchMessage(Message.SaveFile)}
                     disabled={!validSave}><SaveIcon />&nbsp;Save</button
                 >
@@ -133,7 +133,7 @@
 
     {#if currentTab == TabID.Character}
         <div class="container tab-content">
-            <Character {save} on:message />
+            <Character bind:validSave={validSave} {save} on:message />
         </div>
     {:else if currentTab == TabID.Mercenary}
         <div class="container tab-content">
