@@ -44,7 +44,7 @@
 <div class="full-height full-width">
     <nav
         class="container-fluid"
-        style="margin-bottom: var(--pico-block-spacing-vertical); position:sticky; top: 0px;;"
+        id="navbar"
     >
         <ul>
             <li>
@@ -155,15 +155,19 @@
 </div>
 
 <style>
-    nav {
+    #navbar {
+        margin-bottom: var(--pico-block-spacing-vertical);
+        position:fixed;
+        top: 0px;
         background-color: var(--pico-alternate-background);
+        
     }
-
     .selected {
         background-color: var(--pico-form-element-active-background-color);
     }
 
     .tab-content {
+        margin-top: calc(1rem * var(--pico-line-height) + var(--pico-nav-link-spacing-vertical) * 2 + 4rem);
         padding-bottom: calc(var(--pico-block-spacing-vertical) * 0.66);
     }
 

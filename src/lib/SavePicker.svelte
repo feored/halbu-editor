@@ -15,6 +15,7 @@
     import charstats from "../res/charstats.json";
     import { calcTitle } from "./utils/Utils.svelte";
     import { SettingsKey, settings_get, settings_initialize } from "./utils/Settings.svelte";
+    import { AlertCircleIcon } from "lucide-svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -92,12 +93,14 @@
     <article>
         <h5 class="text-center">Load Existing Character</h5>
         {#if !saveFolderSet}
-            <p class="text-center">
-                Set a designated save folder in the settings to easily pick from existing
-                characters.
-            </p>
+                <p class="toast toast-info row">
+                    <AlertCircleIcon />&nbsp;Set a designated save folder in the settings to easily pick from existing
+                    characters.
+                </p>
         {:else if saveFilesFound.length < 1}
-            <p class="text-center">Found no valid .d2s files in save folder.</p>
+        <p class="toast toast-info row">
+            <AlertCircleIcon />&nbsp;Found no valid .d2s files in save folder.
+        </p>
         {/if}
         <div class="grid-tiles">
             {#each saveFilesFound as saveFile}
@@ -109,7 +112,7 @@
                         loadSavePath(saveFile.path);
                     }}
                 >
-                    <div class="col flex-center full-height">
+                    <div class="col full-height" style="text-align:left">
                         <b class={saveFile.save.character.status.hardcore ? "red" : ""}
                             >{calcTitle(saveFile.save.character)}
                             {saveFile.save.character.name}</b
@@ -119,7 +122,7 @@
                             {saveFile.save.character.class}
                         </span>
                         {#if saveFile.save.character.status.expansion}
-                            <small>Expansion Character</small>
+                            <small><i>Expansion Character</i></small>
                         {/if}
                     </div>
                 </a>
@@ -144,6 +147,7 @@
         grid-gap: var(--pico-spacing);
         grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
     }
+    
     #list {
         margin: auto;
         width: 66%;
