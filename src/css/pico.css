@@ -308,6 +308,8 @@ nav details.dropdown summary:focus-visible {
 :root:not([data-theme=dark]) {
     /* Halbu specific colors */
   --pico-alternate-background:var(--pico-color-light);
+  --pico-info-background-color:var(--pico-color-azure-100);
+  --pico-info-color: var(--pico-primary);
   /* Original picocss colors */
   --pico-background-color: #f5f5f5;
   --pico-color: #373c44;
@@ -432,6 +434,8 @@ nav details.dropdown summary:focus-visible {
   :root:not([data-theme]) {
     /* Halbu specific colors */
     --pico-alternate-background:var(--pico-color-slate-800);
+    --pico-info-background-color:var(--pico-color-azure-750);
+    --pico-info-color: var(--pico-color-azure-150);
     /* Original picocss colors */
     --pico-background-color: #13171f;
     --pico-color: #c2c7d0;
@@ -559,6 +563,8 @@ nav details.dropdown summary:focus-visible {
 [data-theme=dark] {
 /* Halbu specific colors */
   --pico-alternate-background:var(--pico-color-slate-800);
+  --pico-info-background-color:var(--pico-color-azure-750);
+  --pico-info-color: var(--pico-color-azure-150);
 /* Original picocss colors */
   --pico-background-color: #13171f;
   --pico-color: #c2c7d0;

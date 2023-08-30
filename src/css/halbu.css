@@ -56,7 +56,7 @@ html {
 }
 
 .spaced>*:not(:last-child) {
-    margin-right: 1%;
+    margin-right: var(--pico-spacing);
 }
 
 .vspaced>*:not(:last-child) {
@@ -68,6 +68,15 @@ html {
 }
 
 /* Style */
+
+.toast {
+    padding: var(--pico-spacing);
+    border-radius:var(--pico-border-radius);
+}
+.toast-info {
+    background-color: var(--pico-info-background-color);
+    color: var(--pico-info-color);
+}
 
 .red {
     color: var(--pico-color-red-600);
