@@ -6,9 +6,16 @@
     let initialized = false;
     let settingsManager;
 
-    export const SettingsKey = {
+    export const Key = {
         Theme: "theme",
         SaveFolder: "save_folder",
+        AdvancedQuests: "advanced_quests",
+    };
+
+    export const BASE_SETTINGS = {
+        [Key.Theme]: "",
+        [Key.SaveFolder]: "",
+        [Key.AdvancedQuests]: false,
     };
 
     async function getDefaultSettings() {
@@ -19,9 +26,19 @@
             save_folder = await resolve(homeDirPath, "Saved Games", "Diablo II Resurrected");
         }
         return {
-            theme: "auto",
-            save_folder: save_folder,
+            [Key.Theme]: "auto",
+            [Key.SaveFolder]: save_folder,
+            [Key.AdvancedQuests]: false,
         };
+    }
+
+    export async function apply() {
+        let theme = await get(Key.Theme);
+        if (theme === "auto") {
+            document.querySelector("html").removeAttribute("data-theme");
+        } else if (["dark", "light"].includes(theme)) {
+            document.querySelector("html").setAttribute("data-theme", theme);
+        }
     }
 
     async function initializeIfNecessary() {
@@ -31,11 +48,22 @@
     }
 
     export async function initialize() {
-        settingsManager = new SettingsManager(await getDefaultSettings(), {
+        let defaultSettings = await getDefaultSettings();
+        settingsManager = new SettingsManager(defaultSettings, {
             prettify: true,
             numSpaces: 4,
         });
-        await settingsManager.initialize();
+        // In case we have added settings in a new release. add
+        // the new settings in defaults to the current settings
+        let foundSettings = await settingsManager.initialize();
+        if (Object.keys(foundSettings).length < Object.keys(defaultSettings).length) {
+            Object.keys(defaultSettings).forEach((key) => {
+                if (!(key in foundSettings)) {
+                    set(key, defaultSettings[key]);
+                }
+            });
+        }
+        await settingsManager.syncCache();
         initialized = true;
     }
 

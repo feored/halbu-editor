@@ -66,7 +66,7 @@
 
     async function getExistingCharacters() {
         await settings.initialize();
-        let saveFolder = await settings.get(settings.SettingsKey.SaveFolder);
+        let saveFolder = await settings.get(settings.Key.SaveFolder);
         if (saveFolder.length < 1) {
             saveFolderSet = false;
             return;

@@ -1,18 +1,21 @@
 <script>
     import { SunMoonIcon, FolderIcon } from "lucide-svelte";
     import { open } from "@tauri-apps/api/dialog";
-    import * as settings from "./utils/Settings.svelte";
+    import * as Settings from "./utils/Settings.svelte";
+    import * as Logs from "./utils/Logs.svelte";
 
     // Initialize values
-    let saveFolder = "";
-    let theme = "";
+    let currentSettings = Settings.BASE_SETTINGS;
 
-    settings.initialize();
-    settings.get(settings.SettingsKey.SaveFolder).then((value) => {
-        saveFolder = value;
+    Settings.initialize();
+    Settings.get(Settings.Key.SaveFolder).then((value) => {
+        currentSettings[Settings.Key.SaveFolder] = value;
     });
-    settings.get(settings.SettingsKey.Theme).then((value) => {
-        theme = value;
+    Settings.get(Settings.Key.Theme).then((value) => {
+        currentSettings[Settings.Key.Theme] = value;
+    });
+    Settings.get(Settings.Key.AdvancedQuests).then((value) => {
+        currentSettings[Settings.Key.AdvancedQuests] = value;
     });
 
     const setSaveFolder = async () => {
@@ -22,13 +25,17 @@
                 directory: true,
                 title: "Set D2R Save Folder",
             });
-            saveFolder = Array.isArray(selectedPath) ? selectedPath[0] : selectedPath;
-            await settings.set(
-                settings.SettingsKey.SaveFolder,
-                saveFolder == null ? "" : saveFolder
+            currentSettings[Settings.Key.SaveFolder] = Array.isArray(selectedPath)
+                ? selectedPath[0]
+                : selectedPath;
+            await Settings.set(
+                Settings.Key.SaveFolder,
+                currentSettings[Settings.Key.SaveFolder] == null
+                    ? ""
+                    : currentSettings[Settings.Key.SaveFolder]
             );
         } catch (err) {
-            console.error(err);
+            Logs.error(err);
         }
     };
 
@@ -36,12 +43,13 @@
         if (event.currentTarget.value == null) {
             return;
         }
-        if (event.currentTarget.value === "auto") {
-            document.querySelector("html").removeAttribute("data-theme");
-        } else {
-            document.querySelector("html").setAttribute("data-theme", event.currentTarget.value);
-        }
-        await settings.set(settings.SettingsKey.Theme, event.currentTarget.value);
+        currentSettings[Settings.Key.Theme] = event.currentTarget.value;
+        await Settings.set(Settings.Key.Theme, event.currentTarget.value);
+        await Settings.apply();
+    }
+
+    async function setAdvancedQuests(event) {
+        Settings.set(Settings.Key.AdvancedQuests, event.target.checked);
     }
 </script>
 
@@ -57,7 +65,7 @@
                     name="theme"
                     value="auto"
                     on:change={setTheme}
-                    checked={theme === "auto"}
+                    checked={currentSettings[Settings.Key.Theme] === "auto"}
                 />
                 <label for="auto">Automatic</label>
                 <input
@@ -66,7 +74,7 @@
                     name="theme"
                     value="light"
                     on:change={setTheme}
-                    checked={theme === "light"}
+                    checked={currentSettings[Settings.Key.Theme] === "light"}
                 />
                 <label for="light">Light Theme</label>
                 <input
@@ -75,15 +83,31 @@
                     name="theme"
                     value="dark"
                     on:change={setTheme}
-                    checked={theme === "dark"}
+                    checked={currentSettings[Settings.Key.Theme] === "dark"}
                 />
                 <label for="dark">Dark Theme</label>
             </form>
         </div>
         <div>
             <form role="group">
-                <input type="text" value={saveFolder} readonly />
+                <input type="text" value={currentSettings[Settings.Key.SaveFolder]} readonly />
                 <input type="button" on:click={setSaveFolder} value="Set Save Folder" />
+            </form>
+        </div>
+        <div>
+            <form>
+                <div class="row spaced">
+                    <input
+                        type="checkbox"
+                        on:change={setAdvancedQuests}
+                        role="switch"
+                        checked={currentSettings[Settings.Key.AdvancedQuests] == true}
+                    />
+                    <p>
+                        <b>Quests</b>: Advanced editing mode. Allows editing the state of each quest
+                        manually (not recommended).
+                    </p>
+                </div>
             </form>
         </div>
     </div>

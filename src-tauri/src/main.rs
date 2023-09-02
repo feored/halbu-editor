@@ -12,7 +12,7 @@ fn main() {
         .plugin(
             tauri_plugin_log::Builder::default()
                 .timezone_strategy(TimezoneStrategy::UseLocal)
-                .max_file_size(60000u128)
+                .max_file_size(128000u128)
                 .targets([LogTarget::LogDir, LogTarget::Stdout, LogTarget::Webview])
                 .build(),
         )

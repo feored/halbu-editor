@@ -42,7 +42,7 @@
         },
     ];
 
-    let acts = [
+    const acts = [
         { id: "act1", display: "Act I" },
         { id: "act2", display: "Act II" },
         { id: "act3", display: "Act III" },
@@ -101,7 +101,7 @@
         }
 
         if (same) {
-            difficulties.find((diff) => (diff.id === difficulty.id)).acts[act.id] =
+            difficulties.find((diff) => diff.id === difficulty.id).acts[act.id] =
                 save.waypoints[difficulty.id][act.id][1].acquired; // don't use 0 because 0 is rogue encampment and is always on
             difficulties = difficulties; // Used to let Svelte know the array has changed https://learn.svelte.dev/tutorial/updating-arrays-and-objects
         }
