@@ -1,6 +1,10 @@
 <script>
     import * as log from "../utils/Logs.svelte";
+    import * as Settings from "../utils/Settings.svelte";
     export let save;
+
+    let advancedEditing = Settings.getCache(Settings.Key.AdvancedQuests);
+    let advancedEditingAllQuests = false;
 
     const difficulties = [
         { id: "normal", display: "Normal" },
@@ -8,6 +12,20 @@
         { id: "hell", display: "Hell" },
     ];
 
+    const unused_act_quests = {
+        act1: [],
+        act2: [],
+        act3: [],
+        act4: [
+            { id: "unused_1", display: "Unused Quest 1" },
+            { id: "unused_2", display: "Unused Quest 2" },
+            { id: "unused_3", display: "Unused Quest 3" },
+        ],
+        act5: [
+            { id: "unused_1", display: "Unused Quest 1" },
+            { id: "unused_2", display: "Unused Quest 2" },
+        ],
+    };
     const acts = [
         {
             id: "act1",
@@ -111,38 +129,85 @@
     }
 </script>
 
-{#each difficulties as difficulty}
-    <article>
-        <header>
-            <h4>{difficulty.display}</h4>
-        </header>
-        {#each acts as act}
-            <article>
-                <h5>{act.display}</h5>
-                <div class="grid-adaptable">
-                    {#each act.quests as quest}
-                        <div>
-                            <p><b>{quest.display}</b></p>
-                            {#each questFlags as flag}
-                                <div class="row spaced">
-                                    <input
-                                        type="checkbox"
-                                        id={difficulty.id + act.id + quest.id + flag.id}
-                                        checked={save.quests[difficulty.id][act.id][
-                                            quest.id
-                                        ].state.includes(flag.id)}
-                                        on:change={() =>
-                                            toggleFlag(difficulty.id, act.id, quest.id, flag.id)}
-                                    />
-                                    <label for={difficulty.id + act.id + quest.id + flag.id}
-                                        >{flag.display}</label
-                                    >
+{#if advancedEditing}
+    <div class="row spaced pad">
+        <input
+            id="advancedEditingAllQuests"
+            name="advancedEditingAllQuests"
+            type="checkbox"
+            role="switch"
+            bind:checked={advancedEditingAllQuests}
+        />
+        <legend>Enable Unused Quests</legend>
+    </div>
+
+    {#each difficulties as difficulty}
+        <article>
+            <header>
+                <h4>{difficulty.display}</h4>
+            </header>
+            {#each acts as act}
+                <article>
+                    <h5>{act.display}</h5>
+
+                    <div class="grid-adaptable">
+                        {#each act.quests as quest}
+                            <div>
+                                <p><b>{quest.display}</b></p>
+                                {#each questFlags as flag}
+                                    <div class="row spaced">
+                                        <input
+                                            type="checkbox"
+                                            id={difficulty.id + act.id + quest.id + flag.id}
+                                            checked={save.quests[difficulty.id][act.id][
+                                                quest.id
+                                            ].state.includes(flag.id)}
+                                            on:change={() =>
+                                                toggleFlag(
+                                                    difficulty.id,
+                                                    act.id,
+                                                    quest.id,
+                                                    flag.id
+                                                )}
+                                        />
+                                        <label for={difficulty.id + act.id + quest.id + flag.id}
+                                            >{flag.display}</label
+                                        >
+                                    </div>
+                                {/each}
+                            </div>
+                        {/each}
+                        {#if advancedEditingAllQuests}
+                            {#each unused_act_quests[act.id] as quest}
+                                <div>
+                                    <p><b>{quest.display}</b></p>
+                                    {#each questFlags as flag}
+                                        <div class="row spaced">
+                                            <input
+                                                type="checkbox"
+                                                id={difficulty.id + act.id + quest.id + flag.id}
+                                                checked={save.quests[difficulty.id][act.id][
+                                                    quest.id
+                                                ].state.includes(flag.id)}
+                                                on:change={() =>
+                                                    toggleFlag(
+                                                        difficulty.id,
+                                                        act.id,
+                                                        quest.id,
+                                                        flag.id
+                                                    )}
+                                            />
+                                            <label for={difficulty.id + act.id + quest.id + flag.id}
+                                                >{flag.display}</label
+                                            >
+                                        </div>
+                                    {/each}
                                 </div>
                             {/each}
-                        </div>
-                    {/each}
-                </div>
-            </article>
-        {/each}
-    </article>
-{/each}
+                        {/if}
+                    </div>
+                </article>
+            {/each}
+        </article>
+    {/each}
+{/if}

@@ -2,6 +2,7 @@
     import { type } from "@tauri-apps/api/os";
     import { resolve, homeDir } from "@tauri-apps/api/path";
     import { SettingsManager } from "tauri-settings";
+    import * as log from "./Logs.svelte";
 
     let initialized = false;
     let settingsManager;
@@ -80,5 +81,14 @@
     export async function set(key, value) {
         await initializeIfNecessary();
         return settingsManager.set(key, value);
+    }
+
+    export function getCache(key) {
+        if (!initialized) {
+            log.error(
+                "Error: Trying to get a value from the cache before the settings manager has been initialized."
+            );
+        }
+        return settingsManager.getCache(key);
     }
 </script>
