@@ -1,23 +1,17 @@
 <script>
     import { SunMoonIcon, FolderIcon } from "lucide-svelte";
     import { open } from "@tauri-apps/api/dialog";
-    import Settings, {
-        SettingsKey,
-        settings_initialize,
-        settings_has,
-        settings_get,
-        settings_set,
-    } from "./utils/Settings.svelte";
+    import * as settings from "./utils/Settings.svelte";
 
     // Initialize values
     let saveFolder = "";
     let theme = "";
 
-    settings_initialize();
-    settings_get(SettingsKey.SaveFolder).then((value) => {
+    settings.initialize();
+    settings.get(settings.SettingsKey.SaveFolder).then((value) => {
         saveFolder = value;
     });
-    settings_get(SettingsKey.Theme).then((value) => {
+    settings.get(settings.SettingsKey.Theme).then((value) => {
         theme = value;
     });
 
@@ -29,7 +23,10 @@
                 title: "Set D2R Save Folder",
             });
             saveFolder = Array.isArray(selectedPath) ? selectedPath[0] : selectedPath;
-            await settings_set(SettingsKey.SaveFolder, saveFolder == null ? "" : saveFolder);
+            await settings.set(
+                settings.SettingsKey.SaveFolder,
+                saveFolder == null ? "" : saveFolder
+            );
         } catch (err) {
             console.error(err);
         }
@@ -44,7 +41,7 @@
         } else {
             document.querySelector("html").setAttribute("data-theme", event.currentTarget.value);
         }
-        await settings_set(SettingsKey.Theme, event.currentTarget.value);
+        await settings.set(settings.SettingsKey.Theme, event.currentTarget.value);
     }
 </script>
 

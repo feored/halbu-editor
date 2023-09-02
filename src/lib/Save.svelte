@@ -4,6 +4,7 @@
     import Waypoints from "./tabs/Waypoints.svelte";
     import Skills from "./tabs/skills/Skills.svelte";
     import Settings from "./SettingsPage.svelte";
+    import Quests from "./tabs/Quests.svelte";
 
     import { Message, buildMessage } from "./utils/Message.svelte";
     import { createEventDispatcher } from "svelte";
@@ -42,10 +43,7 @@
 </script>
 
 <div class="full-height full-width">
-    <nav
-        class="container-fluid"
-        id="navbar"
-    >
+    <nav class="container-fluid" id="navbar">
         <ul>
             <li>
                 <button
@@ -123,7 +121,8 @@
             </li>
             <li>
                 <button
-                    class="tab" style="background-color:var(--pico-color-green-500);"
+                    class="tab"
+                    style="background-color:var(--pico-color-green-500);"
                     on:click={() => dispatchMessage(Message.SaveFile)}
                     disabled={!validSave}><SaveIcon />&nbsp;Save</button
                 >
@@ -133,7 +132,7 @@
 
     {#if currentTab == TabID.Character}
         <div class="container tab-content">
-            <Character bind:validSave={validSave} {save} on:message />
+            <Character bind:validSave {save} on:message />
         </div>
     {:else if currentTab == TabID.Mercenary}
         <div class="container tab-content">
@@ -151,24 +150,31 @@
         <div class="container tab-content">
             <Settings />
         </div>
+    {:else if currentTab == TabID.Quests}
+        <div class="container tab-content">
+            <Quests {save} />
+        </div>
     {/if}
 </div>
 
 <style>
     #navbar {
         margin-bottom: var(--pico-block-spacing-vertical);
-        position:fixed;
+        position: fixed;
         top: 0px;
         background-color: var(--pico-alternate-background);
-        
+        overflow: hidden;
     }
     .selected {
         background-color: var(--pico-form-element-active-background-color);
     }
 
     .tab-content {
-        margin-top: calc(1rem * var(--pico-line-height) + var(--pico-nav-link-spacing-vertical) * 2 + 4rem);
+        margin-top: calc(
+            1rem * var(--pico-line-height) + var(--pico-nav-link-spacing-vertical) * 2 + 4rem
+        );
         padding-bottom: calc(var(--pico-block-spacing-vertical) * 0.66);
+        overflow: auto;
     }
 
     .tab {

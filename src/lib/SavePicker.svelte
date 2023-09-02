@@ -14,7 +14,7 @@
     import { Class } from "./utils/Constants.svelte";
     import charstats from "../res/charstats.json";
     import { calcTitle } from "./utils/Utils.svelte";
-    import { SettingsKey, settings_get, settings_initialize } from "./utils/Settings.svelte";
+    import * as settings from "./utils/Settings.svelte";
     import { AlertCircleIcon } from "lucide-svelte";
 
     const dispatch = createEventDispatcher();
@@ -65,8 +65,8 @@
     }
 
     async function getExistingCharacters() {
-        await settings_initialize();
-        let saveFolder = await settings_get(SettingsKey.SaveFolder);
+        await settings.initialize();
+        let saveFolder = await settings.get(settings.SettingsKey.SaveFolder);
         if (saveFolder.length < 1) {
             saveFolderSet = false;
             return;
@@ -93,14 +93,14 @@
     <article>
         <h5 class="text-center">Load Existing Character</h5>
         {#if !saveFolderSet}
-                <p class="toast toast-info row">
-                    <AlertCircleIcon />&nbsp;Set a designated save folder in the settings to easily pick from existing
-                    characters.
-                </p>
+            <p class="toast toast-info row">
+                <AlertCircleIcon />&nbsp;Set a designated save folder in the settings to easily pick
+                from existing characters.
+            </p>
         {:else if saveFilesFound.length < 1}
-        <p class="toast toast-info row">
-            <AlertCircleIcon />&nbsp;Found no valid .d2s files in save folder.
-        </p>
+            <p class="toast toast-info row">
+                <AlertCircleIcon />&nbsp;Found no valid .d2s files in save folder.
+            </p>
         {/if}
         <div class="grid-tiles">
             {#each saveFilesFound as saveFile}
@@ -147,7 +147,7 @@
         grid-gap: var(--pico-spacing);
         grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
     }
-    
+
     #list {
         margin: auto;
         width: 66%;

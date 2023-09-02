@@ -7,9 +7,6 @@ body,
     width: 100%;
 }
 
-html {
-    overflow-y: scroll;
-}
 
 .row {
     display: flex;
@@ -71,8 +68,9 @@ html {
 
 .toast {
     padding: var(--pico-spacing);
-    border-radius:var(--pico-border-radius);
+    border-radius: var(--pico-border-radius);
 }
+
 .toast-info {
     background-color: var(--pico-info-background-color);
     color: var(--pico-info-color);
