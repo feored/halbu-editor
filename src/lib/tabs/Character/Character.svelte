@@ -17,10 +17,7 @@
     export let save;
     export let validSave;
 
-    $: {
-        validSave = validName;
-        console.log(validSave);
-    }
+    $: validSave = validName;
 
     const MAX_GOLD_PER_LEVEL = 10000;
     const MAX_XP = 3520485254;

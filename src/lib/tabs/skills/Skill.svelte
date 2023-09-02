@@ -119,7 +119,6 @@
 
     function descLine(descline, next = false) {
         // Only values used within the skilldesc.txt file are [36, 74, 75, 40, 76, 18, 13, 34, 31, 41, 77]
-        console.log("Now handling: " + JSON.stringify(descline));
         switch (descline["id"]) {
             case 34:
             case 39:

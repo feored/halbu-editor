@@ -112,12 +112,14 @@
 
 <style>
     article {
+        margin: auto;
         max-width: 520px;
         padding-left: 0 !important;
         padding-right: 0 !important;
     }
     article > header {
         width: 100%;
+        margin-bottom: 0;
     }
 
     article > :not(header) {
