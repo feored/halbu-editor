@@ -6,10 +6,12 @@
     import SavePicker, { CharacterType } from "./lib/SavePicker.svelte";
     import Save from "./lib/Save.svelte";
     import SettingsPage from "./lib/SettingsPage.svelte";
+    import { apply as applySettings } from "./lib/utils/Settings.svelte";
 
     let currentSave = null;
-
     let inSettings = false;
+
+    applySettings();
 
     async function saveCharacter() {
         const filePath = await save({

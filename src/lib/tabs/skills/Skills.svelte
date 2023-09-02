@@ -44,7 +44,6 @@
     updateClickableSkills();
 
     function handleSkillChanges(event) {
-        console.log(event.detail);
         switch (event.detail.id) {
             case Message.SkillPointChange:
                 let skillNum = skillIdToSaveId(event.detail.data.id, save.character.class);

@@ -38,10 +38,10 @@ body,
     justify-content: center;
 }
 
-.grid-variable {
+.grid-adaptable {
     display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
     grid-gap: var(--pico-spacing);
-    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
 }
 
 .text-center {

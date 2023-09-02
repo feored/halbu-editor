@@ -22,28 +22,28 @@
         }
     }
 
-    export async function error(string) {
+    export async function error(elem) {
         await attachIfNecessary();
-        log_error(string);
+        log_error(JSON.stringify(elem));
     }
 
-    export async function warn(string) {
+    export async function warn(elem) {
         await attachIfNecessary();
-        log_warn(string);
+        log_warn(JSON.stringify(elem));
     }
 
-    export async function info(string) {
+    export async function info(elem) {
         await attachIfNecessary();
-        log_info(string);
+        log_info(JSON.stringify(elem));
     }
 
-    export async function debug(string) {
+    export async function debug(elem) {
         await attachIfNecessary();
-        log_debug(string);
+        log_debug(JSON.stringify(elem));
     }
 
-    export async function trace(string) {
+    export async function trace(elem) {
         await attachIfNecessary();
-        log_trace(string);
+        log_trace(JSON.stringify(elem));
     }
 </script>
