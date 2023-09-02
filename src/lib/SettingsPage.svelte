@@ -2,7 +2,7 @@
     import { SunMoonIcon, FolderIcon } from "lucide-svelte";
     import { open } from "@tauri-apps/api/dialog";
     import * as Settings from "./utils/Settings.svelte";
-    import * as Logs from "./utils/Logs.svelte";
+    import * as log from "./utils/Logs.svelte";
 
     // Initialize values
     let currentSettings = Settings.BASE_SETTINGS;
@@ -35,7 +35,7 @@
                     : currentSettings[Settings.Key.SaveFolder]
             );
         } catch (err) {
-            Logs.error(err);
+            log.error(err);
         }
     };
 
