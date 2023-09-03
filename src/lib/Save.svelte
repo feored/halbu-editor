@@ -1,10 +1,10 @@
 <script>
-    import Character from "./tabs/Character/Character.svelte";
-    import Mercenary from "./tabs/Mercenary/Mercenary.svelte";
+    import Character from "./tabs/character/Character.svelte";
+    import Mercenary from "./tabs/mercenary/Mercenary.svelte";
     import Waypoints from "./tabs/Waypoints.svelte";
     import Skills from "./tabs/skills/Skills.svelte";
     import Settings from "./SettingsPage.svelte";
-    import Quests from "./tabs/Quests.svelte";
+    import Quests from "./tabs/quests/Quests.svelte";
 
     import { Message, buildMessage } from "./utils/Message.svelte";
     import { createEventDispatcher } from "svelte";
@@ -49,7 +49,7 @@
                 <button
                     class="tab outline"
                     on:click={() => dispatchMessage(Message.CharacterUnpicked)}
-                    ><ArrowLeftIcon /> Back</button
+                    ><ArrowLeftIcon /> Menu</button
                 >
             </li>
         </ul>

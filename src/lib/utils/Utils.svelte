@@ -1,5 +1,5 @@
 <script context="module">
-    import titles from "../tabs/Character/titles.json";
+    import titles from "../tabs/character/titles.json";
     import { Class, Difficulty, Act } from "./Constants.svelte";
 
     export function countOccurrences(string, word) {

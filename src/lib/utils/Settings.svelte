@@ -10,13 +10,17 @@
     export const Key = {
         Theme: "theme",
         SaveFolder: "save_folder",
-        AdvancedQuests: "advanced_quests",
+        QuestsAdvancedFlags: "quests_advanced_flags",
+        QuestsAdvancedAllQuests: "quests_advanced_all_quests",
+        QuestsShowPrologue: "quests_show_prologue",
     };
 
     export const BASE_SETTINGS = {
         [Key.Theme]: "",
         [Key.SaveFolder]: "",
-        [Key.AdvancedQuests]: false,
+        [Key.QuestsAdvancedFlags]: false,
+        [Key.QuestsAdvancedAllQuests]: false,
+        [Key.QuestsShowPrologue]: false,
     };
 
     async function getDefaultSettings() {
@@ -29,12 +33,15 @@
         return {
             [Key.Theme]: "auto",
             [Key.SaveFolder]: save_folder,
-            [Key.AdvancedQuests]: false,
+            [Key.QuestsAdvancedFlags]: false,
+            [Key.QuestsAdvancedAllQuests]: false,
+            [Key.QuestsShowPrologue]: false,
         };
     }
 
     export async function apply() {
         let theme = await get(Key.Theme);
+        console.log(theme);
         if (theme === "auto") {
             document.querySelector("html").removeAttribute("data-theme");
         } else if (["dark", "light"].includes(theme)) {

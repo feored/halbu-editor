@@ -135,7 +135,7 @@
 
 <article>
     <header>
-        <h5>General</h5>
+        <h4>General</h4>
     </header>
     <fieldset id="info">
         <div class="grid">
@@ -321,7 +321,7 @@
 </article>
 <article>
     <header>
-        <h5>Stats</h5>
+        <h4>Stats</h4>
     </header>
 
     <div id="stats" class="grid">
@@ -491,7 +491,7 @@
 </article>
 <article>
     <header>
-        <h5>Gold</h5>
+        <h4>Gold</h4>
     </header>
     <fieldset id="gold" class="grid">
         <div>

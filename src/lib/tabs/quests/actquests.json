@@ -1,0 +1,515 @@
+[
+    {
+        "id": "act1",
+        "display": "Act I",
+        "quests": [
+            {
+                "id": "prologue",
+                "display": "Prologue",
+                "states": [
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            },
+            {
+                "id": "q1",
+                "display": "Den of Evil",
+                "states": [
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            },
+            {
+                "id": "q2",
+                "display": "Sisters' Burial Grounds",
+                "states": [
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            },
+            {
+                "id": "q4",
+                "display": "The Search for Cain",
+                "states": [
+                    {
+                        "flags": [
+                            "Custom6"
+                        ],
+                        "display": "Killed Cow King"
+                    },
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            },
+            {
+                "id": "q5",
+                "display": "The Forgotten Tower",
+                "states": [
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            },
+            {
+                "id": "q3",
+                "display": "Tools of the Trade",
+                "states": [
+                    {
+                        "flags": [
+                            "Custom2",
+                            "RewardPending"
+                        ],
+                        "display": "Imbue Available"
+                    },
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            },
+            {
+                "id": "q6",
+                "display": "Sisters to the Slaughter",
+                "states": [
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            },
+            {
+                "id": "completion",
+                "display": "Completion",
+                "states": [
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "id": "act2",
+        "display": "Act II",
+        "quests": [
+            {
+                "id": "prologue",
+                "display": "Prologue",
+                "states": [
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            },
+            {
+                "id": "q1",
+                "display": "Radament's Lair",
+                "states": [
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            },
+            {
+                "id": "q2",
+                "display": "The Horadric Staff",
+                "states": [
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            },
+            {
+                "id": "q3",
+                "display": "Tainted Sun",
+                "states": [
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            },
+            {
+                "id": "q4",
+                "display": "Arcane Sanctuary",
+                "states": [
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            },
+            {
+                "id": "q5",
+                "display": "The Summoner",
+                "states": [
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            },
+            {
+                "id": "q6",
+                "display": "The Seven Tombs",
+                "states": [
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            },
+            {
+                "id": "completion",
+                "display": "Completion",
+                "states": [
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "id": "act3",
+        "display": "Act III",
+        "quests": [
+            {
+                "id": "prologue",
+                "display": "Prologue",
+                "states": [
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            },
+            {
+                "id": "q1",
+                "display": "Lam Esen's tome",
+                "states": [
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            },
+            {
+                "id": "q2",
+                "display": "Khalim's Will",
+                "states": [
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            },
+            {
+                "id": "q3",
+                "display": "Blade of the Old Religion",
+                "states": [
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            },
+            {
+                "id": "q4",
+                "display": "The Golden Bird",
+                "states": [
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            },
+            {
+                "id": "q5",
+                "display": "The Blackened Temple",
+                "states": [
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            },
+            {
+                "id": "q6",
+                "display": "The Guardian",
+                "states": [
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            },
+            {
+                "id": "completion",
+                "display": "Completion",
+                "states": [
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "id": "act4",
+        "display": "Act IV",
+        "quests": [
+            {
+                "id": "prologue",
+                "display": "Prologue",
+                "states": [
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            },
+            {
+                "id": "q1",
+                "display": "The Fallen Angel",
+                "states": [
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            },
+            {
+                "id": "q3",
+                "display": "Hell's Forge",
+                "states": [
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            },
+            {
+                "id": "q2",
+                "display": "Terror's End",
+                "states": [
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            },
+            {
+                "id": "completion",
+                "display": "Completion",
+                "states": [
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "id": "act5",
+        "display": "Act V",
+        "quests": [
+            {
+                "id": "prologue",
+                "display": "Prologue",
+                "states": [
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            },
+            {
+                "id": "q1",
+                "display": "Siege on Harrogath",
+                "states": [
+                    {
+                        "flags": [
+                            "RewardPending",
+                            "Custom1"
+                        ],
+                        "display": "Socket Available"
+                    },
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            },
+            {
+                "id": "q2",
+                "display": "Rescue on Mount Arreat",
+                "states": [
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            },
+            {
+                "id": "q3",
+                "display": "Prison of Ice",
+                "states": [
+                    {
+                        "flags": [
+                            "Custom3"
+                        ],
+                        "display": "Used Scroll of Resistance"
+                    },
+                    {
+                        "flags": [
+                            "Custom4"
+                        ],
+                        "display": "Freed Anya"
+                    },
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            },
+            {
+                "id": "q4",
+                "display": "Betrayal of Harrogath",
+                "states": [
+                    {
+                        "flags": [
+                            "RewardPending",
+                            "EnterArea"
+                        ],
+                        "display": "Anya Personalization Available"
+                    },
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            },
+            {
+                "id": "q5",
+                "display": "Rite of Passage",
+                "states": [
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            },
+            {
+                "id": "q6",
+                "display": "Eve of Destruction",
+                "states": [
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            },
+            {
+                "id": "completion",
+                "display": "Completion",
+                "states": [
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            }
+        ]
+    }
+]

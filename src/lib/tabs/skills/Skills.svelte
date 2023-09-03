@@ -84,9 +84,9 @@
         {#each [2, 1, 0] as skillPageIndex}
             <article class="container-center">
                 <header>
-                    <h3 class="page-title">
+                    <h4 class="page-title">
                         {skillpages[save.character.class][skillPageIndex]}
-                    </h3>
+                    </h4>
                 </header>
                 <div class="grid-3 skills-page pad">
                     {#each skillsData.filter((skill) => skill.page == skillPageIndex + 1) as skill}
