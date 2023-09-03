@@ -1,11 +1,12 @@
 <script>
-    import { SunMoonIcon, FolderIcon } from "lucide-svelte";
+    import { InfoIcon } from "lucide-svelte";
     import { open } from "@tauri-apps/api/dialog";
+    import { tooltip } from "./utils/actions.js";
     import * as Settings from "./utils/Settings.svelte";
     import * as log from "./utils/Logs.svelte";
 
     // Initialize values
-    let currentSettings = Settings.BASE_SETTINGS;
+    let currentSettings = {};
 
     Settings.initialize();
     Settings.get(Settings.Key.SaveFolder).then((value) => {
@@ -14,8 +15,14 @@
     Settings.get(Settings.Key.Theme).then((value) => {
         currentSettings[Settings.Key.Theme] = value;
     });
-    Settings.get(Settings.Key.AdvancedQuests).then((value) => {
-        currentSettings[Settings.Key.AdvancedQuests] = value;
+    Settings.get(Settings.Key.QuestsAdvancedFlags).then((value) => {
+        currentSettings[Settings.Key.QuestsAdvancedFlags] = value;
+    });
+    Settings.get(Settings.Key.QuestsAdvancedAllQuests).then((value) => {
+        currentSettings[Settings.Key.QuestsAdvancedAllQuests] = value;
+    });
+    Settings.get(Settings.Key.QuestsShowPrologue).then((value) => {
+        currentSettings[Settings.Key.QuestsShowPrologue] = value;
     });
 
     const setSaveFolder = async () => {
@@ -48,17 +55,30 @@
         await Settings.apply();
     }
 
-    async function setAdvancedQuests(event) {
-        Settings.set(Settings.Key.AdvancedQuests, event.target.checked);
+    async function setQuestsAdvancedFlags(event) {
+        Settings.set(Settings.Key.QuestsAdvancedFlags, event.target.checked);
+        currentSettings[Settings.Key.QuestsAdvancedFlags] = event.target.checked;
+        console.log(currentSettings[Settings.Key.QuestsAdvancedFlags]);
+    }
+
+    async function setQuestsAdvancedAllQuests(event) {
+        Settings.set(Settings.Key.QuestsAdvancedAllQuests, event.target.checked);
+        currentSettings[Settings.Key.QuestsAdvancedAllQuest] = event.target.checked;
+    }
+
+    async function setQuestsShowPrologue(event) {
+        Settings.set(Settings.Key.QuestsShowPrologue, event.target.checked);
+        currentSettings[Settings.Key.QuestsShowPrologue] = event.target.checked;
     }
 </script>
 
 <article style="max-width:62.5rem; margin:auto;">
-    <header><h5>Settings</h5></header>
+    <header><h4>Settings</h4></header>
     <div class="col vspaced">
-        <div>
+        <h5>General</h5>
+        <div class="row spaced">
+            <legend>Set theme</legend>
             <form>
-                <legend><b>Set theme</b></legend>
                 <input
                     type="radio"
                     id="auto"
@@ -88,27 +108,83 @@
                 <label for="dark">Dark Theme</label>
             </form>
         </div>
+
         <div>
             <form role="group">
-                <input type="text" value={currentSettings[Settings.Key.SaveFolder]} readonly />
                 <input type="button" on:click={setSaveFolder} value="Set Save Folder" />
+                <input type="text" value={currentSettings[Settings.Key.SaveFolder]} readonly />
             </form>
         </div>
-        <div>
-            <form>
-                <div class="row spaced">
-                    <input
-                        type="checkbox"
-                        on:change={setAdvancedQuests}
-                        role="switch"
-                        checked={currentSettings[Settings.Key.AdvancedQuests] == true}
-                    />
-                    <p>
-                        <b>Quests</b>: Advanced editing mode. Allows editing the state of each quest
-                        manually (not recommended).
-                    </p>
-                </div>
-            </form>
-        </div>
+        <h5>Quests</h5>
+        <form>
+            <div class="row spaced">
+                <input
+                    type="checkbox"
+                    role="switch"
+                    checked={currentSettings[Settings.Key.QuestsAdvancedFlags]}
+                    on:change={setQuestsAdvancedFlags}
+                />
+                <span> Advanced editing mode </span>
+                <span
+                    use:tooltip={{
+                        content:
+                            "Allows editing the flags manually for each quest.<br/><i>Not recommended unless you know what you're doing.</i>",
+                        allowHTML: true,
+                        placement: "bottom",
+                        theme: "halbu",
+                        arrow: true,
+                        animation: "shift-toward",
+                        hideOnClick: false,
+                    }}><InfoIcon size="20" /></span
+                >
+            </div>
+        </form>
+        <form>
+            <div class="row spaced">
+                <input
+                    type="checkbox"
+                    role="switch"
+                    checked={currentSettings[Settings.Key.QuestsAdvancedAllQuests]}
+                    disabled={!currentSettings[Settings.Key.QuestsAdvancedFlags]}
+                    on:change={setQuestsAdvancedAllQuests}
+                />
+                <span>Show Unused Quests</span>
+                <span
+                    use:tooltip={{
+                        content:
+                            "Show quest slots unused by the game.<br/><i>Requires advanced editing mode.</i>",
+                        allowHTML: true,
+                        placement: "bottom",
+                        theme: "halbu",
+                        arrow: true,
+                        animation: "shift-toward",
+                        hideOnClick: false,
+                    }}><InfoIcon size="20" /></span
+                >
+            </div>
+        </form>
+        <form>
+            <div class="row spaced">
+                <input
+                    type="checkbox"
+                    role="switch"
+                    checked={currentSettings[Settings.Key.QuestsShowPrologue]}
+                    on:change={setQuestsShowPrologue}
+                />
+                <span> Show Prologue</span>
+                <span
+                    use:tooltip={{
+                        content:
+                            "The prologue is the first quest of each act, and it controls whether you have already been introduced to a given act by certain NPCs",
+                        allowHTML: true,
+                        placement: "bottom",
+                        theme: "halbu",
+                        arrow: true,
+                        animation: "shift-toward",
+                        hideOnClick: false,
+                    }}><InfoIcon size="20" /></span
+                >
+            </div>
+        </form>
     </div>
 </article>

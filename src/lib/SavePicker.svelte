@@ -91,7 +91,7 @@
     </div>
 
     <article>
-        <h5 class="text-center">Load Existing Character</h5>
+        <h4 class="text-center">Load Existing Character</h4>
         {#if !saveFolderSet}
             <p class="toast toast-info row">
                 <AlertCircleIcon />&nbsp;Set a designated save folder in the settings to easily pick
@@ -129,7 +129,7 @@
             {/each}
         </div>
     </article>
-    <h5 class="text-center">New Character</h5>
+    <h4 class="text-center">New Character</h4>
     <div id="btn-group">
         {#each Object.keys(Class) as charClass}
             <button

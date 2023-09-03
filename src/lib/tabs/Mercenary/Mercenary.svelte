@@ -32,9 +32,7 @@
     function variantIDToInfo(variantID) {
         const result = variants.filter((info) => info.id == variantID);
         if (result.length != 1) {
-            console.error(
-                `Error trying to get variant from variant id ${variantID}.`
-            );
+            console.error(`Error trying to get variant from variant id ${variantID}.`);
             return variants[0];
         }
         return JSON.parse(JSON.stringify(result[0]));
@@ -44,9 +42,7 @@
 
     function hire() {
         isHired = !isHired;
-        save.character.mercenary.id = isHired
-            ? Math.floor(Math.random() * u32MAX)
-            : 0;
+        save.character.mercenary.id = isHired ? Math.floor(Math.random() * u32MAX) : 0;
     }
 
     let hiredRef;
@@ -56,38 +52,25 @@
     let mercVariant = variantIDToInfo(save.character.mercenary.variant_id);
 
     let possibleVariants = variants.filter(
-        (merc) =>
-            merc.difficulty == mercVariant.difficulty &&
-            merc.type == mercVariant.type
+        (merc) => merc.difficulty == mercVariant.difficulty && merc.type == mercVariant.type
     );
 
     function updateVariant() {
         possibleVariants = variants.filter(
-            (merc) =>
-                merc.difficulty == mercVariant.difficulty &&
-                merc.type == mercVariant.type
+            (merc) => merc.difficulty == mercVariant.difficulty && merc.type == mercVariant.type
         );
         changeExperience();
     }
 
     // Experience
-    let mercLevel = levelFromXp(
-        save.character.mercenary.experience,
-        mercVariant.rate
-    );
+    let mercLevel = levelFromXp(save.character.mercenary.experience, mercVariant.rate);
 
     function changeExperience() {
-        mercLevel = levelFromXp(
-            save.character.mercenary.experience,
-            mercVariant.rate
-        );
+        mercLevel = levelFromXp(save.character.mercenary.experience, mercVariant.rate);
     }
 
     function changeLevel() {
-        save.character.mercenary.experience = xpFromLevel(
-            mercLevel,
-            mercVariant.rate
-        );
+        save.character.mercenary.experience = xpFromLevel(mercLevel, mercVariant.rate);
     }
 
     // Names
@@ -95,20 +78,17 @@
 
     function updateName() {
         variantNames = names[mercVariant.type];
-        save.character.mercenary.name_id = Math.floor(
-            Math.random() * variantNames.length
-        );
+        save.character.mercenary.name_id = Math.floor(Math.random() * variantNames.length);
     }
 
     $: if (variantNames.length > 0) {
-        save.character.mercenary.name =
-            variantNames[save.character.mercenary.name_id];
+        save.character.mercenary.name = variantNames[save.character.mercenary.name_id];
     }
 </script>
 
 <article>
     <header>
-        <h5>Status</h5>
+        <h4>Status</h4>
     </header>
     <div class="grid" style="align-items:center">
         <div>
@@ -134,9 +114,7 @@
                 bind:checked={save.character.mercenary.dead}
                 disabled={!isHired}
             />
-            <label for="dead"
-                >{save.character.mercenary.dead ? "Dead" : "Alive"}</label
-            >
+            <label for="dead">{save.character.mercenary.dead ? "Dead" : "Alive"}</label>
         </div>
 
         <div>
@@ -215,7 +193,7 @@
 </article>
 <article>
     <header>
-        <h5>Hireling Type</h5>
+        <h4>Hireling Type</h4>
     </header>
     <fieldset id="variant" class="grid">
         <div>

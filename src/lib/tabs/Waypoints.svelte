@@ -84,12 +84,9 @@
     }
 
     function CheckActWaypoints(difficulty, act) {
-        console.log(difficulty.display);
-        console.log(act.display);
         let same = true;
         for (let i = 1; i < save.waypoints[difficulty.id][act.id].length; i++) {
             if (save.waypoints[difficulty.id][act.id][i - 1].id != ROGUE_ENCAMPMENT) {
-                console.log(save.waypoints[difficulty.id][act.id][i - 1].id);
                 if (
                     save.waypoints[difficulty.id][act.id][i - 1].acquired !=
                     save.waypoints[difficulty.id][act.id][i].acquired
@@ -112,7 +109,7 @@
     <article>
         <header>
             <div class="row spaced" style="align-items:baseline;">
-                <h5>{difficulty.display}</h5>
+                <h4>{difficulty.display}</h4>
             </div>
         </header>
         <div class="grid" style="width:100%;">

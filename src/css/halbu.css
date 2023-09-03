@@ -94,7 +94,7 @@ input[type="number"] {
     background-color: var(--pico-background-color);
     color: var(--text-muted);
     border-radius: 6px;
-    border: var(--pico-border-width) solid var(--pico-contrast);
+    border: var(--pico-border-width) solid var(--pico-primary);
     font-weight: normal;
     font-size: medium;
     padding: 12px;
