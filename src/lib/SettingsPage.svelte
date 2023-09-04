@@ -6,24 +6,7 @@
     import * as log from "./utils/Logs.svelte";
 
     // Initialize values
-    let currentSettings = {};
-
-    Settings.initialize();
-    Settings.get(Settings.Key.SaveFolder).then((value) => {
-        currentSettings[Settings.Key.SaveFolder] = value;
-    });
-    Settings.get(Settings.Key.Theme).then((value) => {
-        currentSettings[Settings.Key.Theme] = value;
-    });
-    Settings.get(Settings.Key.QuestsAdvancedFlags).then((value) => {
-        currentSettings[Settings.Key.QuestsAdvancedFlags] = value;
-    });
-    Settings.get(Settings.Key.QuestsAdvancedAllQuests).then((value) => {
-        currentSettings[Settings.Key.QuestsAdvancedAllQuests] = value;
-    });
-    Settings.get(Settings.Key.QuestsShowPrologue).then((value) => {
-        currentSettings[Settings.Key.QuestsShowPrologue] = value;
-    });
+    let currentSettings = Settings.getCachedSettings();
 
     const setSaveFolder = async () => {
         try {

@@ -233,20 +233,8 @@
                 ]
             },
             {
-                "id": "q1",
-                "display": "Lam Esen's tome",
-                "states": [
-                    {
-                        "flags": [
-                            "RewardGranted"
-                        ],
-                        "display": "Completed"
-                    }
-                ]
-            },
-            {
-                "id": "q2",
-                "display": "Khalim's Will",
+                "id": "q4",
+                "display": "The Golden Bird",
                 "states": [
                     {
                         "flags": [
@@ -269,8 +257,20 @@
                 ]
             },
             {
-                "id": "q4",
-                "display": "The Golden Bird",
+                "id": "q2",
+                "display": "Khalim's Will",
+                "states": [
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Completed"
+                    }
+                ]
+            },
+            {
+                "id": "q1",
+                "display": "Lam Esen's tome",
                 "states": [
                     {
                         "flags": [

@@ -124,6 +124,7 @@
     async function changeClass() {
         let newSave = await invoke("new_save", { class: save.character.class });
         save.skills = newSave.skills;
+        ewSave.attributes.statpts.value = save.attributes.statpts.value;
         newSave.attributes.newskills.value = save.attributes.newskills.value;
         newSave.attributes.experience.value = save.attributes.experience.value;
         newSave.attributes.level.value = save.attributes.level.value;
