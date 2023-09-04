@@ -23,6 +23,14 @@
         [Key.QuestsShowPrologue]: false,
     };
 
+    export function getCachedSettings() {
+        let settings = BASE_SETTINGS;
+        Object.keys(settings).forEach((key) => {
+            settings[key] = settingsManager.getCache(key);
+        });
+        return settings;
+    }
+
     async function getDefaultSettings() {
         let save_folder = "";
         const osType = await type();

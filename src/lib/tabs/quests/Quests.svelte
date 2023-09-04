@@ -50,19 +50,52 @@
         { id: "CompletedBefore", display: "Completed Before" },
     ];
 
-    const quest_states = {
-        clear: [],
-        complete: ["RewardGranted", "UpdateQuestLog"],
-    };
+    const questRewards = [
+        // Den of Evil
+        { act: "act1", quest: "q1", attribute: "newskills", value: 1, min: 0, max: 255 },
+        //Radament
+        { act: "act2", quest: "q1", attribute: "newskills", value: 1, min: 0, max: 255 },
+        // Izual
+        { act: "act4", quest: "q1", attribute: "newskills", value: 2, min: 0, max: 255 },
+        // Lam Esen
+        { act: "act3", quest: "q1", attribute: "statpts", value: 5, min: 0, max: 255 },
+        // Golden Bird
+        { act: "act3", quest: "q4", attribute: "maxhp", value: 20 * 256, min: 0, max: 8181 },
+        { act: "act3", quest: "q4", attribute: "hitpoints", value: 20 * 256, min: 0, max: 8181 },
+    ];
 
-    const additional_quest_flags = {
-        Custom6: "Killed Cow King",
-    };
+    function handleRewards(actId, questId, flagId, add) {
+        // Add/remove stats for stat/skill qs
+        if (flagId != "RewardGranted") {
+            // Quest complete is the only flag we care about
+            return;
+        }
+        questRewards
+            .filter((rewardLine) => {
+                return rewardLine.act == actId && rewardLine.quest == questId;
+            })
+            .forEach((rewardLine) => {
+                if (add) {
+                    save.attributes[rewardLine.attribute].value = Math.min(
+                        save.attributes[rewardLine.attribute].value + rewardLine.value,
+                        rewardLine.max
+                    );
+                } else {
+                    save.attributes[rewardLine.attribute].value = Math.max(
+                        save.attributes[rewardLine.attribute].value - rewardLine.value,
+                        rewardLine.min
+                    );
+                }
+            });
+    }
 
     function removeFlag(difficultyId, actId, questId, flagId) {
-        save.quests[difficultyId][actId][questId].state = save.quests[difficultyId][actId][
-            questId
-        ].state.filter((item) => item != flagId);
+        if (save.quests[difficultyId][actId][questId].state.includes(flagId)) {
+            save.quests[difficultyId][actId][questId].state = save.quests[difficultyId][actId][
+                questId
+            ].state.filter((item) => item != flagId);
+            handleRewards(actId, questId, flagId, false);
+        }
     }
 
     function addFlag(difficultyId, actId, questId, flagId) {
@@ -72,6 +105,7 @@
                 flagId,
                 ...save.quests[difficultyId][actId][questId].state,
             ];
+            handleRewards(actId, questId, flagId, true);
         }
     }
 
