@@ -504,9 +504,21 @@
                 "states": [
                     {
                         "flags": [
-                            "RewardGranted"
+                            "CompletedBefore"
                         ],
                         "display": "Completed"
+                    },
+                    {
+                        "flags": [
+                            "RewardPending"
+                        ],
+                        "display": "Akara reset available"
+                    },
+                    {
+                        "flags": [
+                            "RewardGranted"
+                        ],
+                        "display": "Akara reset used"
                     }
                 ]
             }
