@@ -52,16 +52,16 @@
 
     const questRewards = [
         // Den of Evil
-        { act: "act1", quest: "q1", attribute: "newskills", value: 1, min: 0, max: 255 },
+        { act: "act1", quest: "q1", attribute: "newskills", value: 1 },
         //Radament
-        { act: "act2", quest: "q1", attribute: "newskills", value: 1, min: 0, max: 255 },
+        { act: "act2", quest: "q1", attribute: "newskills", value: 1 },
         // Izual
-        { act: "act4", quest: "q1", attribute: "newskills", value: 2, min: 0, max: 255 },
+        { act: "act4", quest: "q1", attribute: "newskills", value: 2 },
         // Lam Esen
-        { act: "act3", quest: "q1", attribute: "statpts", value: 5, min: 0, max: 255 },
+        { act: "act3", quest: "q1", attribute: "statpts", value: 5 },
         // Golden Bird
-        { act: "act3", quest: "q4", attribute: "maxhp", value: 20 * 256, min: 0, max: 8181 },
-        { act: "act3", quest: "q4", attribute: "hitpoints", value: 20 * 256, min: 0, max: 8181 },
+        { act: "act3", quest: "q4", attribute: "maxhp", value: 20 * 256 },
+        { act: "act3", quest: "q4", attribute: "hitpoints", value: 20 * 256 },
     ];
 
     function handleRewards(actId, questId, flagId, add) {
@@ -78,12 +78,12 @@
                 if (add) {
                     save.attributes[rewardLine.attribute].value = Math.min(
                         save.attributes[rewardLine.attribute].value + rewardLine.value,
-                        rewardLine.max
+                        Math.pow(2, save.attributes[rewardLine.attribute].bit_length) - 1
                     );
                 } else {
                     save.attributes[rewardLine.attribute].value = Math.max(
                         save.attributes[rewardLine.attribute].value - rewardLine.value,
-                        rewardLine.min
+                        0
                     );
                 }
             });
@@ -253,7 +253,7 @@
                                                     act.id +
                                                     quest.id +
                                                     state.display}
-                                                >{state.display}{#if (quest.id == "completion" && act.id != "act4") || (quest.id == "q2" && act.id == "act4")}&nbsp;<span
+                                                >{state.display}{#if (quest.id == "completion" && act.id != "act4" && act.id != "act5") || (quest.id == "q2" && act.id == "act4")}&nbsp;<span
                                                         use:tooltip={{
                                                             content:
                                                                 "Required to use the waypoint to the next act.",
@@ -264,7 +264,21 @@
                                                             animation: "shift-toward",
                                                             hideOnClick: false,
                                                         }}><InfoIcon size="16" /></span
-                                                    >{/if}</label
+                                                    >
+                                                {:else if act.id == "act5" && quest.id == "completion" && state.display != "Completed"}
+                                                    &nbsp;<span
+                                                        use:tooltip={{
+                                                            content:
+                                                                "Will only take effect if Den of Evil has been completed.",
+                                                            allowHTML: true,
+                                                            placement: "bottom",
+                                                            theme: "halbu",
+                                                            arrow: true,
+                                                            animation: "shift-toward",
+                                                            hideOnClick: false,
+                                                        }}><InfoIcon size="16" /></span
+                                                    >
+                                                {/if}</label
                                             >
                                         </div>
                                     {/each}
