@@ -5,7 +5,7 @@
 	import * as log from "./Logs.svelte";
 
 	export let initialized = false;
-	const store = new Store(".settings.dat");
+	const store = new Store("settings.json");
 	export let cachedSettings = {};
 
 	export const Key = {
