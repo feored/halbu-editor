@@ -24,7 +24,15 @@
 	}
 
 	onMount(() => {
-		getExistingCharacters();
+		const until = (predFn) => {
+			const poll = (done) => (predFn() ? done() : setTimeout(() => poll(done), 50));
+			return new Promise(poll);
+		};
+		until(() => {
+			return settings.initialized;
+		}).then(() => {
+			getExistingCharacters();
+		});
 	});
 
 	let saveFolderSet = false;
@@ -65,8 +73,8 @@
 	}
 
 	async function getExistingCharacters() {
-		await settings.initialize();
 		let saveFolder = await settings.get(settings.Key.SaveFolder);
+
 		if (saveFolder.length < 1) {
 			// Empty string is the default
 			saveFolderSet = false;

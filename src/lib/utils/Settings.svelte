@@ -1,11 +1,12 @@
 <script context="module">
 	import { type } from "@tauri-apps/api/os";
 	import { resolve, homeDir } from "@tauri-apps/api/path";
-	import { SettingsManager } from "tauri-settings";
+	import { Store } from "tauri-plugin-store-api";
 	import * as log from "./Logs.svelte";
 
-	let initialized = false;
-	let settingsManager;
+	export let initialized = false;
+	const store = new Store(".settings.dat");
+	export let cachedSettings = {};
 
 	export const Key = {
 		Theme: "theme",
@@ -14,25 +15,6 @@
 		QuestsAdvancedAllQuests: "quests_advanced_all_quests",
 		QuestsShowPrologue: "quests_show_prologue",
 	};
-
-	export const BASE_SETTINGS = {
-		[Key.Theme]: "",
-		[Key.SaveFolder]: "",
-		[Key.QuestsAdvancedFlags]: false,
-		[Key.QuestsAdvancedAllQuests]: false,
-		[Key.QuestsShowPrologue]: false,
-	};
-
-	export function getCachedSettings() {
-		console.log("Obtaining cached settings");
-		let settings = BASE_SETTINGS;
-		Object.keys(settings).forEach((key) => {
-			settings[key] = settingsManager.getCache(key);
-			console.log(key, settings[key]);
-		});
-		console.log("Cached settings: ", settings);
-		return settings;
-	}
 
 	async function getDefaultSettings() {
 		let save_folder = "";
@@ -52,7 +34,6 @@
 
 	export async function apply() {
 		let theme = await get(Key.Theme);
-		console.log(theme);
 		if (theme === "auto") {
 			document.querySelector("html").removeAttribute("data-theme");
 		} else if (["dark", "light"].includes(theme)) {
@@ -67,46 +48,35 @@
 	}
 
 	export async function initialize() {
-		let defaultSettings = await getDefaultSettings();
-		settingsManager = new SettingsManager(defaultSettings, {
-			prettify: true,
-			numSpaces: 4,
-		});
-		// In case we have added settings in a new release. add
-		// the new settings in defaults to the current settings
-		let foundSettings = await settingsManager.initialize();
-		if (Object.keys(foundSettings).length < Object.keys(defaultSettings).length) {
-			Object.keys(defaultSettings).forEach((key) => {
-				if (!(key in foundSettings)) {
-					set(key, defaultSettings[key]);
-				}
-			});
+		const defaultSettings = await getDefaultSettings();
+		cachedSettings = {};
+		let keys = Object.values(Key);
+		for (let i = 0; i < keys.length; i++) {
+			const key = keys[i];
+			let present = await store.has(key);
+			if (present) {
+				cachedSettings[key] = await store.get(key);
+			} else {
+				cachedSettings[key] = defaultSettings[key];
+				await store.set(key, defaultSettings[key]);
+			}
 		}
-		await settingsManager.syncCache();
+		await store.save();
 		initialized = true;
 	}
 
-	export async function has(key) {
-		await initializeIfNecessary();
-		return settingsManager.hasCache(key);
+	export function has(key) {
+		return key in cachedSettings;
 	}
 
-	export async function get(key) {
-		await initializeIfNecessary();
-		return settingsManager.get(key);
+	export function get(key) {
+		return cachedSettings[key];
 	}
 
 	export async function set(key, value) {
 		await initializeIfNecessary();
-		return settingsManager.set(key, value);
-	}
-
-	export function getCache(key) {
-		if (!initialized) {
-			log.error(
-				"Error: Trying to get a value from the cache before the settings manager has been initialized."
-			);
-		}
-		return settingsManager.getCache(key);
+		cachedSettings[key] = value;
+		await store.set(key, value);
+		await store.save();
 	}
 </script>
