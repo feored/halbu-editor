@@ -6,9 +6,10 @@
 	import acts from "./actquests.json";
 	export let save;
 
-	let showPrologue = Settings.getCache(Settings.Key.QuestsShowPrologue);
-	let advancedFlags = Settings.getCache(Settings.Key.QuestsAdvancedFlags);
-	let advancedAllQuests = Settings.getCache(Settings.Key.QuestsAdvancedAllQuests);
+	let showPrologue = Settings.get(Settings.Key.QuestsShowPrologue);
+	let advancedFlags = Settings.get(Settings.Key.QuestsAdvancedFlags);
+	let advancedAllQuests = Settings.get(Settings.Key.QuestsAdvancedAllQuests);
+	console.log(showPrologue + " " + advancedFlags + " " + advancedAllQuests);
 
 	const difficulties = [
 		{ id: "normal", display: "Normal" },

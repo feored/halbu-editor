@@ -6,7 +6,7 @@
 	import * as log from "./utils/Logs.svelte";
 
 	// Initialize values
-	let currentSettings = Settings.getCachedSettings();
+	let currentSettings = Settings.cachedSettings;
 
 	const setSaveFolder = async () => {
 		try {

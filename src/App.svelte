@@ -1,84 +1,90 @@
 <script>
-    import { invoke } from "@tauri-apps/api/tauri";
-    import { save } from "@tauri-apps/api/dialog";
-    import { Message } from "./lib/utils/Message.svelte";
-    import { SettingsIcon } from "lucide-svelte";
-    import SavePicker, { CharacterType } from "./lib/SavePicker.svelte";
-    import Save from "./lib/Save.svelte";
-    import SettingsPage from "./lib/SettingsPage.svelte";
-    import { apply as applySettings } from "./lib/utils/Settings.svelte";
+	import { invoke } from "@tauri-apps/api/tauri";
+	import { save } from "@tauri-apps/api/dialog";
+	import { Message } from "./lib/utils/Message.svelte";
+	import { SettingsIcon } from "lucide-svelte";
+	import SavePicker, { CharacterType } from "./lib/SavePicker.svelte";
+	import Save from "./lib/Save.svelte";
+	import SettingsPage from "./lib/SettingsPage.svelte";
+	import {
+		initialize as initializeSettings,
+		apply as applySettings,
+	} from "./lib/utils/Settings.svelte";
 
-    let currentSave = null;
-    let inSettings = false;
+	let currentSave = null;
+	let inSettings = false;
 
-    applySettings();
+	initializeSettings().then(() => {
+		console.log("Settings initialized.");
+		applySettings();
+	});
 
-    async function saveCharacter() {
-        const filePath = await save({
-            defaultPath: currentSave.character.name,
-            filters: [
-                {
-                    name: "D2R Save File",
-                    extensions: ["d2s"],
-                },
-            ],
-        });
-        let res = await invoke("save_file", {
-            path: filePath,
-            save: currentSave,
-        });
-    }
+	async function saveCharacter() {
+		const filePath = await save({
+			defaultPath: currentSave.character.name,
+			filters: [
+				{
+					name: "D2R Save File",
+					extensions: ["d2s"],
+				},
+			],
+		});
+		let res = await invoke("save_file", {
+			path: filePath,
+			save: currentSave,
+		});
+	}
 
-    async function handlePickedCharacter(messageContents) {
-        currentSave = messageContents.save;
-    }
+	async function handlePickedCharacter(messageContents) {
+		currentSave = messageContents.save;
+	}
 
-    function unpickCharacter() {
-        currentSave = null;
-    }
+	function unpickCharacter() {
+		currentSave = null;
+	}
 
-    function handleMessages(event) {
-        switch (event.detail.id) {
-            case Message.CharacterUnpicked:
-                unpickCharacter();
-                break;
-            case Message.CharacterPicked:
-                handlePickedCharacter(event.detail.data);
-                break;
-            case Message.SaveFile:
-                saveCharacter();
-                break;
-        }
-    }
+	function handleMessages(event) {
+		switch (event.detail.id) {
+			case Message.CharacterUnpicked:
+				unpickCharacter();
+				break;
+			case Message.CharacterPicked:
+				handlePickedCharacter(event.detail.data);
+				break;
+			case Message.SaveFile:
+				saveCharacter();
+				break;
+		}
+	}
 </script>
 
 <div id="option-btn">
-    <button class:outline={inSettings} id="settings" on:click={() => (inSettings = !inSettings)}
-        ><SettingsIcon /></button
-    >
+	<button class:outline={inSettings} id="settings" on:click={() => (inSettings = !inSettings)}
+		><SettingsIcon /></button
+	>
 </div>
 {#if inSettings}
-    <main class="full-height container-center">
-        <div class="full-width pad">
-            <SettingsPage />
-        </div>
-    </main>
+	<main class="full-height container-center">
+		<div class="full-width pad">
+			<SettingsPage />
+		</div>
+	</main>
 {:else if currentSave == null}
-    <main class="pad">
-        <SavePicker on:message={handleMessages} />
-    </main>
+	<main class="pad">
+		<SavePicker on:message={handleMessages} />
+	</main>
 {:else}
-    <Save save={currentSave} on:message={handleMessages} />
+	<Save save={currentSave} on:message={handleMessages} />
 {/if}
 
 <style>
-    .pad {
-        padding: var(--pico-spacing);
-    }
+	.pad {
+		padding: var(--pico-spacing);
+	}
 
-    #option-btn {
-        top: var(--pico-spacing);
-        right: var(--pico-spacing);
-        position: absolute;
-    }
+	#option-btn {
+		top: var(--pico-spacing);
+		right: var(--pico-spacing);
+		position: absolute;
+	}
 </style>

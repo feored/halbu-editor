@@ -42,74 +42,71 @@
 	let currentTab = TabID.Character;
 </script>
 
-<div class="full-height full-width">
-	<nav class="container-fluid" id="navbar">
-		<ul>
-			<li>
-				<button
-					class="tab outline"
-					on:click={() => dispatchMessage(Message.CharacterUnpicked)}
-					><ArrowLeftIcon /> Menu</button
-				>
-			</li>
-		</ul>
-		<ul>
-			<li>
-				<button
-					class="tab"
-					class:selected={currentTab == TabID.Character}
-					on:click={() => {
-						currentTab = TabID.Character;
-					}}><PersonStandingIcon />&nbsp;Character</button
-				>
-			</li>
-			<li>
-				<button
-					class="tab"
-					class:selected={currentTab == TabID.Mercenary}
-					on:click={() => {
-						currentTab = TabID.Mercenary;
-					}}><UserSquare2Icon />&nbsp;Hireling</button
-				>
-			</li>
-			<li>
-				<button
-					class="tab"
-					class:selected={currentTab == TabID.Skills}
-					on:click={() => {
-						currentTab = TabID.Skills;
-					}}><BookPlusIcon />&nbsp;Skills</button
-				>
-			</li>
-			<li>
-				<button
-					class="tab"
-					class:selected={currentTab == TabID.Waypoints}
-					on:click={() => {
-						currentTab = TabID.Waypoints;
-					}}><LocateIcon />&nbsp;Waypoints</button
-				>
-			</li>
-			<li>
-				<button
-					class="tab"
-					class:selected={currentTab == TabID.Quests}
-					on:click={() => {
-						currentTab = TabID.Quests;
-					}}><ScrollIcon />&nbsp;Quests</button
-				>
-			</li>
-			<li>
-				<button
-					class="tab"
-					class:selected={currentTab == TabID.Items}
-					on:click={() => {
-						currentTab = TabID.Items;
-					}}><SwordIcon />&nbsp;Items</button
-				>
-			</li>
-		</ul>
-		<ul>
+<div class="sidebar">
+	<ul>
+		<li>
+			<button class="tab outline" on:click={() => dispatchMessage(Message.CharacterUnpicked)}
+				><ArrowLeftIcon /> Menu</button
+			>
+		</li>
+	</ul>
+	<ul>
+		<li>
+			<button
+				class="tab"
+				class:selected={currentTab == TabID.Character}
+				on:click={() => {
+					currentTab = TabID.Character;
+				}}><PersonStandingIcon />&nbsp;Character</button
+			>
+		</li>
+		<li>
+			<button
+				class="tab"
+				class:selected={currentTab == TabID.Mercenary}
+				on:click={() => {
+					currentTab = TabID.Mercenary;
+				}}><UserSquare2Icon />&nbsp;Hireling</button
+			>
+		</li>
+		<li>
+			<button
+				class="tab"
+				class:selected={currentTab == TabID.Skills}
+				on:click={() => {
+					currentTab = TabID.Skills;
+				}}><BookPlusIcon />&nbsp;Skills</button
+			>
+		</li>
+		<li>
+			<button
+				class="tab"
+				class:selected={currentTab == TabID.Waypoints}
+				on:click={() => {
+					currentTab = TabID.Waypoints;
+				}}><LocateIcon />&nbsp;Waypoints</button
+			>
+		</li>
+		<li>
+			<button
+				class="tab"
+				class:selected={currentTab == TabID.Quests}
+				on:click={() => {
+					currentTab = TabID.Quests;
+				}}><ScrollIcon />&nbsp;Quests</button
+			>
+		</li>
+		<li>
+			<button
+				class="tab"
+				class:selected={currentTab == TabID.Items}
+				on:click={() => {
+					currentTab = TabID.Items;
+				}}><SwordIcon />&nbsp;Items</button
+			>
+		</li>
+	</ul>
+	<!-- <ul>
 			<li>
 				<button
 					class="tab"
@@ -127,9 +124,10 @@
 					disabled={!validSave}><SaveIcon />&nbsp;Save</button
 				>
 			</li>
-		</ul>
-	</nav>
+		</ul> -->
+</div>
 
+<div class="content">
 	{#if currentTab == TabID.Character}
 		<div class="container tab-content">
 			<Character bind:validSave {save} on:message />
@@ -158,6 +156,19 @@
 </div>
 
 <style>
+	.sidebar {
+		margin: 0;
+		padding: 0;
+		width: 200px;
+		position: fixed;
+		height: 100%;
+		overflow: auto;
+	}
+	div.content {
+		margin-left: 200px;
+		padding: 1px 16px;
+		height: 1000px;
+	}
 	#navbar {
 		margin-bottom: var(--pico-block-spacing-vertical);
 		position: fixed;
