@@ -6,7 +6,7 @@
 Save Editor for Diablo II Resurrected
 
 
-![window](src/res/window.png)
+![window](static/window.png)
 
 
 
