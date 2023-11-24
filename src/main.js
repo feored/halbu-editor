@@ -1,4 +1,3 @@
-import "./app.scss";
 import "./css/halbu.css";
 
 import App from "./App.svelte";
