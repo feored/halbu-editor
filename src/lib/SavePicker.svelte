@@ -151,10 +151,8 @@
 		{/if}
 		<div class="row">
 			<div class="col-3">
-				<p>Manually choose .d2s file</p>
-				<button class="btn btn-primary" on:click={readFileContents}
-					>Load another save</button
-				>
+				<p>Pick a different save file</p>
+				<button class="btn btn-primary" on:click={readFileContents}>Select</button>
 			</div>
 			<div class="col-9 text-end">
 				<p>New character</p>
