@@ -8,6 +8,8 @@
 	const store = new Store("settings.json");
 	export let cachedSettings = {};
 
+	window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", apply);
+
 	export const Key = {
 		Theme: "theme",
 		SaveFolder: "save_folder",
@@ -35,9 +37,10 @@
 	export async function apply() {
 		let theme = await get(Key.Theme);
 		if (theme === "auto") {
-			document.querySelector("html").removeAttribute("data-theme");
-		} else if (["dark", "light"].includes(theme)) {
-			document.querySelector("html").setAttribute("data-theme", theme);
+			theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+		}
+		if (["dark", "light"].includes(theme)) {
+			document.querySelector("html").setAttribute("data-bs-theme", theme);
 		}
 	}
 

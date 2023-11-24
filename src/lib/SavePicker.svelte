@@ -91,91 +91,84 @@
 	}
 </script>
 
-<div id="list" class="full-height vspaced">
-	<hgroup class="text-center">
-		<h1>Halbu Editor</h1>
-		<p>Diablo II : Resurrected Save Editor</p>
-	</hgroup>
-	<div class="row full-width container-center">
-		<button on:click={readFileContents}>Edit .d2s</button>
-	</div>
-
-	<article>
-		<h4 class="text-center">Load Existing Character</h4>
+<div class="container m-0">
+	<div class="col">
+		<h3>Select Save</h3>
 		{#if !saveFolderSet}
-			<p class="toast toast-info row">
-				<AlertCircleIcon />&nbsp;Set a designated save folder in the settings to easily pick
-				from existing characters.
-			</p>
-		{:else if saveFilesFound.length < 1}
-			<p class="toast toast-info row">
-				<AlertCircleIcon />&nbsp;Found no valid .d2s files in save folder.
-			</p>
-		{:else}
-			<div class="grid-tiles">
-				{#each saveFilesFound as saveFile}
-					<a
-						href="#top"
-						role="button"
-						aria-pressed="false"
-						on:click={() => {
-							loadSavePath(saveFile.path);
-						}}
-					>
-						<div class="col full-height" style="text-align:left">
-							<b class={saveFile.save.character.status.hardcore ? "red" : ""}
-								>{calcTitle(saveFile.save.character)}
-								{saveFile.save.character.name}</b
-							>
-							<span>
-								Level {saveFile.save.character.level}
-								{saveFile.save.character.class}
-							</span>
-							{#if saveFile.save.character.status.expansion}
-								<small><i>Expansion Character</i></small>
-							{/if}
-						</div>
-					</a>
-				{/each}
+			<div class="text-center text-bg-warning p-3 m-3 rounded">
+				<div class="d-flex">
+					<AlertCircleIcon />&nbsp;Set a designated save folder in the settings to easily
+					pick from existing characters.
+				</div>
 			</div>
+		{:else if saveFilesFound.length < 1}
+			<div class="text-center text-bg-warning p-3 m-3 rounded">
+				<div class="d-flex">
+					<AlertCircleIcon />&nbsp;Found no valid .d2s files in save folder.
+				</div>
+			</div>
+		{:else}
+			<table class="table table-striped">
+				<tbody>
+					{#each saveFilesFound as saveFile}
+						<tr>
+							<td
+								><a
+									href="#top"
+									role="button"
+									aria-pressed="false"
+									class="text-decoration-none"
+									on:click={() => {
+										loadSavePath(saveFile.path);
+									}}
+									><b class={saveFile.save.character.status.hardcore ? "red" : ""}
+										>{calcTitle(saveFile.save.character)}
+										{#if saveFile.save.character.name.length > 0}
+											{saveFile.save.character.name}
+										{:else}
+											<i>Corrupted Name</i>
+										{/if}
+									</b></a
+								></td
+							>
+							<td
+								>Level {saveFile.save.character.level}
+								{saveFile.save.character.class}</td
+							>
+							<td>
+								{#if saveFile.save.character.status.expansion}
+									<small><i>Expansion Character</i></small>
+								{:else}
+									<small><i>Classic Character</i></small>
+								{/if}
+							</td>
+						</tr>
+						<!-- 
+							</a> -->
+					{/each}
+				</tbody>
+			</table>
 		{/if}
-	</article>
-	<h4 class="text-center">New Character</h4>
-	<div id="btn-group">
-		{#each Object.keys(Class) as charClass}
-			<button
-				on:click={() => {
-					newSave(charClass);
-				}}>{charClass}</button
-			>
-		{/each}
+		<div class="row">
+			<div class="col-3">
+				<p>Manually choose .d2s file</p>
+				<button class="btn btn-primary" on:click={readFileContents}
+					>Load another save</button
+				>
+			</div>
+			<div class="col-9 text-end">
+				<p>New character</p>
+				<div class="btn-group">
+					{#each Object.keys(Class) as charClass}
+						<button
+							class="btn btn-primary"
+							on:click={() => {
+								newSave(charClass);
+							}}>{charClass}</button
+						>
+					{/each}
+				</div>
+			</div>
+		</div>
 	</div>
 </div>
-
-<style>
-	.grid-tiles {
-		display: grid;
-		grid-gap: var(--pico-spacing);
-		grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-	}
-
-	#list {
-		margin: auto;
-		width: 66%;
-	}
-	#btn-group {
-		display: flex;
-		flex-direction: column;
-		padding: 0;
-		margin: auto;
-		max-width: 30rem;
-	}
-	#btn-group > button {
-		border-radius: 0;
-		border: var(--pico-border-width) solid var(--pico-muted-border-color);
-	}
-	#btn-group > button:not(:last-child) {
-		border-bottom: none; /* Prevent double borders */
-		margin-bottom: 0;
-	}
-</style>
