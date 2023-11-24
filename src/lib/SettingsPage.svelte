@@ -4,7 +4,15 @@
 	import { tooltip } from "./utils/actions.js";
 	import * as Settings from "./utils/Settings.svelte";
 	import * as log from "./utils/Logs.svelte";
+	import { onMount } from "svelte";
+	import { getVersion } from "@tauri-apps/api/app";
 
+	let appVersion = "";
+	onMount(() => {
+		getVersion().then((version) => {
+			appVersion = version;
+		});
+	});
 	// Initialize values
 	let currentSettings = Settings.cachedSettings;
 
@@ -185,4 +193,6 @@
 			>
 		</label>
 	</div>
+	<br />
+	<p class="text-end font-monospace">Version {appVersion}</p>
 </div>
