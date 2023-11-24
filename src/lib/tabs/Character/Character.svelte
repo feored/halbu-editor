@@ -95,12 +95,15 @@
 		let characters = nameByteSize / characterByteSize;
 		if (characters < 2 || characters > 15) {
 			validName = false;
-			return;
+			nameRef.setCustomValidity("Name must be 2-15 characters");
 		}
 		if (!RegExp(/^\p{L}[\p{L},_,\-]/, "u").test(nameRef.value)) {
 			// Check that string starts with a unicode letters
 			// and only contains unicode letters or _ -
 			validName = false;
+			nameRef.setCustomValidity(
+				"Name must start with a letter and only contain letters, _ or -"
+			);
 			return;
 		}
 		let dashes = 0;
@@ -115,10 +118,12 @@
 		}
 		if (dashes > 1 || underscores > 1) {
 			validName = false;
+			nameRef.setCustomValidity("Name can only contain 1 _ or -");
 			return;
 		}
 		validName = true;
 		save.character.name = nameRef.value;
+		nameRef.setCustomValidity("");
 	}
 
 	async function changeClass() {

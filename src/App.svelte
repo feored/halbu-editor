@@ -114,9 +114,7 @@
 			<li class="nav-item">
 				<a class="nav-link disabled" href="/items">Items</a>
 			</li>
-		</ul>
-		<ul class="sidebar-footer nav nav-pills flex-column">
-			<li class="nav-item">
+			<li class="nav-item mt-5">
 				<a
 					class="nav-link"
 					href="#top"
@@ -127,22 +125,35 @@
 				>
 			</li>
 		</ul>
+		<ul class="sidebar-footer nav nav-pills flex-column">
+			{#if currentSave != null}
+				<li class="nav-item d-grid">
+					<button
+						class="btn {validSave ? 'btn-primary' : 'btn-danger'}"
+						on:click={saveCharacter}
+						disabled={!validSave}
+					>
+						Save
+					</button>
+				</li>
+			{/if}
+		</ul>
 	</div>
 	<div class="p-5">
 		{#if currentTab == TabID.Home}
 			<SavePicker on:message={handleMessages} />
 		{:else if currentTab == TabID.Character}
-			<Character bind:validSave save={currentSave} on:message={handleMessages} />
+			<Character bind:validSave bind:save={currentSave} on:message={handleMessages} />
 		{:else if currentTab == TabID.Mercenary}
-			<Mercenary save={currentSave} />
+			<Mercenary bind:save={currentSave} />
 		{:else if currentTab == TabID.Skills}
-			<Skills save={currentSave} />
+			<Skills bind:save={currentSave} />
 		{:else if currentTab == TabID.Waypoints}
-			<Waypoints save={currentSave} />
+			<Waypoints bind:save={currentSave} />
 		{:else if currentTab == TabID.Settings}
 			<Settings />
 		{:else if currentTab == TabID.Quests}
-			<Quests save={currentSave} />
+			<Quests bind:save={currentSave} />
 		{/if}
 	</div>
 </div>
