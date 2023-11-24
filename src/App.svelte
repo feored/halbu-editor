@@ -1,7 +1,5 @@
 <!-- App.svelte -->
 <script>
-	import SavePicker from "./lib/SavePicker.svelte";
-	import SettingsPage from "./lib/SettingsPage.svelte";
 	import { invoke } from "@tauri-apps/api/tauri";
 	import { save } from "@tauri-apps/api/dialog";
 	import { Message } from "./lib/utils/Message.svelte";
@@ -9,12 +7,16 @@
 		initialize as initializeSettings,
 		apply as applySettings,
 	} from "./lib/utils/Settings.svelte";
+
+	import SavePicker from "./lib/SavePicker.svelte";
 	import Character from "./lib/tabs/character/Character.svelte";
 	import Mercenary from "./lib/tabs/mercenary/Mercenary.svelte";
 	import Waypoints from "./lib/tabs/Waypoints.svelte";
 	import Skills from "./lib/tabs/skills/Skills.svelte";
 	import Settings from "./lib/SettingsPage.svelte";
 	import Quests from "./lib/tabs/quests/Quests.svelte";
+
+	let appVersion = "";
 
 	let currentSave = null;
 	let validSave = true;
@@ -86,7 +88,8 @@
 
 <div class="container-fluid layout p-0">
 	<div class="sidebar bg-custom-light border-end p-3">
-		<h1 class="text-center display-6 text-primary">Halbu Editor</h1>
+		<h1 class="text-center display-6 text-primary mt-3">Halbu Editor</h1>
+
 		<ul class="nav nav-pills flex-column">
 			<li class="nav-item">
 				<a
