@@ -147,91 +147,99 @@
 	}
 </script>
 
-{#if advancedFlags}
-	<article>
+<div class="container-fluid m-0">
+	{#if advancedFlags}
 		{#each difficulties as difficulty}
-			{#each acts as act}
-				<h5>{difficulty.display} - {act.display}</h5>
-				<div class="grid-adaptable">
-					{#each act.quests as quest}
-						{#if quest.id != "prologue" || showPrologue}
-							<div>
-								<p><b>{quest.display}</b></p>
-								{#each questFlags as flag}
-									<div class="row spaced">
-										<input
-											type="checkbox"
-											id={difficulty.id + act.id + quest.id + flag.id}
-											checked={save.quests[difficulty.id][act.id][
-												quest.id
-											].state.includes(flag.id)}
-											on:change={() =>
-												toggleFlag(
-													difficulty.id,
-													act.id,
-													quest.id,
-													flag.id
-												)}
-										/>
-										<label for={difficulty.id + act.id + quest.id + flag.id}
-											>{flag.display}</label
-										>
-									</div>
-								{/each}
-							</div>
-						{/if}
-					{/each}
-					{#if advancedAllQuests}
-						{#each unused_act_quests[act.id] as quest}
-							<div>
-								<p><b>{quest.display}</b></p>
-								{#each questFlags as flag}
-									<div class="row spaced">
-										<input
-											type="checkbox"
-											id={difficulty.id + act.id + quest.id + flag.id}
-											checked={save.quests[difficulty.id][act.id][
-												quest.id
-											].state.includes(flag.id)}
-											on:change={() =>
-												toggleFlag(
-													difficulty.id,
-													act.id,
-													quest.id,
-													flag.id
-												)}
-										/>
-										<label for={difficulty.id + act.id + quest.id + flag.id}
-											>{flag.display}</label
-										>
-									</div>
-								{/each}
-							</div>
-						{/each}
-					{/if}
-				</div>
-				<br />
-			{/each}
-		{/each}
-		<hr />
-	</article>
-{:else}
-	<article>
-		{#each difficulties as difficulty}
-			<div class="row spaced vspaced" style="justify-content: space-evenly;">
+			<h4>{difficulty.display}</h4>
+			<div class="row py-3">
 				{#each acts as act}
-					<!-- Normal mode-->
-					<div class="vspaced">
-						<h5>{difficulty.display} - {act.display}</h5>
+					<div class="row my-3">
+						<h6>{act.display}</h6>
 						{#each act.quests as quest}
 							{#if quest.id != "prologue" || showPrologue}
-								<div>
+								<div class="col">
+									<p><b>{quest.display}</b></p>
+									{#each questFlags as flag}
+										<div class="form-check">
+											<input
+												class="form-check-input"
+												type="checkbox"
+												id={difficulty.id + act.id + quest.id + flag.id}
+												checked={save.quests[difficulty.id][act.id][
+													quest.id
+												].state.includes(flag.id)}
+												on:change={() =>
+													toggleFlag(
+														difficulty.id,
+														act.id,
+														quest.id,
+														flag.id
+													)}
+											/>
+											<label
+												class="form-check-label"
+												for={difficulty.id + act.id + quest.id + flag.id}
+												>{flag.display}</label
+											>
+										</div>
+									{/each}
+								</div>
+							{/if}
+						{/each}
+						{#if advancedAllQuests}
+							{#each unused_act_quests[act.id] as quest}
+								<div class="col">
+									<p><b>{quest.display}</b></p>
+									{#each questFlags as flag}
+										<div class="form-check">
+											<input
+												class="form-check-input"
+												type="checkbox"
+												id={difficulty.id + act.id + quest.id + flag.id}
+												checked={save.quests[difficulty.id][act.id][
+													quest.id
+												].state.includes(flag.id)}
+												on:change={() =>
+													toggleFlag(
+														difficulty.id,
+														act.id,
+														quest.id,
+														flag.id
+													)}
+											/>
+											<label
+												class="form-check-label"
+												for={difficulty.id + act.id + quest.id + flag.id}
+												>{flag.display}</label
+											>
+										</div>
+									{/each}
+								</div>
+							{/each}
+						{/if}
+					</div>
+					<br />
+				{/each}
+			</div>
+		{/each}
+	{:else}
+		{#each difficulties as difficulty}
+			<h4>{difficulty.display}</h4>
+			<div class="row">
+				{#each acts as act}
+					<!-- Normal mode-->
+					<div class="col-lg-2 py-3">
+						<h6>{act.display}</h6>
+						{#each act.quests as quest}
+							{#if quest.id != "prologue" || showPrologue}
+								<div class="my-3">
 									<span>
 										<b>{quest.display}</b>
 									</span>
 									{#each quest.states as state}
-										<div>
+										<div class="form-check">
 											<input
+												class="form-check-input"
 												type="checkbox"
 												id={difficulty.id +
 													act.id +
@@ -258,6 +266,7 @@
 													)}
 											/>
 											<label
+												class="form-check-label"
 												for={difficulty.id +
 													act.id +
 													quest.id +
@@ -301,6 +310,5 @@
 				{/each}
 			</div>
 		{/each}
-		<hr />
-	</article>
-{/if}
+	{/if}
+</div>

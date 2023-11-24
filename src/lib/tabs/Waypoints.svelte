@@ -105,55 +105,63 @@
 	}
 </script>
 
-<article>
+<div class="container m-0">
 	{#each difficulties as difficulty}
-		<div class="row spaced" style="align-items:baseline;">
-			<h6>{difficulty.display}</h6>
-		</div>
-		<div class="grid" style="width:100%;">
+		<h4>{difficulty.display}</h4>
+		<div class="row">
 			{#each acts as act}
-				<fieldset>
-					<div class="row spaced" style="align-items:baseline;">
-						<legend><b>{act.display}</b></legend><input
+				<div class="col-lg-2">
+					<div class="form-check">
+						<input
 							type="checkbox"
+							id={act.display}
+							class="form-check-input"
 							name="actWaypoints"
 							bind:checked={difficulty.acts[act.id]}
 							on:click={() => toggleActWaypoints(difficulty, act)}
-						/>
+						/><label class="form-check-label" for={act.display}
+							><h5>{act.display}</h5></label
+						>
 					</div>
+
 					{#each save.waypoints[difficulty.id][act.id] as wp}
-						<div>
-							<input
-								type="checkbox"
-								id={wp.act + wp.id}
-								name={wp.act + wp.id}
-								bind:checked={wp.acquired}
-								disabled={wp.id === ROGUE_ENCAMPMENT}
-								on:change={() => CheckActWaypoints(difficulty, act)}
-							/>
-							<label for={wp.act + wp.id}>{wp.name}</label>
-							{#if wp.id === ROGUE_ENCAMPMENT}
-								<span
-									use:tooltip={{
-										content:
-											"<p style='text-align:center'>The Rogue Encampment is acquired by default.</p>",
-										allowHTML: true,
-										placement: "bottom",
-										theme: "halbu",
-										arrow: true,
-										animation: "shift-toward",
-										hideOnClick: false,
-									}}><InfoIcon size={16} /></span
+						<div class="col">
+							<div class="form-check">
+								<input
+									class="form-check-input"
+									type="checkbox"
+									id={wp.act + wp.id}
+									name={wp.act + wp.id}
+									bind:checked={wp.acquired}
+									disabled={wp.id === ROGUE_ENCAMPMENT}
+									on:change={() => CheckActWaypoints(difficulty, act)}
+								/>
+								<label class="form-check-label" for={wp.act + wp.id}
+									>{wp.name}</label
 								>
-							{/if}
+								{#if wp.id === ROGUE_ENCAMPMENT}
+									<span
+										use:tooltip={{
+											content:
+												"<p style='text-align:center'>This waypoint is acquired by default.</p>",
+											allowHTML: true,
+											placement: "bottom",
+											theme: "halbu",
+											arrow: true,
+											animation: "shift-toward",
+											hideOnClick: false,
+										}}><InfoIcon size={16} /></span
+									>
+								{/if}
+							</div>
 						</div>
 					{/each}
-				</fieldset>
+				</div>
 			{/each}
 		</div>
-		<hr />
+		<br />
 	{/each}
-</article>
+</div>
 
 <style>
 </style>

@@ -86,50 +86,59 @@
 	}
 </script>
 
-<article>
+<div class="container m-0">
 	<h6>Status</h6>
-	<div class="grid" style="align-items:center">
-		<div>
-			<input
-				aria-invalid={!isHired}
-				role="switch"
-				bind:this={hiredRef}
-				type="checkbox"
-				id="hired"
-				name="hired"
-				on:change={hire}
-				bind:checked={isHired}
-			/>
-			<label for="hired"><b>{isHired ? "Hired" : "Not Hired"}</b></label>
+	<div class="row">
+		<div class="col-lg-3 d-flex">
+			<div class="form-check form-check-inline">
+				<input
+					class="form-check-input"
+					role="switch"
+					bind:this={hiredRef}
+					type="checkbox"
+					id="hired"
+					name="hired"
+					on:change={hire}
+					bind:checked={isHired}
+				/>
+				<label class="form-check-label" for="hired"
+					><b>{isHired ? "Hired" : "Not Hired"}</b></label
+				>
+			</div>
+			<div class="form-check form-check-inline">
+				<input
+					class="form-check-input"
+					role="switch"
+					type="checkbox"
+					id="dead"
+					name="dead"
+					bind:checked={save.character.mercenary.dead}
+					disabled={!isHired}
+				/>
+				<label class="form-check-label" for="dead"
+					>{save.character.mercenary.dead ? "Dead" : "Alive"}</label
+				>
+			</div>
 		</div>
-
-		<div>
+	</div>
+	<div class="row">
+		<div class="col-lg-3">
+			<label class="form-label" for="id">ID</label>
 			<input
-				role="switch"
-				type="checkbox"
-				id="dead"
-				name="dead"
-				bind:checked={save.character.mercenary.dead}
-				disabled={!isHired}
-			/>
-			<label for="dead">{save.character.mercenary.dead ? "Dead" : "Alive"}</label>
-		</div>
-
-		<div>
-			<label for="id">ID</label>
-			<input
+				class="form-control"
 				type="number"
 				name="id"
 				min="0"
 				max={u32MAX}
 				step="1"
+				use:enforceMinMax
 				bind:value={save.character.mercenary.id}
-				readonly
 			/>
 		</div>
-		<div>
-			<label for="name">Name</label>
+		<div class="col-lg-3">
+			<label class="form-label" for="name">Name</label>
 			<select
+				class="form-select"
 				bind:value={save.character.mercenary.name_id}
 				name="name_id"
 				id="name_id"
@@ -140,10 +149,8 @@
 				{/each}
 			</select>
 		</div>
-	</div>
-	<div class="grid" style="align-items:center">
-		<div>
-			<label for="level"
+		<div class="col-lg-3">
+			<label class="form-label" for="level"
 				>Level&nbsp;
 				<span
 					use:tooltip={{
@@ -161,6 +168,7 @@
 				</span></label
 			>
 			<input
+				class="form-control"
 				use:enforceMinMax
 				type="number"
 				name="id"
@@ -172,10 +180,10 @@
 				disabled={!isHired}
 			/>
 		</div>
-
-		<div>
-			<label for="experience">Experience</label>
+		<div class="col-lg-3">
+			<label class="form-label" for="experience">Experience</label>
 			<input
+				class="form-control"
 				use:enforceMinMax
 				type="number"
 				name="id"
@@ -190,10 +198,11 @@
 	</div>
 	<hr />
 	<h6>Hireling Type</h6>
-	<fieldset id="variant" class="grid">
-		<div>
-			<label for="difficultyHired">Difficulty Hired</label>
+	<div class="row">
+		<div class="col-lg-4">
+			<label class="form-label" for="difficultyHired">Difficulty Hired</label>
 			<select
+				class="form-select"
 				bind:value={mercVariant.difficulty}
 				name="difficultyHired"
 				id="difficultyHired"
@@ -205,10 +214,10 @@
 				<option value={Difficulty.Hell}>Hell</option>
 			</select>
 		</div>
-
-		<div>
-			<label for="class">Class</label>
+		<div class="col-lg-4">
+			<label class="form-label" for="class">Class</label>
 			<select
+				class="form-select"
 				bind:value={mercVariant.type}
 				name="class"
 				id="class"
@@ -224,10 +233,10 @@
 				<option value={MercenaryClass.Barbarian}>Barbarian</option>
 			</select>
 		</div>
-
-		<div>
-			<label for="variant">Variant</label>
+		<div class="col-lg-4">
+			<label class="form-label" for="variant">Variant</label>
 			<select
+				class="form-select"
 				bind:value={mercVariant.variant}
 				name="variant"
 				id="mercVariant"
@@ -241,7 +250,5 @@
 				{/each}
 			</select>
 		</div>
-	</fieldset>
-</article>
-
-<div class="grid-5 flex-center" />
+	</div>
+</div>

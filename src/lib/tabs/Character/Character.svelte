@@ -124,7 +124,7 @@
 	async function changeClass() {
 		let newSave = await invoke("new_save", { class: save.character.class });
 		save.skills = newSave.skills;
-		ewSave.attributes.statpts.value = save.attributes.statpts.value;
+		newSave.attributes.statpts.value = save.attributes.statpts.value;
 		newSave.attributes.newskills.value = save.attributes.newskills.value;
 		newSave.attributes.experience.value = save.attributes.experience.value;
 		newSave.attributes.level.value = save.attributes.level.value;
@@ -134,71 +134,73 @@
 	}
 </script>
 
-<article>
+<div class="container m-0">
 	<h6>General</h6>
-	<fieldset id="info">
-		<div class="grid">
-			<div class="col">
-				<label for="name">
-					Name &nbsp;
-					<span
-						use:tooltip={{
-							content:
-								"<h4>Naming Restrictions</h4><ul style='text-align:left;'><li>2-15 characters</li><li>Only 1 _ and - allowed</li><li>Must begin with a letter</li><li>No numbers</li><li>No mixing languages</li></ul>",
-							allowHTML: true,
-							placement: "bottom",
-							theme: "halbu",
-							arrow: true,
-							animation: "shift-toward",
-							hideOnClick: false,
-						}}
-					>
-						<InfoIcon size={18} /></span
-					>
-				</label>
-				<input
-					aria-invalid={validName == false}
-					on:keydown={validateName}
-					on:input={validateName}
-					on:change={validateName}
-					title="2-15 characters"
-					bind:this={nameRef}
-					type="text"
-					id="name"
-					placeholder="default"
-					name="name"
-					required
-					minlength="2"
-					maxlength="15"
-					size="15"
-					value={save.character.name}
-				/>
-			</div>
-
-			<div class="col">
-				<label for="class">Class</label>
-				<select
-					bind:value={save.character.class}
-					name="class"
-					id="class"
-					on:change={() => {
-						changeClass();
-						updateTitle();
+	<div class="row">
+		<div class="col was-validated">
+			<label class="form-label" for="name">
+				Name &nbsp;
+				<span
+					use:tooltip={{
+						content:
+							"<h6>Naming Restrictions</h6><ul style='text-align:left;'><li>2-15 characters</li><li>Only 1 _ and - allowed</li><li>Must begin with a letter</li><li>No numbers</li><li>No mixing languages</li></ul>",
+						allowHTML: true,
+						placement: "bottom",
+						theme: "halbu",
+						arrow: true,
+						animation: "shift-toward",
+						hideOnClick: false,
 					}}
 				>
-					<option value={Class.Amazon}>Amazon</option>
-					<option value={Class.Assassin}>Assassin</option>
-					<option value={Class.Barbarian}>Barbarian</option>
-					<option value={Class.Druid}>Druid</option>
-					<option value={Class.Necromancer}>Necromancer</option>
-					<option value={Class.Paladin}>Paladin</option>
-					<option value={Class.Sorceress}>Sorceress</option>
-				</select>
-			</div>
-
+					<InfoIcon size={18} /></span
+				>
+			</label>
+			<input
+				class="form-control {!validName ? 'valid' : 'invalid'}"
+				on:keydown={validateName}
+				on:input={validateName}
+				on:change={validateName}
+				title="2-15 characters"
+				bind:this={nameRef}
+				type="text"
+				id="name"
+				placeholder="default"
+				name="name"
+				required
+				minlength="2"
+				maxlength="15"
+				size="15"
+				value={save.character.name}
+			/>
+		</div>
+		<div class="col">
+			<label class="form-label" for="class">Class</label>
+			<select
+				class="form-select"
+				bind:value={save.character.class}
+				name="class"
+				id="class"
+				on:change={() => {
+					changeClass();
+					updateTitle();
+				}}
+			>
+				<option value={Class.Amazon}>Amazon</option>
+				<option value={Class.Assassin}>Assassin</option>
+				<option value={Class.Barbarian}>Barbarian</option>
+				<option value={Class.Druid}>Druid</option>
+				<option value={Class.Necromancer}>Necromancer</option>
+				<option value={Class.Paladin}>Paladin</option>
+				<option value={Class.Sorceress}>Sorceress</option>
+			</select>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-lg-2">
 			<div id="level">
-				<label for="level">Level</label>
+				<label class="form-label" for="level">Level</label>
 				<input
+					class="form-control"
 					type="number"
 					name="level"
 					min="1"
@@ -209,9 +211,12 @@
 					on:input={changeLevel}
 				/>
 			</div>
-			<div id="experience">
-				<label for="experience">Experience</label>
+		</div>
+		<div class="col-lg-2">
+			<div id="level">
+				<label class="form-label" for="experience">Experience</label>
 				<input
+					class="form-control"
 					type="number"
 					name="experience"
 					min="0"
@@ -223,10 +228,11 @@
 				/>
 			</div>
 		</div>
-		<div class="grid" style="align-items:center;">
-			<div class="col">
-				<label for="mapSeed">Map Seed</label>
+		<div class="col-lg-2">
+			<div id="level">
+				<label class="form-label" for="mapSeed">Map Seed</label>
 				<input
+					class="form-control"
 					type="number"
 					name="mapSeed"
 					min="0"
@@ -236,8 +242,11 @@
 					bind:value={save.character.map_seed}
 				/>
 			</div>
-			<div>
+		</div>
+		<div class="col-lg-6 text-center" style="margin-top:auto;">
+			<div class="form-check form-check-inline">
 				<input
+					class="form-check-input"
 					type="checkbox"
 					id="expansion"
 					name="expansion"
@@ -246,47 +255,69 @@
 						save.character.class === "Assassin"}
 					on:change={updateTitle}
 				/>
-				<label for="expansion">Expansion</label>
+				<label class="form-check-label" for="expansion">Expansion</label>
 			</div>
-
-			<div>
+			<div class="form-check form-check-inline">
 				<input
+					class="form-check-input"
 					type="checkbox"
 					id="hardcore"
 					name="hardcore"
 					bind:checked={save.character.status.hardcore}
 					on:change={updateTitle}
 				/>
-				<label for="hardcore">Hardcore</label>
+				<label class="form-check-label" for="hardcore">Hardcore</label>
 			</div>
 
-			<div>
+			<div class="form-check form-check-inline">
 				<input
+					class="form-check-input"
 					type="checkbox"
 					id="died"
 					name="died"
 					bind:checked={save.character.status.died}
 				/>
-				<label for="died">Died</label>
+				<label class="form-check-label" for="died"
+					>Died <span
+						use:tooltip={{
+							content:
+								"Controls whether the character has died once. Does not matter in Softcore.",
+							allowHTML: true,
+							placement: "bottom",
+							theme: "halbu",
+							arrow: true,
+							animation: "shift-toward",
+							hideOnClick: false,
+						}}
+					>
+						<InfoIcon size={18} /></span
+					></label
+				>
 			</div>
 
-			<div>
+			<div class="form-check form-check-inline">
 				<input
+					class="form-check-input"
 					type="checkbox"
 					id="ladder"
 					name="ladder"
 					bind:checked={save.character.status.ladder}
 				/>
-				<label for="ladder">Ladder</label>
+				<label class="form-check-label" for="ladder">Ladder</label>
 			</div>
 		</div>
-	</fieldset>
+	</div>
 	<hr />
-	<fieldset id="difficulty" class="grid">
-		<legend><h6>Difficulty</h6></legend>
-		<div>
-			<label for="difficultyBeaten">Difficulty Beaten</label>
-			<select bind:value={difficultyBeaten} on:change={updateTitle} name="currentDifficulty">
+	<h6>Difficulty</h6>
+	<div class="row">
+		<div class="col">
+			<label class="form-label" for="difficultyBeaten">Difficulty Beaten</label>
+			<select
+				class="form-select"
+				bind:value={difficultyBeaten}
+				on:change={updateTitle}
+				name="currentDifficulty"
+			>
 				<option value="None" selected={difficultyBeaten === "None"}>None</option>
 				<option value="Normal" selected={difficultyBeaten === "Normal"}>Normal</option>
 				<option value="Nightmare" selected={difficultyBeaten === "Nightmare"}
@@ -295,21 +326,34 @@
 				<option value="Hell" selected={difficultyBeaten === "Hell"}>Hell</option>
 			</select>
 		</div>
-		<div>
-			<label for="title">Title</label>
-			<input type="text" name="title" size="10" bind:value={title} readonly />
+		<div class="col">
+			<label class="form-label" for="title">Title</label>
+			<input
+				class="form-control"
+				type="text"
+				name="title"
+				size="10"
+				bind:value={title}
+				readonly
+			/>
 		</div>
-		<div>
-			<label for="currentDifficulty">Current Difficulty</label>
-			<select bind:value={save.character.difficulty} name="currentDifficulty">
+	</div>
+	<div class="row">
+		<div class="col">
+			<label class="form-label" for="currentDifficulty">Current Difficulty</label>
+			<select
+				class="form-select"
+				bind:value={save.character.difficulty}
+				name="currentDifficulty"
+			>
 				<option value={Difficulty.Normal}>Normal</option>
 				<option value={Difficulty.Nightmare}>Nightmare</option>
 				<option value={Difficulty.Hell}>Hell</option>
 			</select>
 		</div>
-		<div>
-			<label for="currentAct">Current Act</label>
-			<select bind:value={save.character.act} name="currentAct">
+		<div class="col">
+			<label class="form-label" for="currentAct">Current Act</label>
+			<select class="form-select" bind:value={save.character.act} name="currentAct">
 				<option value={Act.Act1}>Act I</option>
 				<option value={Act.Act2}>Act II</option>
 				<option value={Act.Act3}>Act III</option>
@@ -317,92 +361,63 @@
 				<option value={Act.Act5}>Act V</option>
 			</select>
 		</div>
-	</fieldset>
+	</div>
 	<hr />
 	<h6>Stats</h6>
-	<div id="stats" class="grid">
+	<div class="row">
 		<div class="col">
-			<fieldset id="attributes" class="grid">
-				<div>
-					<label for="strength">Strength</label>
-					<input
-						type="number"
-						name="strength"
-						min="0"
-						max="1023"
-						step="1"
-						use:enforceMinMax
-						bind:value={save.attributes.strength.value}
-					/>
-				</div>
-				<div>
-					<label for="dexterity">Dexterity</label>
-					<input
-						type="number"
-						name="dexterity"
-						min="0"
-						max="1023"
-						step="1"
-						use:enforceMinMax
-						bind:value={save.attributes.dexterity.value}
-					/>
-				</div>
-				<div>
-					<label for="vitality">Vitality</label>
-					<input
-						type="number"
-						name="vitality"
-						min="0"
-						max="1023"
-						step="1"
-						use:enforceMinMax
-						bind:value={save.attributes.vitality.value}
-					/>
-				</div>
-				<div>
-					<label for="energy">Energy</label>
-					<input
-						type="number"
-						name="energy"
-						min="0"
-						max="1023"
-						step="1"
-						use:enforceMinMax
-						bind:value={save.attributes.energy.value}
-					/>
-				</div>
-			</fieldset>
-			<div>
-				<label for="statPointsLeft">Stat Points Left</label>
-				<input
-					use:enforceMinMax
-					type="number"
-					name="statPointsLeft"
-					min="0"
-					max="1023"
-					step="1"
-					bind:value={save.attributes.statpts.value}
-				/>
-			</div>
-
-			<div>
-				<label for="skillPointsLeft">Skill Points Left</label>
-				<input
-					use:enforceMinMax
-					type="number"
-					name="skillPointsLeft"
-					min="0"
-					max="255"
-					step="1"
-					bind:value={save.attributes.newskills.value}
-				/>
-			</div>
+			<label class="form-label" for="strength">Strength</label>
+			<input
+				class="form-control"
+				type="number"
+				name="strength"
+				min="0"
+				max="1023"
+				step="1"
+				use:enforceMinMax
+				bind:value={save.attributes.strength.value}
+			/>
+			<label class="form-label" for="dexterity">Dexterity</label>
+			<input
+				class="form-control"
+				type="number"
+				name="dexterity"
+				min="0"
+				max="1023"
+				step="1"
+				use:enforceMinMax
+				bind:value={save.attributes.dexterity.value}
+			/>
+			<label class="form-label" for="vitality">Vitality</label>
+			<input
+				class="form-control"
+				type="number"
+				name="vitality"
+				min="0"
+				max="1023"
+				step="1"
+				use:enforceMinMax
+				bind:value={save.attributes.vitality.value}
+			/>
+			<label class="form-label" for="energy">Energy</label>
+			<input
+				class="form-control"
+				type="number"
+				name="energy"
+				min="0"
+				max="1023"
+				step="1"
+				use:enforceMinMax
+				bind:value={save.attributes.energy.value}
+			/>
 		</div>
-		<fieldset id="resources">
-			<div id="life" class="grid">
-				<div>
-					<label for="lifeCurrent">Current Life</label>
+
+		<div class="col">
+			<div class="row">
+				<div class="col">
+					<label class="form-label" for="lifeCurrent">Current Life</label>
 					<input
+						class="form-control"
 						use:enforceMinMax
 						type="number"
 						name="lifeCurrent"
@@ -412,10 +427,10 @@
 						bind:value={currentLife}
 					/>
 				</div>
-
-				<div>
-					<label for="lifeBase">Base Life</label>
+				<div class="col">
+					<label class="form-label" for="lifeBase">Base Life</label>
 					<input
+						class="form-control"
 						use:enforceMinMax
 						type="number"
 						name="lifeBase"
@@ -426,11 +441,11 @@
 					/>
 				</div>
 			</div>
-
-			<div id="mana" class="grid">
-				<div>
-					<label for="manaCurrent">Current Mana</label>
+			<div class="row">
+				<div class="col">
+					<label class="form-label" for="manaCurrent">Current Mana</label>
 					<input
+						class="form-control"
 						use:enforceMinMax
 						type="number"
 						name="manaCurrent"
@@ -440,10 +455,10 @@
 						bind:value={currentMana}
 					/>
 				</div>
-
-				<div>
-					<label for="manaBase">Base Mana</label>
+				<div class="col">
+					<label class="form-label" for="manaBase">Base Mana</label>
 					<input
+						class="form-control"
 						use:enforceMinMax
 						type="number"
 						name="manaBase"
@@ -454,11 +469,11 @@
 					/>
 				</div>
 			</div>
-
-			<div id="stamina" class="grid">
-				<div>
-					<label for="staminaCurrent">Current Stamina</label>
+			<div class="row">
+				<div class="col">
+					<label class="form-label" for="staminaCurrent">Current Stamina</label>
 					<input
+						class="form-control"
 						use:enforceMinMax
 						type="number"
 						name="staminaCurrent"
@@ -468,10 +483,10 @@
 						bind:value={currentStamina}
 					/>
 				</div>
-
-				<div>
-					<label for="staminaBase">Base Stamina</label>
+				<div class="col">
+					<label class="form-label" for="staminaBase">Base Stamina</label>
 					<input
+						class="form-control"
 						use:enforceMinMax
 						type="number"
 						name="staminaBase"
@@ -482,15 +497,45 @@
 					/>
 				</div>
 			</div>
-		</fieldset>
+			<div class="row">
+				<div class="col">
+					<div class="col">
+						<label class="form-label" for="statPointsLeft">Stat Points Left</label>
+						<input
+							class="form-control"
+							use:enforceMinMax
+							type="number"
+							name="statPointsLeft"
+							min="0"
+							max="1023"
+							step="1"
+							bind:value={save.attributes.statpts.value}
+						/>
+					</div>
+				</div>
+				<div class="col">
+					<label class="form-label" for="skillPointsLeft">Skill Points Left</label>
+					<input
+						class="form-control"
+						use:enforceMinMax
+						type="number"
+						name="skillPointsLeft"
+						min="0"
+						max="255"
+						step="1"
+						bind:value={save.attributes.newskills.value}
+					/>
+				</div>
+			</div>
+		</div>
 	</div>
 	<hr />
 	<h6>Gold</h6>
-
-	<fieldset id="gold" class="grid">
-		<div>
-			<label for="goldInventory">Inventory</label>
+	<div class="row">
+		<div class="col">
+			<label class="form-label" for="goldInventory">Inventory</label>
 			<input
+				class="form-control"
 				use:enforceMinMax
 				type="number"
 				name="goldInventory"
@@ -500,9 +545,10 @@
 				bind:value={save.attributes.gold.value}
 			/>
 		</div>
-		<div>
-			<label for="goldStash">Stash</label>
+		<div class="col">
+			<label class="form-label" for="goldStash">Stash</label>
 			<input
+				class="form-control"
 				use:enforceMinMax
 				type="number"
 				name="goldStash"
@@ -512,8 +558,5 @@
 				bind:value={save.attributes.goldbank.value}
 			/>
 		</div>
-	</fieldset>
-</article>
-
-<style>
-</style>
+	</div>
+</div>

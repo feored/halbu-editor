@@ -8,93 +8,32 @@ body,
 }
 
 
-.row {
-	display: flex;
-	flex-direction: row;
-}
-
-.col {
-	display: flex;
-	flex-direction: column;
-}
-
-.full-height {
-	height: 100%;
-}
-
-.full-width {
-	width: 100%;
-}
-
-.container-center {
-	justify-content: center;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-}
-
-.flex-center {
-	align-items: center;
-	justify-content: center;
-}
-
-.grid-adaptable {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-	grid-gap: var(--pico-spacing);
-}
-
-.text-center {
-	text-align: center;
-}
-
-.pad {
-	padding: var(--pico-spacing);
-}
-
-.spaced>*:not(:last-child) {
-	margin-right: var(--pico-spacing);
-}
-
-.vspaced>*:not(:last-child) {
-	margin-bottom: var(--pico-block-spacing-vertical);
-}
-
 .disabled {
 	opacity: 0.5;
 }
 
 /* Style */
 
-.toast {
-	padding: var(--pico-spacing);
-	border-radius: var(--pico-border-radius);
-}
-
-.toast-info {
-	background-color: var(--pico-info-background-color);
-	color: var(--pico-info-color);
-}
-
-.red {
-	color: var(--pico-color-red-600);
-}
-
-.muted {
-	color: var(--pico-muted-color);
-}
-
 input[type="number"] {
 	text-align: right;
+}
+
+
+[data-bs-theme=light] .bg-custom-light {
+	background-color: var(--bs-light);
+}
+
+[data-bs-theme=dark] .bg-custom-light {
+	background-color: var(--bs-secondary-bg-subtle);
 }
 
 /* Tooltips */
 
 .tippy-box[data-theme~='halbu'] {
-	background-color: var(--pico-background-color);
+	background-color: var(--bs-secondary-bg-subtle);
 	color: var(--text-muted);
 	border-radius: 6px;
-	border: var(--pico-border-width) solid var(--pico-primary);
+	border: var(--bs-border-width) var(--bs-border-style) var(--bs-primary);
 	font-weight: normal;
 	font-size: medium;
 	padding: 12px;
