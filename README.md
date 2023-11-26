@@ -1,5 +1,5 @@
 
-### Halbu Editor
+# Halbu Editor
 
 <img src="static/screenshots/home.png" />
 <p float="left">
@@ -14,7 +14,7 @@
 
 A save editor for Diablo II: Resurrected.
 
-This project started as a way to learn Rust. The goal is to have a native hero editor for D2R that's easy to use, lets you modify as many things as possible, parses mangled saves gracefully, is up to date with the latest patches,  includes a skill calculator and does not use copyrighted assets (no exocet font, game icons, etc).
+This project started as a way to learn Rust. The goal is to have a native hero editor for D2R that's easy to use, lets you modify as many things as possible, parses mangled saves gracefully, is up to date with the latest patches,  includes a skill calculator and does not use copyrighted assets (no exocet font, skill icons, etc).
 
 #### Features
 
