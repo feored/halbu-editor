@@ -38,6 +38,8 @@
 	let saveFolderSet = false;
 	let saveFilesFound = [];
 
+	let selectedClass;
+
 	async function readFileContents() {
 		try {
 			const selectedPath = await open({
@@ -67,8 +69,8 @@
 		}
 	}
 
-	async function newSave(charClass) {
-		let newSave = await invoke("new_save", { class: charClass });
+	async function newSave() {
+		let newSave = await invoke("new_save", { class: selectedClass });
 		dispatchMessage(Message.CharacterPicked, { save: newSave });
 	}
 
@@ -109,6 +111,15 @@
 			</div>
 		{:else}
 			<table class="table table-striped">
+				<thead>
+					<tr>
+						<th scope="col">Name</th>
+						<th scope="col">Level</th>
+						<th scope="col">Class</th>
+						<th scope="col">Hardcore</th>
+						<th scope="col">Expansion</th>
+					</tr>
+				</thead>
 				<tbody>
 					{#each saveFilesFound as saveFile}
 						<tr>
@@ -131,15 +142,22 @@
 									</b></a
 								></td
 							>
-							<td
-								>Level {saveFile.save.character.level}
-								{saveFile.save.character.class}</td
-							>
+							<td>Level {saveFile.save.character.level} </td>
+							<td>
+								{saveFile.save.character.class}
+							</td>
+							<td>
+								{#if saveFile.save.character.status.hardcore}
+									<small><i>Hardcore</i></small>
+								{:else}
+									<small><i>Softcore</i></small>
+								{/if}
+							</td>
 							<td>
 								{#if saveFile.save.character.status.expansion}
-									<small><i>Expansion Character</i></small>
+									<small><i>Expansion</i></small>
 								{:else}
-									<small><i>Classic Character</i></small>
+									<small><i>Classic</i></small>
 								{/if}
 							</td>
 						</tr>
@@ -150,22 +168,31 @@
 			</table>
 		{/if}
 		<div class="row">
-			<div class="col-3">
-				<p>Pick a different save file</p>
-				<button class="btn btn-primary" on:click={readFileContents}>Select</button>
+			<div class="col-4">
+				<p class="form-text">Pick a different save file</p>
+				<button class="btn btn-primary" on:click={readFileContents}>Open Save</button>
 			</div>
-			<div class="col-9 text-end">
-				<p>New character</p>
-				<div class="btn-group">
-					{#each Object.keys(Class) as charClass}
-						<button
-							class="btn btn-primary"
-							on:click={() => {
-								newSave(charClass);
-							}}>{charClass}</button
-						>
-					{/each}
-				</div>
+			<div class="col-4" />
+			<div class="col-4 text-end">
+				<p class="form-text">New character</p>
+				<select
+					class="form-select"
+					name="newCharacter"
+					id="newCharacter"
+					bind:value={selectedClass}
+					on:change={() => {
+						newSave();
+					}}
+				>
+					<option selected>New Character</option>
+					<option value={Class.Amazon}>Amazon</option>
+					<option value={Class.Assassin}>Assassin</option>
+					<option value={Class.Barbarian}>Barbarian</option>
+					<option value={Class.Druid}>Druid</option>
+					<option value={Class.Necromancer}>Necromancer</option>
+					<option value={Class.Paladin}>Paladin</option>
+					<option value={Class.Sorceress}>Sorceress</option>
+				</select>
 			</div>
 		</div>
 	</div>

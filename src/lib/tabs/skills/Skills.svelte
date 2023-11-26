@@ -6,6 +6,7 @@
 	import { skillIdToSaveId } from "../../utils/Utils.svelte";
 	import allSkillsData from "../../../../static/skills_complete.json";
 	import { onMount } from "svelte";
+	import { enforceMinMax } from "../../utils/actions.js";
 
 	export let save;
 
@@ -41,8 +42,6 @@
 		clickableSkills = save.skills.map((skill) => isSkillClickable(skill.id));
 	}
 
-	updateClickableSkills();
-
 	function handleSkillChanges(event) {
 		switch (event.detail.id) {
 			case Message.SkillPointChange:
@@ -63,7 +62,7 @@
 				break;
 			default:
 				console.error(
-					"Skills page received message that was not skill point change: " +
+					"Skills page received a message that was not handled properly: " +
 						event.detail.id.description
 				);
 				break;
@@ -75,13 +74,29 @@
 			save.attributes.newskills.value += skill.points;
 			skill.points = 0;
 		});
+		// only so that svelte detects the change
 		save.skills = [...save.skills];
 	}
 </script>
 
-<div class="container-fluid">
-	<button class="btn btn-primary" on:click={refund}>Refund All Points</button>
-	<p>Points Left: {save.attributes.newskills.value}</p>
+<div class="container m-0">
+	<div class="col-3">
+		<label class="form-text" for="pointsLeft">Skillpoints left</label>
+		<div class="input-group">
+			<input
+				class="form-control"
+				type="number"
+				id="pointsLeft"
+				min="0"
+				max="255"
+				use:enforceMinMax
+				step="1"
+				bind:value={save.attributes.newskills.value}
+			/>
+			<button class="btn btn-primary" on:click={refund}>Refund All Points</button>
+		</div>
+	</div>
+
 	<div class="row">
 		{#each [2, 1, 0] as skillPageIndex}
 			<div class="col">
@@ -112,7 +127,6 @@
 <style>
 	.grid-skills {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr));
 		grid-gap: 1rem;
 	}
 	.page-title {
