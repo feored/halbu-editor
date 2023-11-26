@@ -40,8 +40,9 @@ Changes to how .d2s files are parsed and saved should be made there.
 
 Rust and [Tauri](https://tauri.app/v1/guides/getting-started/prerequisites) are prerequisites.
 
-Install dependencies
+Init halbu submodule and install dependencies
 ```
+$ git submodule update --init --recursive
 $ npm install
 ```
  
@@ -52,7 +53,7 @@ $ npm run tauri dev
 
 Build
 ```
-npm run tauri build
+$ npm run tauri build
 ```
 
 The skill calculator relies on a python program (found in `/static/process/`) processing the D2 data text files into easier to parse [json](/static/skills_complete.json) containing descriptions and calculations for every skill.
