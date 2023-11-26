@@ -109,6 +109,15 @@
 			</div>
 		{:else}
 			<table class="table table-striped">
+				<thead>
+					<tr>
+						<th scope="col">Name</th>
+						<th scope="col">Level</th>
+						<th scope="col">Class</th>
+						<th scope="col">Hardcore</th>
+						<th scope="col">Expansion</th>
+					</tr>
+				</thead>
 				<tbody>
 					{#each saveFilesFound as saveFile}
 						<tr>
@@ -131,15 +140,22 @@
 									</b></a
 								></td
 							>
-							<td
-								>Level {saveFile.save.character.level}
-								{saveFile.save.character.class}</td
-							>
+							<td>Level {saveFile.save.character.level} </td>
+							<td>
+								{saveFile.save.character.class}
+							</td>
+							<td>
+								{#if saveFile.save.character.status.hardcore}
+									<small><i>Hardcore</i></small>
+								{:else}
+									<small><i>Softcore</i></small>
+								{/if}
+							</td>
 							<td>
 								{#if saveFile.save.character.status.expansion}
-									<small><i>Expansion Character</i></small>
+									<small><i>Expansion</i></small>
 								{:else}
-									<small><i>Classic Character</i></small>
+									<small><i>Classic</i></small>
 								{/if}
 							</td>
 						</tr>
