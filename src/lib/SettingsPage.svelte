@@ -178,7 +178,7 @@
 			on:change={setQuestsShowPrologue}
 		/>
 		<label for="show-prologue">
-			<span> Show Prologue</span>
+			<span> Show prologue</span>
 			<span
 				use:tooltip={{
 					content:

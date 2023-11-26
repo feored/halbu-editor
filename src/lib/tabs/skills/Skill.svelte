@@ -240,7 +240,7 @@
 	class="{isClickable ? '' : 'disabled'}
 	{invested_style} p-1 rounded"
 >
-	<div class="d-grid gap-2 skill-container">
+	<div class="d-grid gap-2 skill-container" style="height:100%;">
 		<button
 			use:tooltip={{
 				content: tooltipContent,
