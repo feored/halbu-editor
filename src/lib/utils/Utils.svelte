@@ -1,6 +1,6 @@
 <script context="module">
     import titles from "../tabs/character/titles.json";
-    import { Class, Difficulty, Act } from "./Constants.svelte";
+    import { Class } from "./Constants.svelte";
 
     export function countOccurrences(string, word) {
         return string.split(word).length - 1;
@@ -21,18 +21,22 @@
     }
 
     export function calcTitle(character) {
-        let difficultyBeaten = calcDifficultyBeaten(character);
-        let gender = [Class.Amazon, Class.Assassin, Class.Sorceress].includes(character.class)
+        const difficultyBeaten = calcDifficultyBeaten(character);
+        const gender = [Class.Amazon, Class.Assassin, Class.Sorceress].includes(character?.class)
             ? "Female"
             : "Male";
-        let core = character.status.hardcore ? "Hardcore" : "Softcore";
-        let expansion = character.status.expansion ? "Expansion" : "Classic";
-        return titles[core][expansion][difficultyBeaten][gender];
+        const core = character?.status?.hardcore ? "Hardcore" : "Softcore";
+        const expansion = character?.status?.expansion ? "Expansion" : "Classic";
+
+        return titles?.[core]?.[expansion]?.[difficultyBeaten]?.[gender] ?? "";
     }
 
     export function calcDifficultyBeaten(character) {
-        return ["None", "Normal", "Nightmare", "Hell"][
-            Math.floor(character.progression / (4 + (character.expansion ? 1 : 0)))
-        ];
+        const progression = Number(character?.progression ?? 0);
+        const isExpansion = Boolean(character?.status?.expansion);
+        const rawIndex = Math.floor(progression / (4 + (isExpansion ? 1 : 0)));
+        const index = Math.max(0, Math.min(rawIndex, 3));
+
+        return ["None", "Normal", "Nightmare", "Hell"][index];
     }
 </script>

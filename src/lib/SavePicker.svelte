@@ -116,7 +116,7 @@
 						<th scope="col">Name</th>
 						<th scope="col">Level</th>
 						<th scope="col">Class</th>
-						<th scope="col">Hardcore</th>
+						<th scope="col">Core</th>
 						<th scope="col">Expansion</th>
 					</tr>
 				</thead>
