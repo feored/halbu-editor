@@ -1,3 +1,4 @@
+<svelte:options runes={true} />
 <script>
 	import { InfoIcon } from "lucide-svelte";
 	import { open } from "@tauri-apps/api/dialog";
@@ -7,14 +8,14 @@
 	import { onMount } from "svelte";
 	import { getVersion } from "@tauri-apps/api/app";
 
-	let appVersion = "";
+	let appVersion = $state("");
 	onMount(() => {
 		getVersion().then((version) => {
 			appVersion = version;
 		});
 	});
 	// Initialize values
-	let currentSettings = Settings.cachedSettings;
+	let currentSettings = $state(Settings.cachedSettings);
 
 	const setSaveFolder = async () => {
 		try {
@@ -77,7 +78,7 @@
 				id="auto"
 				name="theme"
 				value="auto"
-				on:change={setTheme}
+				onchange={setTheme}
 				checked={currentSettings[Settings.Key.Theme] === "auto"}
 			/>
 			<label for="auto">Automatic</label>
@@ -86,7 +87,7 @@
 				id="light"
 				name="theme"
 				value="light"
-				on:change={setTheme}
+				onchange={setTheme}
 				checked={currentSettings[Settings.Key.Theme] === "light"}
 			/>
 			<label for="light">Light Theme</label>
@@ -95,7 +96,7 @@
 				id="dark "
 				name="theme"
 				value="dark"
-				on:change={setTheme}
+				onchange={setTheme}
 				checked={currentSettings[Settings.Key.Theme] === "dark"}
 			/>
 			<label for="dark">Dark Theme</label>
@@ -105,7 +106,7 @@
 		<input
 			type="button"
 			class="btn btn-primary"
-			on:click={setSaveFolder}
+			onclick={setSaveFolder}
 			value="Set Save Folder"
 		/>
 		<input
@@ -124,7 +125,7 @@
 			role="switch"
 			id="advanced-flags"
 			checked={currentSettings[Settings.Key.QuestsAdvancedFlags] == true}
-			on:change={setQuestsAdvancedFlags}
+			onchange={setQuestsAdvancedFlags}
 		/>
 		<label for="advanced-flags">
 			<span> Advanced editing mode </span>
@@ -150,7 +151,7 @@
 			checked={currentSettings[Settings.Key.QuestsAdvancedAllQuests] == true}
 			disabled={!currentSettings[Settings.Key.QuestsAdvancedFlags]}
 			id="advanced-all-quests"
-			on:change={setQuestsAdvancedAllQuests}
+			onchange={setQuestsAdvancedAllQuests}
 		/>
 		<label for="advanced-all-quests"
 			><span>Show unused quests</span>
@@ -175,7 +176,7 @@
 			type="checkbox"
 			role="switch"
 			checked={currentSettings[Settings.Key.QuestsShowPrologue] == true}
-			on:change={setQuestsShowPrologue}
+			onchange={setQuestsShowPrologue}
 		/>
 		<label for="show-prologue">
 			<span> Show prologue</span>

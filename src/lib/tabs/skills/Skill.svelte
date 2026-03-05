@@ -1,5 +1,5 @@
+<svelte:options runes={true} />
 <script>
-	import { createEventDispatcher } from "svelte";
 	import { Message, buildMessage } from "../../utils/Message.svelte";
 	import { tooltip } from "../../utils/actions.js";
 	import { countOccurrences } from "../../utils/Utils.svelte";
@@ -7,22 +7,14 @@
 
 	import "tippy.js/dist/tippy.css";
 	import "tippy.js/animations/shift-toward.css";
-	import { save } from "@tauri-apps/api/dialog";
+	let { id, skillData, isClickable = false, character, skills, onmessage } = $props();
+	const currentId = $derived(skillData["saveId"]);
 
-	export let id;
-	export let skillData;
-	export let isClickable = false;
-	export let character;
-	export let skills;
-
-	const currentId = skillData["saveId"];
-
-	const dispatch = createEventDispatcher();
 	function dispatchMessage(id, data) {
-		dispatch("message", buildMessage(id, data));
+		onmessage?.(buildMessage(id, data));
 	}
 
-	$: invested_style = skills[currentId].points > 0 ? "bg-success" : "bg-secondary";
+	const invested_style = $derived(skills[currentId].points > 0 ? "bg-success" : "bg-secondary");
 
 	function handleClick(event) {
 		if (event.button == 0) {
@@ -185,10 +177,13 @@
 	}
 
 	// Tooltip
-	let formattedDescription =
-		skillData["description"].charAt(0).toUpperCase() + skillData["description"].slice(1) + ".";
+	const tooltipContent = $derived.by(() => {
+		const formattedDescription =
+			skillData["description"].charAt(0).toUpperCase() +
+			skillData["description"].slice(1) +
+			".";
 
-	$: tooltipContent = `
+		return `
     <div class='container'>
         <h5 id='skillTitle'>${skillData["name"]}</h5>
         <p class='descripton'>${formattedDescription}</p>
@@ -233,6 +228,7 @@
         </p>
     </div>
     `;
+	});
 </script>
 
 <div
@@ -252,8 +248,11 @@
 				hideOnClick: false,
 			}}
 			class="btn p-1 rounded"
-			on:click={handleClick}
-			on:contextmenu|preventDefault={handleClick}
+			onclick={handleClick}
+			oncontextmenu={(event) => {
+				event.preventDefault();
+				handleClick(event);
+			}}
 			>{skillData["name"]}
 		</button>
 		<input

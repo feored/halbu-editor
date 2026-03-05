@@ -1,4 +1,5 @@
 <!-- App.svelte -->
+<svelte:options runes={true} />
 <script>
 	import { invoke } from "@tauri-apps/api/tauri";
 	import { save } from "@tauri-apps/api/dialog";
@@ -16,10 +17,8 @@
 	import Settings from "./lib/SettingsPage.svelte";
 	import Quests from "./lib/tabs/quests/Quests.svelte";
 
-	let appVersion = "";
-
-	let currentSave = null;
-	let validSave = true;
+	let currentSave = $state(null);
+	let validSave = $state(true);
 
 	export const TabID = {
 		Home: Symbol("Home"),
@@ -38,7 +37,7 @@
 		Waypoints: TabID.Waypoints,
 		Quests: TabID.Quests,
 	};
-	let currentTab = TabID.Home;
+	let currentTab = $state(TabID.Home);
 
 	initializeSettings().then(() => {
 		console.log("Settings initialized.");
@@ -71,13 +70,13 @@
 		currentSave = null;
 	}
 
-	function handleMessages(event) {
-		switch (event.detail.id) {
+	function handleMessages(message) {
+		switch (message.id) {
 			case Message.CharacterUnpicked:
 				unpickCharacter();
 				break;
 			case Message.CharacterPicked:
-				handlePickedCharacter(event.detail.data);
+				handlePickedCharacter(message.data);
 				break;
 			case Message.SaveFile:
 				saveCharacter();
@@ -96,7 +95,7 @@
 					class="nav-link"
 					href="#top"
 					class:active={currentTab == TabID.Home}
-					on:click={() => {
+					onclick={() => {
 						currentTab = TabID.Home;
 					}}>Home</a
 				>
@@ -108,7 +107,7 @@
 						class="nav-link"
 						href="#top"
 						class:active={currentTab == id}
-						on:click={() => {
+						onclick={() => {
 							currentTab = id;
 						}}>{name}</a
 					>
@@ -122,7 +121,7 @@
 					class="nav-link"
 					href="#top"
 					class:active={currentTab == TabID.Settings}
-					on:click={() => {
+					onclick={() => {
 						currentTab = TabID.Settings;
 					}}>Settings</a
 				>
@@ -133,7 +132,7 @@
 				<li class="nav-item d-grid">
 					<button
 						class="btn {validSave ? 'btn-primary' : 'btn-danger'}"
-						on:click={saveCharacter}
+						onclick={saveCharacter}
 						disabled={!validSave}
 					>
 						Save
@@ -144,9 +143,9 @@
 	</div>
 	<div class="p-5">
 		{#if currentTab == TabID.Home}
-			<SavePicker on:message={handleMessages} />
+			<SavePicker onmessage={handleMessages} />
 		{:else if currentTab == TabID.Character}
-			<Character bind:validSave bind:save={currentSave} on:message={handleMessages} />
+			<Character bind:validSave bind:save={currentSave} />
 		{:else if currentTab == TabID.Mercenary}
 			<Mercenary bind:save={currentSave} />
 		{:else if currentTab == TabID.Skills}

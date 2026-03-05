@@ -1,12 +1,13 @@
+<svelte:options runes={true} />
 <script>
 	import { tooltip } from "./../utils/actions.js";
 	import { InfoIcon } from "lucide-svelte";
 
-	export let save;
+	let { save = $bindable() } = $props();
 
 	const ROGUE_ENCAMPMENT = "RogueEncampment";
 
-	let difficulties = [
+	let difficulties = $state([
 		{
 			id: "normal",
 			display: "Normal",
@@ -40,7 +41,7 @@
 				act5: false,
 			},
 		},
-	];
+	]);
 
 	const acts = [
 		{ id: "act1", display: "Act I" },
@@ -100,7 +101,6 @@
 		if (same) {
 			difficulties.find((diff) => diff.id === difficulty.id).acts[act.id] =
 				save.waypoints[difficulty.id][act.id][1].acquired; // don't use 0 because 0 is rogue encampment and is always on
-			difficulties = difficulties; // Used to let Svelte know the array has changed https://learn.svelte.dev/tutorial/updating-arrays-and-objects
 		}
 	}
 </script>
@@ -118,7 +118,7 @@
 							class="form-check-input"
 							name="actWaypoints"
 							bind:checked={difficulty.acts[act.id]}
-							on:click={() => toggleActWaypoints(difficulty, act)}
+							onclick={() => toggleActWaypoints(difficulty, act)}
 						/><label class="form-check-label" for={act.display}
 							><h5>{act.display}</h5></label
 						>
@@ -134,7 +134,7 @@
 									name={wp.act + wp.id}
 									bind:checked={wp.acquired}
 									disabled={wp.id === ROGUE_ENCAMPMENT}
-									on:change={() => CheckActWaypoints(difficulty, act)}
+									onchange={() => CheckActWaypoints(difficulty, act)}
 								/>
 								<label class="form-check-label" for={wp.act + wp.id}
 									>{wp.name}</label

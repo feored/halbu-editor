@@ -1,12 +1,12 @@
+<svelte:options runes={true} />
 <script>
-	import { invoke } from "@tauri-apps/api/tauri";
 	import { InfoIcon } from "lucide-svelte";
 	import names from "./names.json";
 	import variants from "./variants.json";
 	import { Difficulty, Act, u32MAX } from "../../utils/Constants.svelte";
 	import { enforceMinMax, tooltip } from "../../utils/actions.js";
 
-	export let save;
+	let { save = $bindable() } = $props();
 
 	const MercenaryClass = {
 		Rogue: "Rogue",
@@ -46,13 +46,18 @@
 	}
 
 	let hiredRef;
-	$: isHired = save.character.mercenary.id != 0;
+	let isHired = $state(save.character.mercenary.id != 0);
+	$effect(() => {
+		isHired = save.character.mercenary.id != 0;
+	});
 
 	// Variants
-	let mercVariant = variantIDToInfo(save.character.mercenary.variant_id);
+	let mercVariant = $state(variantIDToInfo(save.character.mercenary.variant_id));
 
-	let possibleVariants = variants.filter(
+	let possibleVariants = $state(
+		variants.filter(
 		(merc) => merc.difficulty == mercVariant.difficulty && merc.type == mercVariant.type
+		)
 	);
 
 	function updateVariant() {
@@ -63,7 +68,7 @@
 	}
 
 	// Experience
-	let mercLevel = levelFromXp(save.character.mercenary.experience, mercVariant.rate);
+	let mercLevel = $state(levelFromXp(save.character.mercenary.experience, mercVariant.rate));
 
 	function changeExperience() {
 		mercLevel = levelFromXp(save.character.mercenary.experience, mercVariant.rate);
@@ -74,16 +79,18 @@
 	}
 
 	// Names
-	let variantNames = names[mercVariant.type];
+	let variantNames = $state(names[mercVariant.type]);
 
 	function updateName() {
 		variantNames = names[mercVariant.type];
 		save.character.mercenary.name_id = Math.floor(Math.random() * variantNames.length);
 	}
 
-	$: if (variantNames.length > 0) {
+	$effect(() => {
+		if (variantNames.length > 0) {
 		save.character.mercenary.name = variantNames[save.character.mercenary.name_id];
-	}
+		}
+	});
 </script>
 
 <div class="container m-0">
@@ -98,7 +105,7 @@
 					type="checkbox"
 					id="hired"
 					name="hired"
-					on:change={hire}
+					onchange={hire}
 					bind:checked={isHired}
 				/>
 				<label class="form-check-label" for="hired"
@@ -176,7 +183,7 @@
 				max="98"
 				step="1"
 				bind:value={mercLevel}
-				on:input={changeLevel}
+				oninput={changeLevel}
 				disabled={!isHired}
 			/>
 		</div>
@@ -191,7 +198,7 @@
 				max={u32MAX}
 				step="1"
 				bind:value={save.character.mercenary.experience}
-				on:input={changeExperience}
+				oninput={changeExperience}
 				disabled={!isHired}
 			/>
 		</div>
@@ -206,7 +213,7 @@
 				bind:value={mercVariant.difficulty}
 				name="difficultyHired"
 				id="difficultyHired"
-				on:change={updateVariant}
+				onchange={updateVariant}
 				disabled={!isHired}
 			>
 				<option value={Difficulty.Normal}>Normal</option>
@@ -221,7 +228,7 @@
 				bind:value={mercVariant.type}
 				name="class"
 				id="class"
-				on:change={() => {
+				onchange={() => {
 					updateVariant();
 					updateName();
 				}}
@@ -240,7 +247,7 @@
 				bind:value={mercVariant.variant}
 				name="variant"
 				id="mercVariant"
-				on:change={() => {
+				onchange={() => {
 					updateVariant();
 				}}
 				disabled={!isHired}

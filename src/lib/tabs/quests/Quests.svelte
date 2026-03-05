@@ -1,14 +1,15 @@
+<svelte:options runes={true} />
 <script>
 	import * as log from "../../utils/Logs.svelte";
 	import * as Settings from "../../utils/Settings.svelte";
 	import { tooltip } from "../../utils/actions";
 	import { InfoIcon } from "lucide-svelte";
 	import acts from "./actquests.json";
-	export let save;
+	let { save = $bindable() } = $props();
 
-	let showPrologue = Settings.get(Settings.Key.QuestsShowPrologue);
-	let advancedFlags = Settings.get(Settings.Key.QuestsAdvancedFlags);
-	let advancedAllQuests = Settings.get(Settings.Key.QuestsAdvancedAllQuests);
+	let showPrologue = $state(Settings.get(Settings.Key.QuestsShowPrologue));
+	let advancedFlags = $state(Settings.get(Settings.Key.QuestsAdvancedFlags));
+	let advancedAllQuests = $state(Settings.get(Settings.Key.QuestsAdvancedAllQuests));
 	console.log(showPrologue + " " + advancedFlags + " " + advancedAllQuests);
 
 	const difficulties = [
@@ -168,7 +169,7 @@
 												checked={save.quests[difficulty.id][act.id][
 													quest.id
 												].state.includes(flag.id)}
-												on:change={() =>
+												onchange={() =>
 													toggleFlag(
 														difficulty.id,
 														act.id,
@@ -199,7 +200,7 @@
 												checked={save.quests[difficulty.id][act.id][
 													quest.id
 												].state.includes(flag.id)}
-												on:change={() =>
+												onchange={() =>
 													toggleFlag(
 														difficulty.id,
 														act.id,
@@ -257,7 +258,7 @@
 													quest.id,
 													state
 												)}
-												on:change={() =>
+												onchange={() =>
 													toggleState(
 														difficulty.id,
 														act.id,

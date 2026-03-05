@@ -1,23 +1,20 @@
+<svelte:options runes={true} />
 <script>
 	import skillpages from "./skillpages.json";
 	import Skill from "./Skill.svelte";
 	import { Message } from "../../utils/Message.svelte";
-	import { Rows } from "lucide-svelte";
 	import { skillIdToSaveId } from "../../utils/Utils.svelte";
 	import allSkillsData from "../../../../static/skills_complete.json";
-	import { onMount } from "svelte";
 	import { enforceMinMax } from "../../utils/actions.js";
 
-	export let save;
+	let { save = $bindable() } = $props();
 
-	const skillRows = 6;
-	const skillCols = 3;
+	const skillsData = $derived(
+		allSkillsData.filter((skillData) => skillData.class == save.character.class)
+	);
 
-	let skillsData = allSkillsData.filter((skillData) => skillData.class == save.character.class);
-
-	let clickableSkills = new Array(30);
-
-	onMount(() => {
+	let clickableSkills = $state(new Array(30).fill(false));
+	$effect(() => {
 		updateClickableSkills();
 	});
 
@@ -42,20 +39,20 @@
 		clickableSkills = save.skills.map((skill) => isSkillClickable(skill.id));
 	}
 
-	function handleSkillChanges(event) {
-		switch (event.detail.id) {
+	function handleSkillChanges(message) {
+		switch (message.id) {
 			case Message.SkillPointChange:
-				let skillNum = skillIdToSaveId(event.detail.data.id, save.character.class);
-				if (event.detail.data["value"] > 0 && isSkillClickable(event.detail.data.id)) {
-					save.skills[skillNum].points += event.detail.data.value;
-					save.attributes.newskills.value -= event.detail.data.value;
+				let skillNum = skillIdToSaveId(message.data.id, save.character.class);
+				if (message.data["value"] > 0 && isSkillClickable(message.data.id)) {
+					save.skills[skillNum].points += message.data.value;
+					save.attributes.newskills.value -= message.data.value;
 					updateClickableSkills();
 				} else if (
 					save.skills[skillNum].points > 0 &&
-					save.skills[skillNum].points >= event.detail.data.value
+					save.skills[skillNum].points >= message.data.value
 				) {
-					save.skills[skillNum].points += event.detail.data.value;
-					save.attributes.newskills.value -= event.detail.data.value;
+					save.skills[skillNum].points += message.data.value;
+					save.attributes.newskills.value -= message.data.value;
 					updateClickableSkills();
 				}
 				//save.attributes.newskills.value += event.detail.data;
@@ -63,7 +60,7 @@
 			default:
 				console.error(
 					"Skills page received a message that was not handled properly: " +
-						event.detail.id.description
+						message.id.description
 				);
 				break;
 		}
@@ -93,7 +90,7 @@
 				step="1"
 				bind:value={save.attributes.newskills.value}
 			/>
-			<button class="btn btn-primary" on:click={refund}>Refund All Points</button>
+			<button class="btn btn-primary" onclick={refund}>Refund All Points</button>
 		</div>
 	</div>
 
@@ -114,7 +111,7 @@
 								skills={save.skills}
 								character={save.character}
 								isClickable={clickableSkills[skill["saveId"]]}
-								on:message={handleSkillChanges}
+								onmessage={handleSkillChanges}
 							/>
 						{/each}
 					</div>

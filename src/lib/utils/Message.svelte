@@ -1,4 +1,4 @@
-<script context="module">
+<script module>
     export const Message = {
         CharacterPicked: Symbol("Character Picked"),
         CharacterUnpicked: Symbol("Character Unpicked"),

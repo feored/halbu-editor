@@ -1,4 +1,4 @@
-<script context="module">
+<script module>
 	import { type } from "@tauri-apps/api/os";
 	import { resolve, homeDir } from "@tauri-apps/api/path";
 	import { Store } from "tauri-plugin-store-api";

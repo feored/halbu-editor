@@ -1,4 +1,4 @@
-<script context="module">
+<script module>
     import {
         trace as log_trace,
         debug as log_debug,

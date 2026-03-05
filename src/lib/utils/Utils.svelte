@@ -1,4 +1,4 @@
-<script context="module">
+<script module>
     import titles from "../tabs/character/titles.json";
     import { Class } from "./Constants.svelte";
 

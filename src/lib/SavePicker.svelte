@@ -1,4 +1,5 @@
-<script context="module">
+<svelte:options runes={true} />
+<script module>
 	export const CharacterType = {
 		Existing: Symbol("Existing"),
 		New: Symbol("New"),
@@ -7,20 +8,18 @@
 
 <script>
 	import { onMount } from "svelte";
-	import { open, save } from "@tauri-apps/api/dialog";
-	import { createEventDispatcher } from "svelte";
+	import { open } from "@tauri-apps/api/dialog";
 	import { Message, buildMessage } from "./utils/Message.svelte";
 	import { invoke } from "@tauri-apps/api/tauri";
 	import { Class } from "./utils/Constants.svelte";
-	import charstats from "../res/charstats.json";
 	import { calcTitle } from "./utils/Utils.svelte";
 	import * as settings from "./utils/Settings.svelte";
 	import { AlertCircleIcon } from "lucide-svelte";
 
-	const dispatch = createEventDispatcher();
+	let { onmessage } = $props();
 
 	function dispatchMessage(id, data) {
-		dispatch("message", buildMessage(id, data));
+		onmessage?.(buildMessage(id, data));
 	}
 
 	onMount(() => {
@@ -35,10 +34,10 @@
 		});
 	});
 
-	let saveFolderSet = false;
-	let saveFilesFound = [];
+	let saveFolderSet = $state(false);
+	let saveFilesFound = $state([]);
 
-	let selectedClass;
+	let selectedClass = $state();
 
 	async function readFileContents() {
 		try {
@@ -129,7 +128,7 @@
 									role="button"
 									aria-pressed="false"
 									class="text-decoration-none"
-									on:click={() => {
+									onclick={() => {
 										loadSavePath(saveFile.path);
 									}}
 									><b class={saveFile.save.character.status.hardcore ? "red" : ""}
@@ -170,9 +169,9 @@
 		<div class="row">
 			<div class="col-4">
 				<p class="form-text">Pick a different save file</p>
-				<button class="btn btn-primary" on:click={readFileContents}>Open Save</button>
+				<button class="btn btn-primary" onclick={readFileContents}>Open Save</button>
 			</div>
-			<div class="col-4" />
+			<div class="col-4"></div>
 			<div class="col-4 text-end">
 				<p class="form-text">New character</p>
 				<select
@@ -180,7 +179,7 @@
 					name="newCharacter"
 					id="newCharacter"
 					bind:value={selectedClass}
-					on:change={() => {
+					onchange={() => {
 						newSave();
 					}}
 				>

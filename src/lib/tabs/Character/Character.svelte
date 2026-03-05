@@ -1,57 +1,61 @@
+<svelte:options runes={true} />
 <script>
 	import { invoke } from "@tauri-apps/api/tauri";
 	import { InfoIcon } from "lucide-svelte";
-	import { Message, buildMessage } from "../../utils/Message.svelte";
-	import { createEventDispatcher } from "svelte";
 	import { enforceMinMax, tooltip } from "../../utils/actions.js";
 	import { calcTitle, calcDifficultyBeaten } from "../../utils/Utils.svelte";
 
 	import experienceTable from "./experience.json";
 	import { Class, Difficulty, Act } from "../../utils/Constants.svelte";
 
-	const dispatch = createEventDispatcher();
-	function dispatchMessage(id, data) {
-		dispatch("message", buildMessage(id, data));
-	}
-
-	export let save;
-	export let validSave;
-
-	$: validSave = validName;
+	let { save = $bindable(), validSave = $bindable() } = $props();
 
 	const MAX_GOLD_PER_LEVEL = 10000;
 	const MAX_XP = 3520485254;
 
 	let nameRef;
+	let validName = $state(true);
+	$effect(() => {
+		validSave = validName;
+	});
 
-	$: goldInventoryMax = MAX_GOLD_PER_LEVEL * save.character.level;
+	const goldInventoryMax = $derived(MAX_GOLD_PER_LEVEL * save.character.level);
 
-	let currentLife = save.attributes.hitpoints.value / 256;
-	$: save.attributes.hitpoints.value = Math.round(currentLife * 256);
+	let currentLife = $state(save.attributes.hitpoints.value / 256);
+	$effect(() => {
+		save.attributes.hitpoints.value = Math.round(currentLife * 256);
+	});
 
-	let baseLife = save.attributes.maxhp.value / 256;
-	$: save.attributes.maxhp.value = Math.round(baseLife * 256);
+	let baseLife = $state(save.attributes.maxhp.value / 256);
+	$effect(() => {
+		save.attributes.maxhp.value = Math.round(baseLife * 256);
+	});
 
-	let currentMana = save.attributes.mana.value / 256;
-	$: save.attributes.mana.value = Math.round(currentMana * 256);
+	let currentMana = $state(save.attributes.mana.value / 256);
+	$effect(() => {
+		save.attributes.mana.value = Math.round(currentMana * 256);
+	});
 
-	let baseMana = save.attributes.maxmana.value / 256;
-	$: save.attributes.maxmana.value = Math.round(baseMana * 256);
+	let baseMana = $state(save.attributes.maxmana.value / 256);
+	$effect(() => {
+		save.attributes.maxmana.value = Math.round(baseMana * 256);
+	});
 
-	let currentStamina = save.attributes.stamina.value / 256;
-	$: save.attributes.stamina.value = Math.round(currentStamina * 256);
+	let currentStamina = $state(save.attributes.stamina.value / 256);
+	$effect(() => {
+		save.attributes.stamina.value = Math.round(currentStamina * 256);
+	});
 
-	let baseStamina = save.attributes.maxstamina.value / 256;
-	$: save.attributes.maxstamina.value = Math.round(baseStamina * 256);
+	let baseStamina = $state(save.attributes.maxstamina.value / 256);
+	$effect(() => {
+		save.attributes.maxstamina.value = Math.round(baseStamina * 256);
+	});
 
 	// Title & Progression
 
-	let difficultyBeatenRef;
-
-	let difficultiesToBeat = ["None", "Normal", "Nightmare", "Hell"];
-	let difficultyBeaten = calcDifficultyBeaten(save.character);
-
-	let title = "";
+	const difficultiesToBeat = ["None", "Normal", "Nightmare", "Hell"];
+	let difficultyBeaten = $state(calcDifficultyBeaten(save.character));
+	let title = $state("");
 	updateTitle();
 
 	function updateTitle() {
@@ -86,8 +90,6 @@
 	}
 
 	// Name validation
-
-	let validName = true;
 
 	function validateName() {
 		let nameByteSize = new Blob([nameRef.value]).size;
@@ -162,9 +164,9 @@
 			</label>
 			<input
 				class="form-control {!validName ? 'valid' : 'invalid'}"
-				on:keydown={validateName}
-				on:input={validateName}
-				on:change={validateName}
+				onkeydown={validateName}
+				oninput={validateName}
+				onchange={validateName}
 				title="2-15 characters"
 				bind:this={nameRef}
 				type="text"
@@ -185,7 +187,7 @@
 				bind:value={save.character.class}
 				name="class"
 				id="class"
-				on:change={() => {
+				onchange={() => {
 					changeClass();
 					updateTitle();
 				}}
@@ -213,7 +215,7 @@
 					step="1"
 					use:enforceMinMax
 					bind:value={save.attributes.level.value}
-					on:input={changeLevel}
+					oninput={changeLevel}
 				/>
 			</div>
 		</div>
@@ -229,7 +231,7 @@
 					step="1"
 					use:enforceMinMax
 					bind:value={save.attributes.experience.value}
-					on:input={changeExperience}
+					oninput={changeExperience}
 				/>
 			</div>
 		</div>
@@ -258,7 +260,7 @@
 					bind:checked={save.character.status.expansion}
 					disabled={save.character.class === "Druid" ||
 						save.character.class === "Assassin"}
-					on:change={updateTitle}
+					onchange={updateTitle}
 				/>
 				<label class="form-check-label" for="expansion">Expansion</label>
 			</div>
@@ -269,7 +271,7 @@
 					id="hardcore"
 					name="hardcore"
 					bind:checked={save.character.status.hardcore}
-					on:change={updateTitle}
+					onchange={updateTitle}
 				/>
 				<label class="form-check-label" for="hardcore">Hardcore</label>
 			</div>
@@ -320,7 +322,7 @@
 			<select
 				class="form-select"
 				bind:value={difficultyBeaten}
-				on:change={updateTitle}
+				onchange={updateTitle}
 				name="currentDifficulty"
 			>
 				<option value="None" selected={difficultyBeaten === "None"}>None</option>
