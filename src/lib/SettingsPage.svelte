@@ -1,7 +1,7 @@
 <svelte:options runes={true} />
 <script>
 	import { InfoIcon } from "lucide-svelte";
-	import { open } from "@tauri-apps/api/dialog";
+	import { open } from "@tauri-apps/plugin-dialog";
 	import { tooltip } from "./utils/actions.js";
 	import * as Settings from "./utils/Settings.svelte";
 	import * as log from "./utils/Logs.svelte";

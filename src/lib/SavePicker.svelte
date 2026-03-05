@@ -8,9 +8,9 @@
 
 <script>
 	import { onMount } from "svelte";
-	import { open } from "@tauri-apps/api/dialog";
+	import { open } from "@tauri-apps/plugin-dialog";
 	import { Message, buildMessage } from "./utils/Message.svelte";
-	import { invoke } from "@tauri-apps/api/tauri";
+	import { invoke } from "@tauri-apps/api/core";
 	import { Class } from "./utils/Constants.svelte";
 	import { calcTitle } from "./utils/Utils.svelte";
 	import * as settings from "./utils/Settings.svelte";

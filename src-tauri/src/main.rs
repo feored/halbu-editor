@@ -1,22 +1,25 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use tauri_plugin_log::LogTarget;
-use tauri_plugin_log::TimezoneStrategy;
+use tauri_plugin_log::{Target, TargetKind};
 
 pub mod cmds;
 use cmds::*;
 
 fn main() {
     let _ = tauri::Builder::default()
+        .plugin(tauri_plugin_os::init())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(
-            tauri_plugin_log::Builder::default()
-                .timezone_strategy(TimezoneStrategy::UseLocal)
-                .max_file_size(128000u128)
-                .targets([LogTarget::LogDir, LogTarget::Stdout, LogTarget::Webview])
+            tauri_plugin_log::Builder::new()
+                .targets([
+                    Target::new(TargetKind::Stdout),
+                    Target::new(TargetKind::LogDir { file_name: None }),
+                    Target::new(TargetKind::Webview),
+                ])
                 .build(),
         )
-        .plugin(tauri_plugin_store::Builder::default().build())
         .invoke_handler(tauri::generate_handler![
             get_character_from_path,
             save_file,

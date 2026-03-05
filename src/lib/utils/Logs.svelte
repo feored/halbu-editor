@@ -6,7 +6,7 @@
         warn as log_warn,
         error as log_error,
         attachConsole,
-    } from "tauri-plugin-log-api";
+    } from "@tauri-apps/plugin-log";
 
     let attached = false;
     let detachConsole;

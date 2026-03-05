@@ -1,6 +1,6 @@
 <svelte:options runes={true} />
 <script>
-	import { invoke } from "@tauri-apps/api/tauri";
+	import { invoke } from "@tauri-apps/api/core";
 	import { InfoIcon } from "lucide-svelte";
 	import { enforceMinMax, tooltip } from "../../utils/actions.js";
 	import { calcTitle, calcDifficultyBeaten } from "../../utils/Utils.svelte";

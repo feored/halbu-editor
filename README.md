@@ -38,7 +38,7 @@ D2R will need to be launched again after saving a file for changes to take effec
 The editor relies on the [halbu](https://github.com/feored/halbu) Rust library to parse save files.
 Changes to how .d2s files are parsed and saved should be made there. 
 
-Rust and [Tauri](https://tauri.app/v1/guides/getting-started/prerequisites) are prerequisites.
+Rust and [Tauri](https://v2.tauri.app/start/prerequisites/) are prerequisites.
 
 Init halbu submodule and install dependencies
 ```

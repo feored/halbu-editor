@@ -1,11 +1,11 @@
 <script module>
-	import { type } from "@tauri-apps/api/os";
+	import { type } from "@tauri-apps/plugin-os";
 	import { resolve, homeDir } from "@tauri-apps/api/path";
-	import { Store } from "tauri-plugin-store-api";
+	import { LazyStore } from "@tauri-apps/plugin-store";
 	import * as log from "./Logs.svelte";
 
 	export let initialized = false;
-	const store = new Store("settings.json");
+	const store = new LazyStore("settings.json");
 	export let cachedSettings = {};
 
 	window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", apply);
@@ -20,8 +20,8 @@
 
 	async function getDefaultSettings() {
 		let save_folder = "";
-		const osType = await type();
-		if (osType === "Windows_NT") {
+		const osType = type();
+		if (osType === "windows") {
 			const homeDirPath = await homeDir();
 			save_folder = await resolve(homeDirPath, "Saved Games", "Diablo II Resurrected");
 		}
