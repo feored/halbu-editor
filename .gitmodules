@@ -1,3 +1,4 @@
 [submodule "libhalbu"]
 	path = libhalbu
 	url = https://github.com/feored/halbu
+	branch = dev

@@ -1,3 +1,4 @@
+use halbu::format::FormatId;
 use halbu::Save;
 use log::{debug, info};
 use serde::{Deserialize, Serialize};
@@ -21,27 +22,34 @@ pub fn get_character_from_path(path: String) -> Result<Save, String> {
         Ok(bytes) => bytes,
         Err(e) => return Err(e.to_string()),
     };
-    let result = Save::parse(&save_file);
+    let result = Save::parse_lax(&save_file).map_err(|e| e.to_string())?;
+    if !result.issues.is_empty() {
+        debug!(
+            "File {0} parsed with {1} non-fatal issue(s).",
+            path.display(),
+            result.issues.len()
+        );
+    }
     debug!("File {0} parsed successfully.", path.display());
-    Ok(result)
+    Ok(result.save)
 }
 
 #[tauri::command]
 pub fn new_save(class: halbu::Class) -> Save {
-    Save::default_class(class)
+    Save::new(FormatId::V99, class)
 }
 #[tauri::command]
 pub fn save_file(path: String, save: Save) -> Result<String, String> {
     let path: &Path = Path::new(&path);
-    let generated_save = save.to_bytes();
+    let generated_save = save.to_bytes().map_err(|e| e.to_string())?;
 
     let mut file = OpenOptions::new()
         .write(true)
         .create(true)
         .open(path)
-        .unwrap();
+        .map_err(|e| e.to_string())?;
 
-    file.write_all(&generated_save).unwrap();
+    file.write_all(&generated_save).map_err(|e| e.to_string())?;
     Ok(String::from("Success!"))
 }
 
