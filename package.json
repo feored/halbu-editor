@@ -7,6 +7,7 @@
 		"dev": "vite",
 		"build": "vite build",
 		"preview": "vite preview",
+		"preprocess:skills": "python3 static/tools/preprocess/main.py --all",
 		"tauri": "tauri"
 	},
 	"dependencies": {

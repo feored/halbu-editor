@@ -1,6 +1,7 @@
 import re
 
-from data import skills, skilldesc, missiles
+from data import skills, skilldesc, missiles, getCurrentDataVersion
+from versions import get_calcs_adapter
 
 FRAMES_PER_SECOND = 25
 MISSILE_PREFIX = "_MISSILE_"
@@ -10,7 +11,7 @@ M2_PREFIX = f"{MISSILE_PREFIX}2_"
 M3_PREFIX = f"{MISSILE_PREFIX}3_"
 
 
-MISSILES_LOOKUP_VALUES = [
+BASE_MISSILES_LOOKUP_VALUES = [
     "HitShift",
     "MinDamage",
     "MinLevDam1"
@@ -47,7 +48,7 @@ MISSILES_LOOKUP_VALUES = [
 ]
 
 ## mana always after lvlmana, so as not to replace lvlmana into lvl34 if skillsrow["mana"] == 34
-SKILLS_LOOKUP_VALUES = [
+BASE_SKILLS_LOOKUP_VALUES = [
     "Param10",
     "Param11",
     "Param12",
@@ -296,7 +297,7 @@ def diminishing(skillsRow, whichDm):
             b = "par10"
     return parenthesize(f"floor(floor((110 * lvl) / (lvl + 6)) * (({b} - {a}) / 100)) + {a}")
 
-expandDict = {
+BASE_EXPAND_DICT = {
     "par10": {
         "static": True,
         "value": "Param10"
@@ -584,7 +585,27 @@ expandDict = {
     }
 }
 
-expandKeys = expandDict.keys()
+def getCalcsAdapter():
+    return get_calcs_adapter(getCurrentDataVersion())
+
+def getMissileLookupValues():
+    lookupValues = list(BASE_MISSILES_LOOKUP_VALUES)
+    for value in getCalcsAdapter().missile_lookup_values():
+        if value not in lookupValues:
+            lookupValues.append(value)
+    return lookupValues
+
+def getSkillLookupValues():
+    lookupValues = list(BASE_SKILLS_LOOKUP_VALUES)
+    for value in getCalcsAdapter().skill_lookup_values():
+        if value not in lookupValues:
+            lookupValues.append(value)
+    return lookupValues
+
+def getExpandDict():
+    expandDict = dict(BASE_EXPAND_DICT)
+    expandDict.update(getCalcsAdapter().expand_overrides())
+    return expandDict
 
 
 def expandExpressionMax(expression, skillsRow):
@@ -599,7 +620,8 @@ def expandExpressionMax(expression, skillsRow):
     return expression
 
 def expandExpressionOnce(expression, skillsRow):
-    for key in expandKeys:
+    expandDict = getExpandDict()
+    for key in expandDict.keys():
         if key in expression:
             if expandDict[key]["static"]:
                     expression = expression.replace(key, expandDict[key]["value"])
@@ -664,10 +686,10 @@ def replaceLookupSklvl(expression, skillsRow):
         sklvlRow = getRow(sklvlName, skills, "skill")
         parts = replacedSklvl.split(".", 1)
         parts[0] = expandExpressionMax(parts[0], sklvlRow)
-        parts[0] = replaceLookupExpression(parts[0], SKILLS_LOOKUP_VALUES, skillsRow)
+        parts[0] = replaceLookupExpression(parts[0], getSkillLookupValues(), skillsRow, "skills")
         parts[1] = expandExpressionMax(parts[1], sklvlRow)
         parts[1] = parts[1].replace("lvl", parenthesize(parts[0]))
-        parts[1] = replaceLookupExpression(parts[1], SKILLS_LOOKUP_VALUES, sklvlRow)
+        parts[1] = replaceLookupExpression(parts[1], getSkillLookupValues(), sklvlRow, "skills")
         expression = expression.replace(sklvl, parts[1])
     return expression
         
@@ -694,7 +716,7 @@ def replaceLookupSynergies(expression, skillsRow):
         synergyId = skillIdFromName(synergyName)
         replacedSynergy = synergy[nameEndIndex+2:-1] ## turn skill('Golem Mastery'.ln56) into ln56
         replacedSynergy = expandExpressionMax(replacedSynergy, skillsRow)
-        replacedSynergy = replaceLookupExpression(replacedSynergy, SKILLS_LOOKUP_VALUES, skills[synergyId])
+        replacedSynergy = replaceLookupExpression(replacedSynergy, getSkillLookupValues(), skills[synergyId], "skills")
         replacedSynergy = replaceLevel(replacedSynergy, synergyId)
         finalSynergy = f"synergy('{replacedSynergy}')"
         expression = expression.replace(synergy, finalSynergy)
@@ -702,7 +724,7 @@ def replaceLookupSynergies(expression, skillsRow):
     return expression
 
 def replaceLookupSpecificMissile(expression, skillsRow):
-    """ Replace expressions of type miss('skill'.rang) with values from missiles.txt"""
+    """Replace expressions of type miss('skill'.rang/.rad/...) with values from missiles.txt"""
     # extractedMissiles = re.findall(r"miss\('.*?'\..*?\)", expression)
     # don't use regex, we need to match parentheses to match miss('blabla'.(par8 + par7))
     extractedMissiles = findParenthesesMatchedExpressions(expression, "miss(")
@@ -715,7 +737,12 @@ def replaceLookupSpecificMissile(expression, skillsRow):
         oldMissile = replacedMissile
         ## Keep expanding/looking up values as long as possible
         while True:
-            replacedMissile = replaceLookupExpression(replacedMissile, MISSILES_LOOKUP_VALUES, getRow(missileName, missiles, "Missile"))
+            replacedMissile = replaceLookupExpression(
+                replacedMissile,
+                getMissileLookupValues(),
+                getRow(missileName, missiles, "Missile"),
+                "missiles"
+            )
             replacedMissile = expandExpressionOnce(replacedMissile, skillsRow)
             if oldMissile == replacedMissile:
                 break
@@ -725,11 +752,16 @@ def replaceLookupSpecificMissile(expression, skillsRow):
     return expression
         
 
-def replaceLookupExpression(expression, lookupValues, fromRow):
+def replaceLookupExpression(expression, lookupValues, fromRow, tableName):
+    adapter = getCalcsAdapter()
     for lookupExp in lookupValues:
         if lookupExp in expression:
-            toReplace = fromRow[lookupExp]
-            expression = expression.replace(lookupExp, "0" if toReplace == "" else toReplace)
+            toReplace = None
+            if fromRow is not None:
+                toReplace = fromRow.get(lookupExp)
+            if toReplace is None:
+                toReplace = adapter.missing_lookup_value(tableName, lookupExp, fromRow)
+            expression = expression.replace(lookupExp, "0" if toReplace in ("", None) else str(toReplace))
     return expression
 
 def replaceLookupMissile(expression, skilldescRow):
@@ -749,7 +781,7 @@ def replaceLookupMissile(expression, skilldescRow):
     while True:
         if "mael" in expression:
             expression = expression.replace("mael", getMastery(missilesRow["EType"]))
-        expression = replaceLookupExpression(expression, MISSILES_LOOKUP_VALUES, missilesRow)
+        expression = replaceLookupExpression(expression, getMissileLookupValues(), missilesRow, "missiles")
         expression = expandExpressionOnce(expression, [])
         if oldMissile == expression:
             break
@@ -766,7 +798,7 @@ def replaceLookup(expression, skillsRow, skilldescRow):
         endMissileIndex = expression.index(MISSILE_SUFFIX) + len(MISSILE_SUFFIX)
         expression = expression[0:startMissileIndex] + replaceLookupMissile(expression[startMissileIndex:endMissileIndex], skilldescRow) + expression[endMissileIndex::]
         
-    expression = replaceLookupExpression(expression, SKILLS_LOOKUP_VALUES, skillsRow)
+    expression = replaceLookupExpression(expression, getSkillLookupValues(), skillsRow, "skills")
     return expression
 
 

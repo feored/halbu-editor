@@ -1,9 +1,13 @@
 import csv
 import json
-import os
 from pathlib import Path
 
-BASE_FOLDER = Path(__file__).parent.parent
+STATIC_FOLDER = Path(__file__).resolve().parents[2]
+RAW_VERSIONS_FOLDER = STATIC_FOLDER / "data" / "raw" / "versions"
+GENERATED_SKILLS_FOLDER = STATIC_FOLDER / "data" / "generated" / "skills"
+DEFAULT_DATA_VERSION = "v99"
+SUPPORTED_DATA_VERSIONS = {"v99", "v105"}
+CURRENT_DATA_VERSION = DEFAULT_DATA_VERSION
 SKILLS_CSV = "skills.txt"
 SKILLDESC_CSV = "skilldesc.txt"
 MISSILES_CSV = "missiles.txt"
@@ -16,7 +20,8 @@ CLASS_OFFSET = {
     "Paladin": 96,
     "Barbarian": 126,
     "Druid": 221,
-    "Assassin": 251
+    "Assassin": 251,
+    "Warlock": 373,
 }
 
 # D2R has .tbl files but doesn't use them,
@@ -56,11 +61,39 @@ def fixTypos(file, data):
                 row[key] = typos[file][row[columnId]][key]
     return data
 
-def setupData():
+def normalizeDataVersion(dataVersion):
+    if dataVersion in SUPPORTED_DATA_VERSIONS:
+        return dataVersion
+    raise ValueError(
+        f"Unsupported data version '{dataVersion}'. Supported versions: {sorted(SUPPORTED_DATA_VERSIONS)}"
+    )
+
+def getDataFolder(dataVersion):
+    return RAW_VERSIONS_FOLDER / dataVersion
+
+def resolveDataPath(dataFolder, filename):
+    # Allow partial version folders: try requested version, then default version, then legacy /static.
+    versionPath = dataFolder / filename
+    if versionPath.is_file():
+        return versionPath
+    defaultVersionPath = RAW_VERSIONS_FOLDER / DEFAULT_DATA_VERSION / filename
+    if defaultVersionPath.is_file():
+        return defaultVersionPath
+    return STATIC_FOLDER / filename
+
+def setupData(dataVersion=DEFAULT_DATA_VERSION):
     """Load all csvs/json files from the game into global variables for easy access"""
-    global skills, skilldesc, missiles, strings
+    global skills, skilldesc, missiles, strings, CURRENT_DATA_VERSION
+    dataVersion = normalizeDataVersion(dataVersion)
+    CURRENT_DATA_VERSION = dataVersion
+    dataFolder = getDataFolder(dataVersion)
+    skills.clear()
+    skilldesc.clear()
+    missiles.clear()
+    strings.clear()
+
     def loadData(receiver, filename, csvdelimiter):
-        with open(BASE_FOLDER / filename) as csvfile:
+        with open(resolveDataPath(dataFolder, filename), encoding="utf-8-sig") as csvfile:
             reader = csv.DictReader(csvfile, delimiter=csvdelimiter)
             for row in reader:
                 receiver.append(row)
@@ -71,11 +104,17 @@ def setupData():
     skilldesc = fixTypos("skilldesc", skilldesc)
     loadData(missiles, MISSILES_CSV, "\t")
     for filename in STRINGS:
-        with open(BASE_FOLDER / filename, encoding='utf-8-sig') as jsonFile:
+        with open(resolveDataPath(dataFolder, filename), encoding='utf-8-sig') as jsonFile:
             for row in json.load(jsonFile):
                 strings[row["Key"]] = row["enUS"]
 
-def saveData(name, data):
+def saveData(name, data, dataVersion=DEFAULT_DATA_VERSION):
+    dataVersion = normalizeDataVersion(dataVersion)
     format_json = json.dumps(data, indent=4)
-    with open(BASE_FOLDER.parent / "src" / "res" / f"{name}.json", "w") as f:
+    outputFolder = GENERATED_SKILLS_FOLDER / dataVersion
+    outputFolder.mkdir(parents=True, exist_ok=True)
+    with open(outputFolder / f"{name}.json", "w", encoding="utf-8") as f:
         f.write(format_json)
+
+def getCurrentDataVersion():
+    return CURRENT_DATA_VERSION

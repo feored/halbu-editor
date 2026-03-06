@@ -45,7 +45,7 @@
         "reqskills": [],
         "saveId": 1,
         "name": "Fire Arrow",
-        "description": "magically enhances your arrows\nor bolts with fire\nalways hits",
+        "description": "magically enhances your arrows\nor bolts with fire",
         "desclines": [
             {
                 "id": 36,
@@ -200,7 +200,7 @@
         "reqskills": [],
         "saveId": 5,
         "name": "Cold Arrow",
-        "description": "magically enhances your arrows or bolts\nby adding cold damage and a slowing effect\ncold arrows only do half of their regular damage\nalways hits",
+        "description": "magically enhances your arrows or bolts\nby adding cold damage and a slowing effect\ncold arrows only do half of their regular damage",
         "desclines": [
             {
                 "id": 36,
@@ -451,7 +451,7 @@
         ],
         "saveId": 10,
         "name": "Exploding Arrow",
-        "description": "enchants an arrow or bolt that explodes on\ncontact, damaging all nearby enemies\nalways hits",
+        "description": "enchants an arrow or bolt that explodes on\ncontact, damaging all nearby enemies",
         "desclines": [
             {
                 "id": 36,
@@ -508,6 +508,16 @@
                 "textb": "Duration: %d seconds",
                 "calca": "(300 + (lvl - 1) * 150)",
                 "calcb": "25"
+            },
+            {
+                "id": 74,
+                "texta": "Physical Damage Received Reduced by %d%%",
+                "calca": "(floor(floor((110 * lvl) / (lvl + 6)) * ((40 - 0) / 100)) + 0)"
+            },
+            {
+                "id": 74,
+                "texta": "Ranged attacks slowed to %d%%",
+                "calca": "100-(floor(floor((110 * lvl) / (lvl + 6)) * ((75 - 25) / 100)) + 25)"
             }
         ],
         "dsc2lines": [
@@ -523,16 +533,6 @@
                 "textb": "Radius: %d yards",
                 "calca": "(27 + (lvl - 1) * 0)*2",
                 "calcb": "3"
-            },
-            {
-                "id": 74,
-                "texta": "Physical Damage Received Reduced by %d%%",
-                "calca": "(floor(floor((110 * lvl) / (lvl + 6)) * ((40 - 0) / 100)) + 0)"
-            },
-            {
-                "id": 74,
-                "texta": "Ranged attacks slowed to %d%%",
-                "calca": "100-(floor(floor((110 * lvl) / (lvl + 6)) * ((75 - 25) / 100)) + 25)"
             }
         ],
         "dsc3lines": [],
@@ -696,7 +696,7 @@
         ],
         "saveId": 15,
         "name": "Ice Arrow",
-        "description": "magically enhances your arrow or bolt\nto freeze your enemies\nalways hits",
+        "description": "magically enhances your arrow or bolt\nto freeze your enemies",
         "desclines": [
             {
                 "id": 36,
@@ -1017,7 +1017,7 @@
         ],
         "saveId": 21,
         "name": "Immolation Arrow",
-        "description": "enhances arrows or bolts to\ncause severe fire damage and\ncreates a pyre upon impact\nalways hits",
+        "description": "enhances arrows or bolts to\ncause severe fire damage and\ncreates a pyre upon impact",
         "desclines": [
             {
                 "id": 36,
@@ -1190,7 +1190,7 @@
         ],
         "saveId": 25,
         "name": "Freezing Arrow",
-        "description": "magically enhances an arrow or bolt\nto freeze entire groups of monsters\nalways hits",
+        "description": "magically enhances an arrow or bolt\nto freeze entire groups of monsters",
         "desclines": [
             {
                 "id": 36,
@@ -2036,7 +2036,7 @@
                 "id": 36,
                 "texta": "Fire Duration: %d second",
                 "textb": "Fire Duration: %d seconds",
-                "calca": "((90 + lvl * 25) / 25)",
+                "calca": "((90 +  (lvl *  25) + lvl * 0) / 25)",
                 "calcb": "25"
             },
             {
@@ -2328,7 +2328,7 @@
                 "id": 36,
                 "texta": "Range: %d yard",
                 "textb": "Range: %d yards",
-                "calca": "((7 + lvl * 2) / 25)*2",
+                "calca": "((7 +  (lvl *  2) + lvl * 0) / 25)*2",
                 "calcb": "3"
             },
             {
@@ -3033,7 +3033,7 @@
         "reqskills": [],
         "saveId": 27,
         "name": "Lightning Mastery",
-        "description": "passive - reduces the mana required\nto cast your lightning spells",
+        "description": "passive - increases all damage caused by your lightning spells",
         "desclines": [
             {
                 "id": 74,
@@ -4203,7 +4203,7 @@
         ],
         "saveId": 20,
         "name": "Attract",
-        "description": "curses a monster to becomes the\ntarget of all nearby monsters\nthis curse may not be overridden by another curse",
+        "description": "curses a monster to become the\ntarget of all nearby monsters\nthis curse may not be overridden by another curse",
         "desclines": [
             {
                 "id": 31,
@@ -5836,7 +5836,7 @@
         ],
         "saveId": 22,
         "name": "Holy Shock",
-        "description": "when active, aura causes pulses of electricity\nto damage nearby enemies",
+        "description": "when active, aura causes pulses of electricity\nto damage nearby enemies\nadds lightning damage to your attack",
         "desclines": [
             {
                 "id": 36,
@@ -6068,7 +6068,7 @@
         ],
         "saveId": 26,
         "name": "Fanaticism",
-        "description": "when active, aura increases attack speed\nand attack rating for you and your party",
+        "description": "when active, aura increases damage, attack speed\nand attack rating for you and your party",
         "desclines": [
             {
                 "id": 36,
@@ -6150,7 +6150,7 @@
         ],
         "saveId": 28,
         "name": "Redemption",
-        "description": "when active, aura attempts to redeem\nthe souls of slain enemies to give\nlife and mana to you and your party",
+        "description": "when active, aura attempts to redeem\nthe souls of slain enemies to give\nyou life and mana",
         "desclines": [
             {
                 "id": 74,
@@ -10281,7 +10281,7 @@
             {
                 "id": 74,
                 "texta": "Defense: %+d%%",
-                "calca": "(lvl-1)*12"
+                "calca": "lvl*12"
             },
             {
                 "id": 74,
@@ -10894,7 +10894,7 @@
             {
                 "id": 74,
                 "texta": "Resist All: %+d%%",
-                "calca": "((110*(lvl-1))/(lvl+5)*(90-5))/100+5"
+                "calca": "(floor(floor((110 * lvl) / (lvl + 6)) * ((90 - 5) / 100)) + 5)"
             },
             {
                 "id": 74,
@@ -11005,6 +11005,1963 @@
             }
         ],
         "column": 2,
+        "row": 6,
+        "page": 3
+    },
+    {
+        "id": 373,
+        "skilldesc": "summon goatman",
+        "class": "Warlock",
+        "reqlevel": 1,
+        "reqskills": [],
+        "saveId": 0,
+        "name": "Summon Goatman",
+        "description": "Summons a Goatman to fight by your side",
+        "desclines": [
+            {
+                "id": 36,
+                "texta": "Mana Cost: %d",
+                "calca": "max((30 + 1 * (lvl - 1)) * (2 ** 7), 1 * 256)",
+                "calcb": "256"
+            },
+            {
+                "id": 74,
+                "texta": "Defense: %d",
+                "calca": "pst4"
+            },
+            {
+                "id": 13,
+                "texta": "Life: %d",
+                "calca": "((35 * (lvl - 1))+synergy('(50 + (slvl(378) - 1) * 35)'))"
+            },
+            {
+                "id": 74,
+                "texta": "Attack Rating: %+d",
+                "calca": "(lvl*40)+synergy('(25 + (slvl(374) - 1) * 25)')"
+            },
+            {
+                "id": 74,
+                "texta": "Attack Speed: %+d%%",
+                "calca": "ps10"
+            },
+            {
+                "id": 34,
+                "texta": "Damage: %d-%d"
+            }
+        ],
+        "dsc2lines": [
+            {
+                "id": 74,
+                "texta": "+%d%% Chance of Crushing Blow",
+                "calca": "ps12"
+            }
+        ],
+        "dsc3lines": [
+            {
+                "id": 40,
+                "texta": "%s Receives Bonuses From:",
+                "textb": "Summon Goatman",
+                "calca": "2"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Chance of Crushing Blow per level",
+                "textb": "Death Mark",
+                "calca": "1"
+            }
+        ],
+        "column": 3,
+        "row": 1,
+        "page": 1
+    },
+    {
+        "id": 374,
+        "skilldesc": "demonic mastery",
+        "class": "Warlock",
+        "reqlevel": 1,
+        "reqskills": [
+            373
+        ],
+        "saveId": 1,
+        "name": "Demonic Mastery",
+        "description": "Passive - Enhances your summoned and bound demons",
+        "desclines": [
+            {
+                "id": 74,
+                "texta": "Run/Walk Speed: %+d%%",
+                "calca": "(floor(floor((110 * lvl) / (lvl + 6)) * ((39 - 5) / 100)) + 5)"
+            },
+            {
+                "id": 74,
+                "texta": "Damage: %+d%%",
+                "calca": "ln21"
+            },
+            {
+                "id": 74,
+                "texta": "Attack Speed: %+d%%",
+                "calca": "min((5 + (lvl - 1) * 1).25)"
+            },
+            {
+                "id": 74,
+                "texta": "Attack Rating: %+d",
+                "calca": "(25 + (lvl - 1) * 25)"
+            },
+            {
+                "id": 74,
+                "texta": "Max Demons: %d",
+                "calca": "((lvl>=20)?3:((lvl>=10)?2:1))"
+            }
+        ],
+        "dsc2lines": [],
+        "dsc3lines": [],
+        "column": 1,
+        "row": 1,
+        "page": 1
+    },
+    {
+        "id": 375,
+        "skilldesc": "death mark",
+        "class": "Warlock",
+        "reqlevel": 6,
+        "reqskills": [
+            373
+        ],
+        "saveId": 2,
+        "name": "Death Mark",
+        "description": "Forces your demon to teleport to and attack an enemy",
+        "desclines": [
+            {
+                "id": 36,
+                "texta": "Mana Cost: %d",
+                "calca": "max((9 + 1 * (lvl - 1)) * (2 ** 6), 1 * 256)",
+                "calcb": "256"
+            },
+            {
+                "id": 36,
+                "texta": "Duration: %d second",
+                "textb": "Duration: %d seconds",
+                "calca": "(125 + (lvl - 1) * 13)",
+                "calcb": "25"
+            },
+            {
+                "id": 74,
+                "texta": "Defense: %d",
+                "calca": "(-50 + (lvl - 1) * -35)"
+            },
+            {
+                "id": 74,
+                "texta": "Magic Damage Increased by %d",
+                "calca": "-1*(-5 + (lvl - 1) * -2)"
+            },
+            {
+                "id": 74,
+                "texta": "Damage Increased by %d",
+                "calca": "-1*(-5 + (lvl - 1) * -2)"
+            }
+        ],
+        "dsc2lines": [
+            {
+                "id": 36,
+                "texta": "Casting Delay: %d second",
+                "textb": "Casting Delay: %d seconds",
+                "calca": "20",
+                "calcb": "25"
+            }
+        ],
+        "dsc3lines": [],
+        "column": 2,
+        "row": 2,
+        "page": 1
+    },
+    {
+        "id": 376,
+        "skilldesc": "summon tainted",
+        "class": "Warlock",
+        "reqlevel": 12,
+        "reqskills": [
+            373
+        ],
+        "saveId": 3,
+        "name": "Summon Tainted",
+        "description": "Summons a Tainted to fight by your side",
+        "desclines": [
+            {
+                "id": 36,
+                "texta": "Mana Cost: %d",
+                "calca": "max((50 + 1 * (lvl - 1)) * (2 ** 7), 1 * 256)",
+                "calcb": "256"
+            },
+            {
+                "id": 74,
+                "texta": "Defense: %d",
+                "calca": "pst3"
+            },
+            {
+                "id": 13,
+                "texta": "Life: %d",
+                "calca": "((35 * (lvl - 1))+synergy('(50 + (slvl(378) - 1) * 35)'))"
+            },
+            {
+                "id": 74,
+                "texta": "Resist Fire: %+d%%",
+                "calca": "(floor(floor((110 * (lvl)) / ((lvl) + 6)) * ((70 - 15) / 100)) + 15)"
+            },
+            {
+                "id": 75,
+                "texta": "Fire Damage: %d-%d",
+                "calca": "((lvl > 4)?((10 + (4 * (min((lvl), 8) - 1)) + (8 * (max(min((lvl), 16) - 8, 0))) + (36 * (max(min((lvl), 22) - 16, 0))) + (48 * (max(min((lvl), 28) - 22, 0))) + (50 * (max((lvl) - 28, 0)))) * (2 ** (7 - 8)) * (100 + synergy('blvl(380)')*20 )/100):(((10 + (4 * (min((lvl), 8) - 1)) + (8 * (max(min((lvl), 16) - 8, 0))) + (36 * (max(min((lvl), 22) - 16, 0))) + (48 * (max(min((lvl), 28) - 22, 0))) + (50 * (max((lvl) - 28, 0)))) * (2 ** (7 - 8)) * (100 + synergy('blvl(380)')*20 )/100)))+((((lvl > 4)?((10 + (4 * (min((lvl), 8) - 1)) + (8 * (max(min((lvl), 16) - 8, 0))) + (36 * (max(min((lvl), 22) - 16, 0))) + (48 * (max(min((lvl), 28) - 22, 0))) + (50 * (max((lvl) - 28, 0)))) * (2 ** (7 - 8)) * (100 + synergy('blvl(380)')*20 )/100):(((10 + (4 * (min((lvl), 8) - 1)) + (8 * (max(min((lvl), 16) - 8, 0))) + (36 * (max(min((lvl), 22) - 16, 0))) + (48 * (max(min((lvl), 28) - 22, 0))) + (50 * (max((lvl) - 28, 0)))) * (2 ** (7 - 8)) * (100 + synergy('blvl(380)')*20 )/100)))*pst2)/100)",
+                "calcb": "((lvl > 4)?((14 + (6 * (min((lvl), 8) - 1)) + (10 * (max(min((lvl), 16) - 8, 0))) + (40 * (max(min((lvl), 22) - 16, 0))) + (50 * (max(min((lvl), 28) - 22, 0))) + (55 * (max((lvl) - 28, 0)))) * (2 ** (7 - 8)) * (100 + synergy('blvl(380)')*20 )/100):(((14 + (6 * (min((lvl), 8) - 1)) + (10 * (max(min((lvl), 16) - 8, 0))) + (40 * (max(min((lvl), 22) - 16, 0))) + (50 * (max(min((lvl), 28) - 22, 0))) + (55 * (max((lvl) - 28, 0)))) * (2 ** (7 - 8)) * (100 + synergy('blvl(380)')*20 )/100)))+((((lvl > 4)?((14 + (6 * (min((lvl), 8) - 1)) + (10 * (max(min((lvl), 16) - 8, 0))) + (40 * (max(min((lvl), 22) - 16, 0))) + (50 * (max(min((lvl), 28) - 22, 0))) + (55 * (max((lvl) - 28, 0)))) * (2 ** (7 - 8)) * (100 + synergy('blvl(380)')*20 )/100):(((14 + (6 * (min((lvl), 8) - 1)) + (10 * (max(min((lvl), 16) - 8, 0))) + (40 * (max(min((lvl), 22) - 16, 0))) + (50 * (max(min((lvl), 28) - 22, 0))) + (55 * (max((lvl) - 28, 0)))) * (2 ** (7 - 8)) * (100 + synergy('blvl(380)')*20 )/100)))*pst2)/100)"
+            }
+        ],
+        "dsc2lines": [],
+        "dsc3lines": [
+            {
+                "id": 40,
+                "texta": "%s Receives Bonuses From:",
+                "textb": "Summon Tainted",
+                "calca": "2"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Fire Damage per Level",
+                "textb": "Blood Boil",
+                "calca": "synergy('30')"
+            }
+        ],
+        "column": 3,
+        "row": 3,
+        "page": 1
+    },
+    {
+        "id": 377,
+        "skilldesc": "summon defiler",
+        "class": "Warlock",
+        "reqlevel": 18,
+        "reqskills": [
+            376
+        ],
+        "saveId": 4,
+        "name": "Summon Defiler",
+        "description": "Summons a defiler that binds enemy souls together \n to take shared damage",
+        "desclines": [
+            {
+                "id": 36,
+                "texta": "Mana Cost: %d",
+                "calca": "max((70 + 1 * (lvl - 1)) * (2 ** 7), 1 * 256)",
+                "calcb": "256"
+            },
+            {
+                "id": 74,
+                "texta": "Defense: %d",
+                "calca": "pst3"
+            },
+            {
+                "id": 13,
+                "texta": "Life: %d",
+                "calca": "((35 * (lvl - 1))+synergy('(50 + (slvl(378) - 1) * 35)'))"
+            },
+            {
+                "id": 74,
+                "texta": "Damage Shared Between Bound Targets: %d%%",
+                "calca": "((110 *(lvl) * (60 - 20)) / (100 * ((lvl) + 6)) + 20"
+            },
+            {
+                "id": 74,
+                "texta": "Max Bound Souls: %d",
+                "calca": "((110 *(lvl) * (6 - 2)) / (100 * ((lvl) + 6)) + 2"
+            }
+        ],
+        "dsc2lines": [],
+        "dsc3lines": [],
+        "column": 3,
+        "row": 4,
+        "page": 1
+    },
+    {
+        "id": 378,
+        "skilldesc": "blood oath",
+        "class": "Warlock",
+        "reqlevel": 6,
+        "reqskills": [
+            374
+        ],
+        "saveId": 5,
+        "name": "Blood Oath",
+        "description": "Passive - Bind the lifeforce of your demon \n to protect from enemy attacks",
+        "desclines": [
+            {
+                "id": 74,
+                "texta": "%+d%% Damage Taken Goes To your demon",
+                "calca": "(5 + (lvl - 1) * 2)"
+            },
+            {
+                "id": 74,
+                "texta": "Physical Damage to your demon Reduced by %d%%",
+                "calca": "(floor(floor((110 * lvl) / (lvl + 6)) * ((12 - 1) / 100)) + 1)"
+            },
+            {
+                "id": 74,
+                "texta": "Resist All for your demon: %+d%%",
+                "calca": "(floor(floor((110 * lvl) / (lvl + 6)) * ((79 - 3) / 100)) + 3)"
+            },
+            {
+                "id": 74,
+                "texta": "Life of your demon: %+d%%",
+                "calca": "(50 + (lvl - 1) * 35)"
+            }
+        ],
+        "dsc2lines": [],
+        "dsc3lines": [],
+        "column": 1,
+        "row": 2,
+        "page": 1
+    },
+    {
+        "id": 379,
+        "skilldesc": "engorge",
+        "class": "Warlock",
+        "reqlevel": 24,
+        "reqskills": [
+            380
+        ],
+        "saveId": 6,
+        "name": "Engorge",
+        "description": "Heal and empower your demon by feeding it a corpse",
+        "desclines": [
+            {
+                "id": 36,
+                "texta": "Mana Cost: %d",
+                "calca": "max((12 + 1 * (lvl - 1)) * (2 ** 6), 1 * 256)",
+                "calcb": "256"
+            },
+            {
+                "id": 36,
+                "texta": "Duration: %d second",
+                "textb": "Duration: %d seconds",
+                "calca": "(125 + (lvl - 1) * 75)",
+                "calcb": "25"
+            },
+            {
+                "id": 74,
+                "texta": "Life Steal: %+d%%",
+                "calca": "ln21"
+            },
+            {
+                "id": 74,
+                "texta": "Heal Demon's Life: %+d%%",
+                "calca": "(30 + (lvl - 1) * 1)"
+            },
+            {
+                "id": 75,
+                "texta": "Attack Speed: %+d%%",
+                "calca": "ast4"
+            }
+        ],
+        "dsc2lines": [
+            {
+                "id": 74,
+                "texta": "Physical Damage to your demon Reduced by %d%%",
+                "calca": "5"
+            },
+            {
+                "id": 74,
+                "texta": "Defense: %+d",
+                "calca": "ast5"
+            },
+            {
+                "id": 74,
+                "texta": "Replenish Life %+d",
+                "calca": "ast6"
+            }
+        ],
+        "dsc3lines": [
+            {
+                "id": 40,
+                "texta": "%s Receives Bonuses From:",
+                "textb": "Engorge",
+                "calca": "2"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d Defense per level",
+                "textb": "Blood Oath",
+                "calca": "synergy('pa11')"
+            },
+            {
+                "id": 76,
+                "texta": "%s: +%d Replenish life per level",
+                "textb": "Blood Oath",
+                "calca": "synergy('pa12')"
+            }
+        ],
+        "column": 2,
+        "row": 5,
+        "page": 1
+    },
+    {
+        "id": 380,
+        "skilldesc": "blood boil",
+        "class": "Warlock",
+        "reqlevel": 18,
+        "reqskills": [
+            375
+        ],
+        "saveId": 7,
+        "name": "Blood Boil",
+        "description": "Erupt your demon's blood to damage nearby enemies",
+        "desclines": [
+            {
+                "id": 36,
+                "texta": "Mana Cost: %d",
+                "calca": "max((15 + 1 * (lvl - 1)) * (2 ** 6), 1 * 256)",
+                "calcb": "256"
+            },
+            {
+                "id": 74,
+                "texta": "Demon's Life Cost: %d%%",
+                "calca": "max((15 + (lvl - 1) * -1), 5)"
+            },
+            {
+                "id": 36,
+                "texta": "Radius: %d yard",
+                "textb": "Radius: %d yards",
+                "calca": "(12 + (lvl - 1) * 1)",
+                "calcb": "3"
+            },
+            {
+                "id": 75,
+                "texta": "Fire Damage: %d-%d",
+                "calca": "(((10 + (8 * (min(lvl, 8) - 1)) + (10 * (max(min(lvl, 16) - 8, 0))) + (12 * (max(min(lvl, 22) - 16, 0))) + (16 * (max(min(lvl, 28) - 22, 0))) + (20 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + (synergy('blvl(378)'))*20)/100) * ((100 + firemastery)/100))",
+                "calcb": "(((20 + (10 * (min(lvl, 8) - 1)) + (12 * (max(min(lvl, 16) - 8, 0))) + (18 * (max(min(lvl, 22) - 16, 0))) + (26 * (max(min(lvl, 28) - 22, 0))) + (30 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + (synergy('blvl(378)'))*20)/100) * ((100 + firemastery)/100))"
+            },
+            {
+                "id": 75,
+                "texta": "Damage: %d-%d",
+                "calca": "((10 + (8 * (min(lvl, 8) - 1)) + (10 * (max(min(lvl, 16) - 8, 0))) + (12 * (max(min(lvl, 22) - 16, 0))) + (16 * (max(min(lvl, 28) - 22, 0))) + (20 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + (synergy('blvl(379)'))*20)/100)",
+                "calcb": "((20 + (10 * (min(lvl, 8) - 1)) + (12 * (max(min(lvl, 16) - 8, 0))) + (18 * (max(min(lvl, 22) - 16, 0))) + (26 * (max(min(lvl, 28) - 22, 0))) + (30 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + (synergy('blvl(379)'))*20)/100)"
+            }
+        ],
+        "dsc2lines": [],
+        "dsc3lines": [
+            {
+                "id": 40,
+                "texta": "%s Receives Bonuses From:",
+                "textb": "Blood Boil",
+                "calca": "2"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Fire Damage per Level",
+                "textb": "Blood Oath",
+                "calca": "20",
+                "calcb": " "
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Damage per Level",
+                "textb": "Engorge",
+                "calca": "20"
+            }
+        ],
+        "column": 2,
+        "row": 4,
+        "page": 1
+    },
+    {
+        "id": 381,
+        "skilldesc": "consume",
+        "class": "Warlock",
+        "reqlevel": 30,
+        "reqskills": [
+            378
+        ],
+        "saveId": 8,
+        "name": "Consume",
+        "description": "Sacrifice your demon in exchange for power",
+        "desclines": [
+            {
+                "id": 36,
+                "texta": "Mana Cost: %d",
+                "calca": "max((25 + 1 * (lvl - 1)) * (2 ** 8), 1 * 256)",
+                "calcb": "256"
+            },
+            {
+                "id": 36,
+                "texta": "Duration: %d second",
+                "textb": "Duration: %d seconds",
+                "calca": "(1000 + (lvl - 1) * 500)",
+                "calcb": "25"
+            },
+            {
+                "id": 74,
+                "texta": "Run/Walk Speed: %+d%%",
+                "calca": "(floor(floor((110 * lvl) / (lvl + 6)) * ((46 - 10) / 100)) + 10)"
+            },
+            {
+                "id": 74,
+                "texta": "Max Life: %+d%%",
+                "calca": "(5 + (lvl - 1) * 1)"
+            }
+        ],
+        "dsc2lines": [
+            {
+                "id": 78,
+                "texta": "Bonus from %s:",
+                "textb": "Summon or Bind a demon to learn its secrets"
+            }
+        ],
+        "dsc3lines": [],
+        "column": 1,
+        "row": 6,
+        "page": 1
+    },
+    {
+        "id": 382,
+        "skilldesc": "bind demon",
+        "class": "Warlock",
+        "reqlevel": 30,
+        "reqskills": [
+            379,
+            377
+        ],
+        "saveId": 9,
+        "name": "Bind Demon",
+        "description": "Force an injured demon to do your bidding",
+        "desclines": [
+            {
+                "id": 36,
+                "texta": "Mana Cost: %d",
+                "calca": "max((25 + 1 * (lvl - 1)) * (2 ** 8), 1 * 256)",
+                "calcb": "256"
+            },
+            {
+                "id": 74,
+                "texta": "Chance to Bind: %d%%",
+                "calca": "(floor(floor((110 * lvl) / (lvl + 6)) * ((29 - 7) / 100)) + 7)+((synergy('blvl(375)')*100)/100)"
+            },
+            {
+                "id": 74,
+                "texta": "Life of your demon: %+d%%",
+                "calca": "0"
+            },
+            {
+                "id": 74,
+                "texta": "Damage %+d",
+                "calca": "pst9"
+            },
+            {
+                "id": 74,
+                "texta": "Damage: %+d%%",
+                "calca": "pst3"
+            }
+        ],
+        "dsc2lines": [
+            {
+                "id": 74,
+                "texta": "Bound demons gain Extra Strong",
+                "calca": "lvl/5"
+            },
+            {
+                "id": 74,
+                "texta": "Bound demons gain Extra Fast",
+                "calca": "lvl/10"
+            },
+            {
+                "id": 74,
+                "texta": "Bound demons gain Spectral Hit",
+                "calca": "lvl/15"
+            },
+            {
+                "id": 74,
+                "texta": "Bound demons gain Aura Enchanted",
+                "calca": "lvl/20"
+            }
+        ],
+        "dsc3lines": [
+            {
+                "id": 40,
+                "texta": "%s Receives Bonuses From:",
+                "textb": "Bind Demon",
+                "calca": "2"
+            },
+            {
+                "id": 76,
+                "texta": "%s: +%d%% Chance to Bind Demon per level",
+                "textb": "Death Mark",
+                "calca": "100/100"
+            }
+        ],
+        "column": 3,
+        "row": 6,
+        "page": 1
+    },
+    {
+        "id": 383,
+        "skilldesc": "levitate",
+        "class": "Warlock",
+        "reqlevel": 1,
+        "reqskills": [],
+        "saveId": 10,
+        "name": "Levitation Mastery",
+        "description": "Passive - Improve your ability to levitate your equipped\n weapon with your mind",
+        "desclines": [
+            {
+                "id": 74,
+                "texta": "Weapon Requirements %+d%%",
+                "calca": "mair"
+            },
+            {
+                "id": 74,
+                "texta": "Critical Strike Chance: %+d%%",
+                "calca": "pst1"
+            },
+            {
+                "id": 74,
+                "texta": "Attack Rating: %+d%%",
+                "calca": "(0 + (lvl - 1) * 35)"
+            },
+            {
+                "id": 75,
+                "texta": "Damage: %+d%%",
+                "calca": "(25 + (lvl - 1) * 4)"
+            }
+        ],
+        "dsc2lines": [],
+        "dsc3lines": [],
+        "column": 1,
+        "row": 1,
+        "page": 2
+    },
+    {
+        "id": 384,
+        "skilldesc": "eldritchblast",
+        "class": "Warlock",
+        "reqlevel": 24,
+        "reqskills": [
+            387
+        ],
+        "saveId": 11,
+        "name": "Eldritch Blast",
+        "description": "Blast hexed enemies with draining magical damage \n and refresh the duration of their active hex",
+        "desclines": [
+            {
+                "id": 36,
+                "texta": "Mana Cost: %d",
+                "calca": "max((11 + 1 * (lvl - 1)) * (2 ** 7), 1 * 256)",
+                "calcb": "256"
+            },
+            {
+                "id": 74,
+                "texta": "Mana Steal: %+d%%",
+                "calca": "min((5 + (lvl - 1) * 1), 20)"
+            },
+            {
+                "id": 74,
+                "texta": "Life Steal: %+d%%",
+                "calca": "min((5 + (lvl - 1) * 1), 20)"
+            },
+            {
+                "id": 75,
+                "texta": "Magic Damage: %d-%d",
+                "calca": "((2 + (3 * (min(lvl, 8) - 1)) + (6 * (max(min(lvl, 16) - 8, 0))) + (9 * (max(min(lvl, 22) - 16, 0))) + (15 * (max(min(lvl, 28) - 22, 0))) + (17 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + (synergy('blvl(390)')+synergy('blvl(389)'))*50)/100)",
+                "calcb": "((6 + (3 * (min(lvl, 8) - 1)) + (6 * (max(min(lvl, 16) - 8, 0))) + (9 * (max(min(lvl, 22) - 16, 0))) + (15 * (max(min(lvl, 28) - 22, 0))) + (17 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + (synergy('blvl(390)')+synergy('blvl(389)'))*50)/100)"
+            }
+        ],
+        "dsc2lines": [
+            {
+                "id": 36,
+                "texta": "Duration: %d second",
+                "textb": "Duration: %d seconds",
+                "calca": "1000 + synergy('blvl(387)') * 50",
+                "calcb": "25"
+            }
+        ],
+        "dsc3lines": [
+            {
+                "id": 40,
+                "texta": "%s Receives Bonuses From:",
+                "textb": "Eldritch Blast",
+                "calca": "2"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Magic Damage per Level",
+                "textb": "Hex: Purge",
+                "calca": "50"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Magic Damage per Level",
+                "textb": "Blade Warp",
+                "calca": "50"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d Seconds per Level",
+                "textb": "Psychic Ward",
+                "calca": "50/25"
+            }
+        ],
+        "column": 2,
+        "row": 5,
+        "page": 2
+    },
+    {
+        "id": 385,
+        "skilldesc": "hex bane",
+        "class": "Warlock",
+        "reqlevel": 1,
+        "reqskills": [],
+        "saveId": 12,
+        "name": "Hex: Bane",
+        "description": "Hexes your weapon to impair enemies and add magic damage",
+        "desclines": [
+            {
+                "id": 36,
+                "texta": "Mana Cost: %d",
+                "calca": "max((12 + 1 * (lvl - 1)) * (2 ** 7), 1 * 256)",
+                "calcb": "256"
+            },
+            {
+                "id": 36,
+                "texta": "Duration: %d second",
+                "textb": "Duration: %d seconds",
+                "calca": "(3600 + (lvl - 1) * 300)",
+                "calcb": "25"
+            },
+            {
+                "id": 36,
+                "texta": "[PH] Effect Length: %d second",
+                "textb": "[PH]Effect Length: %d seconds",
+                "calca": "min(250,((0 + (0 * (min(lvl, 8) - 1)) + (0 * (max(min(lvl, 16) - 8), 0)) + (0 * (max(lvl - 16, 0)))) * (2 ** (7 - 8)) * (100 + 0)/100))",
+                "calcb": "25"
+            },
+            {
+                "id": 75,
+                "texta": "Magic Damage: %d-%d",
+                "calca": "((9 + (3 * (min(lvl, 8) - 1)) + (7 * (max(min(lvl, 16) - 8, 0))) + (11 * (max(min(lvl, 22) - 16, 0))) + (15 * (max(min(lvl, 28) - 22, 0))) + (19 * (max(lvl - 28, 0)))) * (2 ** (7 - 8)) * (100 + (synergy('blvl(381)')*pa10)+(synergy('blvl(389)')*pa10)+(synergy('blvl(392)')*pa10))/100)",
+                "calcb": "((16 + (5 * (min(lvl, 8) - 1)) + (9 * (max(min(lvl, 16) - 8, 0))) + (13 * (max(min(lvl, 22) - 16, 0))) + (17 * (max(min(lvl, 28) - 22, 0))) + (21 * (max(lvl - 28, 0)))) * (2 ** (7 - 8)) * (100 + (synergy('blvl(381)')*pa10)+(synergy('blvl(389)')*pa10)+(synergy('blvl(392)')*pa10))/100)"
+            },
+            {
+                "id": 74,
+                "texta": "Attack Rating: %+d%%",
+                "calca": "20 + (lvl - 1) * 9"
+            }
+        ],
+        "dsc2lines": [
+            {
+                "id": 36,
+                "texta": "Hex Duration: %d seconds",
+                "textb": "Hex Duration: %d seconds",
+                "calca": "150+(((synergy('blvl(384)')) *5))",
+                "calcb": "25"
+            },
+            {
+                "id": 74,
+                "texta": "%+d%% to Enemy Defense",
+                "calca": "ast1"
+            },
+            {
+                "id": 74,
+                "texta": "%+d%% to Enemy Attack Rating",
+                "calca": "ast2"
+            }
+        ],
+        "dsc3lines": [
+            {
+                "id": 40,
+                "texta": "%s Receives Bonuses From:",
+                "textb": "Hex: Bane",
+                "calca": "2"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Magic Damage per Level",
+                "textb": "Mirrored Blades",
+                "calca": "pa10"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Magic Damage per Level",
+                "textb": "Hex: Purge",
+                "calca": "pa10"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Magic Damage per Level",
+                "textb": "Consume",
+                "calca": "pa10"
+            },
+            {
+                "id": 79,
+                "texta": "%s: Hex Duration +%d seconds per level",
+                "textb": "Eldritch Blast",
+                "calca": "5",
+                "calcb": "25"
+            }
+        ],
+        "column": 3,
+        "row": 1,
+        "page": 2
+    },
+    {
+        "id": 386,
+        "skilldesc": "hex siphon",
+        "class": "Warlock",
+        "reqlevel": 24,
+        "reqskills": [
+            389
+        ],
+        "saveId": 13,
+        "name": "Hex: Siphon",
+        "description": "Hexes your weapon to extract the lifeforce of slain enemies",
+        "desclines": [
+            {
+                "id": 36,
+                "texta": "Mana Cost: %d",
+                "calca": "max((25 + 1 * (lvl - 1)) * (2 ** 7), 1 * 256)",
+                "calcb": "256"
+            },
+            {
+                "id": 36,
+                "texta": "Duration: %d second",
+                "textb": "Duration: %d seconds",
+                "calca": "(3600 + (lvl - 1) * 300)",
+                "calcb": "25"
+            },
+            {
+                "id": 74,
+                "texta": "Life After Each Kill: %+d",
+                "calca": "pst3"
+            },
+            {
+                "id": 74,
+                "texta": "Mana After Each Kill: %+d",
+                "calca": "pst5"
+            },
+            {
+                "id": 74,
+                "texta": "Attack Rating: %+d%%",
+                "calca": "20 + (lvl - 1) * 9"
+            }
+        ],
+        "dsc2lines": [
+            {
+                "id": 36,
+                "texta": "Hex Duration: %d seconds",
+                "textb": "Hex Duration: %d seconds",
+                "calca": "150+(((synergy('blvl(384)')) *5))",
+                "calcb": "25"
+            },
+            {
+                "id": 74,
+                "texta": "Enemy Damage: %+d%%",
+                "calca": "ast1"
+            }
+        ],
+        "dsc3lines": [
+            {
+                "id": 40,
+                "texta": "%s Receives Bonuses From:",
+                "textb": "Hex: Siphon",
+                "calca": "2"
+            },
+            {
+                "id": 76,
+                "texta": "%s: +%d Life and Mana After Kill per level",
+                "textb": "Engorge",
+                "calca": "1"
+            },
+            {
+                "id": 79,
+                "texta": "%s: Hex Duration +%d seconds per level",
+                "textb": "Eldritch Blast",
+                "calca": "5",
+                "calcb": "25"
+            }
+        ],
+        "column": 3,
+        "row": 5,
+        "page": 2
+    },
+    {
+        "id": 387,
+        "skilldesc": "psychic ward",
+        "class": "Warlock",
+        "reqlevel": 18,
+        "reqskills": [
+            391
+        ],
+        "saveId": 14,
+        "name": "Psychic Ward",
+        "description": "Creates a mental shield that absorbs damage from \n attacks and can stun melee attackers",
+        "desclines": [
+            {
+                "id": 36,
+                "texta": "Mana Cost: %d",
+                "calca": "max((20 + 2 * (lvl - 1)) * (2 ** 8), 1 * 256)",
+                "calcb": "256"
+            },
+            {
+                "id": 36,
+                "texta": "Stun Length: %d second",
+                "textb": "Stun Length: %d seconds",
+                "calca": "(floor(floor((110 * lvl) / (lvl + 6)) * ((85 - 37) / 100)) + 37)",
+                "calcb": "25"
+            },
+            {
+                "id": 74,
+                "texta": "Absorbs %d damage",
+                "calca": "((15 + (lvl - 1) * 10) + (synergy('blvl(391)') + synergy('blvl(383)')) * 15)"
+            }
+        ],
+        "dsc2lines": [],
+        "dsc3lines": [
+            {
+                "id": 40,
+                "texta": "%s Receives Bonuses From:",
+                "textb": "Psychic Ward",
+                "calca": "2"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d Damage Absorbed per Level",
+                "textb": "Cleave",
+                "calca": "15"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d Damage Absorbed per Level",
+                "textb": "Levitation Mastery",
+                "calca": "15"
+            }
+        ],
+        "column": 2,
+        "row": 4,
+        "page": 2
+    },
+    {
+        "id": 388,
+        "skilldesc": "echoing strike",
+        "class": "Warlock",
+        "reqlevel": 12,
+        "reqskills": [
+            383
+        ],
+        "saveId": 15,
+        "name": "Echoing Strike",
+        "description": "Create echoes of your melee weapon that pierce through enemies",
+        "desclines": [
+            {
+                "id": 36,
+                "texta": "Mana Cost: %d",
+                "calca": "max((14 + 1 * (lvl - 1)) * (2 ** 7), 1 * 256)",
+                "calcb": "256"
+            },
+            {
+                "id": 74,
+                "texta": "Attack Rating: %+d%%",
+                "calca": "lvl*10"
+            },
+            {
+                "id": 75,
+                "texta": "Damage: %d-%d",
+                "calca": "((8 + (3 * (min(lvl, 8) - 1)) + (4 * (max(min(lvl, 16) - 8, 0))) + (6 * (max(min(lvl, 22) - 16, 0))) + (6 * (max(min(lvl, 28) - 22, 0))) + (6 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + (synergy('blvl(392)')+synergy('blvl(390)'))*5)/100)*(((((100+((30 + (lvl - 1) * 5)+clc0))/(synergy('blvl(392)') > 0) ? (1+(synergy('blvl(392)')/5)) : 1)/2)*(synergy('blvl(392)') > 0) ? (1+(synergy('blvl(392)')/5)) : 1*2)-1)/100",
+                "calcb": "((12 + (5 * (min(lvl, 8) - 1)) + (6 * (max(min(lvl, 16) - 8, 0))) + (9 * (max(min(lvl, 22) - 16, 0))) + (9 * (max(min(lvl, 28) - 22, 0))) + (9 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + (synergy('blvl(392)')+synergy('blvl(390)'))*5)/100)*(((((100+((30 + (lvl - 1) * 5)+clc0))/(synergy('blvl(392)') > 0) ? (1+(synergy('blvl(392)')/5)) : 1)/2)*(synergy('blvl(392)') > 0) ? (1+(synergy('blvl(392)')/5)) : 1*2)-1)/100"
+            },
+            {
+                "id": 74,
+                "texta": "Damage: +%d%%",
+                "calca": "(30 + (lvl - 1) * 5)+clc0"
+            }
+        ],
+        "dsc2lines": [
+            {
+                "id": 36,
+                "texta": "%d Echo",
+                "textb": "%d Echoes",
+                "calca": "(synergy('blvl(392)') > 0) ? (1+(synergy('blvl(392)')/5)) : 1",
+                "calcb": "1"
+            },
+            {
+                "id": 74,
+                "texta": "%d%% Weapon Damage",
+                "calca": "96*100/128"
+            }
+        ],
+        "dsc3lines": [
+            {
+                "id": 40,
+                "texta": "%s Receives Bonuses From:",
+                "textb": "Echoing Strike",
+                "calca": "2"
+            },
+            {
+                "id": 76,
+                "texta": "%s: Additional echoes created every fifth level: %d",
+                "textb": "Mirrored Blades",
+                "calca": "pa10"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Damage per Level",
+                "textb": "Mirrored Blades",
+                "calca": "5"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Damage per Level",
+                "textb": "Blade Warp",
+                "calca": "5"
+            }
+        ],
+        "column": 1,
+        "row": 3,
+        "page": 2
+    },
+    {
+        "id": 389,
+        "skilldesc": "hex purge",
+        "class": "Warlock",
+        "reqlevel": 12,
+        "reqskills": [
+            385
+        ],
+        "saveId": 16,
+        "name": "Hex: Purge",
+        "description": "Hexes your weapon to warp enemies creating a chance\n they will erupt when hit",
+        "desclines": [
+            {
+                "id": 36,
+                "texta": "Mana Cost: %d",
+                "calca": "max((25 + 1 * (lvl - 1)) * (2 ** 8), 1 * 256)",
+                "calcb": "256"
+            },
+            {
+                "id": 36,
+                "texta": "Duration: %d second",
+                "textb": "Duration: %d seconds",
+                "calca": "(3600 + (lvl - 1) * 300)",
+                "calcb": "25"
+            },
+            {
+                "id": 75,
+                "texta": "Magic Explosion Damage: %d-%d",
+                "calca": "((10 + (4 * (min(lvl, 8) - 1)) + (8 * (max(min(lvl, 16) - 8, 0))) + (10 * (max(min(lvl, 22) - 16, 0))) + (14 * (max(min(lvl, 28) - 22, 0))) + (18 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + (synergy('blvl(385)')+synergy('blvl(384)') )*10)/100)",
+                "calcb": "((15 + (6 * (min(lvl, 8) - 1)) + (10 * (max(min(lvl, 16) - 8, 0))) + (12 * (max(min(lvl, 22) - 16, 0))) + (16 * (max(min(lvl, 28) - 22, 0))) + (20 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + (synergy('blvl(385)')+synergy('blvl(384)') )*10)/100)"
+            },
+            {
+                "id": 74,
+                "texta": "Attack Speed: %+d%%",
+                "calca": "pst1"
+            },
+            {
+                "id": 74,
+                "texta": "Attack Rating: %+d%%",
+                "calca": "20 + (lvl - 1) * 9"
+            }
+        ],
+        "dsc2lines": [
+            {
+                "id": 74,
+                "texta": "Range: %d yards",
+                "calca": "rng"
+            },
+            {
+                "id": 36,
+                "texta": "Hex Duration: %d seconds",
+                "textb": "Hex Duration: %d seconds",
+                "calca": "150+(((synergy('blvl(384)')) *5))",
+                "calcb": "25"
+            },
+            {
+                "id": 36,
+                "texta": "Hex Removed after %d Explosion",
+                "textb": "Hex Removed after %d Explosions",
+                "calca": "min(1+(lvl/10),3)",
+                "calcb": "1"
+            },
+            {
+                "id": 74,
+                "texta": "Chance to Erupt: %+d%%",
+                "calca": "(ln21+(synergy('blvl(400)') *pa10)) / 100"
+            }
+        ],
+        "dsc3lines": [
+            {
+                "id": 40,
+                "texta": "%s Receives Bonuses From:",
+                "textb": "Hex: Purge",
+                "calca": "2"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Magic Damage per Level",
+                "textb": "Hex: Bane",
+                "calca": "10"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Magic Damage per Level",
+                "textb": "Eldritch Blast",
+                "calca": "10"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Chance to Erupt per level",
+                "textb": "Sigil: Death",
+                "calca": "(pa10/100)"
+            },
+            {
+                "id": 79,
+                "texta": "%s: Hex Duration +%d seconds per level",
+                "textb": "Eldritch Blast",
+                "calca": "5",
+                "calcb": "25"
+            }
+        ],
+        "column": 3,
+        "row": 3,
+        "page": 2
+    },
+    {
+        "id": 390,
+        "skilldesc": "blade warp",
+        "class": "Warlock",
+        "reqlevel": 18,
+        "reqskills": [
+            388
+        ],
+        "saveId": 17,
+        "name": "Blade Warp",
+        "description": "Hurl an astral weapon that teleports you to its impact",
+        "desclines": [
+            {
+                "id": 36,
+                "texta": "Mana Cost: %d",
+                "calca": "max((15 + 0 * (lvl - 1)) * (2 ** 8), 1 * 256)",
+                "calcb": "256"
+            },
+            {
+                "id": 74,
+                "texta": "Radius: %d yards",
+                "calca": "0"
+            },
+            {
+                "id": 75,
+                "texta": "Magic Damage: %d-%d",
+                "calca": "((8 + (3 * (min(lvl, 8) - 1)) + (5 * (max(min(lvl, 16) - 8, 0))) + (8 * (max(min(lvl, 22) - 16, 0))) + (8 * (max(min(lvl, 28) - 22, 0))) + (8 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + (synergy('blvl(388)')+synergy('blvl(392)'))*24)/100)",
+                "calcb": "((10 + (3 * (min(lvl, 8) - 1)) + (5 * (max(min(lvl, 16) - 8, 0))) + (8 * (max(min(lvl, 22) - 16, 0))) + (8 * (max(min(lvl, 28) - 22, 0))) + (8 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + (synergy('blvl(388)')+synergy('blvl(392)'))*24)/100)"
+            }
+        ],
+        "dsc2lines": [
+            {
+                "id": 36,
+                "texta": "Casting Delay: %d second",
+                "textb": "Casting Delay: %d seconds",
+                "calca": "20",
+                "calcb": "25"
+            }
+        ],
+        "dsc3lines": [
+            {
+                "id": 40,
+                "texta": "%s Receives Bonuses From:",
+                "textb": "Blade Warp",
+                "calca": "2"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Magic Damage per Level",
+                "textb": "Mirrored Blades",
+                "calca": "24"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Magic Damage per Level",
+                "textb": "Echoing Strike",
+                "calca": "24"
+            }
+        ],
+        "column": 1,
+        "row": 4,
+        "page": 2
+    },
+    {
+        "id": 391,
+        "skilldesc": "cleave",
+        "class": "Warlock",
+        "reqlevel": 6,
+        "reqskills": [
+            383
+        ],
+        "saveId": 18,
+        "name": "Cleave",
+        "description": "Attack all enemies in an expanding arc",
+        "desclines": [
+            {
+                "id": 36,
+                "texta": "Mana Cost: %d",
+                "calca": "max((3 + 0 * (lvl - 1)) * (2 ** 8), 1 * 256)",
+                "calcb": "256"
+            },
+            {
+                "id": 74,
+                "texta": "Cleave Arc: %d Degrees",
+                "calca": "(lvl >= 20) ? 20 : lvl +10*pa10"
+            },
+            {
+                "id": 74,
+                "texta": "Damage: %+d%%",
+                "calca": "(20 + (lvl - 1) * 5)+((synergy('blvl(392)')+synergy('blvl(389)')+synergy('blvl(384)'))*10)"
+            },
+            {
+                "id": 74,
+                "texta": "Attack Speed: %+d%%",
+                "calca": "(floor(floor((110 * lvl) / (lvl + 6)) * ((30 - 10) / 100)) + 10)"
+            },
+            {
+                "id": 74,
+                "texta": "Attack Rating: %+d%%",
+                "calca": "50 + (lvl - 1) * 7"
+            }
+        ],
+        "dsc2lines": [],
+        "dsc3lines": [
+            {
+                "id": 40,
+                "texta": "%s Receives Bonuses From:",
+                "textb": "Cleave",
+                "calca": "2"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Damage per Level",
+                "textb": "Mirrored Blades",
+                "calca": "10"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Damage per Level",
+                "textb": "Hex: Purge",
+                "calca": "10"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Damage per Level",
+                "textb": "Eldritch Blast",
+                "calca": "10"
+            }
+        ],
+        "column": 2,
+        "row": 2,
+        "page": 2
+    },
+    {
+        "id": 392,
+        "skilldesc": "mirrored blades",
+        "class": "Warlock",
+        "reqlevel": 30,
+        "reqskills": [
+            390,
+            384
+        ],
+        "saveId": 19,
+        "name": "Mirrored Blades",
+        "description": "Attack with mirror duplicates of your weapon",
+        "desclines": [
+            {
+                "id": 36,
+                "texta": "Mana Cost: %d",
+                "calca": "max((10 + 1 * (lvl - 1)) * (2 ** 7), 1 * 256)",
+                "calcb": "256"
+            },
+            {
+                "id": 74,
+                "texta": "Attack Speed: %+d%%",
+                "calca": "(floor(floor((110 * lvl) / (lvl + 6)) * ((30 - 10) / 100)) + 10)"
+            },
+            {
+                "id": 74,
+                "texta": "Mirrored Blade Damage: %d%%",
+                "calca": "(floor(floor((110 * lvl) / (lvl + 6)) * ((120 - 50) / 100)) + 50)"
+            }
+        ],
+        "dsc2lines": [
+            {
+                "id": 74,
+                "texta": "Mirrored Weapons Created: %d",
+                "calca": "min((2 + (lvl / 5)), 5)-1"
+            }
+        ],
+        "dsc3lines": [],
+        "column": 2,
+        "row": 6,
+        "page": 2
+    },
+    {
+        "id": 393,
+        "skilldesc": "sigil lethargy",
+        "class": "Warlock",
+        "reqlevel": 6,
+        "reqskills": [],
+        "saveId": 20,
+        "name": "Sigil: Lethargy",
+        "description": "Lay a sigil on the ground that slows and weakens enemies",
+        "desclines": [
+            {
+                "id": 36,
+                "texta": "Mana Cost: %d",
+                "calca": "max((4 + 0 * (lvl - 1)) * (2 ** 8), 1 * 256)",
+                "calcb": "256"
+            },
+            {
+                "id": 36,
+                "texta": "Duration: %d second",
+                "textb": "Duration: %d seconds",
+                "calca": "((100+(lvl*25) + lvl * 0) / 25)",
+                "calcb": "25"
+            },
+            {
+                "id": 74,
+                "texta": "Radius: %d yards",
+                "calca": "rng",
+                "calcb": "3"
+            },
+            {
+                "id": 74,
+                "texta": "Enemy Defense: %+d%%",
+                "calca": "(-33 + (lvl - 1) * -1)"
+            },
+            {
+                "id": 74,
+                "texta": "Damage Taken: %+d%%",
+                "calca": "(20 + (lvl - 1) * 1)"
+            }
+        ],
+        "dsc2lines": [
+            {
+                "id": 74,
+                "texta": "Run/Walk Speed: %+d%%",
+                "calca": "-50"
+            },
+            {
+                "id": 74,
+                "texta": "Attack Speed: %+d%%",
+                "calca": "-50"
+            }
+        ],
+        "dsc3lines": [],
+        "column": 2,
+        "row": 2,
+        "page": 3
+    },
+    {
+        "id": 394,
+        "skilldesc": "ring of fire",
+        "class": "Warlock",
+        "reqlevel": 6,
+        "reqskills": [],
+        "saveId": 21,
+        "name": "Ring of Fire",
+        "description": "Releases a volley of expanding hellfire in all directions that pushes \n enemies away",
+        "desclines": [
+            {
+                "id": 36,
+                "texta": "Mana Cost: %d",
+                "calca": "max((16 + 1 * (lvl - 1)) * (2 ** 7), 1 * 256)",
+                "calcb": "256"
+            },
+            {
+                "id": 75,
+                "texta": "Fire Damage: %d-%d",
+                "calca": "(((6 + (6 * (min(lvl, 8) - 1)) + (8 * (max(min(lvl, 16) - 8, 0))) + (10 * (max(min(lvl, 22) - 16, 0))) + (11 * (max(min(lvl, 28) - 22, 0))) + (12 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + (synergy('blvl(398)')+synergy('blvl(401)'))*10)/100) * ((100 + firemastery)/100))",
+                "calcb": "(((12 + (7 * (min(lvl, 8) - 1)) + (9 * (max(min(lvl, 16) - 8, 0))) + (12 * (max(min(lvl, 22) - 16, 0))) + (14 * (max(min(lvl, 28) - 22, 0))) + (18 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + (synergy('blvl(398)')+synergy('blvl(401)'))*10)/100) * ((100 + firemastery)/100))"
+            }
+        ],
+        "dsc2lines": [
+            {
+                "id": 74,
+                "texta": "+%d%% Fire Damage per yard",
+                "calca": "5"
+            }
+        ],
+        "dsc3lines": [
+            {
+                "id": 40,
+                "texta": "%s Receives Bonuses From:",
+                "textb": "Ring of Fire",
+                "calca": "2"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Fire Damage per Level",
+                "textb": "Flame Wave",
+                "calca": "10"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Fire Damage per Level",
+                "textb": "Apocalypse",
+                "calca": "10"
+            }
+        ],
+        "column": 1,
+        "row": 2,
+        "page": 3
+    },
+    {
+        "id": 395,
+        "skilldesc": "miasma bolt",
+        "class": "Warlock",
+        "reqlevel": 1,
+        "reqskills": [],
+        "saveId": 22,
+        "name": "Miasma Bolt",
+        "description": "Fires a bolt of darkness that releases a cloud of entropy",
+        "desclines": [
+            {
+                "id": 36,
+                "texta": "Mana Cost: %d",
+                "calca": "max((4 + 1 * (lvl - 1)) * (2 ** 7), 1 * 256)",
+                "calcb": "256"
+            },
+            {
+                "id": 75,
+                "texta": "Average Magic Damage: %d-%d per second",
+                "calca": "m1nm",
+                "calcb": "m1xm"
+            },
+            {
+                "id": 75,
+                "texta": "Magic Damage: %d-%d",
+                "calca": "((1 + (1 * (min(lvl, 8) - 1)) + (2 * (max(min(lvl, 16) - 8, 0))) + (3 * (max(min(lvl, 22) - 16, 0))) + (3 * (max(min(lvl, 28) - 22, 0))) + (4 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + (synergy('blvl(399)')+synergy('blvl(402)'))*10)/100)",
+                "calcb": "((3 + (2 * (min(lvl, 8) - 1)) + (3 * (max(min(lvl, 16) - 8, 0))) + (3 * (max(min(lvl, 22) - 16, 0))) + (4 * (max(min(lvl, 28) - 22, 0))) + (4 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + (synergy('blvl(399)')+synergy('blvl(402)'))*10)/100)"
+            }
+        ],
+        "dsc2lines": [
+            {
+                "id": 36,
+                "texta": "Duration: %d second",
+                "textb": "Duration: %d seconds",
+                "calca": "50 + min(((synergy('blvl(397)') > 0) ? (synergy('slvl(397)')*5) : 0),100)",
+                "calcb": "25"
+            },
+            {
+                "id": 36,
+                "texta": "Miasma Radius: %d Yards",
+                "textb": "Miasma Radius: %d Yards",
+                "calca": "(synergy('blvl(397)') >= 10)?4:((synergy('blvl(397)')>=5)?3:2)",
+                "calcb": "1"
+            }
+        ],
+        "dsc3lines": [
+            {
+                "id": 40,
+                "texta": "%s Receives Bonuses From:",
+                "textb": "Miasma Bolt",
+                "calca": "2"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Magic Damage per Level",
+                "textb": "Miasma Chain",
+                "calca": "10"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Average Magic Damage per Second per Level",
+                "textb": "Miasma Chain",
+                "calca": "20"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Magic Damage per Level",
+                "textb": "Abyss",
+                "calca": "10"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Average Magic Damage per Second per Level",
+                "textb": "Abyss",
+                "calca": "20"
+            }
+        ],
+        "column": 3,
+        "row": 1,
+        "page": 3
+    },
+    {
+        "id": 396,
+        "skilldesc": "sigil rancor",
+        "class": "Warlock",
+        "reqlevel": 12,
+        "reqskills": [
+            393
+        ],
+        "saveId": 23,
+        "name": "Sigil: Rancor",
+        "description": "Lay a sigil on the ground that enrages those who enter\n and has a chance for enemies to attack one another",
+        "desclines": [
+            {
+                "id": 36,
+                "texta": "Mana Cost: %d",
+                "calca": "max((12 + 0 * (lvl - 1)) * (2 ** 8), 1 * 256)",
+                "calcb": "256"
+            },
+            {
+                "id": 36,
+                "texta": "Duration: %d second",
+                "textb": "Duration: %d seconds",
+                "calca": "((100+(lvl*25) + lvl * 0) / 25)",
+                "calcb": "25"
+            },
+            {
+                "id": 74,
+                "texta": "Radius: %d yards",
+                "calca": "rng",
+                "calcb": "3"
+            },
+            {
+                "id": 74,
+                "texta": "Attack Speed: %+d%%",
+                "calca": "ast2"
+            },
+            {
+                "id": 74,
+                "texta": "Damage: %+d%%",
+                "calca": "ast1"
+            }
+        ],
+        "dsc2lines": [
+            {
+                "id": 74,
+                "texta": "Chance to Enrage: %+d%%",
+                "calca": "75"
+            }
+        ],
+        "dsc3lines": [],
+        "column": 2,
+        "row": 3,
+        "page": 3
+    },
+    {
+        "id": 397,
+        "skilldesc": "enhanced entropy",
+        "class": "Warlock",
+        "reqlevel": 24,
+        "reqskills": [
+            399
+        ],
+        "saveId": 24,
+        "name": "Enhanced Entropy",
+        "description": "Passive - Improve your mastery over the entropic forces \n of shadow magic",
+        "desclines": [
+            {
+                "id": 36,
+                "texta": "Bonus Abyss Radius: +%d Yards",
+                "textb": "Bonus Abyss Radius: +%d Yards",
+                "calca": "lvl",
+                "calcb": "5"
+            },
+            {
+                "id": 36,
+                "texta": "+%d Seconds to Miasma Duration",
+                "textb": "+%d Seconds to Miasma Duration",
+                "calca": "min(lvl*5,100)",
+                "calcb": "25"
+            },
+            {
+                "id": 74,
+                "texta": "Miasma Radius: %d Yards",
+                "calca": "(lvl >= 10)?4:((lvl>=5)?3:2)"
+            }
+        ],
+        "dsc2lines": [],
+        "dsc3lines": [],
+        "column": 3,
+        "row": 5,
+        "page": 3
+    },
+    {
+        "id": 398,
+        "skilldesc": "flame wave",
+        "class": "Warlock",
+        "reqlevel": 18,
+        "reqskills": [
+            394
+        ],
+        "saveId": 25,
+        "name": "Flame Wave",
+        "description": "Unleashes a rolling wall of fire that burns the ground in\n its wake",
+        "desclines": [
+            {
+                "id": 36,
+                "texta": "Mana Cost: %d",
+                "calca": "max((14 + 1 * (lvl - 1)) * (2 ** 7), 1 * 256)",
+                "calcb": "256"
+            },
+            {
+                "id": 36,
+                "texta": "Duration: %d second",
+                "textb": "Duration: %d seconds",
+                "calca": "((7 + lvl * 0) / 25)+68",
+                "calcb": "25"
+            },
+            {
+                "id": 74,
+                "texta": "Width: %d yards",
+                "calca": "((floor(floor((110 * lvl) / (lvl + 6)) * ((7 - 4) / 100)) + 4)*2)+1"
+            },
+            {
+                "id": 75,
+                "texta": "Average Fire Damage: %d-%d per second",
+                "calca": "(((7 + (3 * (min(lvl, 8) - 1)) + (6 * (max(min(lvl, 16) - 8, 0))) + (9 * (max(min(lvl, 22) - 16, 0))) + (12 * (max(min(lvl, 28) - 22, 0))) + (15 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + (synergy('blvl(401)')*synergy('10'))+(synergy('blvl(394)')*synergy('10')))/100))",
+                "calcb": "(((10 + (4 * (min(lvl, 8) - 1)) + (8 * (max(min(lvl, 16) - 8, 0))) + (12 * (max(min(lvl, 22) - 16, 0))) + (16 * (max(min(lvl, 28) - 22, 0))) + (20 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + (synergy('blvl(401)')*synergy('10'))+(synergy('blvl(394)')*synergy('10')))/100))"
+            },
+            {
+                "id": 75,
+                "texta": "Fire Damage: %d-%d",
+                "calca": "(((15 + (9 * (min(lvl, 8) - 1)) + (14 * (max(min(lvl, 16) - 8, 0))) + (20 * (max(min(lvl, 22) - 16, 0))) + (21 * (max(min(lvl, 28) - 22, 0))) + (25 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + (synergy('blvl(394)')+synergy('blvl(401)'))*15)/100) * ((100 + firemastery)/100))",
+                "calcb": "(((20 + (11 * (min(lvl, 8) - 1)) + (16 * (max(min(lvl, 16) - 8, 0))) + (21 * (max(min(lvl, 22) - 16, 0))) + (23 * (max(min(lvl, 28) - 22, 0))) + (27 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + (synergy('blvl(394)')+synergy('blvl(401)'))*15)/100) * ((100 + firemastery)/100))"
+            }
+        ],
+        "dsc2lines": [],
+        "dsc3lines": [
+            {
+                "id": 40,
+                "texta": "%s Receives Bonuses From:",
+                "textb": "Flame Wave",
+                "calca": "2"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Fire Damage per Level",
+                "textb": "Ring of Fire",
+                "calca": "15"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Average Fire Damage per Second per Level",
+                "textb": "Ring of Fire",
+                "calca": "10"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Fire Damage per Level",
+                "textb": "Apocalypse",
+                "calca": "15"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Average Fire Damage per Second per Level",
+                "textb": "Apocalypse",
+                "calca": "10"
+            }
+        ],
+        "column": 1,
+        "row": 4,
+        "page": 3
+    },
+    {
+        "id": 399,
+        "skilldesc": "miasma chains",
+        "class": "Warlock",
+        "reqlevel": 12,
+        "reqskills": [
+            395
+        ],
+        "saveId": 26,
+        "name": "Miasma Chain",
+        "description": "Summon shadowy chains that emit a suffocating miasma \n between you and the target",
+        "desclines": [
+            {
+                "id": 36,
+                "texta": "Mana Cost: %d",
+                "calca": "max((9 + 1 * (lvl - 1)) * (2 ** 7), 1 * 256)",
+                "calcb": "256"
+            },
+            {
+                "id": 75,
+                "texta": "Average Magic Damage: %d-%d per second",
+                "calca": "m1nm",
+                "calcb": "m1xm"
+            },
+            {
+                "id": 75,
+                "texta": "Magic Damage: %d-%d",
+                "calca": "((6 + (2 * (min(lvl, 8) - 1)) + (3 * (max(min(lvl, 16) - 8, 0))) + (3 * (max(min(lvl, 22) - 16, 0))) + (4 * (max(min(lvl, 28) - 22, 0))) + (4 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + (synergy('blvl(395)')+synergy('blvl(402)'))*10)/100)",
+                "calcb": "((9 + (2 * (min(lvl, 8) - 1)) + (3 * (max(min(lvl, 16) - 8, 0))) + (3 * (max(min(lvl, 22) - 16, 0))) + (4 * (max(min(lvl, 28) - 22, 0))) + (4 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + (synergy('blvl(395)')+synergy('blvl(402)'))*10)/100)"
+            },
+            {
+                "id": 74,
+                "texta": "%d hits",
+                "calca": "0"
+            }
+        ],
+        "dsc2lines": [
+            {
+                "id": 36,
+                "texta": "Casting Delay: %d second",
+                "textb": "Casting Delay: %d seconds",
+                "calca": "32",
+                "calcb": "25"
+            },
+            {
+                "id": 36,
+                "texta": "Duration: %d second",
+                "textb": "Duration: %d seconds",
+                "calca": "50 + min(((synergy('blvl(397)') > 0) ? (synergy('slvl(397)')*5) : 0),100)",
+                "calcb": "25"
+            },
+            {
+                "id": 36,
+                "texta": "Miasma Radius: %d Yards",
+                "textb": "Miasma Radius: %d Yards",
+                "calca": "(synergy('blvl(397)') >= 10)?4:((synergy('blvl(397)')>=5)?3:2)",
+                "calcb": "1"
+            }
+        ],
+        "dsc3lines": [
+            {
+                "id": 40,
+                "texta": "%s Receives Bonuses From:",
+                "textb": "Miasma Chain",
+                "calca": "2"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Magic Damage per Level",
+                "textb": "Miasma Bolt",
+                "calca": "10"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Average Magic Damage per Second per Level",
+                "textb": "Miasma Bolt",
+                "calca": "20"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Magic Damage per Level",
+                "textb": "Abyss",
+                "calca": "10"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Average Magic Damage per Second per Level",
+                "textb": "Abyss",
+                "calca": "20"
+            }
+        ],
+        "column": 3,
+        "row": 3,
+        "page": 3
+    },
+    {
+        "id": 400,
+        "skilldesc": "sigil death",
+        "class": "Warlock",
+        "reqlevel": 24,
+        "reqskills": [
+            396
+        ],
+        "saveId": 27,
+        "name": "Sigil: Death",
+        "description": "Lay a sigil on the ground that hastens the death\n of injured enemies in a violent explosion",
+        "desclines": [
+            {
+                "id": 36,
+                "texta": "Mana Cost: %d",
+                "calca": "max((20 + 1 * (lvl - 1)) * (2 ** 7), 1 * 256)",
+                "calcb": "256"
+            },
+            {
+                "id": 36,
+                "texta": "Duration: %d second",
+                "textb": "Duration: %d seconds",
+                "calca": "((100+(lvl*25) + lvl * 0) / 25)",
+                "calcb": "25"
+            },
+            {
+                "id": 74,
+                "texta": "Radius: %d yards",
+                "calca": "rng",
+                "calcb": "3"
+            }
+        ],
+        "dsc2lines": [
+            {
+                "id": 74,
+                "texta": "Slays enemies with less than %d%% health",
+                "calca": "13"
+            },
+            {
+                "id": 75,
+                "texta": "Fire Explosion Damage: %d-%d%% of slain enemy's health",
+                "calca": "synergy('70')",
+                "calcb": "synergy('120')"
+            }
+        ],
+        "dsc3lines": [],
+        "column": 2,
+        "row": 5,
+        "page": 3
+    },
+    {
+        "id": 401,
+        "skilldesc": "apocalypse",
+        "class": "Warlock",
+        "reqlevel": 30,
+        "reqskills": [
+            398,
+            400
+        ],
+        "saveId": 28,
+        "name": "Apocalypse",
+        "description": "Create a pentagram that engulfs all enemies in hellfire\nReduces enemy fire resistance for apocalypse\u2019s damage",
+        "desclines": [
+            {
+                "id": 36,
+                "texta": "Mana Cost: %d",
+                "calca": "max((32 + 1 * (lvl - 1)) * (2 ** 8), 1 * 256)",
+                "calcb": "256"
+            },
+            {
+                "id": 74,
+                "texta": "Radius: %d yards",
+                "calca": "rng"
+            },
+            {
+                "id": 74,
+                "texta": "Resist Fire: %+d%%",
+                "calca": "ast1"
+            },
+            {
+                "id": 75,
+                "texta": "Fire Damage: %d-%d",
+                "calca": "(((80 + (23 * (min(lvl, 8) - 1)) + (46 * (max(min(lvl, 16) - 8, 0))) + (69 * (max(min(lvl, 22) - 16, 0))) + (75 * (max(min(lvl, 28) - 22, 0))) + (95 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + (synergy('blvl(394)')+synergy('blvl(398)'))*10)/100) * ((100 + firemastery)/100))",
+                "calcb": "(((100 + (25 * (min(lvl, 8) - 1)) + (50 * (max(min(lvl, 16) - 8, 0))) + (75 * (max(min(lvl, 22) - 16, 0))) + (95 * (max(min(lvl, 28) - 22, 0))) + (115 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + (synergy('blvl(394)')+synergy('blvl(398)'))*10)/100) * ((100 + firemastery)/100))"
+            }
+        ],
+        "dsc2lines": [
+            {
+                "id": 36,
+                "texta": "Casting Delay: %d second",
+                "textb": "Casting Delay: %d seconds",
+                "calca": "45",
+                "calcb": "25"
+            }
+        ],
+        "dsc3lines": [
+            {
+                "id": 40,
+                "texta": "%s Receives Bonuses From:",
+                "textb": "Apocalypse",
+                "calca": "2"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Fire Damage per Level",
+                "textb": "Ring of Fire",
+                "calca": "10"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Fire Damage per Level",
+                "textb": "Flame Wave",
+                "calca": "10"
+            }
+        ],
+        "column": 1,
+        "row": 6,
+        "page": 3
+    },
+    {
+        "id": 402,
+        "skilldesc": "abyss",
+        "class": "Warlock",
+        "reqlevel": 30,
+        "reqskills": [
+            397
+        ],
+        "saveId": 29,
+        "name": "Abyss",
+        "description": "Create a tear in the fabric of reality which pulls enemies\n close before violently collapsing",
+        "desclines": [
+            {
+                "id": 36,
+                "texta": "Mana Cost: %d",
+                "calca": "max((23 + 1 * (lvl - 1)) * (2 ** 8), 1 * 256)",
+                "calcb": "256"
+            },
+            {
+                "id": 75,
+                "texta": "Average Magic Damage: %d-%d per second",
+                "calca": "(m1nm*25)/12",
+                "calcb": "(m1xm*25)/12"
+            },
+            {
+                "id": 75,
+                "texta": "Magic Damage: %d-%d",
+                "calca": "((20 + (3 * (min(lvl, 8) - 1)) + (6 * (max(min(lvl, 16) - 8, 0))) + (9 * (max(min(lvl, 22) - 16, 0))) + (12 * (max(min(lvl, 28) - 22, 0))) + (15 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + (synergy('blvl(395)')+synergy('blvl(399)'))*(synergy('10')))/100)",
+                "calcb": "((40 + (4 * (min(lvl, 8) - 1)) + (8 * (max(min(lvl, 16) - 8, 0))) + (12 * (max(min(lvl, 22) - 16, 0))) + (16 * (max(min(lvl, 28) - 22, 0))) + (20 * (max(lvl - 28, 0)))) * (2 ** (8 - 8)) * (100 + (synergy('blvl(395)')+synergy('blvl(399)'))*(synergy('10')))/100)"
+            }
+        ],
+        "dsc2lines": [
+            {
+                "id": 74,
+                "texta": "Radius: %d yards",
+                "calca": "sd34+(sksrc('Enhanced Entropy'.blvl)/5)"
+            },
+            {
+                "id": 36,
+                "texta": "Casting Delay: %d second",
+                "textb": "Casting Delay: %d seconds",
+                "calca": "50",
+                "calcb": "25"
+            },
+            {
+                "id": 36,
+                "texta": "Duration: %d second",
+                "textb": "Duration: %d seconds",
+                "calca": "((50 + lvl * 0) / 25)",
+                "calcb": "25"
+            }
+        ],
+        "dsc3lines": [
+            {
+                "id": 40,
+                "texta": "%s Receives Bonuses From:",
+                "textb": "Abyss",
+                "calca": "2"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Magic Damage per Level",
+                "textb": "Miasma Bolt",
+                "calca": "10"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Average Magic Damage per Second per Level",
+                "textb": "Miasma Bolt",
+                "calca": "10"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Magic Damage per Level",
+                "textb": "Miasma Chain",
+                "calca": "10"
+            },
+            {
+                "id": 76,
+                "texta": "%s: %+d%% Average Magic Damage per Second per Level",
+                "textb": "Miasma Chain",
+                "calca": "10"
+            }
+        ],
+        "column": 3,
         "row": 6,
         "page": 3
     }

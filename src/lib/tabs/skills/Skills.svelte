@@ -4,13 +4,20 @@
 	import Skill from "./Skill.svelte";
 	import { Message } from "../../utils/Message.svelte";
 	import { skillIdToSaveId } from "../../utils/Utils.svelte";
-	import allSkillsData from "../../../../static/skills_complete.json";
+	import skillsDataV99 from "../../../../static/data/generated/skills/v99/skills_complete.json";
+	import skillsDataV105 from "../../../../static/data/generated/skills/v105/skills_complete.json";
 	import { enforceMinMax } from "../../utils/actions.js";
 
 	let { save = $bindable() } = $props();
+	const skillsByVersion = {
+		99: skillsDataV99,
+		105: skillsDataV105,
+	};
 
 	const skillsData = $derived(
-		allSkillsData.filter((skillData) => skillData.class == save.character.class)
+		(skillsByVersion[save.version] ?? skillsDataV99).filter(
+			(skillData) => skillData.class == save.character.class
+		)
 	);
 
 	let clickableSkills = $state(new Array(30).fill(false));

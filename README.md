@@ -1,10 +1,10 @@
 
 # Halbu Editor
 
-<img src="static/screenshots/home.png" />
+<img src="static/assets/screenshots/home.png" />
 <p float="left">
-  <img src="static/screenshots/character.png" width="49%" /> 
-  <img src="static/screenshots/skills.png" width="49%" />
+  <img src="static/assets/screenshots/character.png" width="49%" /> 
+  <img src="static/assets/screenshots/skills.png" width="49%" />
 </p>
 
 
@@ -56,6 +56,10 @@ Build
 $ npm run tauri build
 ```
 
-The skill calculator relies on a python program (found in `/static/process/`) processing the D2 data text files into easier to parse [json](/static/skills_complete.json) containing descriptions and calculations for every skill.
+The skill calculator relies on a python program (found in `/static/tools/preprocess/`) that processes the D2 data text files into versioned JSON files (for example `/static/data/generated/skills/v99/skills_complete.json` and `/static/data/generated/skills/v105/skills_complete.json`) containing descriptions and calculations for every skill.
 
+Regenerate all supported version datasets:
+```
+$ npm run preprocess:skills
+```
 
