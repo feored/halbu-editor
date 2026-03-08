@@ -1,4 +1,3 @@
-<svelte:options runes={true} />
 <script>
 	import { InfoIcon } from "lucide-svelte";
 	import names from "./names.json";

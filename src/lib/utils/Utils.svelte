@@ -1,30 +1,14 @@
 <script module>
     import titles from "../tabs/character/titles.json";
-    import { Class } from "./Constants.svelte";
+    import { isFemaleClass } from "./GameSupport";
 
     export function countOccurrences(string, word) {
         return string.split(word).length - 1;
     }
 
-    export const skillOffset = {
-        Amazon: 6,
-        Sorceress: 36,
-        Necromancer: 66,
-        Paladin: 96,
-        Barbarian: 126,
-        Druid: 221,
-        Assassin: 251,
-    };
-
-    export function skillIdToSaveId(id, charClass) {
-        return id - skillOffset[charClass];
-    }
-
     export function calcTitle(character) {
         const difficultyBeaten = calcDifficultyBeaten(character);
-        const gender = [Class.Amazon, Class.Assassin, Class.Sorceress].includes(character?.class)
-            ? "Female"
-            : "Male";
+        const gender = isFemaleClass(character?.class) ? "Female" : "Male";
         const core = character?.status?.hardcore ? "Hardcore" : "Softcore";
         const expansion = character?.status?.expansion ? "Expansion" : "Classic";
 

@@ -1,4 +1,3 @@
-<svelte:options runes={true} />
 <script>
 	import { tooltip } from "./../utils/actions.js";
 	import { InfoIcon } from "lucide-svelte";

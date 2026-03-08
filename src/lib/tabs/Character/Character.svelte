@@ -1,12 +1,19 @@
-<svelte:options runes={true} />
 <script>
 	import { invoke } from "@tauri-apps/api/core";
 	import { InfoIcon } from "lucide-svelte";
 	import { enforceMinMax, tooltip } from "../../utils/actions.js";
 	import { calcTitle, calcDifficultyBeaten } from "../../utils/Utils.svelte";
+	import {
+		classLabel,
+		getSupportedClasses,
+		isClassSupportedForVersion,
+		isKnownSaveVersion,
+		normalizeClassForVersion,
+		requiresExpansion,
+	} from "../../utils/GameSupport";
 
 	import experienceTable from "./experience.json";
-	import { Class, Difficulty, Act } from "../../utils/Constants.svelte";
+	import { Difficulty, Act } from "../../utils/Constants.svelte";
 
 	let { save = $bindable(), validSave = $bindable() } = $props();
 
@@ -57,6 +64,34 @@
 	let difficultyBeaten = $state(calcDifficultyBeaten(save.character));
 	let title = $state("");
 	updateTitle();
+
+	let selectedClassForEdit = $state(null);
+	const supportedClasses = $derived(getSupportedClasses(save.version));
+	const isKnownVersion = $derived(isKnownSaveVersion(save.version));
+	const canEditClass = $derived(isKnownVersion && selectedClassForEdit != null);
+	const classSupportWarning = $derived.by(() => {
+		if (!isKnownVersion) {
+			return `Class editing is disabled for unsupported save version ${save.version}.`;
+		}
+
+		if (
+			typeof save.character.class !== "string" ||
+			!isClassSupportedForVersion(save.version, save.character.class)
+		) {
+			return `Current class (${classLabel(save.character.class)}) is not recognized for version ${save.version}. Select a supported class to continue.`;
+		}
+		return "";
+	});
+
+	$effect(() => {
+		selectedClassForEdit = normalizeClassForVersion(save.version, save.character.class);
+	});
+
+	$effect(() => {
+		if (requiresExpansion(save.version, save.character.class)) {
+			save.character.status.expansion = true;
+		}
+	});
 
 	function updateTitle() {
 		save.character.progression =
@@ -128,16 +163,30 @@
 		nameRef.setCustomValidity("");
 	}
 
-	async function changeClass() {
-		let newSave = await invoke("new_save", { class: save.character.class });
-		save.skills = newSave.skills;
-		newSave.attributes.statpts.value = save.attributes.statpts.value;
-		newSave.attributes.newskills.value = save.attributes.newskills.value;
-		newSave.attributes.experience.value = save.attributes.experience.value;
-		newSave.attributes.level.value = save.attributes.level.value;
-		newSave.attributes.gold.value = save.attributes.gold.value;
-		newSave.attributes.goldbank.value = save.attributes.goldbank.value;
-		save.attributes = newSave.attributes;
+	async function changeClass(nextClass) {
+		if (nextClass == null) {
+			return;
+		}
+
+		try {
+			let newSave = await invoke("new_save", {
+				version: Number(save.version),
+				class: nextClass,
+			});
+			save.character.class = nextClass;
+			save.skills = newSave.skills;
+			newSave.attributes.statpts.value = save.attributes.statpts.value;
+			newSave.attributes.newskills.value = save.attributes.newskills.value;
+			newSave.attributes.experience.value = save.attributes.experience.value;
+			newSave.attributes.level.value = save.attributes.level.value;
+			newSave.attributes.gold.value = save.attributes.gold.value;
+			newSave.attributes.goldbank.value = save.attributes.goldbank.value;
+			save.attributes = newSave.attributes;
+			updateTitle();
+		} catch (err) {
+			console.error(err);
+			selectedClassForEdit = normalizeClassForVersion(save.version, save.character.class);
+		}
 	}
 </script>
 
@@ -182,24 +231,33 @@
 		</div>
 		<div class="col">
 			<label class="form-label" for="class">Class</label>
-			<select
-				class="form-select"
-				bind:value={save.character.class}
-				name="class"
-				id="class"
-				onchange={() => {
-					changeClass();
-					updateTitle();
-				}}
-			>
-				<option value={Class.Amazon}>Amazon</option>
-				<option value={Class.Assassin}>Assassin</option>
-				<option value={Class.Barbarian}>Barbarian</option>
-				<option value={Class.Druid}>Druid</option>
-				<option value={Class.Necromancer}>Necromancer</option>
-				<option value={Class.Paladin}>Paladin</option>
-				<option value={Class.Sorceress}>Sorceress</option>
-			</select>
+			{#if canEditClass}
+				<select
+					class="form-select"
+					bind:value={selectedClassForEdit}
+					name="class"
+					id="class"
+					onchange={() => {
+						changeClass(selectedClassForEdit);
+					}}
+				>
+					{#each supportedClasses as className}
+						<option value={className}>{className}</option>
+					{/each}
+				</select>
+			{:else}
+				<input
+					class="form-control"
+					type="text"
+					name="class"
+					id="class"
+					value={classLabel(save.character.class)}
+					readonly
+				/>
+			{/if}
+			{#if classSupportWarning.length > 0}
+				<div class="form-text text-warning">{classSupportWarning}</div>
+			{/if}
 		</div>
 	</div>
 	<div class="row">
@@ -258,8 +316,7 @@
 					id="expansion"
 					name="expansion"
 					bind:checked={save.character.status.expansion}
-					disabled={save.character.class === "Druid" ||
-						save.character.class === "Assassin"}
+					disabled={requiresExpansion(save.version, save.character.class)}
 					onchange={updateTitle}
 				/>
 				<label class="form-check-label" for="expansion">Expansion</label>

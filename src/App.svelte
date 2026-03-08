@@ -1,5 +1,4 @@
 <!-- App.svelte -->
-<svelte:options runes={true} />
 <script>
 	import { invoke } from "@tauri-apps/api/core";
 	import { save } from "@tauri-apps/plugin-dialog";
@@ -141,24 +140,24 @@
 			{/if}
 		</ul>
 	</div>
-	<div class="p-5">
-		{#if currentTab == TabID.Home}
-			<SavePicker onmessage={handleMessages} />
-		{:else if currentTab == TabID.Character}
-			<Character bind:validSave bind:save={currentSave} />
-		{:else if currentTab == TabID.Mercenary}
-			<Mercenary bind:save={currentSave} />
-		{:else if currentTab == TabID.Skills}
-			<Skills bind:save={currentSave} />
-		{:else if currentTab == TabID.Waypoints}
-			<Waypoints bind:save={currentSave} />
-		{:else if currentTab == TabID.Settings}
-			<Settings />
-		{:else if currentTab == TabID.Quests}
-			<Quests bind:save={currentSave} />
-		{/if}
+		<div class="p-5">
+			{#if currentTab == TabID.Home}
+				<SavePicker onmessage={handleMessages} />
+			{:else if currentTab == TabID.Character}
+				<Character bind:validSave bind:save={currentSave} />
+			{:else if currentTab == TabID.Mercenary}
+				<Mercenary bind:save={currentSave} />
+			{:else if currentTab == TabID.Skills}
+				<Skills bind:save={currentSave} />
+			{:else if currentTab == TabID.Waypoints}
+				<Waypoints bind:save={currentSave} />
+			{:else if currentTab == TabID.Settings}
+				<Settings />
+			{:else if currentTab == TabID.Quests}
+				<Quests bind:save={currentSave} />
+			{/if}
+		</div>
 	</div>
-</div>
 
 <style>
 	.layout {

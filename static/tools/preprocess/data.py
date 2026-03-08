@@ -39,12 +39,39 @@ typos = {
         "Fire Wall":
         {
             "EDmgSymPerCalc": "(skill('Warmth'.blvl)*par8+skill('Inferno'.blvl)*par7)"
+        },
+        "Blade Sentinel":
+        {
+            "passivecalc6": "stat('item_pierce_cold_immunity'.accr)"
+        },
+        "Summon Goatman":
+        {
+            "passivecalc3": "(ln56 + (skill('Demonic Mastery'.ln21)))"
+        },
+        "Summon Tainted":
+        {
+            "passivecalc2": "(ln91 + (skill('Demonic Mastery'.ln21)))"
+        },
+        "Summon Defiler":
+        {
+            "passivecalc2": "par2*((lvl - 1) + (skill('Demonic Mastery'.blvl)))"
+        },
+        "Health Link":
+        {
+            "calc2": "((110 *skill('Summon Defiler'.lvl) * (par4 - par3)) / (100 * (skill('Summon Defiler'.lvl) + 6)) + par3)"
         }
     },
     "skilldesc":{
         "columnId": "skilldesc",
         "inferno sentry": { # 211
             "dsc2calca2" : "ln34/2 + skill('Wake of Fire Sentry'.blvl)"
+        },
+        "demonic mastery": {
+            "desccalca3": "min(ln12,25)"
+        },
+        "summon defiler": {
+            "desccalca4": "((110 *sklvl('Summon Defiler'.lvl.lvl) * (sklvl('Health Link'.lvl.par2) - sklvl('Health Link'.lvl.par1))) / (100 * (sklvl('Summon Defiler'.lvl.lvl) + 6)) + sklvl('Health Link'.lvl.par1))",
+            "desccalca5": "((110 *sklvl('Summon Defiler'.lvl.lvl) * (sklvl('Health Link'.lvl.par4) - sklvl('Health Link'.lvl.par3))) / (100 * (sklvl('Summon Defiler'.lvl.lvl) + 6)) + sklvl('Health Link'.lvl.par3))"
         },
         "royal strike": { # 219, not typos but use custom EDXS value instead
             "desccalca3": "miss('royalstrikemeteorfire'.EDNS)*3*25*(mael+100)/100/256",

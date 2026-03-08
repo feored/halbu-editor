@@ -1,4 +1,3 @@
-<svelte:options runes={true} />
 <script module>
 	export const CharacterType = {
 		Existing: Symbol("Existing"),
@@ -11,10 +10,17 @@
 	import { open } from "@tauri-apps/plugin-dialog";
 	import { Message, buildMessage } from "./utils/Message.svelte";
 	import { invoke } from "@tauri-apps/api/core";
-	import { Class } from "./utils/Constants.svelte";
 	import { calcTitle } from "./utils/Utils.svelte";
 	import * as settings from "./utils/Settings.svelte";
 	import { AlertCircleIcon } from "lucide-svelte";
+	import {
+		KNOWN_SAVE_VERSIONS,
+		DEFAULT_NEW_SAVE_VERSION,
+		classLabel,
+		getSaveEditionLabel,
+		getSupportedClasses,
+		normalizeClassForVersion,
+	} from "./utils/GameSupport";
 
 	let { onmessage } = $props();
 
@@ -37,7 +43,12 @@
 	let saveFolderSet = $state(false);
 	let saveFilesFound = $state([]);
 
-	let selectedClass = $state();
+	let selectedVersion = $state(DEFAULT_NEW_SAVE_VERSION);
+	let selectedClass = $state(normalizeClassForVersion(DEFAULT_NEW_SAVE_VERSION, null));
+	const availableClasses = $derived(getSupportedClasses(selectedVersion));
+	$effect(() => {
+		selectedClass = normalizeClassForVersion(selectedVersion, selectedClass);
+	});
 
 	async function readFileContents() {
 		try {
@@ -69,8 +80,18 @@
 	}
 
 	async function newSave() {
-		let newSave = await invoke("new_save", { class: selectedClass });
-		dispatchMessage(Message.CharacterPicked, { save: newSave });
+		if (selectedClass == null) {
+			return;
+		}
+		try {
+			let newSave = await invoke("new_save", {
+				version: Number(selectedVersion),
+				class: selectedClass,
+			});
+			dispatchMessage(Message.CharacterPicked, { save: newSave });
+		} catch (err) {
+			console.error(err);
+		}
 	}
 
 	async function getExistingCharacters() {
@@ -102,26 +123,27 @@
 					pick from existing characters.
 				</div>
 			</div>
-		{:else if saveFilesFound.length < 1}
-			<div class="text-center text-bg-warning p-3 m-3 rounded">
-				<div class="d-flex">
-					<AlertCircleIcon />&nbsp;Found no valid .d2s files in save folder.
+			{:else if saveFilesFound.length < 1}
+				<div class="text-center text-bg-warning p-3 m-3 rounded">
+					<div class="d-flex">
+						<AlertCircleIcon />&nbsp;Found no valid .d2s files in save folder.
+					</div>
 				</div>
-			</div>
-		{:else}
-			<table class="table table-striped">
-				<thead>
-					<tr>
-						<th scope="col">Name</th>
-						<th scope="col">Level</th>
-						<th scope="col">Class</th>
-						<th scope="col">Core</th>
-						<th scope="col">Expansion</th>
-					</tr>
-				</thead>
-				<tbody>
-					{#each saveFilesFound as saveFile}
+			{:else}
+				<table class="table table-striped">
+					<thead>
 						<tr>
+							<th scope="col">Name</th>
+							<th scope="col">Level</th>
+							<th scope="col">Class</th>
+							<th scope="col">Version</th>
+							<th scope="col">Core</th>
+							<th scope="col">Expansion</th>
+						</tr>
+					</thead>
+					<tbody>
+						{#each saveFilesFound as saveFile}
+							<tr>
 							<td
 								><a
 									href="#top"
@@ -141,17 +163,20 @@
 									</b></a
 								></td
 							>
-							<td>Level {saveFile.save.character.level} </td>
-							<td>
-								{saveFile.save.character.class}
-							</td>
-							<td>
-								{#if saveFile.save.character.status.hardcore}
-									<small><i>Hardcore</i></small>
-								{:else}
-									<small><i>Softcore</i></small>
-								{/if}
-							</td>
+								<td>Level {saveFile.save.character.level} </td>
+								<td>
+									{classLabel(saveFile.save.character.class)}
+								</td>
+								<td>
+									<small><i>{getSaveEditionLabel(saveFile.save)}</i></small>
+								</td>
+								<td>
+									{#if saveFile.save.character.status.hardcore}
+										<small><i>Hardcore</i></small>
+									{:else}
+										<small><i>Softcore</i></small>
+									{/if}
+								</td>
 							<td>
 								{#if saveFile.save.character.status.expansion}
 									<small><i>Expansion</i></small>
@@ -159,40 +184,50 @@
 									<small><i>Classic</i></small>
 								{/if}
 							</td>
-						</tr>
-						<!-- 
-							</a> -->
-					{/each}
-				</tbody>
-			</table>
-		{/if}
-		<div class="row">
-			<div class="col-4">
-				<p class="form-text">Pick a different save file</p>
-				<button class="btn btn-primary" onclick={readFileContents}>Open Save</button>
-			</div>
-			<div class="col-4"></div>
-			<div class="col-4 text-end">
-				<p class="form-text">New character</p>
-				<select
-					class="form-select"
-					name="newCharacter"
-					id="newCharacter"
-					bind:value={selectedClass}
-					onchange={() => {
-						newSave();
-					}}
-				>
-					<option selected>New Character</option>
-					<option value={Class.Amazon}>Amazon</option>
-					<option value={Class.Assassin}>Assassin</option>
-					<option value={Class.Barbarian}>Barbarian</option>
-					<option value={Class.Druid}>Druid</option>
-					<option value={Class.Necromancer}>Necromancer</option>
-					<option value={Class.Paladin}>Paladin</option>
-					<option value={Class.Sorceress}>Sorceress</option>
-				</select>
+							</tr>
+							<!-- 
+								</a> -->
+						{/each}
+					</tbody>
+				</table>
+			{/if}
+			<div class="row">
+				<div class="col-4">
+					<p class="form-text">Pick a different save file</p>
+					<button class="btn btn-primary" onclick={readFileContents}>Open Save</button>
+				</div>
+				<div class="col-4"></div>
+				<div class="col-4 text-end">
+					<p class="form-text">New character</p>
+					<div class="input-group">
+						<select
+							class="form-select"
+							name="newCharacterVersion"
+							id="newCharacterVersion"
+							bind:value={selectedVersion}
+							onchange={(event) => {
+								selectedVersion = Number(event.currentTarget.value);
+							}}
+						>
+							{#each KNOWN_SAVE_VERSIONS as version}
+								<option value={version}>{version}</option>
+							{/each}
+						</select>
+						<select
+							class="form-select"
+							name="newCharacter"
+							id="newCharacter"
+							bind:value={selectedClass}
+						>
+							{#each availableClasses as className}
+								<option value={className}>{className}</option>
+							{/each}
+						</select>
+						<button class="btn btn-primary" onclick={newSave} disabled={selectedClass == null}
+							>New</button
+						>
+					</div>
+				</div>
 			</div>
 		</div>
 	</div>
-</div>

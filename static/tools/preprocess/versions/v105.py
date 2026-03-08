@@ -6,6 +6,11 @@ class V105CalcsAdapter(BaseCalcsAdapter):
         values = []
         for i in range(13, 21):
             values.append(f"Param{i}")
+        values.append("aurarangecalc")
+        for i in range(1, 7):
+            values.append(f"aurastatcalc{i}")
+        for i in range(1, 15):
+            values.append(f"passivecalc{i}")
         for i in range(7, 11):
             values.append(f"calc{i}")
             values.append(f"Calc{i}")
@@ -21,6 +26,26 @@ class V105CalcsAdapter(BaseCalcsAdapter):
                 "static": True,
                 "value": "Radius"
             },
+            "m1nm": {
+                "static": True,
+                "value": "m1en",
+            },
+            "m1xm": {
+                "static": True,
+                "value": "m1ex",
+            },
+            "mair": {
+                "static": True,
+                "value": "passivecalc2",
+            },
+            "rng": {
+                "static": True,
+                "value": "aurarangecalc",
+            },
+            "clc0": {
+                "static": True,
+                "value": "0",
+            },
             "auraevent4": {
                 "static": True,
                 "value": "AuraEvent4",
@@ -31,10 +56,29 @@ class V105CalcsAdapter(BaseCalcsAdapter):
                 "static": True,
                 "value": f"Param{i}",
             }
+        for i in range(1, 21):
+            overrides[f"pa{i}"] = {
+                "static": True,
+                "value": f"par{i}",
+            }
         for i in range(7, 11):
             overrides[f"clc{i}"] = {
                 "static": True,
                 "value": f"calc{i}",
+            }
+        for i in range(1, 7):
+            overrides[f"ast{i}"] = {
+                "static": True,
+                "value": f"aurastatcalc{i}",
+            }
+        for i in range(1, 15):
+            overrides[f"pst{i}"] = {
+                "static": True,
+                "value": f"passivecalc{i}",
+            }
+            overrides[f"ps{i}"] = {
+                "static": True,
+                "value": f"passivecalc{i}",
             }
         return overrides
 

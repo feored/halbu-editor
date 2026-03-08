@@ -24,6 +24,8 @@ fn main() {
             get_character_from_path,
             save_file,
             new_save,
+            get_skills_context,
+            get_save_status,
             summary_folder
         ])
         .run(tauri::generate_context!());

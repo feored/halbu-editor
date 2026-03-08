@@ -1,4 +1,3 @@
-<svelte:options runes={true} />
 <script>
 	import * as log from "../../utils/Logs.svelte";
 	import * as Settings from "../../utils/Settings.svelte";

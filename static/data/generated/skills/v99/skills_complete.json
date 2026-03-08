@@ -1029,7 +1029,7 @@
                 "id": 36,
                 "texta": "Fire Duration: %d second",
                 "textb": "Fire Duration: %d seconds",
-                "calca": "((100 + lvl * 0) / 25)",
+                "calca": "100",
                 "calcb": "25"
             },
             {
@@ -2036,7 +2036,7 @@
                 "id": 36,
                 "texta": "Fire Duration: %d second",
                 "textb": "Fire Duration: %d seconds",
-                "calca": "((90 + lvl * 25) / 25)",
+                "calca": "90",
                 "calcb": "25"
             },
             {
@@ -2328,7 +2328,7 @@
                 "id": 36,
                 "texta": "Range: %d yard",
                 "textb": "Range: %d yards",
-                "calca": "((7 + lvl * 2) / 25)*2",
+                "calca": "Range*2",
                 "calcb": "3"
             },
             {
@@ -2350,7 +2350,7 @@
                 "id": 36,
                 "texta": "Fire Duration: %d second",
                 "textb": "Fire Duration: %d seconds",
-                "calca": "((90 + lvl * 0) / 25)",
+                "calca": "90",
                 "calcb": "25"
             }
         ],
@@ -2824,7 +2824,7 @@
                 "id": 36,
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
-                "calca": "((100 + lvl * 0) / 25)",
+                "calca": "100",
                 "calcb": "25"
             },
             {
@@ -8394,7 +8394,7 @@
                 "id": 36,
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
-                "calca": "((80 + lvl * 0) / 25)",
+                "calca": "80",
                 "calcb": "25"
             }
         ],
@@ -9613,7 +9613,7 @@
                 "id": 36,
                 "texta": "Duration: %d second",
                 "textb": "Duration: %d seconds",
-                "calca": "((90 + lvl * 0) / 25)",
+                "calca": "90",
                 "calcb": "25"
             },
             {

@@ -14,11 +14,11 @@ M3_PREFIX = f"{MISSILE_PREFIX}3_"
 BASE_MISSILES_LOOKUP_VALUES = [
     "HitShift",
     "MinDamage",
-    "MinLevDam1"
-    "MinLevDam2"
-    "MinLevDam3"
-    "MinLevDam4"
-    "MinLevDam5"
+    "MinLevDam1",
+    "MinLevDam2",
+    "MinLevDam3",
+    "MinLevDam4",
+    "MinLevDam5",
     "MaxDamage",
     "MaxLevDam1",
     "MaxLevDam2",
@@ -44,7 +44,25 @@ BASE_MISSILES_LOOKUP_VALUES = [
     "ELevLen2",
     "ELevLen3",
     "LevRange",
-    "Range"
+    "Range",
+    "Param1",
+    "Param2",
+    "Param3",
+    "Param4",
+    "Param5",
+    "CltParam1",
+    "CltParam2",
+    "CltParam3",
+    "CltParam4",
+    "CltParam5",
+    "sHitPar1",
+    "sHitPar2",
+    "sHitPar3",
+    "cHitPar1",
+    "cHitPar2",
+    "cHitPar3",
+    "dParam1",
+    "dParam2",
 ]
 
 ## mana always after lvlmana, so as not to replace lvlmana into lvl34 if skillsrow["mana"] == 34
@@ -122,6 +140,13 @@ def isEmptyCell(cell):
 
 def parenthesize(formula):
     return "(" + formula + ")"
+
+def replaceToken(expression, token, replacement):
+    replacement = str(replacement)
+    if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", token):
+        pattern = rf"(?<![A-Za-z0-9_]){re.escape(token)}(?![A-Za-z0-9_])"
+        return re.sub(pattern, lambda _: replacement, expression)
+    return expression.replace(token, replacement)
 
 def calcToHit(skillsRow):
     if len(skillsRow["ToHitCalc"]) > 0:
@@ -257,12 +282,43 @@ def calcEDNS(skillsRow):
 def calcEDXS(skillsRow):
     return parenthesize(calcMissileEMax(skillsRow) + " * 256")
 
+def calcMissileDmgMin(skillsRow):
+    minLevDam1 = "MinLevDam1 * (min(lvl, 8) - 1)"
+    minLevDam2 = "MinLevDam2 * (max(min(lvl, 16) - 8, 0))"
+    minLevDam3 = "MinLevDam3 * (max(min(lvl, 22) - 16, 0))"
+    minLevDam4 = "MinLevDam4 * (max(min(lvl, 28) - 22, 0))"
+    minLevDam5 = "MinLevDam5 * (max(lvl - 28, 0))"
+
+    baseDamage = f"MinDamage + ({minLevDam1}) + ({minLevDam2}) + ({minLevDam3}) + ({minLevDam4}) + ({minLevDam5})"
+    return parenthesize(f"({baseDamage}) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100")
+
+def calcMissileDmgMax(skillsRow):
+    maxLevDam1 = "MaxLevDam1 * (min(lvl, 8) - 1)"
+    maxLevDam2 = "MaxLevDam2 * (max(min(lvl, 16) - 8, 0))"
+    maxLevDam3 = "MaxLevDam3 * (max(min(lvl, 22) - 16, 0))"
+    maxLevDam4 = "MaxLevDam4 * (max(min(lvl, 28) - 22, 0))"
+    maxLevDam5 = "MaxLevDam5 * (max(lvl - 28, 0))"
+
+    baseDamage = f"MaxDamage + ({maxLevDam1}) + ({maxLevDam2}) + ({maxLevDam3}) + ({maxLevDam4}) + ({maxLevDam5})"
+    return parenthesize(f"({baseDamage}) * (2 ** (HitShift - 8)) * (100 + DmgSymPerCalc)/100")
+
+def linearTerms(_skillsRow, terms):
+    a, b = terms
+    return f"({a} + (lvl - 1) * {b})"
+
+def diminishingTerms(_skillsRow, terms):
+    a, b = terms
+    return parenthesize(f"floor(floor((110 * lvl) / (lvl + 6)) * (({b} - {a}) / 100)) + {a}")
+
 def linear(skillsRow, whichLn):
     a, b = "", ""
     match whichLn:
         case 12:
             a = "par1"
             b = "par2"
+        case 21:
+            a = "par11"
+            b = "par12"
         case 34:
             a = "par3"
             b = "par4"
@@ -283,6 +339,9 @@ def diminishing(skillsRow, whichDm):
         case 12:
             a = "par1"
             b = "par2"
+        case 21:
+            a = "par11"
+            b = "par12"
         case 34:
             a = "par3"
             b = "par4"
@@ -296,6 +355,43 @@ def diminishing(skillsRow, whichDm):
             a = "par9"
             b = "par10"
     return parenthesize(f"floor(floor((110 * lvl) / (lvl + 6)) * (({b} - {a}) / 100)) + {a}")
+
+def resolvePassiveCalc(skillsRow, statNames, fallback):
+    if not isinstance(skillsRow, dict):
+        return fallback
+    expected = {name.lower() for name in statNames}
+    for i in range(1, 15):
+        stat = str(skillsRow.get(f"passivestat{i}", "")).strip().lower()
+        if stat in expected:
+            calc = str(skillsRow.get(f"passivecalc{i}", "")).strip()
+            if len(calc) > 0:
+                return calc
+    return fallback
+
+def resolveMasteryToHit(skillsRow):
+    if isinstance(skillsRow, dict):
+        skilldesc_name = str(skillsRow.get("skilldesc", "")).strip().lower()
+        if skilldesc_name == "levitate":
+            return "ln56"
+    return resolvePassiveCalc(
+        skillsRow,
+        {"passive_mastery_melee_th", "passive_mastery_throw_th"},
+        "ln12",
+    )
+
+def resolveMasteryDamage(skillsRow):
+    return resolvePassiveCalc(
+        skillsRow,
+        {"passive_mastery_melee_dmg", "passive_mastery_throw_dmg"},
+        "ln34",
+    )
+
+def resolveMasteryCrit(skillsRow):
+    return resolvePassiveCalc(
+        skillsRow,
+        {"passive_mastery_melee_crit", "passive_mastery_throw_crit"},
+        "dm56",
+    )
 
 BASE_EXPAND_DICT = {
     "par10": {
@@ -346,6 +442,58 @@ BASE_EXPAND_DICT = {
         "static": True,
         "value": "Param9"
     },
+    "cpa1": {
+        "static": True,
+        "value": "CltParam1"
+    },
+    "cpa2": {
+        "static": True,
+        "value": "CltParam2"
+    },
+    "cpa3": {
+        "static": True,
+        "value": "CltParam3"
+    },
+    "cpa4": {
+        "static": True,
+        "value": "CltParam4"
+    },
+    "cpa5": {
+        "static": True,
+        "value": "CltParam5"
+    },
+    "hpa1": {
+        "static": True,
+        "value": "sHitPar1"
+    },
+    "hpa2": {
+        "static": True,
+        "value": "sHitPar2"
+    },
+    "hpa3": {
+        "static": True,
+        "value": "sHitPar3"
+    },
+    "chp1": {
+        "static": True,
+        "value": "cHitPar1"
+    },
+    "chp2": {
+        "static": True,
+        "value": "cHitPar2"
+    },
+    "chp3": {
+        "static": True,
+        "value": "cHitPar3"
+    },
+    "dpa1": {
+        "static": True,
+        "value": "dParam1"
+    },
+    "dpa2": {
+        "static": True,
+        "value": "dParam2"
+    },
     "clc1": {
         "static": True,
         "value": "calc1"
@@ -375,10 +523,20 @@ BASE_EXPAND_DICT = {
         "value": linear,
         "arg": 12
     },
+    "ln21": {
+        "static": False,
+        "value": linear,
+        "arg": 21
+    },
     "dm12": {
         "static": False,
         "value": diminishing,
         "arg": 12
+    },
+    "dm21": {
+        "static": False,
+        "value": diminishing,
+        "arg": 21
     },
     "ln34": {
         "static": False,
@@ -405,6 +563,11 @@ BASE_EXPAND_DICT = {
         "value": linear,
         "arg": 78
     },
+    "ln91": {
+        "static": False,
+        "value": linear,
+        "arg": 91
+    },
     "dm78": {
         "static": False,
         "value": diminishing,
@@ -414,6 +577,76 @@ BASE_EXPAND_DICT = {
         "static": False,
         "value": diminishing,
         "arg": 91
+    },
+    "sl12": {
+        "static": False,
+        "value": linearTerms,
+        "arg": ("par1", "par2")
+    },
+    "sd12": {
+        "static": False,
+        "value": diminishingTerms,
+        "arg": ("par1", "par2")
+    },
+    "sl34": {
+        "static": False,
+        "value": linearTerms,
+        "arg": ("par3", "par4")
+    },
+    "sd34": {
+        "static": False,
+        "value": diminishingTerms,
+        "arg": ("par3", "par4")
+    },
+    "cl12": {
+        "static": False,
+        "value": linearTerms,
+        "arg": ("cpa1", "cpa2")
+    },
+    "cd12": {
+        "static": False,
+        "value": diminishingTerms,
+        "arg": ("cpa1", "cpa2")
+    },
+    "cl34": {
+        "static": False,
+        "value": linearTerms,
+        "arg": ("cpa3", "cpa4")
+    },
+    "cd34": {
+        "static": False,
+        "value": diminishingTerms,
+        "arg": ("cpa3", "cpa4")
+    },
+    "shl1": {
+        "static": False,
+        "value": linearTerms,
+        "arg": ("hpa1", "hpa2")
+    },
+    "shd1": {
+        "static": False,
+        "value": diminishingTerms,
+        "arg": ("hpa1", "hpa2")
+    },
+    "chl1": {
+        "static": False,
+        "value": linearTerms,
+        "arg": ("chp1", "chp2")
+    },
+    "chd1": {
+        "static": False,
+        "value": diminishingTerms,
+        "arg": ("chp1", "chp2")
+    },
+    "dl12": {
+        "static": False,
+        "value": linearTerms,
+        "arg": ("dpa1", "dpa2")
+    },
+    "dd12": {
+        "static": False,
+        "value": diminishingTerms,
+        "arg": ("dpa1", "dpa2")
     },
     "usmc": {
         "static": True,
@@ -491,16 +724,16 @@ BASE_EXPAND_DICT = {
         "value": "auralencalc"
     },
     "macr": {
-        "static": True,
-        "value": "dm56"
+        "static": False,
+        "value": resolveMasteryCrit
     },
     "madm": {
-        "static": True,
-        "value": "ln34"
+        "static": False,
+        "value": resolveMasteryDamage
     },
     "math": {
-        "static": True,
-        "value": "ln12"
+        "static": False,
+        "value": resolveMasteryToHit
     },
     "manc": {
         "static": True,
@@ -518,9 +751,25 @@ BASE_EXPAND_DICT = {
         "static": True,
         "value": "(edmx * 256)"
     },
+    "damn": {
+        "static": False,
+        "value": calcMissileDmgMin
+    },
+    "damx": {
+        "static": False,
+        "value": calcMissileDmgMax
+    },
+    "dmns": {
+        "static": True,
+        "value": "(damn * 256)"
+    },
+    "dmxs": {
+        "static": True,
+        "value": "(damx * 256)"
+    },
     "rang": {
         "static": True,
-        "value": f"((Range + lvl * LevRange) / {FRAMES_PER_SECOND})"
+        "value": "Range"
     },
     "mael": {
         "static": True,
@@ -624,12 +873,14 @@ def expandExpressionOnce(expression, skillsRow):
     for key in expandDict.keys():
         if key in expression:
             if expandDict[key]["static"]:
-                    expression = expression.replace(key, expandDict[key]["value"])
+                    expression = replaceToken(expression, key, expandDict[key]["value"])
             else:
                 if "arg" in expandDict[key]:   
-                    expression = expression.replace(key, expandDict[key]["value"](skillsRow, expandDict[key]["arg"]))
+                    expression = replaceToken(
+                        expression, key, expandDict[key]["value"](skillsRow, expandDict[key]["arg"])
+                    )
                 else:
-                    expression = expression.replace(key, expandDict[key]["value"](skillsRow))
+                    expression = replaceToken(expression, key, expandDict[key]["value"](skillsRow))
     return expression
 
     
@@ -639,6 +890,7 @@ def expand(expression, skillsRow, skilldescRow):
     while canExpand:
         expression = expandExpressionOnce(expression, skillsRow)
         expression = replaceLookupSpecificMissile(expression, skillsRow)
+        expression = replaceLookupSksrc(expression)
         expression = replaceLookupSynergies(expression, skillsRow)
         expression = replaceLookupSklvl(expression, skillsRow)
         expression = replaceLookup(expression, skillsRow, skilldescRow)
@@ -691,6 +943,12 @@ def replaceLookupSklvl(expression, skillsRow):
         parts[1] = parts[1].replace("lvl", parenthesize(parts[0]))
         parts[1] = replaceLookupExpression(parts[1], getSkillLookupValues(), sklvlRow, "skills")
         expression = expression.replace(sklvl, parts[1])
+    return expression
+        
+def replaceLookupSksrc(expression):
+    extractedSksrc = findParenthesesMatchedExpressions(expression, "sksrc(")
+    for sksrc in extractedSksrc:
+        expression = expression.replace(sksrc, f"skill{sksrc[5:]}")
     return expression
         
         
@@ -761,7 +1019,9 @@ def replaceLookupExpression(expression, lookupValues, fromRow, tableName):
                 toReplace = fromRow.get(lookupExp)
             if toReplace is None:
                 toReplace = adapter.missing_lookup_value(tableName, lookupExp, fromRow)
-            expression = expression.replace(lookupExp, "0" if toReplace in ("", None) else str(toReplace))
+            expression = replaceToken(
+                expression, lookupExp, "0" if toReplace in ("", None) else str(toReplace)
+            )
     return expression
 
 def replaceLookupMissile(expression, skilldescRow):

@@ -24,6 +24,7 @@
         Druid: "Druid",
         Paladin: "Paladin",
         Necromancer: "Necromancer",
-        Sorceress: "Sorceress"
+        Sorceress: "Sorceress",
+        Warlock: "Warlock"
     }
 </script>

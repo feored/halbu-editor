@@ -27,12 +27,10 @@ export function enforceMinMax(node) {
 }
 
 export function tooltip(node, params = {}) {
-    const content = params.content;
-
-    const tip = tippy(node, { content, ...params });
+    const tip = tippy(node, { ...params });
 
     return {
-        update: (newParams) => tip.setProps({ content, ...newParams }),
+        update: (newParams = {}) => tip.setProps({ ...newParams }),
         destroy: () => tip.destroy(),
     };
 };
