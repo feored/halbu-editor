@@ -1,5 +1,5 @@
 <script module>
-    import titles from "../tabs/character/titles.json";
+    import titles from "../editor/character/titles.json";
     import { isFemaleClass } from "./GameSupport";
 
     export function countOccurrences(string, word) {

@@ -12,6 +12,7 @@
 
 	export const Key = {
 		Theme: "theme",
+		ParseMode: "parse_mode",
 		SaveFolder: "save_folder",
 		QuestsAdvancedFlags: "quests_advanced_flags",
 		QuestsAdvancedAllQuests: "quests_advanced_all_quests",
@@ -27,6 +28,7 @@
 		}
 		return {
 			[Key.Theme]: "auto",
+			[Key.ParseMode]: "lax",
 			[Key.SaveFolder]: save_folder,
 			[Key.QuestsAdvancedFlags]: false,
 			[Key.QuestsAdvancedAllQuests]: false,

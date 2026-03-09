@@ -1,5 +1,3 @@
-import tippy from "tippy.js";
-
 export function enforceMinMax(node) {
 
     function enforceMinMax() {
@@ -25,12 +23,3 @@ export function enforceMinMax(node) {
         }
     };
 }
-
-export function tooltip(node, params = {}) {
-    const tip = tippy(node, { ...params });
-
-    return {
-        update: (newParams = {}) => tip.setProps({ ...newParams }),
-        destroy: () => tip.destroy(),
-    };
-};

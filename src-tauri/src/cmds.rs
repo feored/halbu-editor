@@ -1,5 +1,5 @@
 use halbu::format::FormatId;
-use halbu::{calc_checksum, Class, Save};
+use halbu::{calc_checksum, Class, ParseIssue, ParsedSave, Save, Strictness};
 use log::{debug, info};
 use serde::{Deserialize, Serialize};
 use std::ffi::OsStr;
@@ -65,6 +65,7 @@ fn supported_classes_for_version(version: u32) -> Vec<String> {
 pub struct SaveFile {
     path: String,
     save: Save,
+    expansion_type: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -84,7 +85,7 @@ pub struct SaveStatus {
     skill_point_slots: usize,
     mercenary_hired: bool,
     mercenary_id: u32,
-    v105_mode_marker: Option<u8>,
+    expansion_type: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -97,6 +98,14 @@ pub struct SkillsContext {
     skill_slot_count: usize,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ParsedCharacter {
+    save: Save,
+    parse_issue_count: usize,
+    parse_issues: Vec<ParseIssue>,
+    source_file_size: usize,
+}
+
 fn format_id_label(format: FormatId) -> String {
     match format {
         FormatId::V99 => "V99".to_string(),
@@ -105,35 +114,58 @@ fn format_id_label(format: FormatId) -> String {
     }
 }
 
-fn v105_mode_marker(save: &Save) -> Option<u8> {
-    if save.version != 105 {
-        return None;
+fn strictness_from_parse_mode(parse_mode: Option<&str>) -> Strictness {
+    match parse_mode {
+        Some(mode) if mode.eq_ignore_ascii_case("strict") => Strictness::Strict,
+        _ => Strictness::Lax,
     }
-
-    save.character
-        .raw_section
-        .get(halbu::character::v105::OFFSET_MODE_MARKER)
-        .copied()
 }
 
-#[tauri::command]
-pub fn get_character_from_path(path: String) -> Result<Save, String> {
-    let path: &Path = Path::new(&path);
-    info!("Parsing file {0}", path.display());
-    let save_file: Vec<u8> = match std::fs::read(path) {
-        Ok(bytes) => bytes,
-        Err(e) => return Err(e.to_string()),
+fn parse_save_from_path(path: &Path, parse_mode: Option<&str>) -> Result<(ParsedSave, usize), String> {
+    let strictness = strictness_from_parse_mode(parse_mode);
+    let parse_mode_label = match strictness {
+        Strictness::Strict => "strict",
+        Strictness::Lax => "lax",
     };
-    let result = Save::parse_lax(&save_file).map_err(|e| e.to_string())?;
-    if !result.issues.is_empty() {
+    info!("Parsing file {0}", path.display());
+    debug!("Using {parse_mode_label} parse mode.");
+
+    let save_file: Vec<u8> = std::fs::read(path).map_err(|e| e.to_string())?;
+    let source_file_size = save_file.len();
+    let parsed = Save::parse(&save_file, strictness).map_err(|e| e.to_string())?;
+    if !parsed.issues.is_empty() {
         debug!(
             "File {0} parsed with {1} non-fatal issue(s).",
             path.display(),
-            result.issues.len()
+            parsed.issues.len()
         );
     }
     debug!("File {0} parsed successfully.", path.display());
-    Ok(result.save)
+    Ok((parsed, source_file_size))
+}
+
+#[tauri::command]
+pub fn get_character_from_path(path: String, parse_mode: Option<String>) -> Result<Save, String> {
+    let path: &Path = Path::new(&path);
+    let (parsed, _) = parse_save_from_path(path, parse_mode.as_deref())?;
+    Ok(parsed.save)
+}
+
+#[tauri::command]
+pub fn get_character_from_path_with_meta(
+    path: String,
+    parse_mode: Option<String>,
+) -> Result<ParsedCharacter, String> {
+    let path: &Path = Path::new(&path);
+    let (parsed, source_file_size) = parse_save_from_path(path, parse_mode.as_deref())?;
+    let parse_issue_count = parsed.issues.len();
+    let parse_issues = parsed.issues;
+    Ok(ParsedCharacter {
+        save: parsed.save,
+        parse_issue_count,
+        parse_issues,
+        source_file_size,
+    })
 }
 
 #[tauri::command]
@@ -168,6 +200,28 @@ pub fn get_skills_context(version: u32, class: Class) -> Result<SkillsContext, S
 pub fn save_file(path: String, save: Save) -> Result<String, String> {
     let path: &Path = Path::new(&path);
     let generated_save = save.to_bytes().map_err(|e| e.to_string())?;
+
+    let mut file = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .open(path)
+        .map_err(|e| e.to_string())?;
+
+    file.write_all(&generated_save).map_err(|e| e.to_string())?;
+    Ok(String::from("Success!"))
+}
+
+#[tauri::command]
+pub fn save_file_as_version(path: String, save: Save, target_version: u32) -> Result<String, String> {
+    let path: &Path = Path::new(&path);
+    let target_format = FormatId::from_version(target_version)
+        .ok_or_else(|| format!("Unsupported save version {target_version}."))?;
+
+    let mut save_for_output = save.clone();
+    save_for_output.set_format_id(target_format);
+    let generated_save = save_for_output
+        .to_bytes_for(target_format)
+        .map_err(|e| e.to_string())?;
 
     let mut file = OpenOptions::new()
         .write(true)
@@ -228,12 +282,12 @@ pub fn get_save_status(save: Save) -> Result<SaveStatus, String> {
         skill_point_slots: save.skills.points.len(),
         mercenary_hired: save.character.mercenary.is_hired(),
         mercenary_id: save.character.mercenary.id,
-        v105_mode_marker: v105_mode_marker(&save),
+        expansion_type: save.expansion_type().label().to_string(),
     })
 }
 
 #[tauri::command]
-pub fn summary_folder(path: String) -> Result<Vec<SaveFile>, String> {
+pub fn summary_folder(path: String, parse_mode: Option<String>) -> Result<Vec<SaveFile>, String> {
     let path: &Path = Path::new(&path);
 
     let files = match read_dir(path) {
@@ -257,8 +311,9 @@ pub fn summary_folder(path: String) -> Result<Vec<SaveFile>, String> {
             None => continue,
         };
 
-        match get_character_from_path(file_path_string.to_string()) {
+        match get_character_from_path(file_path_string.to_string(), parse_mode.clone()) {
             Ok(res) => saves.push(SaveFile {
+                expansion_type: res.expansion_type().label().to_string(),
                 save: res,
                 path: file_path_string.to_string(),
             }),

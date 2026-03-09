@@ -1,4 +1,3 @@
-<!-- App.svelte -->
 <script>
 	import { invoke } from "@tauri-apps/api/core";
 	import { save } from "@tauri-apps/plugin-dialog";
@@ -6,46 +5,113 @@
 	import {
 		initialize as initializeSettings,
 		apply as applySettings,
+		get as getSetting,
+		Key as SettingKey,
 	} from "./lib/utils/Settings.svelte";
 
-	import SavePicker from "./lib/SavePicker.svelte";
-	import Character from "./lib/tabs/character/Character.svelte";
-	import Mercenary from "./lib/tabs/mercenary/Mercenary.svelte";
-	import Waypoints from "./lib/tabs/Waypoints.svelte";
-	import Skills from "./lib/tabs/skills/Skills.svelte";
-	import Settings from "./lib/SettingsPage.svelte";
-	import Quests from "./lib/tabs/quests/Quests.svelte";
+	import AppLayout from "./lib/layout/AppLayout.svelte";
+	import Sidebar from "./lib/layout/Sidebar.svelte";
+	import TopBar from "./lib/layout/TopBar.svelte";
+	import SessionBar from "./lib/layout/SessionBar.svelte";
+
+	import Library from "./lib/library/Library.svelte";
+	import Settings from "./lib/settings/Settings.svelte";
+
+	import Status from "./lib/editor/status/Status.svelte";
+	import Character from "./lib/editor/character/Character.svelte";
+	import Skills from "./lib/editor/skills/Skills.svelte";
+	import Waypoints from "./lib/editor/waypoints/Waypoints.svelte";
+	import Quests from "./lib/editor/quests/Quests.svelte";
+	import Mercenary from "./lib/editor/mercenary/Mercenary.svelte";
+
+	const AppMode = Object.freeze({
+		Library: "library",
+		Editor: "editor",
+		Settings: "settings",
+	});
+
+	const ParseMode = Object.freeze({
+		Lax: "lax",
+		Strict: "strict",
+	});
+
+	const EditorSection = Object.freeze({
+		Status: "status",
+		Character: "character",
+		Skills: "skills",
+		Waypoints: "waypoints",
+		Quests: "quests",
+		Mercenary: "mercenary",
+		Inventory: "inventory",
+	});
+
+	const EDITOR_NAV = Object.freeze([
+		{ id: EditorSection.Character, label: "Character" },
+		{ id: EditorSection.Skills, label: "Skills" },
+		{ id: EditorSection.Waypoints, label: "Waypoints" },
+		{ id: EditorSection.Quests, label: "Quests" },
+		{ id: EditorSection.Mercenary, label: "Mercenary" },
+		{ id: EditorSection.Status, label: "Status", dividerBefore: true },
+	]);
 
 	let currentSave = $state(null);
-	let validSave = $state(true);
+	let currentParseIssueCount = $state(0);
+	let currentParseIssues = $state([]);
+	let currentSourceFileSize = $state(null);
+	let editValidation = $state({ errors: [], warnings: [] });
+	let appMode = $state(AppMode.Library);
+	let settingsOriginMode = $state(AppMode.Library);
+	let currentEditorSection = $state(EditorSection.Status);
+	let parseMode = $state(ParseMode.Lax);
+	const hasEditValidationErrors = $derived(
+		Array.isArray(editValidation?.errors) && editValidation.errors.length > 0
+	);
 
-	export const TabID = {
-		Home: Symbol("Home"),
-		Character: Symbol("Character"),
-		Mercenary: Symbol("Mercenary"),
-		Skills: Symbol("Skills"),
-		Waypoints: Symbol("Waypoints"),
-		Quests: Symbol("Quests"),
-		Items: Symbol("Items"),
-		Settings: Symbol("Settings"),
-	};
-	const tabs = {
-		Character: TabID.Character,
-		Mercenary: TabID.Mercenary,
-		Skills: TabID.Skills,
-		Waypoints: TabID.Waypoints,
-		Quests: TabID.Quests,
-	};
-	let currentTab = $state(TabID.Home);
+	const topbarMode = $derived.by(() => {
+		if (appMode === AppMode.Settings) {
+			return settingsOriginMode;
+		}
+		return appMode;
+	});
+	const sidebarItems = $derived.by(() => {
+		if (currentSave != null) {
+			return EDITOR_NAV.map((item) =>
+				item.id === EditorSection.Status
+					? { ...item, saveBlocked: hasEditValidationErrors }
+					: item
+			);
+		}
+		return [];
+	});
+	const activeSidebarItem = $derived.by(() => {
+		if (appMode === AppMode.Settings) {
+			return null;
+		}
+		if (currentSave != null) {
+			return currentEditorSection;
+		}
+		return AppMode.Library;
+	});
 
 	initializeSettings().then(() => {
 		console.log("Settings initialized.");
 		applySettings();
+		handleParseModeChange(getSetting(SettingKey.ParseMode));
 	});
 
-	async function saveCharacter() {
+	async function saveCharacter(targetVersion = null) {
+		if (currentSave == null) {
+			return;
+		}
+		const resolvedTargetVersion = Number(targetVersion);
+		const hasExplicitTargetVersion =
+			Number.isFinite(resolvedTargetVersion) && resolvedTargetVersion > 0;
+		const defaultNameSuffix =
+			hasExplicitTargetVersion && resolvedTargetVersion !== Number(currentSave.version)
+				? `_v${resolvedTargetVersion}`
+				: "";
 		const filePath = await save({
-			defaultPath: currentSave.character.name,
+			defaultPath: `${currentSave.character.name}${defaultNameSuffix}`,
 			filters: [
 				{
 					name: "D2R Save File",
@@ -53,29 +119,89 @@
 				},
 			],
 		});
-		let res = await invoke("save_file", {
-			path: filePath,
-			save: currentSave,
-		});
+		if (filePath == null) {
+			return;
+		}
+		if (
+			hasExplicitTargetVersion &&
+			resolvedTargetVersion !== Number(currentSave.version)
+		) {
+			await invoke("save_file_as_version", {
+				path: filePath,
+				save: currentSave,
+				targetVersion: resolvedTargetVersion,
+			});
+			return;
+		}
+		await invoke("save_file", { path: filePath, save: currentSave });
 	}
 
-	async function handlePickedCharacter(messageContents) {
-		console.log("Character picked: ", messageContents.save);
-		currentSave = messageContents.save;
-		currentTab = TabID.Character;
+	function openEditor(saveData, parseIssueCount = 0, parseIssues = [], sourceFileSize = null) {
+		currentSave = saveData;
+		const normalizedIssues = Array.isArray(parseIssues) ? parseIssues : [];
+		currentParseIssueCount = Math.max(Number(parseIssueCount) || 0, normalizedIssues.length);
+		currentParseIssues = normalizedIssues;
+		currentSourceFileSize = Number.isFinite(Number(sourceFileSize))
+			? Number(sourceFileSize)
+			: null;
+		editValidation = { errors: [], warnings: [] };
+		currentEditorSection = EditorSection.Status;
+		appMode = AppMode.Editor;
 	}
 
-	function unpickCharacter() {
+	function closeEditor() {
 		currentSave = null;
+		currentParseIssueCount = 0;
+		currentParseIssues = [];
+		currentSourceFileSize = null;
+		editValidation = { errors: [], warnings: [] };
+		currentEditorSection = EditorSection.Status;
+		appMode = AppMode.Library;
+	}
+
+	function goToLibrary() {
+		if (currentSave != null) {
+			closeEditor();
+			return;
+		}
+		appMode = AppMode.Library;
+	}
+
+	function toggleSettings() {
+		if (appMode === AppMode.Settings) {
+			appMode = currentSave == null ? AppMode.Library : AppMode.Editor;
+			return;
+		}
+		settingsOriginMode =
+			appMode === AppMode.Editor && currentSave != null ? AppMode.Editor : AppMode.Library;
+		appMode = AppMode.Settings;
+	}
+
+	function handleSidebarSelection(itemId) {
+		if (currentSave != null) {
+			currentEditorSection = itemId;
+			appMode = AppMode.Editor;
+			return;
+		}
+		appMode = itemId;
+	}
+
+	function handleParseModeChange(nextMode) {
+		parseMode = nextMode === ParseMode.Strict ? ParseMode.Strict : ParseMode.Lax;
 	}
 
 	function handleMessages(message) {
 		switch (message.id) {
 			case Message.CharacterUnpicked:
-				unpickCharacter();
+				closeEditor();
 				break;
 			case Message.CharacterPicked:
-				handlePickedCharacter(message.data);
+				openEditor(
+					message.data.save,
+					message.data.parseIssueCount ?? 0,
+					message.data.parseIssues ?? [],
+					message.data.sourceFileSize ?? null
+				);
 				break;
 			case Message.SaveFile:
 				saveCharacter();
@@ -84,105 +210,60 @@
 	}
 </script>
 
-<div class="container-fluid layout p-0">
-	<div class="sidebar bg-custom-light border-end p-3">
-		<h1 class="text-center display-6 text-primary mt-3">Halbu Editor</h1>
+<AppLayout showSidebar={true} showTopbar={topbarMode !== AppMode.Library}>
+	{#snippet topbar()}
+		{#if topbarMode === AppMode.Editor && currentSave != null}
+			<SessionBar save={currentSave} />
+		{:else if topbarMode === AppMode.Settings}
+			<TopBar title="Halbu Editor" />
+		{/if}
+	{/snippet}
 
-		<ul class="nav nav-pills flex-column">
-			<li class="nav-item">
-				<a
-					class="nav-link"
-					href="#top"
-					class:active={currentTab == TabID.Home}
-					onclick={() => {
-						currentTab = TabID.Home;
-					}}>Home</a
-				>
-			</li>
-			{#each Object.entries(tabs) as [name, id]}
-				<li class="nav-item">
-					<a
-						class:disabled={currentSave == null}
-						class="nav-link"
-						href="#top"
-						class:active={currentTab == id}
-						onclick={() => {
-							currentTab = id;
-						}}>{name}</a
-					>
-				</li>
-			{/each}
-			<li class="nav-item">
-				<a class="nav-link disabled" href="/items">Items</a>
-			</li>
-			<li class="nav-item mt-5">
-				<a
-					class="nav-link"
-					href="#top"
-					class:active={currentTab == TabID.Settings}
-					onclick={() => {
-						currentTab = TabID.Settings;
-					}}>Settings</a
-				>
-			</li>
-		</ul>
-		<ul class="sidebar-footer nav nav-pills flex-column">
-			{#if currentSave != null}
-				<li class="nav-item d-grid">
-					<button
-						class="btn {validSave ? 'btn-primary' : 'btn-danger'}"
-						onclick={saveCharacter}
-						disabled={!validSave}
-					>
-						Save
-					</button>
-				</li>
-			{/if}
-		</ul>
-	</div>
-		<div class="p-5">
-			{#if currentTab == TabID.Home}
-				<SavePicker onmessage={handleMessages} />
-			{:else if currentTab == TabID.Character}
-				<Character bind:validSave bind:save={currentSave} />
-			{:else if currentTab == TabID.Mercenary}
-				<Mercenary bind:save={currentSave} />
-			{:else if currentTab == TabID.Skills}
-				<Skills bind:save={currentSave} />
-			{:else if currentTab == TabID.Waypoints}
-				<Waypoints bind:save={currentSave} />
-			{:else if currentTab == TabID.Settings}
-				<Settings />
-			{:else if currentTab == TabID.Quests}
-				<Quests bind:save={currentSave} />
-			{/if}
-		</div>
-	</div>
+	{#snippet sidebar()}
+		<Sidebar
+			title=""
+			items={sidebarItems}
+			activeId={activeSidebarItem}
+			editorActive={appMode === AppMode.Editor}
+			libraryActive={appMode === AppMode.Library}
+			onSelect={handleSidebarSelection}
+			onLibrary={goToLibrary}
+			settingsActive={appMode === AppMode.Settings}
+			onSettings={toggleSettings}
+		/>
+	{/snippet}
 
-<style>
-	.layout {
-		display: grid;
-		grid-template-columns: fit-content(20ch) minmax(min(50vw, 30ch), 1fr);
-	}
-
-	.sidebar-footer {
-		margin-top: auto;
-		margin-bottom: 0;
-	}
-
-	.sidebar {
-		display: flex;
-		flex-direction: column;
-		position: sticky;
-		top: 0;
-		height: 100vh;
-	}
-
-	.sidebar > ul {
-		padding: 0.5em;
-	}
-
-	.sidebar > ul > li {
-		list-style: none;
-	}
-</style>
+	{#if appMode === AppMode.Settings}
+		<Settings {parseMode} onParseModeChange={handleParseModeChange} />
+	{:else if appMode === AppMode.Library}
+		<Library onmessage={handleMessages} {parseMode} />
+	{:else if currentSave != null}
+		{#if currentEditorSection === EditorSection.Status}
+			<Status
+				save={currentSave}
+				{parseMode}
+				parseIssueCount={currentParseIssueCount}
+				parseIssues={currentParseIssues}
+				sourceFileSize={currentSourceFileSize}
+				{editValidation}
+				saveDisabled={hasEditValidationErrors}
+				onSave={saveCharacter}
+			/>
+		{:else if currentEditorSection === EditorSection.Character}
+			<Character bind:editValidation bind:save={currentSave} />
+		{:else if currentEditorSection === EditorSection.Skills}
+			<Skills bind:save={currentSave} />
+		{:else if currentEditorSection === EditorSection.Waypoints}
+			<Waypoints bind:save={currentSave} />
+		{:else if currentEditorSection === EditorSection.Quests}
+			<Quests bind:save={currentSave} />
+		{:else if currentEditorSection === EditorSection.Mercenary}
+			<Mercenary bind:save={currentSave} />
+		{:else if currentEditorSection === EditorSection.Inventory}
+			<div class="container m-0">
+				<h3>Inventory</h3>
+				<div class="alert alert-secondary mb-0">Inventory editor placeholder.</div>
+			</div>
+		{/if}
+	{/if}
+</AppLayout>

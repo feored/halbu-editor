@@ -1,4 +1,4 @@
-import skillpages from "../tabs/skills/skillpages.json";
+import skillpages from "../editor/skills/skillpages.json";
 import skillsDataV99 from "../../../static/data/generated/skills/v99/skills_complete.json";
 import skillsDataV105 from "../../../static/data/generated/skills/v105/skills_complete.json";
 
@@ -72,10 +72,10 @@ export function formatIdLabel(formatValue) {
 export function getSaveEditionLabel(save) {
 	const format = save?.meta?.format;
 	if (format === "V99") {
-		return "D2R";
+		return "D2R Legacy";
 	}
 	if (format === "V105") {
-		return "ROTW";
+		return "D2R RotW";
 	}
 	if (format && typeof format === "object" && "Unknown" in format) {
 		return `unknown (${format.Unknown})`;
@@ -83,11 +83,11 @@ export function getSaveEditionLabel(save) {
 
 	const version = normalizeVersion(save?.version);
 	if (version === 99) {
-		return "D2R";
+		return "D2R Legacy";
 	}
 
 	if (version === 105) {
-		return "ROTW";
+		return "D2R RotW";
 	}
 
 	return `unknown (${save?.version ?? "?"})`;

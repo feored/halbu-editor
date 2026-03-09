@@ -22,7 +22,9 @@ fn main() {
         )
         .invoke_handler(tauri::generate_handler![
             get_character_from_path,
+            get_character_from_path_with_meta,
             save_file,
+            save_file_as_version,
             new_save,
             get_skills_context,
             get_save_status,

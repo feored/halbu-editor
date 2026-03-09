@@ -1,0 +1,381 @@
+<script module>
+	export const CharacterType = {
+		Existing: Symbol("Existing"),
+		New: Symbol("New"),
+	};
+</script>
+
+<script>
+	import { onMount } from "svelte";
+	import { open } from "@tauri-apps/plugin-dialog";
+	import Button from "../components/ui/button/button.svelte";
+	import { Message, buildMessage } from "../utils/Message.svelte";
+	import { invoke } from "@tauri-apps/api/core";
+	import { calcTitle } from "../utils/Utils.svelte";
+	import * as settings from "../utils/Settings.svelte";
+	import { AlertCircleIcon } from "lucide-svelte";
+	import {
+		KNOWN_SAVE_VERSIONS,
+		DEFAULT_NEW_SAVE_VERSION,
+		classLabel,
+		getSaveEditionLabel,
+		getSupportedClasses,
+		normalizeClassForVersion,
+	} from "../utils/GameSupport";
+
+	let { onmessage, parseMode = "lax" } = $props();
+
+	function dispatchMessage(id, data) {
+		onmessage?.(buildMessage(id, data));
+	}
+
+	onMount(() => {
+		const until = (predFn) => {
+			const poll = (done) => (predFn() ? done() : setTimeout(() => poll(done), 50));
+			return new Promise(poll);
+		};
+		until(() => {
+			return settings.initialized;
+		}).then(() => {
+			getExistingCharacters();
+		});
+	});
+
+	let saveFolderSet = $state(false);
+	let saveFilesFound = $state([]);
+	let currentSaveDirectory = $state("");
+	let filterText = $state("");
+
+	let selectedVersion = $state(DEFAULT_NEW_SAVE_VERSION);
+	let selectedClass = $state(normalizeClassForVersion(DEFAULT_NEW_SAVE_VERSION, null));
+	const availableClasses = $derived(getSupportedClasses(selectedVersion));
+	$effect(() => {
+		selectedClass = normalizeClassForVersion(selectedVersion, selectedClass);
+	});
+
+	async function readFileContents() {
+		try {
+			const selectedPath = await open({
+				multiple: false,
+				filters: [
+					{
+						name: "D2R Save File",
+						extensions: ["d2s"],
+					},
+				],
+				title: "Open .d2s file",
+			});
+			await loadSavePath(selectedPath);
+		} catch (err) {
+			console.error(err);
+		}
+	}
+
+	async function loadSavePath(path) {
+		if (typeof path !== "string" || path.length === 0) {
+			return;
+		}
+
+		try {
+			let parsed = await invoke("get_character_from_path_with_meta", {
+				path: path,
+				parseMode,
+			});
+			dispatchMessage(Message.CharacterPicked, {
+				save: parsed.save,
+				parseIssueCount: Number(parsed.parse_issue_count) || 0,
+				parseIssues: Array.isArray(parsed.parse_issues) ? parsed.parse_issues : [],
+				sourceFileSize: Number(parsed.source_file_size) || null,
+			});
+		} catch (err) {
+			console.error(err);
+		}
+	}
+
+	function handleRowKeydown(event, path) {
+		if (event.key === "Enter" || event.key === " ") {
+			event.preventDefault();
+			loadSavePath(path);
+		}
+	}
+
+	async function newSave() {
+		if (selectedClass == null) {
+			return;
+		}
+		try {
+			let newSave = await invoke("new_save", {
+				version: Number(selectedVersion),
+				class: selectedClass,
+			});
+			dispatchMessage(Message.CharacterPicked, {
+				save: newSave,
+				parseIssueCount: 0,
+				parseIssues: [],
+				sourceFileSize: null,
+			});
+		} catch (err) {
+			console.error(err);
+		}
+	}
+
+	async function getExistingCharacters() {
+		let saveFolder = await settings.get(settings.Key.SaveFolder);
+		currentSaveDirectory = saveFolder ?? "";
+
+		if (saveFolder.length < 1) {
+			// Empty string is the default
+			saveFolderSet = false;
+			saveFilesFound = [];
+			return;
+		}
+		try {
+			let characters = await invoke("summary_folder", {
+				path: saveFolder,
+				parseMode,
+			});
+			saveFilesFound = characters;
+			saveFolderSet = true;
+		} catch (err) {
+			console.error(err);
+			saveFolderSet = false;
+		}
+	}
+
+	const filteredSaveFiles = $derived.by(() => {
+		const query = filterText.trim().toLowerCase();
+		if (query.length === 0) {
+			return saveFilesFound;
+		}
+		return saveFilesFound.filter((saveFile) => {
+			const name = String(saveFile?.save?.character?.name ?? "").toLowerCase();
+			const className = classLabel(saveFile?.save?.character?.class).toLowerCase();
+			const version = getSaveEditionLabel(saveFile?.save).toLowerCase();
+			return name.includes(query) || className.includes(query) || version.includes(query);
+		});
+	});
+
+</script>
+
+<div class="container m-0">
+	<div class="col">
+		<div class="row g-2 align-items-end mb-3">
+			<div class="col-auto d-flex gap-2">
+				<Button class="font-semibold" onclick={readFileContents}>Open File</Button>
+				<Button variant="secondary" onclick={getExistingCharacters}>Refresh Folder</Button>
+			</div>
+			<div class="col-md-3">
+				<label class="form-label mb-1" for="library-filter">Search</label>
+				<input
+					id="library-filter"
+					class="form-control"
+					type="text"
+					placeholder="Filter saves"
+					bind:value={filterText}
+				/>
+			</div>
+			<div class="col">
+				<label class="form-label mb-1" for="library-directory">Save Directory</label>
+				<div
+					id="library-directory"
+					class="save-directory-field"
+					title={currentSaveDirectory}
+					aria-readonly="true"
+				>
+					<span class="save-directory-path">{currentSaveDirectory}</span>
+					<span class="save-directory-badge">Read-only</span>
+				</div>
+			</div>
+		</div>
+
+		{#if !saveFolderSet}
+			<div class="text-center text-bg-warning p-3 m-3 rounded">
+				<div class="d-flex">
+					<AlertCircleIcon />&nbsp;Set a designated save folder in the settings to easily
+					pick from existing characters.
+				</div>
+			</div>
+		{:else if saveFilesFound.length < 1}
+			<div class="text-center text-bg-warning p-3 m-3 rounded">
+				<div class="d-flex">
+					<AlertCircleIcon />&nbsp;Found no valid .d2s files in save folder.
+				</div>
+			</div>
+		{:else}
+			<table class="table library-table">
+				<thead>
+					<tr>
+						<th scope="col" class="form-label mb-0">Name</th>
+						<th scope="col" class="form-label mb-0">Level</th>
+						<th scope="col" class="form-label mb-0">Class</th>
+						<th scope="col" class="form-label mb-0">Version</th>
+						<th scope="col" class="form-label mb-0">Core</th>
+						<th scope="col" class="form-label mb-0">Expansion</th>
+					</tr>
+				</thead>
+				<tbody>
+					{#each filteredSaveFiles as saveFile}
+						<tr
+							class="library-row"
+							role="button"
+							tabindex="0"
+							onclick={() => loadSavePath(saveFile.path)}
+							onkeydown={(event) => handleRowKeydown(event, saveFile.path)}
+						>
+							<td class="py-3">
+								<span class="font-semibold text-halbu-text"
+									>{calcTitle(saveFile.save.character)}
+									{#if saveFile.save.character.name.length > 0}
+										{saveFile.save.character.name}
+									{:else}
+										Corrupted Name
+									{/if}
+								</span>
+							</td>
+							<td class="py-3">Level {saveFile.save.character.level}</td>
+							<td class="py-3">{classLabel(saveFile.save.character.class)}</td>
+							<td class="py-3">
+								<small class="text-halbu-text"
+									>{getSaveEditionLabel(saveFile.save)}</small
+								>
+							</td>
+							<td class="py-3">
+									{#if saveFile.save.character.status.hardcore}
+										<span
+											class="inline-flex items-center rounded-full bg-halbu-dangerSoft px-2 py-0.5 text-[0.78rem] font-semibold text-halbu-danger"
+										>
+											Hardcore
+										</span>
+									{:else}
+										<span
+											class="inline-flex items-center rounded-full bg-halbu-panel2 px-2 py-0.5 text-[0.78rem] font-semibold text-halbu-textMuted"
+										>
+											Softcore
+										</span>
+								{/if}
+							</td>
+							<td class="py-3">
+								<small class="text-halbu-text"
+									>{saveFile.expansion_type ??
+										(saveFile.save.character.status.expansion ? "Expansion" : "Classic")}</small
+								>
+							</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+			{#if filteredSaveFiles.length === 0}
+				<div class="text-center text-bg-warning p-3 rounded">
+					No saves matched "{filterText}".
+				</div>
+			{/if}
+		{/if}
+
+		<div class="row">
+			<div class="col-4">
+				<p class="form-text">Create new character</p>
+			</div>
+			<div class="col-4"></div>
+			<div class="col-4 text-end">
+				<p class="form-text">New character</p>
+				<div class="input-group">
+					<select
+						class="form-select"
+						name="newCharacterVersion"
+						id="newCharacterVersion"
+						bind:value={selectedVersion}
+						onchange={(event) => {
+							selectedVersion = Number(event.currentTarget.value);
+						}}
+					>
+						{#each KNOWN_SAVE_VERSIONS as version}
+							<option value={version}>{version}</option>
+						{/each}
+					</select>
+					<select
+						class="form-select"
+						name="newCharacter"
+						id="newCharacter"
+						bind:value={selectedClass}
+					>
+						{#each availableClasses as className}
+							<option value={className}>{className}</option>
+						{/each}
+					</select>
+					<Button onclick={newSave} disabled={selectedClass == null}>New</Button>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<style>
+	.save-directory-field {
+		min-height: 1.85rem;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+		padding: 0.3rem 0.62rem;
+		border: 1px solid var(--halbu-border);
+		border-radius: var(--app-radius-sm);
+		background: var(--halbu-panel);
+		color: var(--halbu-text-muted);
+		font-size: 0.94rem;
+		cursor: default;
+	}
+
+	.save-directory-path {
+		min-width: 0;
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+	}
+
+	.save-directory-badge {
+		flex-shrink: 0;
+		border: 1px solid var(--halbu-borderStrong);
+		border-radius: var(--app-radius-sm);
+		background: var(--halbu-panel2);
+		color: var(--halbu-text-muted);
+		font-size: 0.78rem;
+		line-height: 1;
+		padding: 0.2rem 0.36rem;
+	}
+
+	.library-table thead th {
+		font-size: 0.84rem;
+		line-height: 1.2;
+		letter-spacing: 0.005em;
+		font-weight: 500;
+		color: color-mix(in srgb, var(--halbu-text) 78%, var(--halbu-text-muted));
+		text-transform: none;
+		padding-top: 0.5rem;
+		padding-bottom: 0.5rem;
+	}
+
+	.library-table tbody td {
+		padding-top: 0.7rem;
+		padding-bottom: 0.7rem;
+	}
+
+	.library-table tbody tr:nth-of-type(even) > * {
+		background: color-mix(in srgb, var(--halbu-panel2) 34%, transparent);
+	}
+
+	.library-row {
+		cursor: pointer;
+	}
+
+	.library-table tbody tr.library-row:hover > * {
+		background: color-mix(in srgb, var(--halbu-panel2) 86%, transparent);
+	}
+
+	.library-row:focus-visible {
+		outline: none;
+	}
+
+	.library-row:focus-visible > * {
+		box-shadow: inset 0 0 0 1px var(--halbu-primary);
+	}
+</style>
