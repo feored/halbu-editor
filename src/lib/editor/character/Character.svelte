@@ -12,18 +12,49 @@
 	} from "../../utils/GameSupport";
 
 	import experienceTable from "./experience.json";
-	import { Difficulty, Act } from "../../utils/Constants.svelte";
+	import { Difficulty, Act } from "../../utils/constants.js";
+	import {
+		buildCharacterEditValidation,
+		experienceForLevel,
+		levelForExperience,
+		validateCharacterName,
+	} from "./characterLogic.js";
 
 	let { save = $bindable(), editValidation = $bindable({ errors: [], warnings: [] }) } = $props();
 
 	const MAX_GOLD_PER_LEVEL = 10000;
 	const MAX_XP = 3520485254;
+	const ATTRIBUTE_MIN = 0;
+	const ATTRIBUTE_MAX = 1023;
+	const STAT_POINTS_MAX = 1023;
+	const SKILL_POINTS_MAX = 255;
+	const MAP_SEED_MAX = 0xffffffff;
+	const QUICK_ADJUST_NEGATIVE_STEPS = Object.freeze([-10]);
+	const QUICK_ADJUST_POSITIVE_STEPS = Object.freeze([10]);
 
 	let nameRef;
 	let validName = $state(true);
 	let nameValidationMessage = $state("");
+	let mapSeedDisplayMode = $state("decimal");
+	let mapSeedDraft = $state("");
+	let mapSeedInputRef;
+	let isMapSeedEditing = $state(false);
 
 	const goldInventoryMax = $derived(MAX_GOLD_PER_LEVEL * save.character.level);
+	const normalizedMapSeed = $derived.by(() => {
+		const parsed = Number(save?.character?.map_seed);
+		if (!Number.isFinite(parsed)) {
+			return null;
+		}
+		return Math.trunc(parsed) >>> 0;
+	});
+	const mapSeedDisplayValue = $derived(formatMapSeed(normalizedMapSeed, mapSeedDisplayMode));
+
+	$effect(() => {
+		if (!isMapSeedEditing && mapSeedDraft !== mapSeedDisplayValue) {
+			mapSeedDraft = mapSeedDisplayValue;
+		}
+	});
 
 	let currentLife = $state(save.attributes.hitpoints.value / 256);
 	$effect(() => {
@@ -81,19 +112,11 @@
 	});
 
 	$effect(() => {
-		const errors = [];
-		const warnings = [];
-		if (!validName) {
-			errors.push(
-				nameValidationMessage.length > 0
-					? nameValidationMessage
-					: "Character name is invalid."
-			);
-		}
-		if (classSupportWarning.length > 0) {
-			warnings.push(classSupportWarning);
-		}
-		editValidation = { errors, warnings };
+		editValidation = buildCharacterEditValidation(
+			validName,
+			nameValidationMessage,
+			classSupportWarning,
+		);
 	});
 
 	$effect(() => {
@@ -120,21 +143,139 @@
 			return; // if we have changed to the same value, don't erase old xp
 		}
 		save.character.level = save.attributes.level.value;
-		save.attributes.experience.value = experienceTable[save.attributes.level.value - 1];
+		save.attributes.experience.value = experienceForLevel(
+			save.attributes.level.value,
+			experienceTable,
+		);
 	}
 
 	async function changeExperience() {
-		let new_level = 99;
-		for (let i = 0; i < 99; i++) {
-			if (experienceTable[i] > save.attributes.experience.value) {
-				new_level = i;
-				break;
-			}
-		}
+		const new_level = levelForExperience(save.attributes.experience.value, experienceTable);
 		if (new_level != save.attributes.level.value) {
 			save.attributes.level.value = new_level;
 			save.character.level = new_level;
 		}
+	}
+
+	function clampInteger(value, min, max) {
+		const parsed = Number(value);
+		const normalized = Number.isFinite(parsed) ? Math.trunc(parsed) : min;
+		return Math.max(min, Math.min(max, normalized));
+	}
+
+	function getAttributeValue(attributeId) {
+		return clampInteger(save.attributes?.[attributeId]?.value, ATTRIBUTE_MIN, ATTRIBUTE_MAX);
+	}
+
+	function setAttributeValue(attributeId, rawValue) {
+		if (save.attributes?.[attributeId] == null) {
+			return;
+		}
+		save.attributes[attributeId].value = clampInteger(rawValue, ATTRIBUTE_MIN, ATTRIBUTE_MAX);
+	}
+
+	function adjustAttributeValue(attributeId, delta) {
+		const currentValue = getAttributeValue(attributeId);
+		setAttributeValue(attributeId, currentValue + Number(delta || 0));
+	}
+
+	function isAttributeAdjustmentDisabled(attributeId, delta) {
+		const currentValue = getAttributeValue(attributeId);
+		return delta < 0 ? currentValue <= ATTRIBUTE_MIN : currentValue >= ATTRIBUTE_MAX;
+	}
+
+	function getPointsValue(pointsKey, maxValue) {
+		return clampInteger(save.attributes?.[pointsKey]?.value, ATTRIBUTE_MIN, maxValue);
+	}
+
+	function setPointsValue(pointsKey, rawValue, maxValue) {
+		if (save.attributes?.[pointsKey] == null) {
+			return;
+		}
+		save.attributes[pointsKey].value = clampInteger(rawValue, ATTRIBUTE_MIN, maxValue);
+	}
+
+	function adjustPointsValue(pointsKey, delta, maxValue) {
+		const currentValue = getPointsValue(pointsKey, maxValue);
+		setPointsValue(pointsKey, currentValue + Number(delta || 0), maxValue);
+	}
+
+	function isPointsAdjustmentDisabled(pointsKey, delta, maxValue) {
+		const currentValue = getPointsValue(pointsKey, maxValue);
+		return delta < 0 ? currentValue <= ATTRIBUTE_MIN : currentValue >= maxValue;
+	}
+
+	function formatMapSeed(value, mode) {
+		if (!Number.isFinite(value)) {
+			return "";
+		}
+		const normalized = Math.trunc(value) >>> 0;
+		if (mode === "hex") {
+			return `0x${normalized.toString(16).toUpperCase().padStart(8, "0")}`;
+		}
+		return String(normalized);
+	}
+
+	function parseMapSeedInput(rawValue) {
+		const value = String(rawValue ?? "").trim();
+		let parsed = Number.NaN;
+		if (/^0x[0-9a-f]+$/i.test(value)) {
+			parsed = Number.parseInt(value.slice(2), 16);
+		} else if (/^[0-9]+$/.test(value)) {
+			parsed = Number.parseInt(value, 10);
+		}
+		if (!Number.isFinite(parsed)) {
+			return null;
+		}
+		const clamped = clampInteger(parsed, 0, MAP_SEED_MAX);
+		return clamped >>> 0;
+	}
+
+	function commitMapSeedDraft() {
+		if (save?.character == null) {
+			return;
+		}
+		const parsed = parseMapSeedInput(mapSeedDraft);
+		if (parsed == null) {
+			if (mapSeedInputRef != null) {
+				mapSeedInputRef.setCustomValidity("Use decimal digits or 0x-prefixed hex.");
+				mapSeedInputRef.reportValidity();
+				mapSeedInputRef.setCustomValidity("");
+			}
+			mapSeedDraft = mapSeedDisplayValue;
+			return;
+		}
+		save.character.map_seed = parsed;
+		mapSeedDraft = formatMapSeed(parsed, mapSeedDisplayMode);
+	}
+
+	function handleMapSeedInput(event) {
+		mapSeedDraft = event.currentTarget.value;
+		if (mapSeedInputRef != null) {
+			mapSeedInputRef.setCustomValidity("");
+		}
+	}
+
+	function handleMapSeedFocus() {
+		isMapSeedEditing = true;
+	}
+
+	function handleMapSeedBlur() {
+		commitMapSeedDraft();
+		isMapSeedEditing = false;
+	}
+
+	function handleMapSeedKeydown(event) {
+		if (event.key !== "Enter") {
+			return;
+		}
+		event.preventDefault();
+		commitMapSeedDraft();
+		event.currentTarget.blur();
+	}
+
+	function setMapSeedDisplayMode(nextMode) {
+		mapSeedDisplayMode = nextMode === "hex" ? "hex" : "decimal";
 	}
 
 	// Name validation
@@ -143,34 +284,12 @@
 		if (nameRef == null) {
 			return;
 		}
-		const value = String(nameRef.value ?? "");
-		let message = "";
-		let characters = Array.from(value).length;
-		if (characters < 2 || characters > 15) {
-			message = "Name must be 2-15 characters";
-		}
-		if (message.length === 0 && !RegExp(/^\p{L}[\p{L}_-]*$/, "u").test(value)) {
-			// Check that string starts with a unicode letters
-			// and only contains unicode letters or _ -
-			message = "Name must start with a letter and only contain letters, _ or -";
-		}
-		let dashes = 0;
-		let underscores = 0;
-		for (const char of value) {
-			if (char === "-") {
-				dashes += 1;
-			} else if (char === "_") {
-				underscores += 1;
-			}
-		}
-		if (message.length === 0 && (dashes > 1 || underscores > 1)) {
-			message = "Name can only contain 1 _ or -";
-		}
-		validName = message.length === 0;
-		nameValidationMessage = message;
-		nameRef.setCustomValidity(message);
+		const result = validateCharacterName(nameRef.value);
+		validName = result.valid;
+		nameValidationMessage = result.message;
+		nameRef.setCustomValidity(result.message);
 		if (validName) {
-			save.character.name = value;
+			save.character.name = result.value;
 		}
 	}
 
@@ -209,9 +328,13 @@
 
 <div class="grid grid-cols-1 content-start gap-[0.6rem] xl:grid-cols-2">
 	<div class="grid content-start gap-[0.6rem]">
-		<section class="rounded-sm border border-halbu-borderStrong bg-halbu-panel2 px-[0.6rem] py-[0.44rem]">
+		<section
+			class="rounded-sm border border-halbu-borderStrong bg-halbu-panel2 px-[0.6rem] py-[0.44rem]"
+		>
 			<h3 class="editor-card-title mb-[0.34rem]">Identity</h3>
-			<div class="grid grid-cols-[7.6rem_minmax(0,1fr)] items-center gap-x-[0.62rem] gap-y-[0.26rem]">
+			<div
+				class="grid grid-cols-[7.6rem_minmax(0,1fr)] items-center gap-x-[0.62rem] gap-y-[0.26rem]"
+			>
 				<label class="form-label mb-0" for="name">Name</label>
 				<input
 					class="form-control"
@@ -237,7 +360,9 @@
 				</div>
 			</div>
 
-			<div class="mt-[0.24rem] grid grid-cols-[7.6rem_minmax(0,1fr)] items-center gap-x-[0.62rem]">
+			<div
+				class="mt-[0.24rem] grid grid-cols-[7.6rem_minmax(0,1fr)] items-center gap-x-[0.62rem]"
+			>
 				<label class="form-label mb-0" for="class">Class</label>
 				{#if canEditClass}
 					<select
@@ -265,12 +390,18 @@
 				{/if}
 			</div>
 			{#if classSupportWarning.length > 0}
-				<div class="form-text mt-[0.2rem] text-halbu-warning sm:pl-[8.1rem]">{classSupportWarning}</div>
+				<div class="form-text mt-[0.2rem] text-halbu-warning sm:pl-[8.1rem]">
+					{classSupportWarning}
+				</div>
 			{/if}
 
-			<div class="mt-[0.24rem] grid grid-cols-[7.6rem_minmax(0,1fr)] items-start gap-x-[0.62rem] gap-y-[0.16rem]">
+			<div
+				class="mt-[0.24rem] grid grid-cols-[7.6rem_minmax(0,1fr)] items-start gap-x-[0.62rem] gap-y-[0.16rem]"
+			>
 				<span class="form-label mb-0">Mode</span>
-				<div class="flex flex-wrap items-center gap-x-[0.8rem] gap-y-[0.28rem] text-[0.9rem]">
+				<div
+					class="flex flex-wrap items-center gap-x-[0.8rem] gap-y-[0.28rem] text-[0.9rem]"
+				>
 					<label class="inline-flex items-center gap-[0.36rem]">
 						<input
 							class="form-check-input mt-0"
@@ -302,8 +433,8 @@
 							name="ladder"
 							bind:checked={save.character.status.ladder}
 						/>
-							<span>Ladder</span>
-						</label>
+						<span>Ladder</span>
+					</label>
 					<div class="inline-flex items-center">
 						<label class="inline-flex items-center gap-[0.36rem]">
 							<input
@@ -320,7 +451,9 @@
 			</div>
 		</section>
 
-		<section class="rounded-sm border border-halbu-border bg-halbu-panel px-[0.6rem] py-[0.44rem]">
+		<section
+			class="rounded-sm border border-halbu-border bg-halbu-panel px-[0.6rem] py-[0.44rem]"
+		>
 			<h3 class="editor-card-title mb-[0.34rem]">Progression</h3>
 			<div class="grid grid-cols-1 gap-[0.3rem] sm:grid-cols-2 sm:gap-x-[0.72rem]">
 				<div class="grid grid-cols-[7.4rem_minmax(0,1fr)] items-center gap-x-[0.44rem]">
@@ -357,7 +490,12 @@
 
 				<div class="grid grid-cols-[7.4rem_minmax(0,1fr)] items-center gap-x-[0.44rem]">
 					<label class="form-label mb-0" for="currentAct">Act</label>
-					<select class="form-select" bind:value={save.character.act} name="currentAct" id="currentAct">
+					<select
+						class="form-select"
+						bind:value={save.character.act}
+						name="currentAct"
+						id="currentAct"
+					>
 						<option value={Act.Act1}>Act I</option>
 						<option value={Act.Act2}>Act II</option>
 						<option value={Act.Act3}>Act III</option>
@@ -390,8 +528,12 @@
 						id="difficultyBeaten"
 					>
 						<option value="None" selected={difficultyBeaten === "None"}>None</option>
-						<option value="Normal" selected={difficultyBeaten === "Normal"}>Normal</option>
-						<option value="Nightmare" selected={difficultyBeaten === "Nightmare"}>Nightmare</option>
+						<option value="Normal" selected={difficultyBeaten === "Normal"}
+							>Normal</option
+						>
+						<option value="Nightmare" selected={difficultyBeaten === "Nightmare"}
+							>Nightmare</option
+						>
 						<option value="Hell" selected={difficultyBeaten === "Hell"}>Hell</option>
 					</select>
 				</div>
@@ -407,13 +549,16 @@
 						readonly
 					/>
 				</div>
-
 			</div>
 		</section>
 
-		<section class="rounded-sm border border-halbu-border bg-halbu-panel px-[0.6rem] py-[0.44rem]">
+		<section
+			class="rounded-sm border border-halbu-border bg-halbu-panel px-[0.6rem] py-[0.44rem]"
+		>
 			<h3 class="editor-card-title mb-[0.34rem]">Gold</h3>
-			<div class="grid grid-cols-[7.4rem_minmax(0,1fr)] gap-y-[0.28rem] sm:grid-cols-[8rem_minmax(0,1fr)] sm:gap-x-[0.62rem]">
+			<div
+				class="grid grid-cols-[7.4rem_minmax(0,1fr)] gap-y-[0.28rem] sm:grid-cols-[8rem_minmax(0,1fr)] sm:gap-x-[0.62rem]"
+			>
 				<label class="form-label mb-0" for="goldInventory">Inventory</label>
 				<input
 					class="form-control"
@@ -441,107 +586,356 @@
 				/>
 			</div>
 		</section>
+
+		<section
+			class="rounded-sm border border-halbu-border bg-halbu-panel px-[0.6rem] py-[0.44rem]"
+		>
+			<h3 class="editor-card-title mb-[0.34rem]">Map Seed</h3>
+			<div
+				class="grid grid-cols-[7.4rem_minmax(0,1fr)] items-center gap-x-[0.44rem] gap-y-[0.3rem]"
+			>
+				<span class="form-label mb-0">Format</span>
+				<div
+					class="inline-flex w-fit overflow-hidden rounded-xs border border-halbu-borderStrong"
+				>
+					<button
+						type="button"
+						class={`h-[1.86rem] min-w-[4.7rem] px-[0.52rem] text-[0.82rem] font-semibold transition ${
+							mapSeedDisplayMode === "decimal"
+								? "bg-halbu-primary text-halbu-white"
+								: "bg-halbu-panel2 text-halbu-text hover:bg-halbu-primarySoft"
+						}`}
+						onclick={() => setMapSeedDisplayMode("decimal")}
+					>
+						Decimal
+					</button>
+					<button
+						type="button"
+						class={`h-[1.86rem] min-w-[4.7rem] border-l border-halbu-borderStrong px-[0.52rem] text-[0.82rem] font-semibold transition ${
+							mapSeedDisplayMode === "hex"
+								? "bg-halbu-primary text-halbu-white"
+								: "bg-halbu-panel2 text-halbu-text hover:bg-halbu-primarySoft"
+						}`}
+						onclick={() => setMapSeedDisplayMode("hex")}
+					>
+						Hex
+					</button>
+				</div>
+
+				<label class="form-label mb-0" for="mapSeed">Seed</label>
+				<input
+					class="form-control max-w-[10.6rem]"
+					type="text"
+					name="mapSeed"
+					id="mapSeed"
+					placeholder="123456789 or 0x075BCD15"
+					bind:this={mapSeedInputRef}
+					bind:value={mapSeedDraft}
+					onfocus={handleMapSeedFocus}
+					oninput={handleMapSeedInput}
+					onblur={handleMapSeedBlur}
+					onkeydown={handleMapSeedKeydown}
+				/>
+
+				<div></div>
+			</div>
+		</section>
 	</div>
 
 	<div class="grid content-start gap-[0.6rem]">
-		<section class="rounded-sm border border-halbu-border bg-halbu-panel px-[0.6rem] py-[0.48rem]">
-			<h3 class="editor-card-title mb-[0.34rem]">Attributes & Points</h3>
-			<div class="grid grid-cols-1 gap-y-[0.28rem] md:grid-cols-2 md:gap-x-[0.72rem]">
+		<section
+			class="rounded-sm border border-halbu-border bg-halbu-panel px-[0.6rem] py-[0.48rem]"
+		>
+			<h3 class="editor-card-title mb-[0.34rem]">Attributes</h3>
+			<div class="grid gap-y-[0.28rem]">
 				<div class="grid grid-cols-[7.1rem_minmax(0,1fr)] items-center gap-x-[0.62rem]">
 					<label class="form-label mb-0" for="strength">Strength</label>
-					<input
-						class="form-control"
-						type="number"
-						name="strength"
-						id="strength"
-						min="0"
-						max="1023"
-						step="1"
-						use:enforceMinMax
-						bind:value={save.attributes.strength.value}
-					/>
-				</div>
-				<div class="grid grid-cols-[7.1rem_minmax(0,1fr)] items-center gap-x-[0.62rem]">
-					<label class="form-label mb-0" for="statPointsLeft">Stat points left</label>
-					<input
-						class="form-control"
-						use:enforceMinMax
-						type="number"
-						name="statPointsLeft"
-						id="statPointsLeft"
-						min="0"
-						max="1023"
-						step="1"
-						bind:value={save.attributes.statpts.value}
-					/>
+					<div class="flex items-center gap-[0.2rem]">
+						{#each QUICK_ADJUST_NEGATIVE_STEPS as delta}
+							<button
+								type="button"
+								class="h-[1.9rem] min-w-[2.15rem] rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-[0.28rem] text-[0.76rem] font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
+								onclick={() => adjustAttributeValue("strength", delta)}
+								disabled={isAttributeAdjustmentDisabled("strength", delta)}
+								aria-label={`${delta < 0 ? "Decrease" : "Increase"} strength by ${Math.abs(delta)}`}
+							>
+								{delta > 0 ? `+${delta}` : `${delta}`}
+							</button>
+						{/each}
+						<input
+							class="form-control max-w-[4.6rem] text-center"
+							type="number"
+							name="strength"
+							id="strength"
+							min="0"
+							max="1023"
+							step="1"
+							use:enforceMinMax
+							bind:value={save.attributes.strength.value}
+							onchange={(event) =>
+								setAttributeValue("strength", event.currentTarget.value)}
+						/>
+						{#each QUICK_ADJUST_POSITIVE_STEPS as delta}
+							<button
+								type="button"
+								class="h-[1.9rem] min-w-[2.15rem] rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-[0.28rem] text-[0.76rem] font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
+								onclick={() => adjustAttributeValue("strength", delta)}
+								disabled={isAttributeAdjustmentDisabled("strength", delta)}
+								aria-label={`${delta < 0 ? "Decrease" : "Increase"} strength by ${Math.abs(delta)}`}
+							>
+								{delta > 0 ? `+${delta}` : `${delta}`}
+							</button>
+						{/each}
+					</div>
 				</div>
 
 				<div class="grid grid-cols-[7.1rem_minmax(0,1fr)] items-center gap-x-[0.62rem]">
 					<label class="form-label mb-0" for="dexterity">Dexterity</label>
-					<input
-						class="form-control"
-						type="number"
-						name="dexterity"
-						id="dexterity"
-						min="0"
-						max="1023"
-						step="1"
-						use:enforceMinMax
-						bind:value={save.attributes.dexterity.value}
-					/>
-				</div>
-				<div class="grid grid-cols-[7.1rem_minmax(0,1fr)] items-center gap-x-[0.62rem]">
-					<label class="form-label mb-0" for="skillPointsLeft">Skill points left</label>
-					<input
-						class="form-control"
-						use:enforceMinMax
-						type="number"
-						name="skillPointsLeft"
-						id="skillPointsLeft"
-						min="0"
-						max="255"
-						step="1"
-						bind:value={save.attributes.newskills.value}
-					/>
+					<div class="flex items-center gap-[0.2rem]">
+						{#each QUICK_ADJUST_NEGATIVE_STEPS as delta}
+							<button
+								type="button"
+								class="h-[1.9rem] min-w-[2.15rem] rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-[0.28rem] text-[0.76rem] font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
+								onclick={() => adjustAttributeValue("dexterity", delta)}
+								disabled={isAttributeAdjustmentDisabled("dexterity", delta)}
+								aria-label={`${delta < 0 ? "Decrease" : "Increase"} dexterity by ${Math.abs(delta)}`}
+							>
+								{delta > 0 ? `+${delta}` : `${delta}`}
+							</button>
+						{/each}
+						<input
+							class="form-control max-w-[4.6rem] text-center"
+							type="number"
+							name="dexterity"
+							id="dexterity"
+							min="0"
+							max="1023"
+							step="1"
+							use:enforceMinMax
+							bind:value={save.attributes.dexterity.value}
+							onchange={(event) =>
+								setAttributeValue("dexterity", event.currentTarget.value)}
+						/>
+						{#each QUICK_ADJUST_POSITIVE_STEPS as delta}
+							<button
+								type="button"
+								class="h-[1.9rem] min-w-[2.15rem] rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-[0.28rem] text-[0.76rem] font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
+								onclick={() => adjustAttributeValue("dexterity", delta)}
+								disabled={isAttributeAdjustmentDisabled("dexterity", delta)}
+								aria-label={`${delta < 0 ? "Decrease" : "Increase"} dexterity by ${Math.abs(delta)}`}
+							>
+								{delta > 0 ? `+${delta}` : `${delta}`}
+							</button>
+						{/each}
+					</div>
 				</div>
 
 				<div class="grid grid-cols-[7.1rem_minmax(0,1fr)] items-center gap-x-[0.62rem]">
 					<label class="form-label mb-0" for="vitality">Vitality</label>
-					<input
-						class="form-control"
-						type="number"
-						name="vitality"
-						id="vitality"
-						min="0"
-						max="1023"
-						step="1"
-						use:enforceMinMax
-						bind:value={save.attributes.vitality.value}
-					/>
+					<div class="flex items-center gap-[0.2rem]">
+						{#each QUICK_ADJUST_NEGATIVE_STEPS as delta}
+							<button
+								type="button"
+								class="h-[1.9rem] min-w-[2.15rem] rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-[0.28rem] text-[0.76rem] font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
+								onclick={() => adjustAttributeValue("vitality", delta)}
+								disabled={isAttributeAdjustmentDisabled("vitality", delta)}
+								aria-label={`${delta < 0 ? "Decrease" : "Increase"} vitality by ${Math.abs(delta)}`}
+							>
+								{delta > 0 ? `+${delta}` : `${delta}`}
+							</button>
+						{/each}
+						<input
+							class="form-control max-w-[4.6rem] text-center"
+							type="number"
+							name="vitality"
+							id="vitality"
+							min="0"
+							max="1023"
+							step="1"
+							use:enforceMinMax
+							bind:value={save.attributes.vitality.value}
+							onchange={(event) =>
+								setAttributeValue("vitality", event.currentTarget.value)}
+						/>
+						{#each QUICK_ADJUST_POSITIVE_STEPS as delta}
+							<button
+								type="button"
+								class="h-[1.9rem] min-w-[2.15rem] rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-[0.28rem] text-[0.76rem] font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
+								onclick={() => adjustAttributeValue("vitality", delta)}
+								disabled={isAttributeAdjustmentDisabled("vitality", delta)}
+								aria-label={`${delta < 0 ? "Decrease" : "Increase"} vitality by ${Math.abs(delta)}`}
+							>
+								{delta > 0 ? `+${delta}` : `${delta}`}
+							</button>
+						{/each}
+					</div>
 				</div>
-				<div class="hidden md:block"></div>
 
 				<div class="grid grid-cols-[7.1rem_minmax(0,1fr)] items-center gap-x-[0.62rem]">
 					<label class="form-label mb-0" for="energy">Energy</label>
-					<input
-						class="form-control"
-						type="number"
-						name="energy"
-						id="energy"
-						min="0"
-						max="1023"
-						step="1"
-						use:enforceMinMax
-						bind:value={save.attributes.energy.value}
-					/>
+					<div class="flex items-center gap-[0.2rem]">
+						{#each QUICK_ADJUST_NEGATIVE_STEPS as delta}
+							<button
+								type="button"
+								class="h-[1.9rem] min-w-[2.15rem] rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-[0.28rem] text-[0.76rem] font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
+								onclick={() => adjustAttributeValue("energy", delta)}
+								disabled={isAttributeAdjustmentDisabled("energy", delta)}
+								aria-label={`${delta < 0 ? "Decrease" : "Increase"} energy by ${Math.abs(delta)}`}
+							>
+								{delta > 0 ? `+${delta}` : `${delta}`}
+							</button>
+						{/each}
+						<input
+							class="form-control max-w-[4.6rem] text-center"
+							type="number"
+							name="energy"
+							id="energy"
+							min="0"
+							max="1023"
+							step="1"
+							use:enforceMinMax
+							bind:value={save.attributes.energy.value}
+							onchange={(event) =>
+								setAttributeValue("energy", event.currentTarget.value)}
+						/>
+						{#each QUICK_ADJUST_POSITIVE_STEPS as delta}
+							<button
+								type="button"
+								class="h-[1.9rem] min-w-[2.15rem] rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-[0.28rem] text-[0.76rem] font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
+								onclick={() => adjustAttributeValue("energy", delta)}
+								disabled={isAttributeAdjustmentDisabled("energy", delta)}
+								aria-label={`${delta < 0 ? "Decrease" : "Increase"} energy by ${Math.abs(delta)}`}
+							>
+								{delta > 0 ? `+${delta}` : `${delta}`}
+							</button>
+						{/each}
+					</div>
 				</div>
-				<div class="hidden md:block"></div>
 			</div>
 		</section>
 
-		<section class="rounded-sm border border-halbu-border bg-halbu-panel px-[0.6rem] py-[0.48rem]">
+		<section
+			class="rounded-sm border border-halbu-border bg-halbu-panel px-[0.6rem] py-[0.48rem]"
+		>
+			<h3 class="editor-card-title mb-[0.34rem]">Points</h3>
+			<div class="grid gap-y-[0.28rem]">
+				<div class="grid grid-cols-[7.4rem_minmax(0,1fr)] items-center gap-x-[0.62rem]">
+					<label class="form-label mb-0" for="statPointsLeft">Stat points left</label>
+					<div class="flex items-center gap-[0.2rem]">
+						{#each QUICK_ADJUST_NEGATIVE_STEPS as delta}
+							<button
+								type="button"
+								class="h-[1.9rem] min-w-[2.15rem] rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-[0.28rem] text-[0.76rem] font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
+								onclick={() => adjustPointsValue("statpts", delta, STAT_POINTS_MAX)}
+								disabled={isPointsAdjustmentDisabled(
+									"statpts",
+									delta,
+									STAT_POINTS_MAX,
+								)}
+								aria-label={`${delta < 0 ? "Decrease" : "Increase"} stat points by ${Math.abs(delta)}`}
+							>
+								{delta > 0 ? `+${delta}` : `${delta}`}
+							</button>
+						{/each}
+						<input
+							class="form-control max-w-[4.6rem] text-center"
+							use:enforceMinMax
+							type="number"
+							name="statPointsLeft"
+							id="statPointsLeft"
+							min="0"
+							max={STAT_POINTS_MAX}
+							step="1"
+							bind:value={save.attributes.statpts.value}
+							onchange={(event) =>
+								setPointsValue(
+									"statpts",
+									event.currentTarget.value,
+									STAT_POINTS_MAX,
+								)}
+						/>
+						{#each QUICK_ADJUST_POSITIVE_STEPS as delta}
+							<button
+								type="button"
+								class="h-[1.9rem] min-w-[2.15rem] rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-[0.28rem] text-[0.76rem] font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
+								onclick={() => adjustPointsValue("statpts", delta, STAT_POINTS_MAX)}
+								disabled={isPointsAdjustmentDisabled(
+									"statpts",
+									delta,
+									STAT_POINTS_MAX,
+								)}
+								aria-label={`${delta < 0 ? "Decrease" : "Increase"} stat points by ${Math.abs(delta)}`}
+							>
+								{delta > 0 ? `+${delta}` : `${delta}`}
+							</button>
+						{/each}
+					</div>
+				</div>
+
+				<div class="grid grid-cols-[7.4rem_minmax(0,1fr)] items-center gap-x-[0.62rem]">
+					<label class="form-label mb-0" for="skillPointsLeft">Skill points left</label>
+					<div class="flex items-center gap-[0.2rem]">
+						{#each QUICK_ADJUST_NEGATIVE_STEPS as delta}
+							<button
+								type="button"
+								class="h-[1.9rem] min-w-[2.15rem] rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-[0.28rem] text-[0.76rem] font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
+								onclick={() =>
+									adjustPointsValue("newskills", delta, SKILL_POINTS_MAX)}
+								disabled={isPointsAdjustmentDisabled(
+									"newskills",
+									delta,
+									SKILL_POINTS_MAX,
+								)}
+								aria-label={`${delta < 0 ? "Decrease" : "Increase"} skill points by ${Math.abs(delta)}`}
+							>
+								{delta > 0 ? `+${delta}` : `${delta}`}
+							</button>
+						{/each}
+						<input
+							class="form-control max-w-[4.6rem] text-center"
+							use:enforceMinMax
+							type="number"
+							name="skillPointsLeft"
+							id="skillPointsLeft"
+							min="0"
+							max={SKILL_POINTS_MAX}
+							step="1"
+							bind:value={save.attributes.newskills.value}
+							onchange={(event) =>
+								setPointsValue(
+									"newskills",
+									event.currentTarget.value,
+									SKILL_POINTS_MAX,
+								)}
+						/>
+						{#each QUICK_ADJUST_POSITIVE_STEPS as delta}
+							<button
+								type="button"
+								class="h-[1.9rem] min-w-[2.15rem] rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-[0.28rem] text-[0.76rem] font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
+								onclick={() =>
+									adjustPointsValue("newskills", delta, SKILL_POINTS_MAX)}
+								disabled={isPointsAdjustmentDisabled(
+									"newskills",
+									delta,
+									SKILL_POINTS_MAX,
+								)}
+								aria-label={`${delta < 0 ? "Decrease" : "Increase"} skill points by ${Math.abs(delta)}`}
+							>
+								{delta > 0 ? `+${delta}` : `${delta}`}
+							</button>
+						{/each}
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<section
+			class="rounded-sm border border-halbu-border bg-halbu-panel px-[0.6rem] py-[0.48rem]"
+		>
 			<h3 class="editor-card-title mb-[0.34rem]">Resources</h3>
-			<div class="grid grid-cols-[7rem_minmax(0,1fr)_minmax(0,1fr)] items-center gap-x-[0.62rem] gap-y-[0.3rem]">
+			<div
+				class="grid grid-cols-[7rem_minmax(0,1fr)_minmax(0,1fr)] items-center gap-x-[0.62rem] gap-y-[0.3rem]"
+			>
 				<div></div>
 				<div class="text-[0.84rem] text-halbu-textMuted">Current</div>
 				<div class="text-[0.84rem] text-halbu-textMuted">Base</div>
@@ -617,7 +1011,6 @@
 					step="0.001"
 					bind:value={baseStamina}
 				/>
-
 			</div>
 		</section>
 	</div>

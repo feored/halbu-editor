@@ -2,10 +2,6 @@
     import titles from "../editor/character/titles.json";
     import { isFemaleClass } from "./GameSupport";
 
-    export function countOccurrences(string, word) {
-        return string.split(word).length - 1;
-    }
-
     export function calcTitle(character) {
         const difficultyBeaten = calcDifficultyBeaten(character);
         const gender = isFemaleClass(character?.class) ? "Female" : "Male";

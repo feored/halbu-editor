@@ -1,5 +1,6 @@
 <script>
 	import Button from "../../components/ui/button/button.svelte";
+	import { AlertCircleIcon, CheckIcon, ChevronRightIcon } from "lucide-svelte";
 
 	let {
 		skillDetails,
@@ -17,41 +18,48 @@
 			onSetPoints(parsed);
 		}
 	}
+
+	let firstLevelOpen = $state(true);
+	let synergiesOpen = $state(true);
+	let descriptionOpen = $state(false);
 </script>
 
-<aside class="sticky top-4 rounded-sm border border-halbu-border bg-halbu-panel px-[0.6rem] py-[0.48rem]">
+<aside
+	class="rounded-sm border border-halbu-borderStrong border-l-2 border-l-halbu-borderStrong bg-halbu-bg px-[0.58rem] py-[0.44rem]"
+>
 	{#if skillDetails == null}
 		<p class="m-0 text-[0.9rem] text-halbu-textMuted">
 			Select a skill to inspect details and edit points.
 		</p>
 	{:else}
-		<header class="mb-[0.42rem] border-b border-halbu-border pb-[0.34rem]">
-			<h3 class="editor-card-title">{skillDetails.name}</h3>
-			<div class="mt-[0.26rem] flex flex-wrap items-center gap-[0.26rem]">
-				<span
-					class={`inline-flex items-center rounded-xs border px-[0.42rem] py-[0.14rem] text-[0.82rem] font-medium ${
-						skillDetails.available
-							? "border-halbu-border bg-halbu-panel2 text-halbu-textMuted"
-							: "border-halbu-warning bg-halbu-warningSoft text-halbu-warning"
-					}`}
-				>
-					{skillDetails.available ? "Ready" : "Locked"}
-				</span>
-				<span
-					class={`inline-flex items-center rounded-xs border px-[0.42rem] py-[0.14rem] text-[0.82rem] font-medium ${
-						skillDetails.levelRequirementMet
-							? "border-halbu-border bg-halbu-panel2 text-halbu-textMuted"
-							: "border-halbu-warning bg-halbu-warningSoft text-halbu-warning"
-					}`}
-				>
-					Req Lvl {skillDetails.reqLevel}
-				</span>
-			</div>
-		</header>
+			<header class="mb-[0.42rem] border-b border-halbu-border pb-[0.34rem]">
+				<h3 class="editor-card-title">{skillDetails.name}</h3>
+				<div class="mt-[0.26rem] flex flex-wrap items-center gap-[0.26rem]">
+					<span
+						class="inline-flex items-center gap-[0.22rem] rounded-xs border border-halbu-border bg-halbu-panel2 px-[0.42rem] py-[0.14rem] text-[0.82rem] font-medium text-halbu-textMuted"
+					>
+						{#if skillDetails.available}
+							<CheckIcon size={12} strokeWidth={2} />
+						{:else}
+							<AlertCircleIcon size={12} strokeWidth={2} />
+						{/if}
+						{skillDetails.available ? "Ready" : "Locked"}
+					</span>
+					<span
+						class="inline-flex items-center gap-[0.22rem] rounded-xs border border-halbu-border bg-halbu-panel2 px-[0.42rem] py-[0.14rem] text-[0.82rem] font-medium text-halbu-textMuted"
+					>
+						{#if skillDetails.levelRequirementMet}
+							<CheckIcon size={12} strokeWidth={2} />
+						{:else}
+							<AlertCircleIcon size={12} strokeWidth={2} />
+						{/if}
+						Req Lvl {skillDetails.reqLevel}
+					</span>
+				</div>
+			</header>
 
-		<section>
-			<h4 class="mb-[0.24rem] text-[0.88rem] font-medium text-halbu-textMuted">Controls</h4>
-			<label class="form-label mb-[0.16rem]" for="inspector-invested-points">Invested</label>
+			<section>
+				<label class="form-label mb-[0.16rem]" for="inspector-invested-points">Invested</label>
 			<div class="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-[0.24rem]">
 				<Button
 					type="button"
@@ -82,15 +90,19 @@
 				>
 					+
 				</Button>
-			</div>
-		</section>
-
-		{#if skillDetails.description.length > 0}
-			<section class="mt-[0.5rem] border-t border-halbu-border pt-[0.5rem]">
-				<h4 class="mb-[0.24rem] text-[0.88rem] font-medium text-halbu-textMuted">Description</h4>
-				<p class="m-0 whitespace-pre-line text-[0.9rem] text-halbu-text">{skillDetails.description}</p>
+				</div>
 			</section>
-		{/if}
+
+			{#if skillDetails.extraLines.length > 0}
+				<section class="mt-[0.5rem] border-t border-halbu-border pt-[0.5rem]">
+					<h4 class="mb-[0.24rem] text-[0.88rem] font-medium text-halbu-textMuted">Misc</h4>
+					<ul class="m-0 grid list-none gap-[0.14rem] p-0 text-[0.9rem]">
+						{#each skillDetails.extraLines as line}
+							<li class="text-halbu-text">{line}</li>
+						{/each}
+					</ul>
+				</section>
+			{/if}
 
 		<section class="mt-[0.5rem] border-t border-halbu-border pt-[0.5rem]">
 			<h4 class="mb-[0.24rem] text-[0.88rem] font-medium text-halbu-textMuted">Requirements</h4>
@@ -99,7 +111,12 @@
 			{:else}
 				<ul class="m-0 grid list-none gap-[0.14rem] p-0 text-[0.9rem]">
 					{#each skillDetails.prerequisites as prerequisite}
-						<li class={prerequisite.met ? "text-halbu-info" : "text-halbu-warning"}>
+						<li class="inline-flex items-center gap-[0.3rem] text-halbu-text">
+							{#if prerequisite.met}
+								<CheckIcon size={13} strokeWidth={2} class="shrink-0 text-halbu-textMuted" />
+							{:else}
+								<AlertCircleIcon size={13} strokeWidth={2} class="shrink-0 text-halbu-textMuted" />
+							{/if}
 							{prerequisite.name}
 						</li>
 					{/each}
@@ -109,21 +126,33 @@
 			{#if skillDetails.lockReasons.length > 0}
 				<ul class="m-0 mt-[0.3rem] grid list-none gap-[0.14rem] p-0 text-[0.9rem]">
 					{#each skillDetails.lockReasons as reason}
-						<li class="text-halbu-warning">{reason}</li>
+						<li class="inline-flex items-center gap-[0.3rem] text-halbu-textMuted">
+							<AlertCircleIcon size={13} strokeWidth={2} class="shrink-0 text-halbu-textMuted" />
+							{reason}
+						</li>
 					{/each}
 				</ul>
 			{/if}
 		</section>
 
-		{#if skillDetails.currentPoints === 0 && skillDetails.currentLines.length > 0}
-			<section class="mt-[0.5rem] border-t border-halbu-border pt-[0.5rem]">
-				<h4 class="mb-[0.24rem] text-[0.88rem] font-medium text-halbu-textMuted">First level</h4>
-				<ul class="m-0 grid list-none gap-[0.14rem] p-0 text-[0.9rem]">
-					{#each skillDetails.currentLines as line}
+			{#if skillDetails.currentPoints === 0 && skillDetails.currentLines.length > 0}
+				<details class="mt-[0.5rem] border-t border-halbu-border pt-[0.5rem]" bind:open={firstLevelOpen}>
+					<summary class="collapsible-summary">
+						<ChevronRightIcon
+							size={13}
+							strokeWidth={2}
+							class={`text-halbu-textMuted transition-transform ${
+								firstLevelOpen ? "rotate-90" : ""
+							}`}
+						/>
+						<span>First Level Stats</span>
+					</summary>
+					<ul class="m-0 mt-[0.22rem] grid list-none gap-[0.14rem] p-0 text-[0.9rem]">
+						{#each skillDetails.currentLines as line}
 						<li class="text-halbu-text">{line}</li>
 					{/each}
 				</ul>
-			</section>
+			</details>
 		{/if}
 
 		{#if skillDetails.currentPoints > 0 && skillDetails.currentLines.length > 0}
@@ -146,38 +175,69 @@
 					{/each}
 				</ul>
 			</section>
-		{/if}
+			{/if}
 
-		{#if skillDetails.synergyLines.length > 0}
-			<section class="mt-[0.5rem] border-t border-halbu-border pt-[0.5rem]">
-				<h4 class="mb-[0.24rem] text-[0.88rem] font-medium text-halbu-textMuted">Synergies</h4>
-				<ul class="m-0 grid list-none gap-[0.14rem] p-0 text-[0.9rem]">
-					{#each skillDetails.synergyEntries as synergy}
-						<li
-							class={
-								synergy.acquired === true
-									? "text-halbu-info"
-									: synergy.acquired === false
-										? "text-halbu-textMuted"
-										: "text-halbu-text"
-							}
-						>
+			{#if skillDetails.synergyLines.length > 0}
+				<details class="mt-[0.5rem] border-t border-halbu-border pt-[0.5rem]" bind:open={synergiesOpen}>
+					<summary class="collapsible-summary">
+						<ChevronRightIcon
+							size={13}
+							strokeWidth={2}
+							class={`text-halbu-textMuted transition-transform ${
+								synergiesOpen ? "rotate-90" : ""
+							}`}
+						/>
+						<span>Synergies</span>
+					</summary>
+					<ul class="m-0 mt-[0.22rem] grid list-none gap-[0.14rem] p-0 text-[0.9rem]">
+						{#each skillDetails.synergyEntries as synergy}
+						<li class="inline-flex items-center gap-[0.3rem] text-halbu-text">
+							{#if synergy.acquired === true}
+								<CheckIcon size={13} strokeWidth={2} class="shrink-0 text-halbu-textMuted" />
+							{:else if synergy.acquired === false}
+								<AlertCircleIcon size={13} strokeWidth={2} class="shrink-0 text-halbu-textMuted" />
+							{/if}
 							{synergy.line}
 						</li>
 					{/each}
 				</ul>
-			</section>
-		{/if}
+				</details>
+			{/if}
 
-		{#if skillDetails.extraLines.length > 0}
-			<section class="mt-[0.5rem] border-t border-halbu-border pt-[0.5rem]">
-				<h4 class="mb-[0.24rem] text-[0.88rem] font-medium text-halbu-textMuted">Notes</h4>
-				<ul class="m-0 grid list-none gap-[0.14rem] p-0 text-[0.9rem]">
-					{#each skillDetails.extraLines as line}
-						<li class="text-halbu-text">{line}</li>
-					{/each}
-				</ul>
-			</section>
+			{#if skillDetails.description.length > 0}
+				<details class="mt-[0.5rem] border-t border-halbu-border pt-[0.5rem]" bind:open={descriptionOpen}>
+					<summary class="collapsible-summary">
+						<ChevronRightIcon
+							size={13}
+							strokeWidth={2}
+							class={`text-halbu-textMuted transition-transform ${
+								descriptionOpen ? "rotate-90" : ""
+							}`}
+						/>
+						<span>Description</span>
+					</summary>
+					<p class="m-0 mt-[0.22rem] whitespace-pre-line text-[0.9rem] text-halbu-text">
+						{skillDetails.description}
+					</p>
+				</details>
+			{/if}
 		{/if}
-	{/if}
-</aside>
+	</aside>
+
+<style>
+	.collapsible-summary {
+		display: flex;
+		align-items: center;
+		gap: 0.24rem;
+		cursor: pointer;
+		list-style: none;
+		font-size: 0.88rem;
+		font-weight: 500;
+		color: var(--halbu-text-muted);
+	}
+
+	.collapsible-summary::-webkit-details-marker {
+		display: none;
+	}
+
+</style>

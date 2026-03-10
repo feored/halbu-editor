@@ -23,7 +23,7 @@
 	}
 </script>
 
-<section class="inline-block w-max max-w-full rounded-sm border border-halbu-border bg-halbu-panel px-[0.6rem] py-[0.48rem]">
+<section class="w-full min-w-0 rounded-sm border border-halbu-border bg-halbu-panel px-[0.68rem] py-[0.52rem]">
 	{#if pageIndexes.length > 1}
 		<div class="mb-[0.42rem] flex min-h-[2.5rem] w-fit items-center gap-[0.38rem] rounded-sm border border-halbu-border bg-halbu-panel px-[0.34rem] py-[0.34rem]">
 			{#each pageIndexes as pageIndex}
@@ -44,8 +44,6 @@
 
 	{#if activePageIndex != null}
 		<SkillTreeSection
-			title={pageTitle(activePageIndex)}
-			showTitle={pageIndexes.length <= 1}
 			skills={skillsForPage(activePageIndex)}
 			skillStatesById={skillStatesById}
 			selectedSkillId={selectedSkillId}

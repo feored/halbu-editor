@@ -34,6 +34,11 @@ function scopedEval(script, scope, functions) {
 	);
 }
 
+function replaceCallableName(script, name, replacement) {
+	const pattern = new RegExp(`(^|[^\\w.])${name}\\s*\\(`, "g");
+	return String(script ?? "").replace(pattern, `$1${replacement}(`);
+}
+
 function createCalculator({ version, character, skills, skillData }) {
 	const currentId = Number(skillData?.saveId);
 
@@ -80,11 +85,20 @@ function createCalculator({ version, character, skills, skillData }) {
 		let normalized = String(expression ?? "");
 		normalized = normalized.replaceAll("lightningmastery", "evalMastery('ltng')");
 		normalized = normalized.replaceAll("firemastery", "evalMastery('fire')");
-		normalized = normalized.replaceAll("floor", "Math.floor");
-		normalized = normalized.replaceAll("min", "Math.min");
-		normalized = normalized.replaceAll("max", "Math.max");
+		normalized = replaceCallableName(normalized, "floor", "Math.floor");
+		normalized = replaceCallableName(normalized, "min", "Math.min");
+		normalized = replaceCallableName(normalized, "max", "Math.max");
 
-		return scopedEval(normalized, evalScope, fns);
+		try {
+			return scopedEval(normalized, evalScope, fns);
+		} catch (error) {
+			console.warn("Failed to evaluate skill expression", {
+				expression,
+				normalized,
+				error: String(error),
+			});
+			return 0;
+		}
 	}
 
 	function synergy(calc) {

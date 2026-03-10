@@ -1,10 +1,3 @@
-<script module>
-	export const CharacterType = {
-		Existing: Symbol("Existing"),
-		New: Symbol("New"),
-	};
-</script>
-
 <script>
 	import { onMount } from "svelte";
 	import { open } from "@tauri-apps/plugin-dialog";
@@ -12,7 +5,7 @@
 	import { Message, buildMessage } from "../utils/Message.svelte";
 	import { invoke } from "@tauri-apps/api/core";
 	import { calcTitle } from "../utils/Utils.svelte";
-	import * as settings from "../utils/Settings.svelte";
+	import * as settings from "../utils/settings.js";
 	import { AlertCircleIcon } from "lucide-svelte";
 	import {
 		KNOWN_SAVE_VERSIONS,
@@ -30,15 +23,14 @@
 	}
 
 	onMount(() => {
-		const until = (predFn) => {
-			const poll = (done) => (predFn() ? done() : setTimeout(() => poll(done), 50));
-			return new Promise(poll);
-		};
-		until(() => {
-			return settings.initialized;
-		}).then(() => {
-			getExistingCharacters();
-		});
+		settings
+			.initialize()
+			.then(() => {
+				getExistingCharacters();
+			})
+			.catch((err) => {
+				console.error(err);
+			});
 	});
 
 	let saveFolderSet = $state(false);
@@ -120,8 +112,9 @@
 	}
 
 	async function getExistingCharacters() {
-		let saveFolder = await settings.get(settings.Key.SaveFolder);
-		currentSaveDirectory = saveFolder ?? "";
+		const configuredSaveFolder = await settings.get(settings.Key.SaveFolder);
+		const saveFolder = typeof configuredSaveFolder === "string" ? configuredSaveFolder : "";
+		currentSaveDirectory = saveFolder;
 
 		if (saveFolder.length < 1) {
 			// Empty string is the default
@@ -183,7 +176,6 @@
 					aria-readonly="true"
 				>
 					<span class="save-directory-path">{currentSaveDirectory}</span>
-					<span class="save-directory-badge">Read-only</span>
 				</div>
 			</div>
 		</div>
@@ -206,11 +198,12 @@
 				<thead>
 					<tr>
 						<th scope="col" class="form-label mb-0">Name</th>
-						<th scope="col" class="form-label mb-0">Level</th>
 						<th scope="col" class="form-label mb-0">Class</th>
-						<th scope="col" class="form-label mb-0">Version</th>
-						<th scope="col" class="form-label mb-0">Core</th>
+						<th scope="col" class="form-label mb-0">Level</th>
+						<th scope="col" class="form-label mb-0">Mode</th>
 						<th scope="col" class="form-label mb-0">Expansion</th>
+						<th scope="col" class="form-label mb-0">Edition</th>
+						<th scope="col" class="form-label mb-0">Version</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -223,8 +216,8 @@
 							onkeydown={(event) => handleRowKeydown(event, saveFile.path)}
 						>
 							<td class="py-3">
-								<span class="font-semibold text-halbu-text"
-									>{calcTitle(saveFile.save.character)}
+								<span class="font-semibold text-halbu-text">
+									{calcTitle(saveFile.save.character)}
 									{#if saveFile.save.character.name.length > 0}
 										{saveFile.save.character.name}
 									{:else}
@@ -232,13 +225,8 @@
 									{/if}
 								</span>
 							</td>
-							<td class="py-3">Level {saveFile.save.character.level}</td>
 							<td class="py-3">{classLabel(saveFile.save.character.class)}</td>
-							<td class="py-3">
-								<small class="text-halbu-text"
-									>{getSaveEditionLabel(saveFile.save)}</small
-								>
-							</td>
+							<td class="py-3">{saveFile.save.character.level}</td>
 							<td class="py-3">
 									{#if saveFile.save.character.status.hardcore}
 										<span
@@ -258,6 +246,16 @@
 								<small class="text-halbu-text"
 									>{saveFile.expansion_type ??
 										(saveFile.save.character.status.expansion ? "Expansion" : "Classic")}</small
+								>
+							</td>
+							<td class="py-3">
+								<small class="text-halbu-text"
+									>{getSaveEditionLabel(saveFile.save)}</small
+								>
+							</td>
+							<td class="py-3">
+								<small class="font-monospace text-halbu-text"
+									>{saveFile?.save?.version ?? "-"}</small
 								>
 							</td>
 						</tr>
@@ -314,7 +312,7 @@
 		min-height: 1.85rem;
 		display: flex;
 		align-items: center;
-		justify-content: space-between;
+		justify-content: flex-start;
 		gap: 0.5rem;
 		padding: 0.3rem 0.62rem;
 		border: 1px solid var(--halbu-border);
@@ -330,17 +328,6 @@
 		overflow: hidden;
 		white-space: nowrap;
 		text-overflow: ellipsis;
-	}
-
-	.save-directory-badge {
-		flex-shrink: 0;
-		border: 1px solid var(--halbu-borderStrong);
-		border-radius: var(--app-radius-sm);
-		background: var(--halbu-panel2);
-		color: var(--halbu-text-muted);
-		font-size: 0.78rem;
-		line-height: 1;
-		padding: 0.2rem 0.36rem;
 	}
 
 	.library-table thead th {

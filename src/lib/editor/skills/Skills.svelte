@@ -11,6 +11,14 @@
 		skillsEquivalent,
 	} from "./skillSlots.js";
 	import {
+		buildPageNotices,
+		buildSkillStatesById,
+		derivePageIndexes,
+		deriveSkillsData,
+		resolveActivePageIndex,
+		resolveSelectedSkillId,
+	} from "./skillsLogic.js";
+	import {
 		classLabel,
 		getSkillPageNames,
 		getSkillsDataset,
@@ -57,155 +65,57 @@
 	const skillsDataset = $derived(getSkillsDataset(save.version));
 	const hasKnownVersionSkills = $derived(skillsDataset != null);
 
-	const skillsData = $derived(
-		hasKnownVersionSkills
-			? skillsDataset
-					.filter((skillData) => skillData.class == save.character.class)
-					.map((skillData) => {
-						if (Number(save.version) === 105 && save.character.class === "Warlock") {
-							return {
-								...skillData,
-								page: 4 - Number(skillData.page),
-							};
-						}
-						return skillData;
-					})
-			: []
-	);
+	const skillsData = $derived(deriveSkillsData(skillsDataset, save.version, save.character.class));
 	const hasBackendClassSupport = $derived(
 		skillsContext == null ? true : Boolean(skillsContext.class_supported_for_version)
 	);
 	const skillSlotsReady = $derived(Array.isArray(save.skills) && save.skills.length >= skillSlotCount);
 	const hasClassSkills = $derived(skillsData.length > 0 && hasBackendClassSupport);
-	const pageIndexes = $derived(
-		Array.from(
-			new Set(skillsData.map((skill) => Number(skill.page) - 1).filter((page) => page >= 0))
-		).sort((a, b) => a - b)
-	);
+	const pageIndexes = $derived(derivePageIndexes(skillsData));
 	const skillPageNames = $derived(getSkillPageNames(save.version, save.character.class, skillsData));
 	const canRenderTrees = $derived(hasClassSkills && skillSlotsReady);
-	const pageTitle = $derived(`${classLabel(save.character.class)} Skills`);
-	const pageNotices = $derived.by(() => {
-		const notices = [];
-		if (skillsContextError.length > 0) {
-			notices.push({
-				level: "warning",
-				text: `Failed to load skills context: ${skillsContextError}`,
-			});
-		}
-		if (!hasKnownVersionSkills) {
-			notices.push({
-				level: "warning",
-				text: `Skills editor is not available for unsupported save version ${save.version}.`,
-			});
-		} else if (!hasBackendClassSupport) {
-			notices.push({
-				level: "warning",
-				text: `Skills editor is not available for class ${classLabel(save.character.class)} in save version ${save.version}. Supported classes: ${skillsContext.supported_classes.join(", ")}.`,
-			});
-		} else if (!hasClassSkills) {
-			notices.push({
-				level: "warning",
-				text: `Skills editor has no data for class ${classLabel(save.character.class)} in save version ${save.version}.`,
-			});
-		} else if (!skillSlotsReady) {
-			notices.push({
-				level: "info",
-				text: "Preparing skills data...",
-			});
-		}
-		return notices;
-	});
+	const pageNotices = $derived(
+		buildPageNotices({
+			skillsContextError,
+			hasKnownVersionSkills,
+			hasBackendClassSupport,
+			hasClassSkills,
+			skillSlotsReady,
+			version: save.version,
+			classLabel: classLabel(save.character.class),
+			supportedClasses: skillsContext?.supported_classes ?? [],
+		})
+	);
 
 	let activePageIndex = $state(null);
 	let selectedSkillId = $state(null);
 
 	$effect(() => {
-		if (!canRenderTrees || pageIndexes.length === 0) {
-			activePageIndex = null;
-			return;
-		}
-		if (activePageIndex != null && pageIndexes.includes(activePageIndex)) {
-			return;
-		}
-		activePageIndex = pageIndexes[0];
+		activePageIndex = resolveActivePageIndex(canRenderTrees, pageIndexes, activePageIndex);
 	});
 
 	$effect(() => {
-		if (!canRenderTrees || skillsData.length === 0 || activePageIndex == null) {
-			selectedSkillId = null;
-			return;
-		}
-		const activePageSkills = skillsData.filter(
-			(skill) => Number(skill.page) === Number(activePageIndex) + 1
+		selectedSkillId = resolveSelectedSkillId(
+			canRenderTrees,
+			skillsData,
+			activePageIndex,
+			selectedSkillId
 		);
-		if (
-			selectedSkillId != null &&
-			activePageSkills.some((skill) => Number(skill.id) === Number(selectedSkillId))
-		) {
-			return;
-		}
-		const orderedSkills = [...activePageSkills].sort((left, right) => {
-			const rowDelta = Number(left.row) - Number(right.row);
-			if (rowDelta !== 0) {
-				return rowDelta;
-			}
-			return Number(left.column) - Number(right.column);
-		});
-		selectedSkillId = orderedSkills.length > 0 ? orderedSkills[0].id : null;
 	});
 
 	function getSkillSlot(skillId) {
 		return skillIdToSaveId(save.version, save.character.class, skillId);
 	}
 
-	function buildSkillState(skillData) {
-		const reqLevel = Number(skillData.reqlevel);
-		const levelRequirementMet = save.character.level >= reqLevel;
-		const unmetPrerequisites = skillData.reqskills.filter((requiredSkillId) => {
-			const requiredSaveId = getSkillSlot(requiredSkillId);
-			return requiredSaveId < 0 || getSkillPoints(save.skills, requiredSaveId) < 1;
-		});
-		const prerequisitesMet = unmetPrerequisites.length === 0;
-		const available = levelRequirementMet && prerequisitesMet;
-		const saveId = Number(skillData.saveId);
-		const points = getSkillPoints(save.skills, saveId);
-		const canIncrement = points < 255 && available && save.attributes.newskills.value > 0;
-		const canDecrement = points > 0;
-
-		let state = "available";
-		if (points > 0) {
-			state = "invested";
-		} else if (!levelRequirementMet) {
-			state = "locked-level";
-		} else if (!prerequisitesMet) {
-			state = "locked-prereq";
-		}
-
-		return {
-			id: Number(skillData.id),
-			saveId,
-			points,
-			available,
-			levelRequirementMet,
-			prerequisitesMet,
-			state,
-			canIncrement,
-			canDecrement,
-		};
-	}
-
-	const skillStatesById = $derived.by(() => {
-		if (!skillSlotsReady) {
-			return {};
-		}
-
-		const states = {};
-		for (const skill of skillsData) {
-			states[Number(skill.id)] = buildSkillState(skill);
-		}
-		return states;
-	});
+	const skillStatesById = $derived(
+		buildSkillStatesById(skillsData, {
+			skillSlotsReady,
+			saveSkills: save.skills,
+			characterLevel: save.character.level,
+			availableSkillPoints: save.attributes.newskills.value,
+			getSkillSlot,
+		})
+	);
 
 	function skillStateFor(skillId) {
 		return skillStatesById[Number(skillId)];
@@ -326,7 +236,6 @@
 
 <div class="skills-page grid content-start gap-[0.6rem]">
 	<SkillsHeader
-		title={pageTitle}
 		pointsLeft={save.attributes.newskills.value}
 		disabled={!hasClassSkills || isSkillsContextLoading}
 		onRefund={refund}
@@ -355,40 +264,38 @@
 		</div>
 	{/if}
 
-	<div class="min-w-0 overflow-x-auto">
-		<div class="flex w-max min-w-full items-start gap-[0.38rem] pr-[0.08rem]">
-			<div class="min-w-0 shrink-0">
-				{#if canRenderTrees}
-					<SkillTreeCanvas
-						pageIndexes={pageIndexes}
-						skillPageNames={skillPageNames}
-						skillsData={skillsData}
-						skillStatesById={skillStatesById}
-						activePageIndex={activePageIndex}
-						selectedSkillId={selectedSkillId}
-						onPageSelect={selectSkillPage}
-						onSelect={selectSkill}
-						onIncrement={incrementSkill}
-						onDecrement={decrementSkill}
-					/>
-				{:else}
-					<div class="rounded-sm border border-halbu-border bg-halbu-panel px-[0.6rem] py-[0.48rem] text-[0.9rem] text-halbu-textMuted">
-						Skill tree is unavailable for this save context.
-					</div>
-				{/if}
-			</div>
-
-			<div class="w-[19.5rem] shrink-0">
-				<SkillInspectorPanel
-					skillDetails={selectedSkillDetails}
-					disabled={!canRenderTrees || isSkillsContextLoading}
-					canIncrement={selectedSkillState != null && selectedSkillState.canIncrement}
-					canDecrement={selectedSkillState != null && selectedSkillState.canDecrement}
-					onIncrement={incrementSelectedSkill}
-					onDecrement={decrementSelectedSkill}
-					onSetPoints={setSelectedSkillPoints}
+	<div class="grid min-w-0 gap-[0.56rem] xl:grid-cols-[minmax(0,2.1fr)_minmax(18.5rem,1fr)]">
+		<div class="min-w-0">
+			{#if canRenderTrees}
+				<SkillTreeCanvas
+					pageIndexes={pageIndexes}
+					skillPageNames={skillPageNames}
+					skillsData={skillsData}
+					skillStatesById={skillStatesById}
+					activePageIndex={activePageIndex}
+					selectedSkillId={selectedSkillId}
+					onPageSelect={selectSkillPage}
+					onSelect={selectSkill}
+					onIncrement={incrementSkill}
+					onDecrement={decrementSkill}
 				/>
-			</div>
+			{:else}
+				<div class="rounded-sm border border-halbu-border bg-halbu-panel px-[0.6rem] py-[0.48rem] text-[0.9rem] text-halbu-textMuted">
+					Skill tree is unavailable for this save context.
+				</div>
+			{/if}
+		</div>
+
+		<div class="min-w-0 xl:max-w-[36rem]">
+			<SkillInspectorPanel
+				skillDetails={selectedSkillDetails}
+				disabled={!canRenderTrees || isSkillsContextLoading}
+				canIncrement={selectedSkillState != null && selectedSkillState.canIncrement}
+				canDecrement={selectedSkillState != null && selectedSkillState.canDecrement}
+				onIncrement={incrementSelectedSkill}
+				onDecrement={decrementSelectedSkill}
+				onSetPoints={setSelectedSkillPoints}
+			/>
 		</div>
 	</div>
 </div>

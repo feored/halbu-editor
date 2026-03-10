@@ -1,7 +1,7 @@
-	<script>
+<script>
 	import names from "./names.json";
 	import variants from "./variants.json";
-	import { Difficulty, u32MAX } from "../../utils/Constants.svelte";
+	import { Difficulty } from "../../utils/constants.js";
 	import { enforceMinMax } from "../../utils/actions.js";
 
 	let { save = $bindable() } = $props();
@@ -12,6 +12,7 @@
 		IronWolf: "Iron Wolf",
 		Barbarian: "Barbarian",
 	};
+	const U32_MAX = 4294967295;
 
 	function xpFromLevel(level, rate) {
 		return rate * (level + 1) * (level * level);
@@ -44,7 +45,7 @@
 
 	function setHired(nextHired) {
 		isHired = nextHired;
-		save.character.mercenary.id = nextHired ? Math.floor(Math.random() * u32MAX) : 0;
+		save.character.mercenary.id = nextHired ? Math.floor(Math.random() * U32_MAX) : 0;
 		if (!nextHired) {
 			save.character.mercenary.dead = false;
 		}
@@ -59,20 +60,21 @@
 
 	let possibleVariants = $state(
 		variants.filter(
-		(merc) => merc.difficulty == mercVariant.difficulty && merc.type == mercVariant.type
-		)
+			(merc) => merc.difficulty == mercVariant.difficulty && merc.type == mercVariant.type,
+		),
 	);
 
 	function updateVariant() {
 		possibleVariants = variants.filter(
-			(merc) => merc.difficulty == mercVariant.difficulty && merc.type == mercVariant.type
+			(merc) => merc.difficulty == mercVariant.difficulty && merc.type == mercVariant.type,
 		);
 		if (possibleVariants.length === 0) {
 			return;
 		}
 
 		const matchedVariant =
-			possibleVariants.find((merc) => merc.variant == mercVariant.variant) ?? possibleVariants[0];
+			possibleVariants.find((merc) => merc.variant == mercVariant.variant) ??
+			possibleVariants[0];
 
 		mercVariant = JSON.parse(JSON.stringify(matchedVariant));
 		save.character.mercenary.variant_id = matchedVariant.id;
@@ -108,7 +110,10 @@
 
 	$effect(() => {
 		if (variantNames.length > 0) {
-			const index = Math.max(0, Math.min(save.character.mercenary.name_id, variantNames.length - 1));
+			const index = Math.max(
+				0,
+				Math.min(save.character.mercenary.name_id, variantNames.length - 1),
+			);
 			save.character.mercenary.name = variantNames[index];
 		}
 	});
@@ -155,7 +160,9 @@
 		}`}
 	>
 		<h3 class="editor-card-title mb-[0.36rem]">Identity</h3>
-		<div class="grid grid-cols-[8rem_minmax(0,1fr)] items-center gap-x-[0.55rem] gap-y-[0.34rem]">
+		<div
+			class="grid grid-cols-[8rem_minmax(0,1fr)] items-center gap-x-[0.55rem] gap-y-[0.34rem]"
+		>
 			<label class="form-label mb-0" for="name_id">Name</label>
 			<select
 				class="form-select"
@@ -176,7 +183,7 @@
 				name="id"
 				id="id"
 				min="0"
-				max={u32MAX}
+				max={U32_MAX}
 				step="1"
 				use:enforceMinMax
 				bind:value={save.character.mercenary.id}
@@ -191,7 +198,9 @@
 		}`}
 	>
 		<h3 class="editor-card-title mb-[0.36rem]">Type</h3>
-		<div class="grid grid-cols-[8rem_minmax(0,1fr)] items-center gap-x-[0.55rem] gap-y-[0.34rem]">
+		<div
+			class="grid grid-cols-[8rem_minmax(0,1fr)] items-center gap-x-[0.55rem] gap-y-[0.34rem]"
+		>
 			<label class="form-label mb-0" for="class">Class</label>
 			<select
 				class="form-select"
@@ -246,7 +255,9 @@
 		}`}
 	>
 		<h3 class="editor-card-title mb-[0.36rem]">Progression</h3>
-		<div class="grid grid-cols-[8rem_minmax(0,1fr)] items-center gap-x-[0.55rem] gap-y-[0.34rem]">
+		<div
+			class="grid grid-cols-[8rem_minmax(0,1fr)] items-center gap-x-[0.55rem] gap-y-[0.34rem]"
+		>
 			<label class="form-label mb-0" for="level">Level</label>
 			<input
 				class="form-control"
@@ -270,15 +281,12 @@
 				name="experience"
 				id="experience"
 				min="0"
-				max={u32MAX}
+				max={U32_MAX}
 				step="1"
 				bind:value={save.character.mercenary.experience}
 				oninput={changeExperience}
 				disabled={!isHired}
 			/>
-		</div>
-		<div class="form-text mt-[0.26rem]">
-			Hirelings use different XP curves depending on class and hired difficulty.
 		</div>
 	</section>
 </div>

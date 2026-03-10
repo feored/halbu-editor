@@ -4,9 +4,7 @@
 	import SkillTierGuideLayer from "./SkillTierGuideLayer.svelte";
 	import { computeTreeLayout } from "./treeLayout.js";
 
-	let {
-		title,
-		showTitle,
+let {
 		skills,
 		skillStatesById,
 		selectedSkillId,
@@ -30,12 +28,6 @@
 </script>
 
 <section class="skills-tree-section">
-	{#if showTitle}
-		<header class="mb-[0.34rem]">
-			<h3 class="editor-card-title">{title}</h3>
-		</header>
-	{/if}
-
 	<div class="tree-scroll">
 		<div
 			class="tree-surface"
@@ -70,6 +62,7 @@
 
 	.tree-scroll {
 		overflow: auto;
+		padding-bottom: 0.1rem;
 	}
 
 	.tree-surface {

@@ -1,5 +1,5 @@
 <script>
-	import * as Settings from "../../utils/Settings.svelte";
+	import * as Settings from "../../utils/settings.js";
 	import acts from "./actquests.json";
 	let { save = $bindable() } = $props();
 
@@ -293,64 +293,46 @@
 								></div>
 							</div>
 
-							<div class="grid gap-[0.34rem]">
-									{#if advancedFlags}
-										{#each getRenderedActQuests(act) as quest}
-											{@const isCompletionQuest = quest.id === "completion"}
-											<article
-												class={`rounded-xs border border-halbu-border px-[0.46rem] py-[0.34rem] ${
-													isCompletionQuest ? "bg-halbu-panel" : "bg-halbu-panel2"
-												}`}
-											>
-												<h4 class="editor-card-title">
-													{isCompletionQuest ? "Act Completion" : quest.display}
-												</h4>
-												<div class="mt-[0.24rem] grid gap-[0.12rem]">
+								<div class="grid gap-[0.34rem]">
+									{#snippet questCard(difficultyId, actId, quest, advancedMode)}
+										{@const isCompletionQuest = quest.id === "completion"}
+										<article
+											class={`rounded-xs border border-halbu-border px-[0.46rem] py-[0.34rem] ${
+												isCompletionQuest ? "bg-halbu-panel" : "bg-halbu-panel2"
+											}`}
+										>
+											<h4 class="editor-card-title">{isCompletionQuest ? "Act Completion" : quest.display}</h4>
+											<div class="mt-[0.24rem] grid gap-[0.12rem]">
+												{#if advancedMode}
 													{#each questFlags as flag}
 														<label
 															class="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-[0.4rem] rounded-xs px-[0.1rem] py-[0.06rem] text-[0.86rem] text-halbu-text"
-															for={activeDifficulty.id + "-" + act.id + "-" + quest.id + "-" + flag.id}
+															for={difficultyId + "-" + actId + "-" + quest.id + "-" + flag.id}
 														>
 															<input
 																class="form-check-input mt-0"
 																type="checkbox"
-																id={activeDifficulty.id + "-" + act.id + "-" + quest.id + "-" + flag.id}
-																checked={hasFlag(activeDifficulty.id, act.id, quest.id, flag.id)}
-																onchange={() =>
-																	toggleFlag(activeDifficulty.id, act.id, quest.id, flag.id)}
+																id={difficultyId + "-" + actId + "-" + quest.id + "-" + flag.id}
+																checked={hasFlag(difficultyId, actId, quest.id, flag.id)}
+																onchange={() => toggleFlag(difficultyId, actId, quest.id, flag.id)}
 															/>
 															<span class="leading-[1.2]">{flag.display}</span>
 														</label>
-												{/each}
-											</div>
-										</article>
-									{/each}
-									{:else}
-										{#each getStandardActQuests(act) as quest}
-											{@const isCompletionQuest = quest.id === "completion"}
-											<article
-												class={`rounded-xs border border-halbu-border px-[0.46rem] py-[0.34rem] ${
-													isCompletionQuest ? "bg-halbu-panel" : "bg-halbu-panel2"
-												}`}
-											>
-												<h4 class="editor-card-title">
-													{isCompletionQuest ? "Act Completion" : quest.display}
-												</h4>
-												<div class="mt-[0.24rem] grid gap-[0.12rem]">
+													{/each}
+												{:else}
 													{#each quest.states as state}
 														<label
 															class="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-[0.4rem] rounded-xs px-[0.1rem] py-[0.06rem] text-[0.86rem] text-halbu-text"
-															for={activeDifficulty.id + "-" + act.id + "-" + quest.id + "-" + state.display}
+															for={difficultyId + "-" + actId + "-" + quest.id + "-" + state.display}
 														>
 															<input
 																class="form-check-input mt-0"
 																type="checkbox"
-																id={activeDifficulty.id + "-" + act.id + "-" + quest.id + "-" + state.display}
-																checked={isStatePresent(activeDifficulty.id, act.id, quest.id, state)}
-																indeterminate={isStateIndetermined(activeDifficulty.id, act.id, quest.id, state)}
-																onchange={() =>
-																toggleState(activeDifficulty.id, act.id, quest.id, state)}
-														/>
+																id={difficultyId + "-" + actId + "-" + quest.id + "-" + state.display}
+																checked={isStatePresent(difficultyId, actId, quest.id, state)}
+																indeterminate={isStateIndetermined(difficultyId, actId, quest.id, state)}
+																onchange={() => toggleState(difficultyId, actId, quest.id, state)}
+															/>
 															<span class="min-w-0">
 																<span
 																	class={`block leading-[1.2] ${
@@ -361,21 +343,24 @@
 																>
 																	{state.display}
 																</span>
-																{#if (quest.id === "completion" && act.id !== "act4" && act.id !== "act5") || (quest.id === "q2" && act.id === "act4")}
+																{#if (quest.id === "completion" && actId !== "act4" && actId !== "act5") || (quest.id === "q2" && actId === "act4")}
 																	<span class="form-text m-0">Required to use the waypoint to the next act.</span>
-																{:else if act.id === "act5" && quest.id === "completion" && state.display !== "Completed"}
-																<span class="form-text m-0">Only takes effect if Den of Evil has been completed.</span>
-															{/if}
-														</span>
-													</label>
-												{/each}
+																{:else if actId === "act5" && quest.id === "completion" && state.display !== "Completed"}
+																	<span class="form-text m-0">Only takes effect if Den of Evil has been completed.</span>
+																{/if}
+															</span>
+														</label>
+													{/each}
+												{/if}
 											</div>
 										</article>
+									{/snippet}
+									{#each (advancedFlags ? getRenderedActQuests(act) : getStandardActQuests(act)) as quest}
+										{@render questCard(activeDifficulty.id, act.id, quest, advancedFlags)}
 									{/each}
-								{/if}
-							</div>
-						</section>
-					{/each}
+								</div>
+							</section>
+						{/each}
 				</div>
 			{/each}
 		</div>

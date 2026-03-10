@@ -5,42 +5,73 @@
 @tailwind utilities;
 
 :root {
-  --halbu-bg: theme("colors.halbu.bg");
-  --halbu-panel: theme("colors.halbu.panel");
-  --halbu-panel2: theme("colors.halbu.panel2");
-  --halbu-card: theme("colors.halbu.card");
-  --halbu-border: theme("colors.halbu.border");
-  --halbu-border-strong: theme("colors.halbu.borderStrong");
-  --halbu-dark-sidebar: theme("colors.halbu.darkSidebar");
-  --halbu-dark-input: theme("colors.halbu.darkInput");
-  --halbu-text: theme("colors.halbu.text");
-  --halbu-text-muted: theme("colors.halbu.textMuted");
-  --halbu-text-dim: theme("colors.halbu.textDim");
-  --halbu-white: theme("colors.halbu.white");
-  --halbu-link: theme("colors.halbu.link");
-  --halbu-light-bg: theme("colors.halbu.lightBg");
-  --halbu-light-panel: theme("colors.halbu.lightPanel");
-  --halbu-light-panel2: theme("colors.halbu.lightPanel2");
-  --halbu-light-secondary-bg: theme("colors.halbu.lightSecondaryBg");
-  --halbu-light-border: theme("colors.halbu.lightBorder");
-  --halbu-light-border-strong: theme("colors.halbu.lightBorderStrong");
-  --halbu-light-text: theme("colors.halbu.lightText");
-  --halbu-light-text-muted: theme("colors.halbu.lightTextMuted");
-  --halbu-light-emphasis: theme("colors.halbu.lightEmphasis");
-  --halbu-primary: theme("colors.halbu.primary");
-  --halbu-primary-hover: theme("colors.halbu.primaryHover");
-  --halbu-primary-active: theme("colors.halbu.primaryActive");
-  --halbu-primary-soft: theme("colors.halbu.primarySoft");
-  --halbu-success: theme("colors.halbu.success");
-  --halbu-success-soft: theme("colors.halbu.successSoft");
-  --halbu-warning: theme("colors.halbu.warning");
-  --halbu-warning-soft: theme("colors.halbu.warningSoft");
-  --halbu-danger: theme("colors.halbu.danger");
-  --halbu-danger-hover: theme("colors.halbu.dangerHover");
-  --halbu-danger-active: theme("colors.halbu.dangerActive");
-  --halbu-danger-soft: theme("colors.halbu.dangerSoft");
-  --halbu-info: theme("colors.halbu.info");
-  --halbu-info-soft: theme("colors.halbu.infoSoft");
+  --halbu-bg-rgb: 20 20 20;
+  --halbu-panel-rgb: 27 27 27;
+  --halbu-panel2-rgb: 35 35 35;
+  --halbu-card-rgb: 43 43 43;
+  --halbu-border-rgb: 61 61 61;
+  --halbu-border-strong-rgb: 86 86 86;
+  --halbu-dark-sidebar-rgb: 24 24 24;
+  --halbu-dark-input-rgb: 18 18 18;
+  --halbu-text-rgb: 236 236 236;
+  --halbu-text-muted-rgb: 178 178 178;
+  --halbu-text-dim-rgb: 127 127 127;
+  --halbu-white-rgb: 255 255 255;
+  --halbu-link-rgb: 142 207 240;
+  --halbu-light-bg-rgb: 244 244 244;
+  --halbu-light-panel-rgb: 255 255 255;
+  --halbu-light-panel2-rgb: 239 239 239;
+  --halbu-light-secondary-bg-rgb: 231 231 231;
+  --halbu-light-border-rgb: 208 208 208;
+  --halbu-light-border-strong-rgb: 189 189 189;
+  --halbu-light-text-rgb: 28 28 28;
+  --halbu-light-text-muted-rgb: 102 102 102;
+  --halbu-light-emphasis-rgb: 16 16 16;
+  --halbu-primary-rgb: 46 163 230;
+  --halbu-primary-hover-rgb: 36 143 201;
+  --halbu-primary-active-rgb: 29 116 163;
+  --halbu-success-rgb: 79 163 109;
+  --halbu-warning-rgb: 227 181 98;
+  --halbu-danger-rgb: 217 83 79;
+  --halbu-danger-hover-rgb: 197 66 62;
+  --halbu-danger-active-rgb: 167 53 50;
+  --halbu-info-rgb: 103 189 233;
+  --halbu-bg: rgb(var(--halbu-bg-rgb));
+  --halbu-panel: rgb(var(--halbu-panel-rgb));
+  --halbu-panel2: rgb(var(--halbu-panel2-rgb));
+  --halbu-card: rgb(var(--halbu-card-rgb));
+  --halbu-border: rgb(var(--halbu-border-rgb));
+  --halbu-border-strong: rgb(var(--halbu-border-strong-rgb));
+  --halbu-dark-sidebar: rgb(var(--halbu-dark-sidebar-rgb));
+  --halbu-dark-input: rgb(var(--halbu-dark-input-rgb));
+  --halbu-text: rgb(var(--halbu-text-rgb));
+  --halbu-text-muted: rgb(var(--halbu-text-muted-rgb));
+  --halbu-text-dim: rgb(var(--halbu-text-dim-rgb));
+  --halbu-white: rgb(var(--halbu-white-rgb));
+  --halbu-link: rgb(var(--halbu-link-rgb));
+  --halbu-light-bg: rgb(var(--halbu-light-bg-rgb));
+  --halbu-light-panel: rgb(var(--halbu-light-panel-rgb));
+  --halbu-light-panel2: rgb(var(--halbu-light-panel2-rgb));
+  --halbu-light-secondary-bg: rgb(var(--halbu-light-secondary-bg-rgb));
+  --halbu-light-border: rgb(var(--halbu-light-border-rgb));
+  --halbu-light-border-strong: rgb(var(--halbu-light-border-strong-rgb));
+  --halbu-light-text: rgb(var(--halbu-light-text-rgb));
+  --halbu-light-text-muted: rgb(var(--halbu-light-text-muted-rgb));
+  --halbu-light-emphasis: rgb(var(--halbu-light-emphasis-rgb));
+  --halbu-primary: rgb(var(--halbu-primary-rgb));
+  --halbu-primary-hover: rgb(var(--halbu-primary-hover-rgb));
+  --halbu-primary-active: rgb(var(--halbu-primary-active-rgb));
+  --halbu-primary-soft: rgb(var(--halbu-primary-rgb) / 0.18);
+  --halbu-success: rgb(var(--halbu-success-rgb));
+  --halbu-success-soft: rgb(var(--halbu-success-rgb) / 0.14);
+  --halbu-warning: rgb(var(--halbu-warning-rgb));
+  --halbu-warning-soft: rgb(var(--halbu-warning-rgb) / 0.18);
+  --halbu-danger: rgb(var(--halbu-danger-rgb));
+  --halbu-danger-hover: rgb(var(--halbu-danger-hover-rgb));
+  --halbu-danger-active: rgb(var(--halbu-danger-active-rgb));
+  --halbu-danger-soft: rgb(var(--halbu-danger-rgb) / 0.14);
+  --halbu-info: rgb(var(--halbu-info-rgb));
+  --halbu-info-soft: rgb(var(--halbu-info-rgb) / 0.14);
   --app-radius-sm: 0.25rem;
   --app-radius-md: 0.4rem;
   --app-radius-lg: 0.55rem;
@@ -56,10 +87,6 @@ body,
   height: 100%;
 }
 
-html {
-  color-scheme: dark;
-}
-
 body {
   margin: 0;
   font-family: var(--app-font);
@@ -70,30 +97,62 @@ body {
 
 /* Light theme stays supported, but the visual identity is tuned for desktop-dark first. */
 [data-bs-theme="light"] {
-  --bs-body-bg: var(--halbu-light-bg);
-  --bs-body-color: var(--halbu-light-text);
-  --bs-secondary-color: var(--halbu-light-text-muted);
-  --bs-tertiary-bg: var(--halbu-light-panel);
-  --bs-secondary-bg: var(--halbu-light-secondary-bg);
-  --bs-border-color: var(--halbu-light-border);
-  --bs-emphasis-color: var(--halbu-light-emphasis);
+  color-scheme: light;
+
+  /* Core palette */
+  --halbu-bg-rgb: 245 247 250;
+  --halbu-panel-rgb: 255 255 255;
+  --halbu-panel2-rgb: 238 242 247;
+  --halbu-card-rgb: 255 255 255;
+  --halbu-border-rgb: 209 216 224;
+  --halbu-border-strong-rgb: 185 194 204;
+  --halbu-dark-sidebar-rgb: 240 243 247;
+  --halbu-dark-input-rgb: 255 255 255;
+  --halbu-text-rgb: 28 32 38;
+  --halbu-text-muted-rgb: 96 106 118;
+  --halbu-text-dim-rgb: 128 136 146;
+  --halbu-link-rgb: var(--halbu-primary-hover-rgb);
+
+  /* Bootstrap mappings */
+  --bs-body-bg: rgb(var(--halbu-bg-rgb));
+  --bs-body-color: rgb(var(--halbu-text-rgb));
+  --bs-secondary-color: rgb(var(--halbu-text-muted-rgb));
+  --bs-tertiary-bg: rgb(var(--halbu-panel-rgb));
+  --bs-secondary-bg: rgb(var(--halbu-panel2-rgb));
+  --bs-border-color: rgb(var(--halbu-border-rgb));
+  --bs-emphasis-color: rgb(var(--halbu-text-rgb));
   --bs-primary: var(--halbu-primary);
   --bs-success: var(--halbu-success);
   --bs-warning: var(--halbu-warning);
   --bs-danger: var(--halbu-danger);
   --bs-info: var(--halbu-info);
-  --app-window-bg: var(--halbu-light-bg);
-  --app-window-border: var(--halbu-light-border-strong);
-  --app-topbar-bg: var(--halbu-light-panel2);
-  --app-sidebar-bg: var(--halbu-light-secondary-bg);
-  --app-content-bg: var(--halbu-light-bg);
-  --app-surface-1: var(--halbu-light-panel);
-  --app-surface-2: var(--halbu-light-panel2);
-  --app-input-bg: var(--halbu-light-panel);
-  --app-input-border: var(--halbu-light-border);
+
+  /* App surfaces */
+  --app-window-bg: rgb(var(--halbu-bg-rgb));
+  --app-window-border: rgb(var(--halbu-border-strong-rgb));
+  --app-topbar-bg: rgb(var(--halbu-panel-rgb));
+  --app-sidebar-bg: rgb(var(--halbu-dark-sidebar-rgb));
+  --app-content-bg: rgb(var(--halbu-bg-rgb));
+  --app-surface-1: rgb(var(--halbu-panel-rgb));
+  --app-surface-2: rgb(var(--halbu-panel2-rgb));
+  --app-input-bg: rgb(var(--halbu-dark-input-rgb));
+  --app-input-border: rgb(var(--halbu-border-rgb));
 }
 
 [data-bs-theme="dark"] {
+  color-scheme: dark;
+  --halbu-bg-rgb: 20 20 20;
+  --halbu-panel-rgb: 27 27 27;
+  --halbu-panel2-rgb: 35 35 35;
+  --halbu-card-rgb: 43 43 43;
+  --halbu-border-rgb: 61 61 61;
+  --halbu-border-strong-rgb: 86 86 86;
+  --halbu-dark-sidebar-rgb: 24 24 24;
+  --halbu-dark-input-rgb: 18 18 18;
+  --halbu-text-rgb: 236 236 236;
+  --halbu-text-muted-rgb: 178 178 178;
+  --halbu-text-dim-rgb: 127 127 127;
+  --halbu-link-rgb: 142 207 240;
   --bs-body-bg: var(--halbu-bg);
   --bs-body-color: var(--halbu-text);
   --bs-secondary-color: var(--halbu-text-muted);
@@ -316,6 +375,11 @@ legend {
   background-color: var(--app-input-bg);
   border-color: var(--app-input-border);
   box-shadow: none;
+  cursor: pointer;
+}
+
+.form-check-input:disabled {
+  cursor: not-allowed;
 }
 
 .form-check-input:focus {

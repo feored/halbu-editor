@@ -1,8 +1,7 @@
 <script>
 	import { open } from "@tauri-apps/plugin-dialog";
 	import Button from "../components/ui/button/button.svelte";
-	import * as Settings from "../utils/Settings.svelte";
-	import * as log from "../utils/Logs.svelte";
+	import * as Settings from "../utils/settings.js";
 	import { onMount } from "svelte";
 	import { getVersion } from "@tauri-apps/api/app";
 
@@ -12,13 +11,16 @@
 	} = $props();
 
 	let appVersion = $state("");
+	let currentSettings = $state({});
 	onMount(() => {
+		const unsubscribe = Settings.settingsStore.subscribe((nextSettings) => {
+			currentSettings = nextSettings ?? {};
+		});
 		getVersion().then((version) => {
 			appVersion = version;
 		});
+		return unsubscribe;
 	});
-	// Initialize values
-	let currentSettings = $state(Settings.cachedSettings);
 
 	const setSaveFolder = async () => {
 		try {
@@ -27,17 +29,15 @@
 				directory: true,
 				title: "Set D2R Save Folder",
 			});
-			currentSettings[Settings.Key.SaveFolder] = Array.isArray(selectedPath)
+			const resolvedSaveFolder = Array.isArray(selectedPath)
 				? selectedPath[0]
 				: selectedPath;
 			await Settings.set(
 				Settings.Key.SaveFolder,
-				currentSettings[Settings.Key.SaveFolder] == null
-					? ""
-					: currentSettings[Settings.Key.SaveFolder]
+				resolvedSaveFolder == null ? "" : resolvedSaveFolder
 			);
 		} catch (err) {
-			log.error(err);
+			console.error(err);
 		}
 	};
 
@@ -45,34 +45,29 @@
 		if (event.currentTarget.value == null) {
 			return;
 		}
-		currentSettings[Settings.Key.Theme] = event.currentTarget.value;
 		await Settings.set(Settings.Key.Theme, event.currentTarget.value);
 		await Settings.apply();
 	}
 
 	async function setParseMode(event) {
 		const nextParseMode = event.currentTarget.value === "strict" ? "strict" : "lax";
-		currentSettings[Settings.Key.ParseMode] = nextParseMode;
 		await Settings.set(Settings.Key.ParseMode, nextParseMode);
 		onParseModeChange?.(nextParseMode);
 	}
 
 	async function setQuestsAdvancedFlags(event) {
-		Settings.set(Settings.Key.QuestsAdvancedFlags, event.target.checked);
-		currentSettings[Settings.Key.QuestsAdvancedFlags] = event.target.checked;
+		await Settings.set(Settings.Key.QuestsAdvancedFlags, event.target.checked);
 	}
 
 	async function setQuestsAdvancedAllQuests(event) {
 		if (!currentSettings[Settings.Key.QuestsAdvancedFlags]) {
 			return;
 		}
-		Settings.set(Settings.Key.QuestsAdvancedAllQuests, event.target.checked);
-		currentSettings[Settings.Key.QuestsAdvancedAllQuests] = event.target.checked;
+		await Settings.set(Settings.Key.QuestsAdvancedAllQuests, event.target.checked);
 	}
 
 	async function setQuestsShowPrologue(event) {
-		Settings.set(Settings.Key.QuestsShowPrologue, event.target.checked);
-		currentSettings[Settings.Key.QuestsShowPrologue] = event.target.checked;
+		await Settings.set(Settings.Key.QuestsShowPrologue, event.target.checked);
 	}
 </script>
 
@@ -149,25 +144,25 @@
 		</div>
 	</section>
 
-	<section class="rounded-sm border border-halbu-border bg-halbu-panel px-[0.6rem] py-[0.46rem]">
-		<h3 class="editor-card-title mb-[0.34rem]">Paths</h3>
-		<div class="grid gap-[0.2rem] sm:grid-cols-[8.7rem_minmax(0,1fr)] sm:items-center sm:gap-x-[0.62rem]">
-			<label class="form-label mb-0" for="settings-save-folder">Save folder</label>
-			<div class="grid gap-[0.36rem] sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
-				<Button onclick={setSaveFolder}>Set Save Folder</Button>
-				<input
-					id="settings-save-folder"
-					type="text"
-					class="form-control form-control-readonly"
-					value={currentSettings[Settings.Key.SaveFolder]}
-					readonly
-				/>
+		<section class="rounded-sm border border-halbu-border bg-halbu-panel px-[0.6rem] py-[0.46rem]">
+			<h3 class="editor-card-title mb-[0.34rem]">Paths</h3>
+			<div class="grid gap-[0.2rem] sm:grid-cols-[8.7rem_minmax(0,1fr)] sm:items-center sm:gap-x-[0.62rem]">
+				<label class="form-label mb-0" for="settings-save-folder">Save folder</label>
+				<div class="grid gap-[0.36rem] sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
+					<Button onclick={setSaveFolder}>Set Save Folder</Button>
+					<input
+						id="settings-save-folder"
+						type="text"
+						class="form-control form-control-readonly"
+						value={currentSettings[Settings.Key.SaveFolder] ?? ""}
+						readonly
+					/>
+				</div>
 			</div>
-		</div>
-	</section>
+		</section>
 
 	<section class="rounded-sm border border-halbu-border bg-halbu-panel px-[0.6rem] py-[0.46rem]">
-		<h3 class="editor-card-title mb-[0.34rem]">Editing</h3>
+		<h3 class="editor-card-title mb-[0.34rem]">Quests</h3>
 		<div class="grid gap-[0.32rem]">
 			<label
 				for="advanced-flags"

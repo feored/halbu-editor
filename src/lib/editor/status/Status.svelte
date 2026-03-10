@@ -49,16 +49,35 @@
 		}
 		return formatBytes(normalizedSourceFileSize);
 	});
+	const parsedMapSeed = $derived(Number(save?.character?.map_seed));
+	const normalizedMapSeed = $derived.by(() => {
+		if (!Number.isFinite(parsedMapSeed)) {
+			return null;
+		}
+		return Math.trunc(parsedMapSeed) >>> 0;
+	});
+	const mapSeedHexLabel = $derived.by(() => {
+		if (normalizedMapSeed == null) {
+			return "-";
+		}
+		return `0x${normalizedMapSeed.toString(16).toUpperCase().padStart(8, "0")}`;
+	});
+	const mapSeedLabel = $derived.by(() => {
+		if (normalizedMapSeed == null) {
+			return "-";
+		}
+		return `${normalizedMapSeed} (${mapSeedHexLabel})`;
+	});
 
 	function formatBytes(bytes) {
 		if (!Number.isFinite(bytes) || bytes < 0) {
 			return "-";
 		}
-		if (bytes < 1024) {
+		if (bytes < 1000) {
 			return `${bytes.toLocaleString()} B`;
 		}
-		const kib = bytes / 1024;
-		return `${bytes.toLocaleString()} B (${kib.toFixed(1)} KiB)`;
+		const kilobytes = bytes / 1000;
+		return `${bytes.toLocaleString()} B (${kilobytes.toFixed(1)} kB)`;
 	}
 
 	function formatUnixTimestamp(unixSeconds) {
@@ -131,8 +150,8 @@
 			<dt class="form-label mb-0">Save version</dt>
 			<dd class="m-0 text-[0.9rem] text-halbu-text">{save?.version ?? "-"}</dd>
 
-			<dt class="form-label mb-0">Map seed</dt>
-			<dd class="m-0 text-[0.9rem] text-halbu-text">{save?.character?.map_seed ?? "-"}</dd>
+				<dt class="form-label mb-0">Map seed</dt>
+				<dd class="m-0 text-[0.9rem] text-halbu-text">{mapSeedLabel}</dd>
 
 			<dt class="form-label mb-0">Last played</dt>
 			<dd class="m-0 text-[0.9rem] text-halbu-text">{formatUnixTimestamp(lastPlayedUnix)}</dd>

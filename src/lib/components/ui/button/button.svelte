@@ -34,10 +34,11 @@
 
 	const resolvedVariant = $derived(VARIANTS[variant] ?? VARIANTS.default);
 	const resolvedSize = $derived(SIZES[size] ?? SIZES.default);
+	const resolvedType = $derived(type === "submit" || type === "reset" ? type : "button");
 </script>
 
 <button
-	{type}
+	type={resolvedType}
 	class={cn(BASE, resolvedVariant, resolvedSize, className)}
 	{...rest}
 >

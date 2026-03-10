@@ -89,7 +89,7 @@
 		border: 1px solid var(--halbu-border);
 		border-radius: 0.25rem;
 		background: var(--halbu-panel2);
-		padding: 0.36rem 0.46rem 0.26rem;
+		padding: 0.28rem 0.34rem 0.2rem;
 		text-align: left;
 		cursor: pointer;
 		overflow: hidden;
@@ -108,18 +108,13 @@
 		display: flex;
 		align-items: flex-start;
 		justify-content: space-between;
-		gap: 0.25rem;
+		gap: 0.22rem;
 	}
 
 	.skill-node__name {
 		font-size: 0.84rem;
 		font-weight: 600;
 		line-height: 1.12;
-		display: -webkit-box;
-		-webkit-line-clamp: 2;
-		-webkit-box-orient: vertical;
-		overflow: hidden;
-		text-overflow: ellipsis;
 		word-break: break-word;
 		flex: 1;
 	}

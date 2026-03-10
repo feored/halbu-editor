@@ -3,7 +3,7 @@
 
 	const ROGUE_ENCAMPMENT = "RogueEncampment";
 
-	let difficulties = $state([
+	const difficulties = [
 		{
 			id: "normal",
 			display: "Normal",
@@ -16,7 +16,7 @@
 			id: "hell",
 			display: "Hell",
 		},
-	]);
+	];
 
 	const acts = [
 		{ id: "act1", display: "Act I" },
@@ -25,14 +25,13 @@
 		{ id: "act4", display: "Act IV" },
 		{ id: "act5", display: "Act V" },
 	];
-	const leftColumnActs = acts.slice(0, 3);
-	const rightColumnActs = acts.slice(3);
+	const actColumns = [acts.slice(0, 3), acts.slice(3)];
 	let activeDifficultyId = $state("normal");
 
 	function setActWaypoints(difficulty, act, value) {
-		for (let i = 0; i < save.waypoints[difficulty.id][act.id].length; i++) {
-			if (save.waypoints[difficulty.id][act.id][i].id != ROGUE_ENCAMPMENT) {
-				save.waypoints[difficulty.id][act.id][i].acquired = value;
+		for (const waypoint of save.waypoints[difficulty.id][act.id]) {
+			if (waypoint.id !== ROGUE_ENCAMPMENT) {
+				waypoint.acquired = value;
 			}
 		}
 	}
@@ -107,11 +106,10 @@
 		</div>
 	</div>
 
-	{#each difficulties as difficulty}
-		{#if difficulty.id === activeDifficultyId}
-			<div class="grid grid-cols-1 gap-[0.58rem] lg:grid-cols-2">
-				<div class="grid content-start gap-[0.58rem]">
-					{#each leftColumnActs as act}
+		{#each difficulties as difficulty}
+			{#if difficulty.id === activeDifficultyId}
+				<div class="grid grid-cols-1 gap-[0.58rem] lg:grid-cols-2">
+					{#snippet actCard(difficulty, act)}
 						{@const actCounts = countActWaypoints(difficulty, act)}
 						<section class="rounded-sm border border-halbu-border bg-halbu-panel px-[0.6rem] py-[0.48rem]">
 							<div class="mb-[0.34rem] flex items-start justify-between gap-[0.5rem]">
@@ -139,97 +137,43 @@
 								</div>
 							</div>
 
-								<div class="grid gap-[0.18rem]">
-										{#each save.waypoints[difficulty.id][act.id] as wp}
-											<label
-												class={`grid grid-cols-[auto_minmax(0,1fr)] items-start gap-[0.44rem] rounded-xs border px-[0.44rem] py-[0.3rem] text-[0.88rem] ${
-													wp.id === ROGUE_ENCAMPMENT
-														? "border-halbu-border bg-halbu-panel2 text-halbu-textMuted"
-														: "border-halbu-border bg-halbu-panel2 text-halbu-text"
-												}`}
-												for={difficulty.id + "-" + wp.act + "-" + wp.id}
-											>
-											<input
-												class="form-check-input mt-0"
-												type="checkbox"
-												id={difficulty.id + "-" + wp.act + "-" + wp.id}
-												name={difficulty.id + "-" + wp.act + "-" + wp.id}
-												bind:checked={wp.acquired}
-												disabled={wp.id === ROGUE_ENCAMPMENT}
-											/>
-											<span class="min-w-0">
-												<span class="block leading-[1.2]">{wp.name}</span>
-												{#if wp.id === ROGUE_ENCAMPMENT}
-													<span class="form-text m-0">Acquired by default.</span>
-												{/if}
-											</span>
-										</label>
+							<div class="grid gap-[0.18rem]">
+								{#each save.waypoints[difficulty.id][act.id] as wp}
+									<label
+										class={`grid grid-cols-[auto_minmax(0,1fr)] items-start gap-[0.44rem] rounded-xs border px-[0.44rem] py-[0.3rem] text-[0.88rem] ${
+											wp.id === ROGUE_ENCAMPMENT
+												? "border-halbu-border bg-halbu-panel2 text-halbu-textMuted"
+												: "border-halbu-border bg-halbu-panel2 text-halbu-text"
+										}`}
+										for={difficulty.id + "-" + wp.act + "-" + wp.id}
+									>
+										<input
+											class="form-check-input mt-0"
+											type="checkbox"
+											id={difficulty.id + "-" + wp.act + "-" + wp.id}
+											name={difficulty.id + "-" + wp.act + "-" + wp.id}
+											bind:checked={wp.acquired}
+											disabled={wp.id === ROGUE_ENCAMPMENT}
+										/>
+										<span class="min-w-0">
+											<span class="block leading-[1.2]">{wp.name}</span>
+											{#if wp.id === ROGUE_ENCAMPMENT}
+												<span class="form-text m-0">Acquired by default.</span>
+											{/if}
+										</span>
+									</label>
 								{/each}
 							</div>
 						</section>
+					{/snippet}
+					{#each actColumns as actColumn}
+						<div class="grid content-start gap-[0.58rem]">
+							{#each actColumn as act}
+								{@render actCard(difficulty, act)}
+							{/each}
+						</div>
 					{/each}
 				</div>
-
-				<div class="grid content-start gap-[0.58rem]">
-					{#each rightColumnActs as act}
-						{@const actCounts = countActWaypoints(difficulty, act)}
-						<section class="rounded-sm border border-halbu-border bg-halbu-panel px-[0.6rem] py-[0.48rem]">
-							<div class="mb-[0.34rem] flex items-start justify-between gap-[0.5rem]">
-								<div class="min-w-0">
-									<h3 class="editor-card-title">{act.display}</h3>
-									<p class="m-0 mt-[0.12rem] text-[0.8rem] text-halbu-textMuted">
-										{actCounts.acquired}/{actCounts.total} acquired
-									</p>
-								</div>
-								<div class="inline-flex shrink-0 items-center gap-[0.24rem]">
-									<button
-										type="button"
-										class="rounded-xs border border-halbu-border bg-halbu-panel2 px-[0.44rem] py-[0.18rem] text-[0.8rem] font-medium text-halbu-text hover:bg-halbu-panel"
-										onclick={() => setActWaypoints(difficulty, act, true)}
-									>
-										All
-									</button>
-									<button
-										type="button"
-										class="rounded-xs border border-halbu-border bg-halbu-panel2 px-[0.44rem] py-[0.18rem] text-[0.8rem] font-medium text-halbu-textMuted hover:bg-halbu-panel hover:text-halbu-text"
-										onclick={() => setActWaypoints(difficulty, act, false)}
-									>
-										None
-									</button>
-								</div>
-							</div>
-
-								<div class="grid gap-[0.18rem]">
-										{#each save.waypoints[difficulty.id][act.id] as wp}
-											<label
-												class={`grid grid-cols-[auto_minmax(0,1fr)] items-start gap-[0.44rem] rounded-xs border px-[0.44rem] py-[0.3rem] text-[0.88rem] ${
-													wp.id === ROGUE_ENCAMPMENT
-														? "border-halbu-border bg-halbu-panel2 text-halbu-textMuted"
-														: "border-halbu-border bg-halbu-panel2 text-halbu-text"
-												}`}
-												for={difficulty.id + "-" + wp.act + "-" + wp.id}
-											>
-											<input
-												class="form-check-input mt-0"
-												type="checkbox"
-												id={difficulty.id + "-" + wp.act + "-" + wp.id}
-												name={difficulty.id + "-" + wp.act + "-" + wp.id}
-												bind:checked={wp.acquired}
-												disabled={wp.id === ROGUE_ENCAMPMENT}
-											/>
-											<span class="min-w-0">
-												<span class="block leading-[1.2]">{wp.name}</span>
-												{#if wp.id === ROGUE_ENCAMPMENT}
-													<span class="form-text m-0">Acquired by default.</span>
-												{/if}
-											</span>
-										</label>
-								{/each}
-							</div>
-						</section>
-					{/each}
-				</div>
-			</div>
-		{/if}
-	{/each}
-</div>
+			{/if}
+		{/each}
+	</div>

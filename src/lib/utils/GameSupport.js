@@ -54,21 +54,6 @@ function getCapabilities(version) {
 	return VERSION_CAPABILITIES[normalizedVersion] ?? null;
 }
 
-export function getVersionLabel(version) {
-	const caps = getCapabilities(version);
-	return caps == null ? `unknown (${version})` : caps.label;
-}
-
-export function formatIdLabel(formatValue) {
-	if (typeof formatValue === "string") {
-		return formatValue;
-	}
-	if (formatValue && typeof formatValue === "object" && "Unknown" in formatValue) {
-		return `Unknown (${formatValue.Unknown})`;
-	}
-	return String(formatValue ?? "Unknown");
-}
-
 export function getSaveEditionLabel(save) {
 	const format = save?.meta?.format;
 	if (format === "V99") {

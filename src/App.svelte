@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import { invoke } from "@tauri-apps/api/core";
 	import { save } from "@tauri-apps/plugin-dialog";
 	import { Message } from "./lib/utils/Message.svelte";
@@ -7,7 +7,7 @@
 		apply as applySettings,
 		get as getSetting,
 		Key as SettingKey,
-	} from "./lib/utils/Settings.svelte";
+	} from "./lib/utils/settings.js";
 
 	import AppLayout from "./lib/layout/AppLayout.svelte";
 	import Sidebar from "./lib/layout/Sidebar.svelte";
@@ -28,12 +28,14 @@
 		Library: "library",
 		Editor: "editor",
 		Settings: "settings",
-	});
+	} as const);
+	type AppMode = (typeof AppMode)[keyof typeof AppMode];
 
 	const ParseMode = Object.freeze({
 		Lax: "lax",
 		Strict: "strict",
-	});
+	} as const);
+	type ParseMode = (typeof ParseMode)[keyof typeof ParseMode];
 
 	const EditorSection = Object.freeze({
 		Status: "status",
@@ -43,7 +45,13 @@
 		Quests: "quests",
 		Mercenary: "mercenary",
 		Inventory: "inventory",
-	});
+	} as const);
+	type EditorSection = (typeof EditorSection)[keyof typeof EditorSection];
+
+	type EditValidation = {
+		errors: unknown[];
+		warnings: unknown[];
+	};
 
 	const EDITOR_NAV = Object.freeze([
 		{ id: EditorSection.Character, label: "Character" },
@@ -54,15 +62,15 @@
 		{ id: EditorSection.Status, label: "Status", dividerBefore: true },
 	]);
 
-	let currentSave = $state(null);
-	let currentParseIssueCount = $state(0);
-	let currentParseIssues = $state([]);
-	let currentSourceFileSize = $state(null);
-	let editValidation = $state({ errors: [], warnings: [] });
-	let appMode = $state(AppMode.Library);
-	let settingsOriginMode = $state(AppMode.Library);
-	let currentEditorSection = $state(EditorSection.Status);
-	let parseMode = $state(ParseMode.Lax);
+	let currentSave = $state<any>(null);
+	let currentParseIssueCount = $state<number>(0);
+	let currentParseIssues = $state<unknown[]>([]);
+	let currentSourceFileSize = $state<number | null>(null);
+	let editValidation = $state<EditValidation>({ errors: [], warnings: [] });
+	let appMode = $state<AppMode>(AppMode.Library);
+	let settingsOriginMode = $state<AppMode>(AppMode.Library);
+	let currentEditorSection = $state<EditorSection>(EditorSection.Status);
+	let parseMode = $state<ParseMode>(ParseMode.Lax);
 	const hasEditValidationErrors = $derived(
 		Array.isArray(editValidation?.errors) && editValidation.errors.length > 0
 	);
@@ -94,7 +102,6 @@
 	});
 
 	initializeSettings().then(() => {
-		console.log("Settings initialized.");
 		applySettings();
 		handleParseModeChange(getSetting(SettingKey.ParseMode));
 	});
@@ -136,6 +143,13 @@
 		await invoke("save_file", { path: filePath, save: currentSave });
 	}
 
+	function resolveInitialEditorSection(parseIssueCount: number): EditorSection {
+		if (parseIssueCount > 0) {
+			return EditorSection.Status;
+		}
+		return EditorSection.Character;
+	}
+
 	function openEditor(saveData, parseIssueCount = 0, parseIssues = [], sourceFileSize = null) {
 		currentSave = saveData;
 		const normalizedIssues = Array.isArray(parseIssues) ? parseIssues : [];
@@ -145,7 +159,7 @@
 			? Number(sourceFileSize)
 			: null;
 		editValidation = { errors: [], warnings: [] };
-		currentEditorSection = EditorSection.Status;
+		currentEditorSection = resolveInitialEditorSection(currentParseIssueCount);
 		appMode = AppMode.Editor;
 	}
 
