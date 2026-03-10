@@ -78,6 +78,7 @@
 				parseIssueCount: Number(parsed.parse_issue_count) || 0,
 				parseIssues: Array.isArray(parsed.parse_issues) ? parsed.parse_issues : [],
 				sourceFileSize: Number(parsed.source_file_size) || null,
+				sourcePath: path,
 			});
 		} catch (err) {
 			console.error(err);
@@ -105,6 +106,7 @@
 				parseIssueCount: 0,
 				parseIssues: [],
 				sourceFileSize: null,
+				sourcePath: null,
 			});
 		} catch (err) {
 			console.error(err);

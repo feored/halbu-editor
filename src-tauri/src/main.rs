@@ -24,6 +24,9 @@ fn main() {
             get_character_from_path_with_meta,
             save_file,
             save_file_as_version,
+            open_backup_folder,
+            get_backup_status,
+            backup_all_detected_saves,
             new_save,
             get_skills_context,
             summary_folder

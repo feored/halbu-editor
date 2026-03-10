@@ -1,5 +1,6 @@
 <script>
-	import { open } from "@tauri-apps/plugin-dialog";
+	import { message, open } from "@tauri-apps/plugin-dialog";
+	import { invoke } from "@tauri-apps/api/core";
 	import Button from "../components/ui/button/button.svelte";
 	import * as Settings from "../utils/settings.js";
 	import { onMount } from "svelte";
@@ -12,6 +13,7 @@
 
 	let appVersion = $state("");
 	let currentSettings = $state({});
+	let backupAllInProgress = $state(false);
 	onMount(() => {
 		const unsubscribe = Settings.settingsStore.subscribe((nextSettings) => {
 			currentSettings = nextSettings ?? {};
@@ -57,6 +59,76 @@
 
 	async function setQuestsAdvancedFlags(event) {
 		await Settings.set(Settings.Key.QuestsAdvancedFlags, event.target.checked);
+	}
+
+	async function setBackupsEnabled(event) {
+		await Settings.set(Settings.Key.BackupsEnabled, event.target.checked);
+	}
+
+	async function setBackupsPerCharacter(event) {
+		const parsed = Number(event.currentTarget.value);
+		const normalized = Number.isFinite(parsed) ? Math.max(1, Math.trunc(parsed)) : 20;
+		await Settings.set(Settings.Key.BackupsPerCharacter, normalized);
+	}
+
+	async function openBackupFolder() {
+		try {
+			await invoke("open_backup_folder");
+		} catch (error) {
+			await message(String(error ?? "Failed to open backup folder."), {
+				title: "Backups",
+				kind: "error",
+			});
+		}
+	}
+
+	async function backupAllDetectedSaves() {
+		const saveFolder = String(currentSettings[Settings.Key.SaveFolder] ?? "").trim();
+		if (saveFolder.length === 0) {
+			await message("Set a save folder first, then run backup-all.", {
+				title: "Backups",
+				kind: "warning",
+			});
+			return;
+		}
+
+		const parsed = Number(currentSettings[Settings.Key.BackupsPerCharacter]);
+		const backupsPerCharacter =
+			Number.isFinite(parsed) && parsed >= 1 ? Math.trunc(parsed) : 20;
+
+		backupAllInProgress = true;
+		try {
+			const result = await invoke("backup_all_detected_saves", {
+				folderPath: saveFolder,
+				parseMode,
+				backupsPerCharacter,
+			});
+			const summary = [
+				`Detected saves: ${result?.detectedFiles ?? 0}`,
+				`Backed up: ${result?.backedUp ?? 0}`,
+				`Skipped (unchanged): ${result?.skippedUnchanged ?? 0}`,
+				`Failed: ${result?.failed ?? 0}`,
+			].join("\n");
+			const hasWarnings =
+				(result?.failed ?? 0) > 0 || (result?.cleanupWarnings?.length ?? 0) > 0;
+			await message(summary, {
+				title: "Backup All Detected Saves",
+				kind: hasWarnings ? "warning" : "info",
+			});
+			if ((result?.cleanupWarnings?.length ?? 0) > 0) {
+				console.warn("[backup cleanup warning]", result.cleanupWarnings.join(" | "));
+			}
+			if ((result?.errors?.length ?? 0) > 0) {
+				console.warn("[backup failures]", result.errors.join(" | "));
+			}
+		} catch (error) {
+			await message(String(error ?? "Backup-all failed."), {
+				title: "Backups",
+				kind: "error",
+			});
+		} finally {
+			backupAllInProgress = false;
+		}
 	}
 
 	async function setQuestsAdvancedAllQuests(event) {
@@ -157,6 +229,57 @@
 						value={currentSettings[Settings.Key.SaveFolder] ?? ""}
 						readonly
 					/>
+				</div>
+			</div>
+
+			<div
+				class="mt-[0.48rem] grid gap-[0.2rem] sm:grid-cols-[8.7rem_minmax(0,1fr)] sm:items-center sm:gap-x-[0.62rem]"
+			>
+				<label class="form-label mb-0" for="settings-backups-enabled">Backups</label>
+				<label
+					for="settings-backups-enabled"
+					class="inline-flex w-fit items-center gap-[0.42rem] rounded-xs border border-halbu-border bg-halbu-panel2 px-[0.52rem] py-[0.34rem] text-[0.92rem] text-halbu-text"
+				>
+					<input
+						id="settings-backups-enabled"
+						class="form-check-input mt-0"
+						type="checkbox"
+						role="switch"
+						checked={currentSettings[Settings.Key.BackupsEnabled] !== false}
+						onchange={setBackupsEnabled}
+					/>
+					<span>Enable automatic backups</span>
+				</label>
+			</div>
+
+				<div
+					class="mt-[0.2rem] grid gap-[0.2rem] sm:grid-cols-[8.7rem_minmax(0,1fr)] sm:items-center sm:gap-x-[0.62rem]"
+				>
+				<label class="form-label mb-0" for="settings-backups-per-character">
+					Backups per character
+				</label>
+				<input
+					id="settings-backups-per-character"
+					class="form-control max-w-[9.5rem]"
+					type="number"
+					min="1"
+					step="1"
+					value={currentSettings[Settings.Key.BackupsPerCharacter] ?? 20}
+					onchange={setBackupsPerCharacter}
+				/>
+			</div>
+
+			<div
+				class="mt-[0.36rem] grid gap-[0.36rem] sm:grid-cols-[8.7rem_minmax(0,1fr)] sm:items-center sm:gap-x-[0.62rem]"
+			>
+				<div></div>
+				<div class="flex flex-wrap gap-[0.36rem]">
+					<Button variant="secondary" onclick={openBackupFolder}>Open Back Up Folder</Button>
+					<Button onclick={backupAllDetectedSaves} disabled={backupAllInProgress}>
+						{backupAllInProgress
+							? "Backing Up..."
+							: "Back Up All Detected Saves"}
+					</Button>
 				</div>
 			</div>
 		</section>

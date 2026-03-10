@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { invoke } from "@tauri-apps/api/core";
-	import { save } from "@tauri-apps/plugin-dialog";
+	import { message, save } from "@tauri-apps/plugin-dialog";
 	import { Message } from "./lib/utils/Message.svelte";
 	import {
 		initialize as initializeSettings,
@@ -53,6 +53,13 @@
 		warnings: unknown[];
 	};
 
+	type SaveCommandResult = {
+		message?: string;
+		backupPerformed?: boolean;
+		backupPath?: string | null;
+		cleanupWarning?: string | null;
+	};
+
 	const EDITOR_NAV = Object.freeze([
 		{ id: EditorSection.Character, label: "Character" },
 		{ id: EditorSection.Skills, label: "Skills" },
@@ -66,6 +73,8 @@
 	let currentParseIssueCount = $state<number>(0);
 	let currentParseIssues = $state<unknown[]>([]);
 	let currentSourceFileSize = $state<number | null>(null);
+	let currentSourcePath = $state<string | null>(null);
+	let saveRevision = $state<number>(0);
 	let editValidation = $state<EditValidation>({ errors: [], warnings: [] });
 	let appMode = $state<AppMode>(AppMode.Library);
 	let settingsOriginMode = $state<AppMode>(AppMode.Library);
@@ -129,18 +138,58 @@
 		if (filePath == null) {
 			return;
 		}
-		if (
-			hasExplicitTargetVersion &&
-			resolvedTargetVersion !== Number(currentSave.version)
-		) {
-			await invoke("save_file_as_version", {
-				path: filePath,
-				save: currentSave,
-				targetVersion: resolvedTargetVersion,
+		const backupsEnabled = getSetting(SettingKey.BackupsEnabled) !== false;
+		const configuredBackupsPerCharacter = Number(getSetting(SettingKey.BackupsPerCharacter));
+		const backupsPerCharacter =
+			Number.isFinite(configuredBackupsPerCharacter) && configuredBackupsPerCharacter >= 1
+				? Math.trunc(configuredBackupsPerCharacter)
+				: 20;
+		const backupSourcePath = currentSourcePath ?? filePath;
+
+		try {
+			let result: SaveCommandResult;
+			if (
+				hasExplicitTargetVersion &&
+				resolvedTargetVersion !== Number(currentSave.version)
+			) {
+				result = await invoke<SaveCommandResult>("save_file_as_version", {
+					path: filePath,
+					save: currentSave,
+					targetVersion: resolvedTargetVersion,
+					backupSourcePath,
+					backupConfig: {
+						enabled: backupsEnabled,
+						backupsPerCharacter,
+					},
+				});
+			} else {
+				result = await invoke<SaveCommandResult>("save_file", {
+					path: filePath,
+					save: currentSave,
+					backupSourcePath,
+					backupConfig: {
+						enabled: backupsEnabled,
+						backupsPerCharacter,
+					},
+				});
+			}
+
+			if (currentSourcePath == null) {
+				currentSourcePath = filePath;
+			}
+				if (typeof result?.cleanupWarning === "string" && result.cleanupWarning.length > 0) {
+					console.warn(`[backup cleanup warning] ${result.cleanupWarning}`);
+				}
+				saveRevision += 1;
+				return;
+			} catch (error) {
+			const detail = String(error ?? "Unknown error");
+			await message(detail, {
+				title: "Save failed",
+				kind: "error",
 			});
-			return;
+			throw error;
 		}
-		await invoke("save_file", { path: filePath, save: currentSave });
 	}
 
 	function resolveInitialEditorSection(parseIssueCount: number): EditorSection {
@@ -150,7 +199,13 @@
 		return EditorSection.Character;
 	}
 
-	function openEditor(saveData, parseIssueCount = 0, parseIssues = [], sourceFileSize = null) {
+	function openEditor(
+		saveData,
+		parseIssueCount = 0,
+		parseIssues = [],
+		sourceFileSize = null,
+		sourcePath = null
+	) {
 		currentSave = saveData;
 		const normalizedIssues = Array.isArray(parseIssues) ? parseIssues : [];
 		currentParseIssueCount = Math.max(Number(parseIssueCount) || 0, normalizedIssues.length);
@@ -158,6 +213,7 @@
 		currentSourceFileSize = Number.isFinite(Number(sourceFileSize))
 			? Number(sourceFileSize)
 			: null;
+		currentSourcePath = typeof sourcePath === "string" && sourcePath.length > 0 ? sourcePath : null;
 		editValidation = { errors: [], warnings: [] };
 		currentEditorSection = resolveInitialEditorSection(currentParseIssueCount);
 		appMode = AppMode.Editor;
@@ -168,6 +224,8 @@
 		currentParseIssueCount = 0;
 		currentParseIssues = [];
 		currentSourceFileSize = null;
+		currentSourcePath = null;
+		saveRevision = 0;
 		editValidation = { errors: [], warnings: [] };
 		currentEditorSection = EditorSection.Status;
 		appMode = AppMode.Library;
@@ -214,7 +272,8 @@
 					message.data.save,
 					message.data.parseIssueCount ?? 0,
 					message.data.parseIssues ?? [],
-					message.data.sourceFileSize ?? null
+					message.data.sourceFileSize ?? null,
+					message.data.sourcePath ?? null
 				);
 				break;
 			case Message.SaveFile:
@@ -259,6 +318,8 @@
 				parseIssueCount={currentParseIssueCount}
 				parseIssues={currentParseIssues}
 				sourceFileSize={currentSourceFileSize}
+				sourcePath={currentSourcePath}
+				{saveRevision}
 				{editValidation}
 				saveDisabled={hasEditValidationErrors}
 				onSave={saveCharacter}
