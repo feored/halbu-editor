@@ -143,16 +143,16 @@
 	}
 </script>
 
-<div class="grid content-start gap-[0.6rem]">
-	<section class="rounded-sm border border-halbu-border bg-halbu-panel px-[0.6rem] py-[0.46rem]">
-		<h3 class="editor-card-title mb-[0.34rem]">General</h3>
-		<div class="grid gap-[0.5rem]">
-			<fieldset class="grid gap-[0.24rem]">
+<div class="grid content-start gap-2.5">
+	<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
+		<h3 class="editor-card-title mb-1.5">General</h3>
+		<div class="grid gap-2">
+			<fieldset class="grid gap-1">
 				<legend class="form-label mb-0">Theme</legend>
-				<div class="flex flex-wrap gap-[0.38rem]">
+				<div class="flex flex-wrap gap-1.5">
 					<label
 						for="auto"
-						class="inline-flex items-center gap-[0.36rem] rounded-xs border border-halbu-border bg-halbu-panel2 px-[0.46rem] py-[0.26rem] text-[0.9rem] text-halbu-text"
+						class="inline-flex items-center gap-1.5 rounded-xs border border-halbu-border bg-halbu-panel2 px-2 py-1 text-[0.9rem] text-halbu-text"
 					>
 						<input
 							class="form-check-input mt-0"
@@ -167,7 +167,7 @@
 					</label>
 					<label
 						for="light"
-						class="inline-flex items-center gap-[0.36rem] rounded-xs border border-halbu-border bg-halbu-panel2 px-[0.46rem] py-[0.26rem] text-[0.9rem] text-halbu-text"
+						class="inline-flex items-center gap-1.5 rounded-xs border border-halbu-border bg-halbu-panel2 px-2 py-1 text-[0.9rem] text-halbu-text"
 					>
 						<input
 							class="form-check-input mt-0"
@@ -182,7 +182,7 @@
 					</label>
 					<label
 						for="dark"
-						class="inline-flex items-center gap-[0.36rem] rounded-xs border border-halbu-border bg-halbu-panel2 px-[0.46rem] py-[0.26rem] text-[0.9rem] text-halbu-text"
+						class="inline-flex items-center gap-1.5 rounded-xs border border-halbu-border bg-halbu-panel2 px-2 py-1 text-[0.9rem] text-halbu-text"
 					>
 						<input
 							class="form-check-input mt-0"
@@ -198,7 +198,7 @@
 				</div>
 			</fieldset>
 
-			<div class="grid gap-[0.2rem] sm:grid-cols-[8.7rem_minmax(0,1fr)] sm:items-center sm:gap-x-[0.62rem]">
+			<div class="grid gap-1 sm:grid-cols-[8.7rem_minmax(0,1fr)] sm:items-center sm:gap-x-2.5">
 				<label class="form-label mb-0" for="parse-mode-setting">Parse mode</label>
 				<select
 					id="parse-mode-setting"
@@ -210,17 +210,17 @@
 					<option value="strict">Strict</option>
 				</select>
 			</div>
-			<p class="form-text m-0 sm:pl-[9.32rem]">
+			<p class="form-text m-0 sm:pl-36">
 				Controls how save parsing handles malformed data when loading files.
 			</p>
 		</div>
 	</section>
 
-		<section class="rounded-sm border border-halbu-border bg-halbu-panel px-[0.6rem] py-[0.46rem]">
-			<h3 class="editor-card-title mb-[0.34rem]">Paths</h3>
-			<div class="grid gap-[0.2rem] sm:grid-cols-[8.7rem_minmax(0,1fr)] sm:items-center sm:gap-x-[0.62rem]">
+		<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
+			<h3 class="editor-card-title mb-1.5">Paths</h3>
+			<div class="grid gap-1 sm:grid-cols-[8.7rem_minmax(0,1fr)] sm:items-center sm:gap-x-2.5">
 				<label class="form-label mb-0" for="settings-save-folder">Save folder</label>
-				<div class="grid gap-[0.36rem] sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
+				<div class="grid gap-1.5 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
 					<Button onclick={setSaveFolder}>Set Save Folder</Button>
 					<input
 						id="settings-save-folder"
@@ -233,12 +233,12 @@
 			</div>
 
 			<div
-				class="mt-[0.48rem] grid gap-[0.2rem] sm:grid-cols-[8.7rem_minmax(0,1fr)] sm:items-center sm:gap-x-[0.62rem]"
+				class="mt-2 grid gap-1 sm:grid-cols-[8.7rem_minmax(0,1fr)] sm:items-center sm:gap-x-2.5"
 			>
 				<label class="form-label mb-0" for="settings-backups-enabled">Backups</label>
 				<label
 					for="settings-backups-enabled"
-					class="inline-flex w-fit items-center gap-[0.42rem] rounded-xs border border-halbu-border bg-halbu-panel2 px-[0.52rem] py-[0.34rem] text-[0.92rem] text-halbu-text"
+					class="inline-flex w-fit items-center gap-1.5 rounded-xs border border-halbu-border bg-halbu-panel2 px-2 py-1.5 text-[0.92rem] text-halbu-text"
 				>
 					<input
 						id="settings-backups-enabled"
@@ -253,14 +253,14 @@
 			</div>
 
 				<div
-					class="mt-[0.2rem] grid gap-[0.2rem] sm:grid-cols-[8.7rem_minmax(0,1fr)] sm:items-center sm:gap-x-[0.62rem]"
+					class="mt-1 grid gap-1 sm:grid-cols-[8.7rem_minmax(0,1fr)] sm:items-center sm:gap-x-2.5"
 				>
 				<label class="form-label mb-0" for="settings-backups-per-character">
 					Backups per character
 				</label>
 				<input
 					id="settings-backups-per-character"
-					class="form-control max-w-[9.5rem]"
+					class="form-control max-w-40"
 					type="number"
 					min="1"
 					step="1"
@@ -270,10 +270,10 @@
 			</div>
 
 			<div
-				class="mt-[0.36rem] grid gap-[0.36rem] sm:grid-cols-[8.7rem_minmax(0,1fr)] sm:items-center sm:gap-x-[0.62rem]"
+				class="mt-1.5 grid gap-1.5 sm:grid-cols-[8.7rem_minmax(0,1fr)] sm:items-center sm:gap-x-2.5"
 			>
 				<div></div>
-				<div class="flex flex-wrap gap-[0.36rem]">
+				<div class="flex flex-wrap gap-1.5">
 					<Button variant="secondary" onclick={openBackupFolder}>Open Back Up Folder</Button>
 					<Button onclick={backupAllDetectedSaves} disabled={backupAllInProgress}>
 						{backupAllInProgress
@@ -284,14 +284,14 @@
 			</div>
 		</section>
 
-	<section class="rounded-sm border border-halbu-border bg-halbu-panel px-[0.6rem] py-[0.46rem]">
-		<h3 class="editor-card-title mb-[0.34rem]">Quests</h3>
-		<div class="grid gap-[0.32rem]">
+	<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
+		<h3 class="editor-card-title mb-1.5">Quests</h3>
+		<div class="grid gap-1.5">
 			<label
 				for="advanced-flags"
-				class="grid gap-[0.12rem] rounded-xs border border-halbu-border bg-halbu-panel2 px-[0.52rem] py-[0.38rem]"
+				class="grid gap-0.5 rounded-xs border border-halbu-border bg-halbu-panel2 px-2 py-1.5"
 			>
-				<span class="inline-flex items-center gap-[0.42rem] text-[0.92rem] text-halbu-text">
+				<span class="inline-flex items-center gap-1.5 text-[0.92rem] text-halbu-text">
 					<input
 						class="form-check-input mt-0"
 						type="checkbox"
@@ -302,7 +302,7 @@
 					/>
 					<span>Advanced editing mode</span>
 				</span>
-				<span class="form-text m-0 pl-[1.62rem]">
+				<span class="form-text m-0 pl-6">
 					Allows editing quest flags manually. Not recommended unless you know what you are
 					doing.
 				</span>
@@ -310,11 +310,11 @@
 
 			<label
 				for="advanced-all-quests"
-				class={`grid gap-[0.12rem] rounded-xs border border-halbu-border bg-halbu-panel2 px-[0.52rem] py-[0.38rem] ${
+				class={`grid gap-0.5 rounded-xs border border-halbu-border bg-halbu-panel2 px-2 py-1.5 ${
 					!currentSettings[Settings.Key.QuestsAdvancedFlags] ? "opacity-70" : ""
 				}`}
 			>
-				<span class="inline-flex items-center gap-[0.42rem] text-[0.92rem] text-halbu-text">
+				<span class="inline-flex items-center gap-1.5 text-[0.92rem] text-halbu-text">
 					<input
 						type="checkbox"
 						class="form-check-input mt-0"
@@ -326,16 +326,16 @@
 					/>
 					<span>Quest display: show unused quests</span>
 				</span>
-				<span class="form-text m-0 pl-[1.62rem]">
+				<span class="form-text m-0 pl-6">
 					Shows quest slots that are unused by the game. Requires advanced editing mode.
 				</span>
 			</label>
 
 			<label
 				for="show-prologue"
-				class="grid gap-[0.12rem] rounded-xs border border-halbu-border bg-halbu-panel2 px-[0.52rem] py-[0.38rem]"
+				class="grid gap-0.5 rounded-xs border border-halbu-border bg-halbu-panel2 px-2 py-1.5"
 			>
-				<span class="inline-flex items-center gap-[0.42rem] text-[0.92rem] text-halbu-text">
+				<span class="inline-flex items-center gap-1.5 text-[0.92rem] text-halbu-text">
 					<input
 						class="form-check-input mt-0"
 						id="show-prologue"
@@ -346,7 +346,7 @@
 					/>
 					<span>Quest display: show prologue</span>
 				</span>
-				<span class="form-text m-0 pl-[1.62rem]">
+				<span class="form-text m-0 pl-6">
 					The prologue is the first quest of each act and controls act introduction flags for
 					certain NPCs.
 				</span>

@@ -16,13 +16,13 @@ let {
 	}
 </script>
 
-<header class="rounded-sm border border-halbu-border bg-halbu-panel px-[0.6rem] py-[0.36rem]">
-	<div class="flex flex-wrap items-center justify-end gap-[0.42rem]">
-		<div class="flex items-center gap-[0.32rem]">
+<header class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-1.5">
+	<div class="flex flex-wrap items-center justify-end gap-1.5">
+		<div class="flex items-center gap-1.5">
 			<label class="form-label mb-0" for="skills-points-left">Available points</label>
 			<input
 				id="skills-points-left"
-				class="form-control h-[1.85rem] w-[8.5rem] text-right"
+				class="form-control h-7 w-[8.5rem] text-right"
 				type="number"
 				min="0"
 				max="255"

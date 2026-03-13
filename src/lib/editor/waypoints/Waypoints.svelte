@@ -40,7 +40,7 @@
 		let total = 0;
 		let acquired = 0;
 		for (const waypoint of save.waypoints[difficulty.id][act.id]) {
-			if (waypoint.id === ROGUE_ENCAMPMENT) {
+			if (waypoint.id === ROGUE_ENCAMPMENT && act.id !== "act1") {
 				continue;
 			}
 			total += 1;
@@ -71,13 +71,13 @@
 	});
 </script>
 
-<div class="grid gap-[0.58rem]">
-	<div class="flex flex-wrap items-stretch justify-between gap-[0.5rem]">
-		<div class="flex min-h-[2.5rem] w-fit items-center gap-[0.38rem] rounded-sm border border-halbu-border bg-halbu-panel px-[0.34rem] py-[0.34rem]">
+<div class="grid gap-2.5">
+	<div class="flex flex-wrap items-stretch justify-between gap-2">
+		<div class="flex min-h-10 w-fit items-center gap-1.5 rounded-sm border border-halbu-border bg-halbu-panel px-1.5 py-1.5">
 			{#each difficulties as difficulty}
 				<button
 					type="button"
-					class={`rounded-xs border px-[0.72rem] py-[0.36rem] text-[0.92rem] font-medium leading-none transition ${
+					class={`rounded-xs border px-3 py-1.5 text-[0.92rem] font-medium leading-none transition ${
 						activeDifficultyId === difficulty.id
 							? "border-halbu-primary bg-halbu-panel2 text-halbu-text"
 							: "border-halbu-border bg-halbu-panel text-halbu-textMuted hover:bg-halbu-panel2 hover:text-halbu-text"
@@ -90,14 +90,14 @@
 				</button>
 			{/each}
 		</div>
-		<div class="flex min-h-[2.5rem] min-w-[14rem] flex-1 flex-col justify-center rounded-sm border border-halbu-border bg-halbu-panel px-[0.56rem] py-[0.34rem]">
-			<div class="mb-[0.22rem] flex items-center justify-between gap-2 text-[0.84rem]">
+		<div class="flex min-h-10 min-w-56 flex-1 flex-col justify-center rounded-sm border border-halbu-border bg-halbu-panel px-2 py-1.5">
+			<div class="mb-1 flex items-center justify-between gap-2 text-[0.84rem]">
 				<span class="text-halbu-textMuted">Total waypoint progress</span>
 				<span class="text-halbu-text">
 					{totalWaypointProgress.acquired}/{totalWaypointProgress.total} ({totalWaypointProgress.percent}%)
 				</span>
 			</div>
-			<div class="h-[0.24rem] overflow-hidden rounded-xs bg-halbu-border">
+			<div class="h-1 overflow-hidden rounded-xs bg-halbu-border">
 				<div
 					class="h-full bg-halbu-info transition-[width] duration-200"
 					style={`width: ${totalWaypointProgress.percent}%`}
@@ -108,39 +108,48 @@
 
 		{#each difficulties as difficulty}
 			{#if difficulty.id === activeDifficultyId}
-				<div class="grid grid-cols-1 gap-[0.58rem] lg:grid-cols-2">
+				<div class="grid grid-cols-1 gap-2.5 lg:grid-cols-2">
 					{#snippet actCard(difficulty, act)}
 						{@const actCounts = countActWaypoints(difficulty, act)}
-						<section class="rounded-sm border border-halbu-border bg-halbu-panel px-[0.6rem] py-[0.48rem]">
-							<div class="mb-[0.34rem] flex items-start justify-between gap-[0.5rem]">
+						{@const actPercent = actCounts.total > 0 ? Math.round((actCounts.acquired / actCounts.total) * 100) : 0}
+						<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
+							<div class="mb-1.5 flex items-start justify-between gap-2">
 								<div class="min-w-0">
 									<h3 class="editor-card-title">{act.display}</h3>
-									<p class="m-0 mt-[0.12rem] text-[0.8rem] text-halbu-textMuted">
+									<p class="m-0 mt-0.5 text-[0.8rem] text-halbu-textMuted">
 										{actCounts.acquired}/{actCounts.total} acquired
 									</p>
 								</div>
-								<div class="inline-flex shrink-0 items-center gap-[0.24rem]">
+								<div class="inline-flex shrink-0 items-center gap-1">
 									<button
 										type="button"
-										class="rounded-xs border border-halbu-border bg-halbu-panel2 px-[0.44rem] py-[0.18rem] text-[0.8rem] font-medium text-halbu-text hover:bg-halbu-panel"
+										class="rounded-xs border border-halbu-border bg-halbu-panel2 px-2 py-0.5 text-[0.8rem] font-medium text-halbu-text hover:bg-halbu-panel"
 										onclick={() => setActWaypoints(difficulty, act, true)}
 									>
 										All
 									</button>
 									<button
 										type="button"
-										class="rounded-xs border border-halbu-border bg-halbu-panel2 px-[0.44rem] py-[0.18rem] text-[0.8rem] font-medium text-halbu-textMuted hover:bg-halbu-panel hover:text-halbu-text"
+										class="rounded-xs border border-halbu-border bg-halbu-panel2 px-2 py-0.5 text-[0.8rem] font-medium text-halbu-textMuted hover:bg-halbu-panel hover:text-halbu-text"
 										onclick={() => setActWaypoints(difficulty, act, false)}
 									>
 										None
 									</button>
+									<span class="ml-0.5 text-[0.82rem] text-halbu-textMuted">{actPercent}%</span>
 								</div>
 							</div>
 
-							<div class="grid gap-[0.18rem]">
+							<div class="mb-1.5 h-1 overflow-hidden rounded-xs bg-halbu-border">
+								<div
+									class="h-full bg-halbu-info transition-[width] duration-200"
+									style={`width: ${actPercent}%`}
+								></div>
+							</div>
+
+							<div class="grid gap-0.5">
 								{#each save.waypoints[difficulty.id][act.id] as wp}
 									<label
-										class={`grid grid-cols-[auto_minmax(0,1fr)] items-start gap-[0.44rem] rounded-xs border px-[0.44rem] py-[0.3rem] text-[0.88rem] ${
+										class={`grid grid-cols-[auto_minmax(0,1fr)] items-start gap-2 rounded-xs border px-2 py-1 text-[0.88rem] ${
 											wp.id === ROGUE_ENCAMPMENT
 												? "border-halbu-border bg-halbu-panel2 text-halbu-textMuted"
 												: "border-halbu-border bg-halbu-panel2 text-halbu-text"
@@ -167,7 +176,7 @@
 						</section>
 					{/snippet}
 					{#each actColumns as actColumn}
-						<div class="grid content-start gap-[0.58rem]">
+						<div class="grid content-start gap-2.5">
 							{#each actColumn as act}
 								{@render actCard(difficulty, act)}
 							{/each}

@@ -25,18 +25,18 @@
 </script>
 
 <aside
-	class="rounded-sm border border-halbu-borderStrong border-l-2 border-l-halbu-borderStrong bg-halbu-bg px-[0.58rem] py-[0.44rem]"
+	class="rounded-sm border border-halbu-borderStrong border-l-2 border-l-halbu-borderStrong bg-halbu-bg px-2.5 py-2"
 >
 	{#if skillDetails == null}
 		<p class="m-0 text-[0.9rem] text-halbu-textMuted">
 			Select a skill to inspect details and edit points.
 		</p>
 	{:else}
-			<header class="mb-[0.42rem] border-b border-halbu-border pb-[0.34rem]">
+			<header class="mb-1.5 border-b border-halbu-border pb-1.5">
 				<h3 class="editor-card-title">{skillDetails.name}</h3>
-				<div class="mt-[0.26rem] flex flex-wrap items-center gap-[0.26rem]">
+				<div class="mt-1 flex flex-wrap items-center gap-1">
 					<span
-						class="inline-flex items-center gap-[0.22rem] rounded-xs border border-halbu-border bg-halbu-panel2 px-[0.42rem] py-[0.14rem] text-[0.82rem] font-medium text-halbu-textMuted"
+						class="inline-flex items-center gap-1 rounded-xs border border-halbu-border bg-halbu-panel2 px-1.5 py-0.5 text-[0.82rem] font-medium text-halbu-textMuted"
 					>
 						{#if skillDetails.available}
 							<CheckIcon size={12} strokeWidth={2} />
@@ -46,7 +46,7 @@
 						{skillDetails.available ? "Ready" : "Locked"}
 					</span>
 					<span
-						class="inline-flex items-center gap-[0.22rem] rounded-xs border border-halbu-border bg-halbu-panel2 px-[0.42rem] py-[0.14rem] text-[0.82rem] font-medium text-halbu-textMuted"
+						class="inline-flex items-center gap-1 rounded-xs border border-halbu-border bg-halbu-panel2 px-1.5 py-0.5 text-[0.82rem] font-medium text-halbu-textMuted"
 					>
 						{#if skillDetails.levelRequirementMet}
 							<CheckIcon size={12} strokeWidth={2} />
@@ -59,12 +59,12 @@
 			</header>
 
 			<section>
-				<label class="form-label mb-[0.16rem]" for="inspector-invested-points">Invested</label>
-			<div class="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-[0.24rem]">
+				<label class="form-label mb-0.5" for="inspector-invested-points">Invested</label>
+			<div class="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-1">
 				<Button
 					type="button"
 					variant="secondary"
-					class="h-[1.85rem] w-[1.9rem] rounded-xs px-0"
+					class="h-7 w-8 rounded-xs px-0"
 					onclick={onDecrement}
 					disabled={disabled || !canDecrement}
 				>
@@ -84,7 +84,7 @@
 				<Button
 					type="button"
 					variant="secondary"
-					class="h-[1.85rem] w-[1.9rem] rounded-xs px-0"
+					class="h-7 w-8 rounded-xs px-0"
 					onclick={onIncrement}
 					disabled={disabled || !canIncrement}
 				>
@@ -94,9 +94,9 @@
 			</section>
 
 			{#if skillDetails.extraLines.length > 0}
-				<section class="mt-[0.5rem] border-t border-halbu-border pt-[0.5rem]">
-					<h4 class="mb-[0.24rem] text-[0.88rem] font-medium text-halbu-textMuted">Misc</h4>
-					<ul class="m-0 grid list-none gap-[0.14rem] p-0 text-[0.9rem]">
+				<section class="mt-2 border-t border-halbu-border pt-2">
+					<h4 class="mb-1 text-[0.88rem] font-medium text-halbu-textMuted">Misc</h4>
+					<ul class="m-0 grid list-none gap-0.5 p-0 text-[0.9rem]">
 						{#each skillDetails.extraLines as line}
 							<li class="text-halbu-text">{line}</li>
 						{/each}
@@ -104,14 +104,14 @@
 				</section>
 			{/if}
 
-		<section class="mt-[0.5rem] border-t border-halbu-border pt-[0.5rem]">
-			<h4 class="mb-[0.24rem] text-[0.88rem] font-medium text-halbu-textMuted">Requirements</h4>
+		<section class="mt-2 border-t border-halbu-border pt-2">
+			<h4 class="mb-1 text-[0.88rem] font-medium text-halbu-textMuted">Requirements</h4>
 			{#if skillDetails.prerequisites.length === 0}
 				<p class="m-0 text-[0.9rem] text-halbu-textMuted">Prerequisites: none</p>
 			{:else}
-				<ul class="m-0 grid list-none gap-[0.14rem] p-0 text-[0.9rem]">
+				<ul class="m-0 grid list-none gap-0.5 p-0 text-[0.9rem]">
 					{#each skillDetails.prerequisites as prerequisite}
-						<li class="inline-flex items-center gap-[0.3rem] text-halbu-text">
+						<li class="inline-flex items-center gap-1 text-halbu-text">
 							{#if prerequisite.met}
 								<CheckIcon size={13} strokeWidth={2} class="shrink-0 text-halbu-textMuted" />
 							{:else}
@@ -124,9 +124,9 @@
 			{/if}
 
 			{#if skillDetails.lockReasons.length > 0}
-				<ul class="m-0 mt-[0.3rem] grid list-none gap-[0.14rem] p-0 text-[0.9rem]">
+				<ul class="m-0 mt-1 grid list-none gap-0.5 p-0 text-[0.9rem]">
 					{#each skillDetails.lockReasons as reason}
-						<li class="inline-flex items-center gap-[0.3rem] text-halbu-textMuted">
+						<li class="inline-flex items-center gap-1 text-halbu-textMuted">
 							<AlertCircleIcon size={13} strokeWidth={2} class="shrink-0 text-halbu-textMuted" />
 							{reason}
 						</li>
@@ -136,7 +136,7 @@
 		</section>
 
 			{#if skillDetails.currentPoints === 0 && skillDetails.currentLines.length > 0}
-				<details class="mt-[0.5rem] border-t border-halbu-border pt-[0.5rem]" bind:open={firstLevelOpen}>
+				<details class="mt-2 border-t border-halbu-border pt-2" bind:open={firstLevelOpen}>
 					<summary class="collapsible-summary">
 						<ChevronRightIcon
 							size={13}
@@ -147,7 +147,7 @@
 						/>
 						<span>First Level Stats</span>
 					</summary>
-					<ul class="m-0 mt-[0.22rem] grid list-none gap-[0.14rem] p-0 text-[0.9rem]">
+					<ul class="m-0 mt-1 grid list-none gap-0.5 p-0 text-[0.9rem]">
 						{#each skillDetails.currentLines as line}
 						<li class="text-halbu-text">{line}</li>
 					{/each}
@@ -156,9 +156,9 @@
 		{/if}
 
 		{#if skillDetails.currentPoints > 0 && skillDetails.currentLines.length > 0}
-			<section class="mt-[0.5rem] border-t border-halbu-border pt-[0.5rem]">
-				<h4 class="mb-[0.24rem] text-[0.88rem] font-medium text-halbu-textMuted">Current</h4>
-				<ul class="m-0 grid list-none gap-[0.14rem] p-0 text-[0.9rem]">
+			<section class="mt-2 border-t border-halbu-border pt-2">
+				<h4 class="mb-1 text-[0.88rem] font-medium text-halbu-textMuted">Current</h4>
+				<ul class="m-0 grid list-none gap-0.5 p-0 text-[0.9rem]">
 					{#each skillDetails.currentLines as line}
 						<li class="text-halbu-text">{line}</li>
 					{/each}
@@ -167,9 +167,9 @@
 		{/if}
 
 		{#if skillDetails.currentPoints > 0 && skillDetails.nextLevelLines.length > 0}
-			<section class="mt-[0.5rem] border-t border-halbu-border pt-[0.5rem]">
-				<h4 class="mb-[0.24rem] text-[0.88rem] font-medium text-halbu-textMuted">Next level</h4>
-				<ul class="m-0 grid list-none gap-[0.14rem] p-0 text-[0.9rem]">
+			<section class="mt-2 border-t border-halbu-border pt-2">
+				<h4 class="mb-1 text-[0.88rem] font-medium text-halbu-textMuted">Next level</h4>
+				<ul class="m-0 grid list-none gap-0.5 p-0 text-[0.9rem]">
 					{#each skillDetails.nextLevelLines as line}
 						<li class="text-halbu-text">{line}</li>
 					{/each}
@@ -178,7 +178,7 @@
 			{/if}
 
 			{#if skillDetails.synergyLines.length > 0}
-				<details class="mt-[0.5rem] border-t border-halbu-border pt-[0.5rem]" bind:open={synergiesOpen}>
+				<details class="mt-2 border-t border-halbu-border pt-2" bind:open={synergiesOpen}>
 					<summary class="collapsible-summary">
 						<ChevronRightIcon
 							size={13}
@@ -189,9 +189,9 @@
 						/>
 						<span>Synergies</span>
 					</summary>
-					<ul class="m-0 mt-[0.22rem] grid list-none gap-[0.14rem] p-0 text-[0.9rem]">
+					<ul class="m-0 mt-1 grid list-none gap-0.5 p-0 text-[0.9rem]">
 						{#each skillDetails.synergyEntries as synergy}
-						<li class="inline-flex items-center gap-[0.3rem] text-halbu-text">
+						<li class="inline-flex items-center gap-1 text-halbu-text">
 							{#if synergy.acquired === true}
 								<CheckIcon size={13} strokeWidth={2} class="shrink-0 text-halbu-textMuted" />
 							{:else if synergy.acquired === false}
@@ -205,7 +205,7 @@
 			{/if}
 
 			{#if skillDetails.description.length > 0}
-				<details class="mt-[0.5rem] border-t border-halbu-border pt-[0.5rem]" bind:open={descriptionOpen}>
+				<details class="mt-2 border-t border-halbu-border pt-2" bind:open={descriptionOpen}>
 					<summary class="collapsible-summary">
 						<ChevronRightIcon
 							size={13}
@@ -216,7 +216,7 @@
 						/>
 						<span>Description</span>
 					</summary>
-					<p class="m-0 mt-[0.22rem] whitespace-pre-line text-[0.9rem] text-halbu-text">
+					<p class="m-0 mt-1 whitespace-pre-line text-[0.9rem] text-halbu-text">
 						{skillDetails.description}
 					</p>
 				</details>

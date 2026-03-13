@@ -1,6 +1,6 @@
 use chrono::Local;
 use halbu::format::FormatId;
-use halbu::{Class, ParseIssue, ParsedSave, Save, Strictness};
+use halbu::{Class, CompatibilityIssue, ParseIssue, ParsedSave, Save, Strictness};
 use log::{debug, info};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -17,64 +17,53 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::Manager;
 use uuid::Uuid;
 
-fn supports_class_for_version(version: u32, class: Class) -> bool {
-    match version {
-        99 => matches!(
-            class,
-            Class::Amazon
-                | Class::Assassin
-                | Class::Barbarian
-                | Class::Druid
-                | Class::Necromancer
-                | Class::Paladin
-                | Class::Sorceress
-        ),
-        105 => matches!(
-            class,
-            Class::Amazon
-                | Class::Assassin
-                | Class::Barbarian
-                | Class::Druid
-                | Class::Necromancer
-                | Class::Paladin
-                | Class::Sorceress
-                | Class::Warlock
-        ),
-        _ => false,
-    }
+const KNOWN_CLASSES: [Class; 8] = [
+    Class::Amazon,
+    Class::Assassin,
+    Class::Barbarian,
+    Class::Druid,
+    Class::Necromancer,
+    Class::Paladin,
+    Class::Sorceress,
+    Class::Warlock,
+];
+
+fn supports_class_for_format(format: FormatId, class: Class) -> bool {
+    let probe_save = Save::new(format, class);
+    !probe_save
+        .check_compatibility(format)
+        .into_iter()
+        .any(|issue| issue.blocking)
 }
 
 fn supported_classes_for_version(version: u32) -> Vec<String> {
-    let classes: &[&str] = match version {
-        99 => &[
-            "Amazon",
-            "Assassin",
-            "Barbarian",
-            "Druid",
-            "Necromancer",
-            "Paladin",
-            "Sorceress",
-        ],
-        105 => &[
-            "Amazon",
-            "Assassin",
-            "Barbarian",
-            "Druid",
-            "Necromancer",
-            "Paladin",
-            "Sorceress",
-            "Warlock",
-        ],
-        _ => &[],
+    let Some(format) = FormatId::from_version(version) else {
+        return Vec::new();
     };
-    classes.iter().map(|class_name| (*class_name).to_string()).collect()
+
+    KNOWN_CLASSES
+        .iter()
+        .copied()
+        .filter(|class_name| supports_class_for_format(format, *class_name))
+        .map(|class_name| class_name.to_string())
+        .collect()
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct SaveFile {
+#[serde(rename_all = "camelCase")]
+pub struct SaveSummaryFile {
     path: String,
-    save: Save,
-    expansion_type: String,
+    name: Option<String>,
+    title: Option<String>,
+    class_name: Option<String>,
+    level: Option<u8>,
+    version: Option<u32>,
+    format_id: Option<String>,
+    game_edition: Option<String>,
+    expansion_type: Option<String>,
+    hardcore: Option<bool>,
+    last_played: Option<u32>,
+    parse_issue_count: usize,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -88,11 +77,21 @@ pub struct SkillsContext {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct OutputFormatOption {
+    format_id: String,
+    version: u32,
+    game_edition: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ParsedCharacter {
     save: Save,
     parse_issue_count: usize,
     parse_issues: Vec<ParseIssue>,
     source_file_size: usize,
+    header_checksum: Option<u32>,
+    computed_checksum: Option<u32>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -180,6 +179,34 @@ fn parse_save_from_path(path: &Path, parse_mode: Option<&str>) -> Result<(Parsed
     Ok((parsed, source_file_size))
 }
 
+fn read_u32_le_at(bytes: &[u8], offset: usize) -> Option<u32> {
+    let end = offset.checked_add(4)?;
+    let data = bytes.get(offset..end)?;
+    let mut raw = [0u8; 4];
+    raw.copy_from_slice(data);
+    Some(u32::from_le_bytes(raw))
+}
+
+fn detect_hardcore_and_last_played(
+    bytes: &[u8],
+    format_id: Option<FormatId>,
+) -> (Option<bool>, Option<u32>) {
+    let Some(format_id) = format_id else {
+        return (None, None);
+    };
+
+    const CHARACTER_SECTION_START: usize = 16;
+    let (status_offset, last_played_offset) = match format_id {
+        FormatId::V99 => (CHARACTER_SECTION_START + 20, CHARACTER_SECTION_START + 32),
+        FormatId::V105 => (CHARACTER_SECTION_START + 4, CHARACTER_SECTION_START + 16),
+        FormatId::Unknown(_) => return (None, None),
+    };
+
+    let hardcore = bytes.get(status_offset).map(|status| (status & (1 << 2)) != 0);
+    let last_played = read_u32_le_at(bytes, last_played_offset);
+    (hardcore, last_played)
+}
+
 fn backup_hash_cache() -> &'static Mutex<HashMap<String, String>> {
     BACKUP_HASH_CACHE.get_or_init(|| Mutex::new(HashMap::new()))
 }
@@ -204,7 +231,9 @@ fn bucket_prefix_for_source(path: &Path) -> String {
 
 fn list_bucket_dirs_for_source(app: &tauri::AppHandle, source_path: &Path) -> Result<Vec<PathBuf>, String> {
     let backup_root = backup_root_dir(app)?;
-    let prefix = format!("{}-", bucket_prefix_for_source(source_path));
+    let uuid = bucket_prefix_for_source(source_path);
+    let old_prefix = format!("{uuid}-");
+    let new_suffix = format!("-{uuid}");
     let entries = read_dir(backup_root).map_err(|e| e.to_string())?;
     let mut dirs = Vec::<PathBuf>::new();
 
@@ -221,12 +250,46 @@ fn list_bucket_dirs_for_source(app: &tauri::AppHandle, source_path: &Path) -> Re
             Some(value) => value,
             None => continue,
         };
-        if file_name.starts_with(&prefix) {
+        if file_name.starts_with(&old_prefix) || file_name.ends_with(&new_suffix) {
             dirs.push(path);
         }
     }
 
     Ok(dirs)
+}
+
+fn latest_timestamp_in_bucket(bucket_dir: &Path) -> Option<String> {
+    let entries = read_dir(bucket_dir).ok()?;
+    let mut latest: Option<String> = None;
+    for entry in entries {
+        let path = entry.ok()?.path();
+        if !path.is_dir() {
+            continue;
+        }
+        let timestamp = path.file_name()?.to_str()?.to_string();
+        if latest.as_ref().map(|current| timestamp > *current).unwrap_or(true) {
+            latest = Some(timestamp);
+        }
+    }
+    latest
+}
+
+fn select_bucket_dir_for_source(app: &tauri::AppHandle, source_path: &Path) -> Result<PathBuf, String> {
+    let bucket_dirs = list_bucket_dirs_for_source(app, source_path)?;
+    if bucket_dirs.is_empty() {
+        return Err("No backups exist yet for this character.".to_string());
+    }
+
+    let mut buckets_with_timestamps: Vec<(Option<String>, PathBuf)> = bucket_dirs
+        .into_iter()
+        .map(|bucket| (latest_timestamp_in_bucket(&bucket), bucket))
+        .collect();
+    buckets_with_timestamps.sort_by(|left, right| left.0.cmp(&right.0).then(left.1.cmp(&right.1)));
+
+    buckets_with_timestamps
+        .pop()
+        .map(|(_, bucket)| bucket)
+        .ok_or_else(|| "No backups exist yet for this character.".to_string())
 }
 
 fn sanitize_component(value: &str, fallback: &str) -> String {
@@ -291,9 +354,21 @@ fn enforce_backup_retention(bucket_dir: &Path, keep: usize) -> Result<(), String
     Ok(())
 }
 
-fn parse_save_for_backup_metadata(path: &Path) -> Option<Save> {
-    let (parsed, _) = parse_save_from_path(path, None).ok()?;
-    Some(parsed.save)
+#[derive(Default)]
+struct BackupSourceSummary {
+    class_name: Option<String>,
+    character_name: Option<String>,
+    level: Option<u8>,
+}
+
+fn summarize_save_for_backup_metadata(path: &Path) -> Option<BackupSourceSummary> {
+    let bytes = fs::read(path).ok()?;
+    let summary = Save::summarize(&bytes, Strictness::Lax).ok()?;
+    Some(BackupSourceSummary {
+        class_name: summary.class.as_ref().map(ToString::to_string),
+        character_name: summary.name,
+        level: summary.level,
+    })
 }
 
 fn determine_bucket_dir(
@@ -302,11 +377,32 @@ fn determine_bucket_dir(
     fallback_save: &Save,
 ) -> Result<PathBuf, String> {
     let backup_root = backup_root_dir(app)?;
-    let source_save = parse_save_for_backup_metadata(source_path).unwrap_or_else(|| fallback_save.clone());
-    let class_name = sanitize_component(&source_save.character.class.to_string(), "class");
-    let character_name = sanitize_component(&source_save.character.name, "character");
-    let prefix = bucket_prefix_for_source(source_path);
-    Ok(backup_root.join(format!("{prefix}-{class_name}-{character_name}")))
+    let source_summary = summarize_save_for_backup_metadata(source_path).unwrap_or_default();
+    let fallback_class = fallback_save.character.class.to_string();
+    let fallback_name = fallback_save.character.name.clone();
+    let fallback_level = fallback_save.character.level.to_string();
+    let class_name = sanitize_component(
+        source_summary
+            .class_name
+            .as_deref()
+            .filter(|value| !value.trim().is_empty())
+            .unwrap_or(&fallback_class),
+        "class",
+    );
+    let character_name = sanitize_component(
+        source_summary
+            .character_name
+            .as_deref()
+            .filter(|value| !value.trim().is_empty())
+            .unwrap_or(&fallback_name),
+        "character",
+    );
+    let summary_level = source_summary.level.map(|level| level.to_string());
+    let character_level = sanitize_component(summary_level.as_deref().unwrap_or(&fallback_level), "level");
+    let uuid = bucket_prefix_for_source(source_path);
+    Ok(backup_root.join(format!(
+        "{character_name}-{class_name}-lvl{character_level}-{uuid}"
+    )))
 }
 
 fn open_path_in_file_manager(path: &Path) -> Result<(), String> {
@@ -460,25 +556,28 @@ pub fn get_character_from_path_with_meta(
     let path: &Path = Path::new(&path);
     let (parsed, source_file_size) = parse_save_from_path(path, parse_mode.as_deref())?;
     let parse_issue_count = parsed.issues.len();
+    let header_checksum = parsed.header_checksum;
+    let computed_checksum = parsed.computed_checksum;
     let parse_issues = parsed.issues;
     Ok(ParsedCharacter {
         save: parsed.save,
         parse_issue_count,
         parse_issues,
         source_file_size,
+        header_checksum,
+        computed_checksum,
     })
 }
 
 #[tauri::command]
 pub fn new_save(version: u32, class: Class) -> Result<Save, String> {
-    if !supports_class_for_version(version, class) {
+    let format = FormatId::from_version(version)
+        .ok_or_else(|| format!("Unsupported save version {version} for new save creation."))?;
+    if !supports_class_for_format(format, class) {
         return Err(format!(
             "Class {class} is not supported for save version {version}."
         ));
     }
-
-    let format = FormatId::from_version(version)
-        .ok_or_else(|| format!("Unsupported save version {version} for new save creation."))?;
     Ok(Save::new(format, class))
 }
 
@@ -496,6 +595,23 @@ pub fn get_skills_context(version: u32, class: Class) -> Result<SkillsContext, S
         supported_classes,
         skill_slot_count: halbu::skills::SKILL_POINTS_COUNT,
     })
+}
+
+#[tauri::command]
+pub fn get_supported_output_formats() -> Vec<OutputFormatOption> {
+    let mut options: Vec<OutputFormatOption> = Save::supported_output_formats()
+        .into_iter()
+        .map(|format| OutputFormatOption {
+            format_id: format_id_label(format),
+            version: format.version(),
+            game_edition: format
+                .edition()
+                .map(|edition| edition.label().to_string())
+                .unwrap_or_else(|| "Unknown".to_string()),
+        })
+        .collect();
+    options.sort_by_key(|option| option.version);
+    options
 }
 #[tauri::command]
 pub fn save_file(
@@ -592,10 +708,36 @@ pub fn save_file_as_version(
 }
 
 #[tauri::command]
+pub fn check_save_compatibility(
+    save: Save,
+    target_version: u32,
+) -> Result<Vec<CompatibilityIssue>, String> {
+    let target_format = FormatId::from_version(target_version)
+        .ok_or_else(|| format!("Unsupported save version {target_version}."))?;
+    Ok(save.check_compatibility(target_format))
+}
+
+#[tauri::command]
 pub fn open_backup_folder(app: tauri::AppHandle) -> Result<String, String> {
     let backup_root = backup_root_dir(&app)?;
     open_path_in_file_manager(&backup_root)?;
     Ok(backup_root.to_string_lossy().to_string())
+}
+
+#[tauri::command]
+pub fn open_backup_folder_for_source(
+    app: tauri::AppHandle,
+    source_path: String,
+) -> Result<String, String> {
+    let normalized_source_path = source_path.trim();
+    if normalized_source_path.is_empty() {
+        return Err("No source save path is available.".to_string());
+    }
+
+    let source = Path::new(normalized_source_path);
+    let bucket_dir = select_bucket_dir_for_source(&app, source)?;
+    open_path_in_file_manager(&bucket_dir)?;
+    Ok(bucket_dir.to_string_lossy().to_string())
 }
 
 #[tauri::command]
@@ -731,16 +873,16 @@ pub fn backup_all_detected_saves(
 }
 
 #[tauri::command]
-pub fn summary_folder(path: String, parse_mode: Option<String>) -> Result<Vec<SaveFile>, String> {
+pub fn summary_folder(path: String, parse_mode: Option<String>) -> Result<Vec<SaveSummaryFile>, String> {
     let path: &Path = Path::new(&path);
-    let parse_mode_ref = parse_mode.as_deref();
+    let strictness = strictness_from_parse_mode(parse_mode.as_deref());
 
     let files = match read_dir(path) {
         Ok(res) => res,
         Err(e) => return Err(e.to_string()),
     };
 
-    let mut saves: Vec<SaveFile> = Vec::<SaveFile>::new();
+    let mut saves: Vec<SaveSummaryFile> = Vec::<SaveSummaryFile>::new();
     for file in files {
         let file_path = match file {
             Ok(res) => res.path(),
@@ -756,18 +898,34 @@ pub fn summary_folder(path: String, parse_mode: Option<String>) -> Result<Vec<Sa
             None => continue,
         };
 
-        let (parsed, _) = match parse_save_from_path(file_path.as_path(), parse_mode_ref) {
+        let bytes = match fs::read(file_path.as_path()) {
             Ok(res) => res,
             Err(_e) => continue,
         };
 
-        let save = parsed.save;
-        saves.push(SaveFile {
-            expansion_type: save.expansion_type().label().to_string(),
-            save,
+        let summary = match Save::summarize(&bytes, strictness) {
+            Ok(res) => res,
+            Err(_e) => continue,
+        };
+
+        let (hardcore, last_played) = detect_hardcore_and_last_played(&bytes, summary.format);
+        saves.push(SaveSummaryFile {
             path: file_path_string.to_string(),
+            name: summary.name,
+            title: summary.title,
+            class_name: summary.class.as_ref().map(ToString::to_string),
+            level: summary.level,
+            version: summary.version,
+            format_id: summary.format.map(format_id_label),
+            game_edition: summary.edition.map(|edition| edition.label().to_string()),
+            expansion_type: summary
+                .expansion_type
+                .map(|expansion_type| expansion_type.label().to_string()),
+            hardcore,
+            last_played,
+            parse_issue_count: summary.issues.len(),
         });
     }
-    saves.sort_unstable_by_key(|save_file| Reverse(save_file.save.character.last_played));
+    saves.sort_unstable_by_key(|save_file| Reverse(save_file.last_played.unwrap_or(0)));
     Ok(saves)
 }

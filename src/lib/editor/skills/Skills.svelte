@@ -234,7 +234,7 @@
 	}
 </script>
 
-<div class="skills-page grid content-start gap-[0.6rem]">
+<div class="skills-page grid content-start gap-2.5">
 	<SkillsHeader
 		pointsLeft={save.attributes.newskills.value}
 		disabled={!hasClassSkills || isSkillsContextLoading}
@@ -243,16 +243,16 @@
 	/>
 
 	{#if isSkillsContextLoading}
-		<div class="rounded-sm border border-halbu-info bg-halbu-infoSoft px-[0.56rem] py-[0.38rem] text-[0.9rem] text-halbu-info">
+		<div class="rounded-sm border border-halbu-info bg-halbu-infoSoft px-2 py-1.5 text-[0.9rem] text-halbu-info">
 			Loading skills context...
 		</div>
 	{/if}
 
 	{#if pageNotices.length > 0}
-		<div class="grid gap-[0.36rem]">
+		<div class="grid gap-1.5">
 			{#each pageNotices as notice}
 				<div
-					class={`rounded-sm border px-[0.56rem] py-[0.38rem] text-[0.9rem] ${
+					class={`rounded-sm border px-2 py-1.5 text-[0.9rem] ${
 						notice.level === "warning"
 							? "border-halbu-warning bg-halbu-warningSoft text-halbu-warning"
 							: "border-halbu-info bg-halbu-infoSoft text-halbu-info"
@@ -264,7 +264,7 @@
 		</div>
 	{/if}
 
-	<div class="grid min-w-0 gap-[0.56rem] xl:grid-cols-[minmax(0,2.1fr)_minmax(18.5rem,1fr)]">
+	<div class="grid min-w-0 gap-2 xl:grid-cols-[minmax(0,2.1fr)_minmax(18.5rem,1fr)]">
 		<div class="min-w-0">
 			{#if canRenderTrees}
 				<SkillTreeCanvas
@@ -280,13 +280,13 @@
 					onDecrement={decrementSkill}
 				/>
 			{:else}
-				<div class="rounded-sm border border-halbu-border bg-halbu-panel px-[0.6rem] py-[0.48rem] text-[0.9rem] text-halbu-textMuted">
+				<div class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2 text-[0.9rem] text-halbu-textMuted">
 					Skill tree is unavailable for this save context.
 				</div>
 			{/if}
 		</div>
 
-		<div class="min-w-0 xl:max-w-[36rem]">
+		<div class="min-w-0 xl:max-w-xl">
 			<SkillInspectorPanel
 				skillDetails={selectedSkillDetails}
 				disabled={!canRenderTrees || isSkillsContextLoading}

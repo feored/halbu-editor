@@ -4,14 +4,11 @@
 	import Button from "../components/ui/button/button.svelte";
 	import { Message, buildMessage } from "../utils/Message.svelte";
 	import { invoke } from "@tauri-apps/api/core";
-	import { calcTitle } from "../utils/Utils.svelte";
 	import * as settings from "../utils/settings.js";
 	import { AlertCircleIcon } from "lucide-svelte";
 	import {
 		KNOWN_SAVE_VERSIONS,
 		DEFAULT_NEW_SAVE_VERSION,
-		classLabel,
-		getSaveEditionLabel,
 		getSupportedClasses,
 		normalizeClassForVersion,
 	} from "../utils/GameSupport";
@@ -79,6 +76,14 @@
 				parseIssues: Array.isArray(parsed.parse_issues) ? parsed.parse_issues : [],
 				sourceFileSize: Number(parsed.source_file_size) || null,
 				sourcePath: path,
+				headerChecksum:
+					Number.isFinite(Number(parsed.header_checksum))
+						? Number(parsed.header_checksum)
+						: null,
+				computedChecksum:
+					Number.isFinite(Number(parsed.computed_checksum))
+						? Number(parsed.computed_checksum)
+						: null,
 			});
 		} catch (err) {
 			console.error(err);
@@ -107,6 +112,8 @@
 				parseIssues: [],
 				sourceFileSize: null,
 				sourcePath: null,
+				headerChecksum: null,
+				computedChecksum: null,
 			});
 		} catch (err) {
 			console.error(err);
@@ -143,10 +150,10 @@
 			return saveFilesFound;
 		}
 		return saveFilesFound.filter((saveFile) => {
-			const name = String(saveFile?.save?.character?.name ?? "").toLowerCase();
-			const className = classLabel(saveFile?.save?.character?.class).toLowerCase();
-			const version = getSaveEditionLabel(saveFile?.save).toLowerCase();
-			return name.includes(query) || className.includes(query) || version.includes(query);
+			const name = String(saveFile?.name ?? "").toLowerCase();
+			const className = String(saveFile?.className ?? "").toLowerCase();
+			const edition = String(saveFile?.gameEdition ?? "").toLowerCase();
+			return name.includes(query) || className.includes(query) || edition.includes(query);
 		});
 	});
 
@@ -219,46 +226,43 @@
 						>
 							<td class="py-3">
 								<span class="font-semibold text-halbu-text">
-									{calcTitle(saveFile.save.character)}
-									{#if saveFile.save.character.name.length > 0}
-										{saveFile.save.character.name}
+									{#if typeof saveFile.title === "string" && saveFile.title.length > 0}
+										{saveFile.title}{" "}
+									{/if}
+									{#if typeof saveFile.name === "string" && saveFile.name.length > 0}
+										{saveFile.name}
 									{:else}
 										Corrupted Name
 									{/if}
 								</span>
 							</td>
-							<td class="py-3">{classLabel(saveFile.save.character.class)}</td>
-							<td class="py-3">{saveFile.save.character.level}</td>
+							<td class="py-3">{saveFile?.className ?? "-"}</td>
+							<td class="py-3">{saveFile?.level ?? "-"}</td>
 							<td class="py-3">
-									{#if saveFile.save.character.status.hardcore}
-										<span
-											class="inline-flex items-center rounded-full bg-halbu-dangerSoft px-2 py-0.5 text-[0.78rem] font-semibold text-halbu-danger"
-										>
-											Hardcore
-										</span>
-									{:else}
-										<span
-											class="inline-flex items-center rounded-full bg-halbu-panel2 px-2 py-0.5 text-[0.78rem] font-semibold text-halbu-textMuted"
-										>
-											Softcore
-										</span>
+								{#if saveFile?.hardcore === true}
+									<span
+										class="inline-flex items-center rounded-full bg-halbu-dangerSoft px-2 py-0.5 text-[0.78rem] font-semibold text-halbu-danger"
+									>
+										Hardcore
+									</span>
+								{:else if saveFile?.hardcore === false}
+									<span
+										class="inline-flex items-center rounded-full bg-halbu-panel2 px-2 py-0.5 text-[0.78rem] font-semibold text-halbu-textMuted"
+									>
+										Softcore
+									</span>
+								{:else}
+									<span class="text-halbu-textMuted">Unknown</span>
 								{/if}
 							</td>
 							<td class="py-3">
-								<small class="text-halbu-text"
-									>{saveFile.expansion_type ??
-										(saveFile.save.character.status.expansion ? "Expansion" : "Classic")}</small
-								>
+								<small class="text-halbu-text">{saveFile?.expansionType ?? "-"}</small>
 							</td>
 							<td class="py-3">
-								<small class="text-halbu-text"
-									>{getSaveEditionLabel(saveFile.save)}</small
-								>
+								<small class="text-halbu-text">{saveFile?.gameEdition ?? "-"}</small>
 							</td>
 							<td class="py-3">
-								<small class="font-monospace text-halbu-text"
-									>{saveFile?.save?.version ?? "-"}</small
-								>
+								<small class="font-monospace text-halbu-text">{saveFile?.version ?? "-"}</small>
 							</td>
 						</tr>
 					{/each}

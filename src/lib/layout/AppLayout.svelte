@@ -10,7 +10,7 @@
 
 <div class="app-layout flex h-dvh min-h-0 flex-col">
 	{#if showTopbar}
-		<header class="app-layout__top relative z-[2] flex min-h-[2.65rem] items-center px-[0.7rem] py-[0.38rem]">
+		<header class="app-layout__top relative z-[2] flex min-h-11 items-center px-3 py-1.5">
 			{@render topbar?.()}
 		</header>
 	{/if}

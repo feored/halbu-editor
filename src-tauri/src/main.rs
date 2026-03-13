@@ -24,10 +24,13 @@ fn main() {
             get_character_from_path_with_meta,
             save_file,
             save_file_as_version,
+            check_save_compatibility,
             open_backup_folder,
+            open_backup_folder_for_source,
             get_backup_status,
             backup_all_detected_saves,
             new_save,
+            get_supported_output_formats,
             get_skills_context,
             summary_folder
         ])

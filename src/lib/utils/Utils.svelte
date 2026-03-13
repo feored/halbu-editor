@@ -1,22 +1,32 @@
 <script module>
-    import titles from "../editor/character/titles.json";
-    import { isFemaleClass } from "./GameSupport";
+	import titles from "../editor/character/titles.json";
+	import { isFemaleClass, normalizeExpansionType } from "./GameSupport";
 
-    export function calcTitle(character) {
-        const difficultyBeaten = calcDifficultyBeaten(character);
-        const gender = isFemaleClass(character?.class) ? "Female" : "Male";
-        const core = character?.status?.hardcore ? "Hardcore" : "Softcore";
-        const expansion = character?.status?.expansion ? "Expansion" : "Classic";
+	function resolveExpansionType(character, expansionType) {
+		const normalized = normalizeExpansionType(expansionType);
+		if (normalized != null) {
+			return normalized;
+		}
+		return character?.status?.expansion ? "Expansion" : "Classic";
+	}
 
-        return titles?.[core]?.[expansion]?.[difficultyBeaten]?.[gender] ?? "";
-    }
+	export function calcTitle(character, expansionType) {
+		const difficultyBeaten = calcDifficultyBeaten(character, expansionType);
+		const gender = isFemaleClass(character?.class) ? "Female" : "Male";
+		const core = character?.status?.hardcore ? "Hardcore" : "Softcore";
+		const normalizedExpansionType = resolveExpansionType(character, expansionType);
+		const expansion = normalizedExpansionType === "Classic" ? "Classic" : "Expansion";
 
-    export function calcDifficultyBeaten(character) {
-        const progression = Number(character?.progression ?? 0);
-        const isExpansion = Boolean(character?.status?.expansion);
-        const rawIndex = Math.floor(progression / (4 + (isExpansion ? 1 : 0)));
-        const index = Math.max(0, Math.min(rawIndex, 3));
+		return titles?.[core]?.[expansion]?.[difficultyBeaten]?.[gender] ?? "";
+	}
 
-        return ["None", "Normal", "Nightmare", "Hell"][index];
-    }
+	export function calcDifficultyBeaten(character, expansionType) {
+		const progression = Number(character?.progression ?? 0);
+		const normalizedExpansionType = resolveExpansionType(character, expansionType);
+		const isExpansion = normalizedExpansionType !== "Classic";
+		const rawIndex = Math.floor(progression / (4 + (isExpansion ? 1 : 0)));
+		const index = Math.max(0, Math.min(rawIndex, 3));
+
+		return ["None", "Normal", "Nightmare", "Hell"][index];
+	}
 </script>

@@ -35,6 +35,7 @@ const VERSION_CAPABILITIES = Object.freeze({
 });
 
 const SKILL_INDEX_CACHE = new Map();
+const SAVE_EXPANSION_TYPES = new Set(["Classic", "Expansion", "RotW"]);
 
 export const KNOWN_SAVE_VERSIONS = Object.freeze(
 	Object.keys(VERSION_CAPABILITIES)
@@ -52,6 +53,67 @@ function normalizeVersion(version) {
 function getCapabilities(version) {
 	const normalizedVersion = normalizeVersion(version);
 	return VERSION_CAPABILITIES[normalizedVersion] ?? null;
+}
+
+function enumVariantLabel(value) {
+	if (typeof value === "string") {
+		return value;
+	}
+	if (value && typeof value === "object") {
+		const keys = Object.keys(value);
+		if (keys.length > 0) {
+			return keys[0];
+		}
+	}
+	return null;
+}
+
+export function normalizeExpansionType(value) {
+	const label = enumVariantLabel(value);
+	return label != null && SAVE_EXPANSION_TYPES.has(label) ? label : null;
+}
+
+export function getSaveExpansionType(save) {
+	const normalized = normalizeExpansionType(save?.expansion_type);
+	if (normalized != null) {
+		return normalized;
+	}
+	return save?.character?.status?.expansion ? "Expansion" : "Classic";
+}
+
+export function isExpandedMode(expansionType) {
+	const normalized = normalizeExpansionType(expansionType);
+	return normalized != null && normalized !== "Classic";
+}
+
+export function getSaveFormatIdLabel(save) {
+	const format = save?.meta?.format;
+	if (format === "V99" || format === "V105") {
+		return format;
+	}
+	if (format && typeof format === "object" && "Unknown" in format) {
+		return `Unknown(${format.Unknown})`;
+	}
+	const version = normalizeVersion(save?.version);
+	if (version === 99) {
+		return "V99";
+	}
+	if (version === 105) {
+		return "V105";
+	}
+	return `Unknown(${save?.version ?? "?"})`;
+}
+
+export function getSaveTargetVersion(save) {
+	const format = save?.meta?.format;
+	if (format === "V99") {
+		return 99;
+	}
+	if (format === "V105") {
+		return 105;
+	}
+	const version = normalizeVersion(save?.version);
+	return version === 99 || version === 105 ? version : null;
 }
 
 export function getSaveEditionLabel(save) {

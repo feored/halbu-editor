@@ -48,7 +48,7 @@
 				</h1>
 			{/if}
 
-			<ul class="sidebar-nav__list m-0 grid list-none gap-[0.2rem] p-0">
+			<ul class="sidebar-nav__list m-0 grid list-none gap-1 p-0">
 				{#each items as item (item.id)}
 					<li
 						class={cn(

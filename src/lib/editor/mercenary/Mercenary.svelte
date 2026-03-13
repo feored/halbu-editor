@@ -119,10 +119,10 @@
 	});
 </script>
 
-<div class="grid max-w-[46rem] content-start gap-[0.6rem]">
-	<section class="rounded-sm border border-halbu-border bg-halbu-panel px-[0.6rem] py-[0.48rem]">
-		<h3 class="editor-card-title mb-[0.36rem]">Status</h3>
-		<div class="grid gap-[0.26rem] text-[0.92rem]">
+<div class="grid max-w-3xl content-start gap-2.5">
+	<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
+		<h3 class="editor-card-title mb-1.5">Status</h3>
+		<div class="grid gap-1 text-[0.92rem]">
 			<label class="inline-flex items-center gap-2">
 				<input
 					class="form-check-input mt-0"
@@ -148,20 +148,20 @@
 			</label>
 		</div>
 		{#if !isHired}
-			<div class="form-text mt-[0.26rem]">
+			<div class="form-text mt-1">
 				Mercenary data is inactive until the mercenary is hired.
 			</div>
 		{/if}
 	</section>
 
 	<section
-		class={`rounded-sm border border-halbu-border bg-halbu-panel px-[0.6rem] py-[0.48rem] ${
+		class={`rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2 ${
 			!isHired ? "opacity-60" : ""
 		}`}
 	>
-		<h3 class="editor-card-title mb-[0.36rem]">Identity</h3>
+		<h3 class="editor-card-title mb-1.5">Identity</h3>
 		<div
-			class="grid grid-cols-[8rem_minmax(0,1fr)] items-center gap-x-[0.55rem] gap-y-[0.34rem]"
+			class="grid grid-cols-[8rem_minmax(0,1fr)] items-center gap-x-2 gap-y-1.5"
 		>
 			<label class="form-label mb-0" for="name_id">Name</label>
 			<select
@@ -193,13 +193,13 @@
 	</section>
 
 	<section
-		class={`rounded-sm border border-halbu-border bg-halbu-panel px-[0.6rem] py-[0.48rem] ${
+		class={`rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2 ${
 			!isHired ? "opacity-60" : ""
 		}`}
 	>
-		<h3 class="editor-card-title mb-[0.36rem]">Type</h3>
+		<h3 class="editor-card-title mb-1.5">Type</h3>
 		<div
-			class="grid grid-cols-[8rem_minmax(0,1fr)] items-center gap-x-[0.55rem] gap-y-[0.34rem]"
+			class="grid grid-cols-[8rem_minmax(0,1fr)] items-center gap-x-2 gap-y-1.5"
 		>
 			<label class="form-label mb-0" for="class">Class</label>
 			<select
@@ -250,13 +250,13 @@
 	</section>
 
 	<section
-		class={`rounded-sm border border-halbu-border bg-halbu-panel px-[0.6rem] py-[0.48rem] ${
+		class={`rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2 ${
 			!isHired ? "opacity-60" : ""
 		}`}
 	>
-		<h3 class="editor-card-title mb-[0.36rem]">Progression</h3>
+		<h3 class="editor-card-title mb-1.5">Progression</h3>
 		<div
-			class="grid grid-cols-[8rem_minmax(0,1fr)] items-center gap-x-[0.55rem] gap-y-[0.34rem]"
+			class="grid grid-cols-[8rem_minmax(0,1fr)] items-center gap-x-2 gap-y-1.5"
 		>
 			<label class="form-label mb-0" for="level">Level</label>
 			<input

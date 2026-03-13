@@ -23,13 +23,13 @@
 	}
 </script>
 
-<section class="w-full min-w-0 rounded-sm border border-halbu-border bg-halbu-panel px-[0.68rem] py-[0.52rem]">
+<section class="w-full min-w-0 rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
 	{#if pageIndexes.length > 1}
-		<div class="mb-[0.42rem] flex min-h-[2.5rem] w-fit items-center gap-[0.38rem] rounded-sm border border-halbu-border bg-halbu-panel px-[0.34rem] py-[0.34rem]">
+		<div class="mb-1.5 flex min-h-10 w-fit items-center gap-1.5 rounded-sm border border-halbu-border bg-halbu-panel px-1.5 py-1.5">
 			{#each pageIndexes as pageIndex}
 				<button
 					type="button"
-					class={`rounded-xs border px-[0.72rem] py-[0.36rem] text-[0.92rem] font-medium leading-none transition ${
+					class={`rounded-xs border px-3 py-1.5 text-[0.92rem] font-medium leading-none transition ${
 						Number(activePageIndex) === Number(pageIndex)
 							? "border-halbu-primary bg-halbu-panel2 text-halbu-text"
 							: "border-halbu-border bg-halbu-panel text-halbu-textMuted hover:bg-halbu-panel2 hover:text-halbu-text"
