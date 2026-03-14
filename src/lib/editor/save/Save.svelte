@@ -1,6 +1,7 @@
 <script>
 	import { confirm } from "@tauri-apps/plugin-dialog";
 	import Button from "../../components/ui/button/button.svelte";
+	import { getErrorMessage } from "../../utils/errorMessage.js";
 	import { buildChangeReview } from "../status/reviewChanges";
 
 	let {
@@ -132,7 +133,7 @@
 		try {
 			await onSave();
 		} catch (error) {
-			statusError = String(error);
+			statusError = getErrorMessage(error, "Failed to save.");
 		} finally {
 			saveInProgress = false;
 		}
@@ -144,7 +145,7 @@
 		try {
 			await onSave({ saveAs: true });
 		} catch (error) {
-			statusError = String(error);
+			statusError = getErrorMessage(error, "Failed to save.");
 		} finally {
 			saveInProgress = false;
 		}
@@ -187,7 +188,7 @@
 			await onRestore();
 			closeReviewModal();
 		} catch (error) {
-			statusError = String(error);
+			statusError = getErrorMessage(error, "Failed to restore changes.");
 		}
 	}
 

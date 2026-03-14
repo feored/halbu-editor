@@ -24,6 +24,7 @@
 		getSkillsDataset,
 		skillIdToSaveId,
 	} from "../../utils/GameSupport";
+	import { getErrorMessage } from "../../utils/errorMessage.js";
 	import { buildSkillDetails } from "./skillDetails";
 
 	let { save = $bindable() } = $props();
@@ -62,7 +63,7 @@
 				return;
 			}
 			skillsContext = null;
-			skillsContextError = String(error);
+			skillsContextError = getErrorMessage(error, "Failed to load skills context.");
 		} finally {
 			if (requestToken === skillsContextRequestToken) {
 				isSkillsContextLoading = false;

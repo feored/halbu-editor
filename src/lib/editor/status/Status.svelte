@@ -6,6 +6,7 @@
 		getSaveEditionLabel,
 		getSaveFormatIdLabel,
 	} from "../../utils/GameSupport";
+	import { getErrorMessage } from "../../utils/errorMessage.js";
 
 	let {
 		save,
@@ -133,7 +134,7 @@
 			});
 			backupStatus = response;
 		} catch (error) {
-			backupStatusError = String(error);
+			backupStatusError = getErrorMessage(error, "Failed to load backup status.");
 		}
 	}
 
@@ -148,7 +149,7 @@
 				sourcePath,
 			});
 		} catch (error) {
-			backupFolderOpenError = String(error ?? "Failed to open backup folder.");
+			backupFolderOpenError = getErrorMessage(error, "Failed to open backup folder.");
 		} finally {
 			openingBackupFolder = false;
 		}

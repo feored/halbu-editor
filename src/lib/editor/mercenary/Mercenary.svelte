@@ -3,6 +3,7 @@
 	import variants from "./variants.json";
 	import { Difficulty } from "../../utils/constants.js";
 	import { enforceMinMax } from "../../utils/actions.js";
+	import { clampInteger } from "../../utils/numbers.js";
 
 	let { save = $bindable() } = $props();
 
@@ -13,6 +14,8 @@
 		Barbarian: "Barbarian",
 	};
 	const U32_MAX = 4294967295;
+	const MERCENARY_LEVEL_MIN = 1;
+	const MERCENARY_LEVEL_MAX = 98;
 
 	function xpFromLevel(level, rate) {
 		return rate * (level + 1) * (level * level);
@@ -74,18 +77,34 @@
 
 	// Experience
 	let mercLevel = $state(1);
+	const mercenaryLevelCap = $derived(
+		clampInteger(save.attributes.level.value, MERCENARY_LEVEL_MIN, MERCENARY_LEVEL_MAX),
+	);
 
 	$effect(() => {
 		mercVariant.rate;
 		save.character.mercenary.experience;
+		mercenaryLevelCap;
 		changeExperience();
 	});
 
+	function clampMercenaryLevel(level) {
+		return clampInteger(level, MERCENARY_LEVEL_MIN, mercenaryLevelCap);
+	}
+
 	function changeExperience() {
-		mercLevel = levelFromXp(save.character.mercenary.experience, mercVariant.rate);
+		const nextMercLevel = clampMercenaryLevel(
+			levelFromXp(save.character.mercenary.experience, mercVariant.rate),
+		);
+		mercLevel = nextMercLevel;
+		const nextExperience = xpFromLevel(nextMercLevel, mercVariant.rate);
+		if (save.character.mercenary.experience !== nextExperience) {
+			save.character.mercenary.experience = nextExperience;
+		}
 	}
 
 	function changeLevel() {
+		mercLevel = clampMercenaryLevel(mercLevel);
 		save.character.mercenary.experience = xpFromLevel(mercLevel, mercVariant.rate);
 	}
 
@@ -256,7 +275,7 @@
 				name="level"
 				id="level"
 				min="1"
-				max="98"
+				max={mercenaryLevelCap}
 				step="1"
 				bind:value={mercLevel}
 				oninput={changeLevel}

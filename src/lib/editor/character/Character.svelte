@@ -2,14 +2,9 @@
 	import { invoke } from "@tauri-apps/api/core";
 	import { enforceMinMax } from "../../utils/actions.js";
 	import { calcTitle, calcDifficultyBeaten } from "../../utils/Utils.svelte";
-	import {
-		displayToFixedPoint,
-		fixedPointToDisplay,
-		RESOURCE_Q8_SCALE,
-	} from "../../utils/resources.js";
+	import { RESOURCE_Q8_SCALE } from "../../utils/resources.js";
 	import {
 		clampInteger,
-		toUInt32OrNull,
 	} from "../../utils/numbers.js";
 	import {
 		classLabel,
@@ -21,6 +16,7 @@
 		normalizeClassForVersion,
 		parseExpansionTypeLabel,
 	} from "../../utils/GameSupport";
+	import { getErrorMessage } from "../../utils/errorMessage.js";
 
 	import experienceTable from "./experience.json";
 	import { Difficulty, Act } from "../../utils/constants.js";
@@ -30,6 +26,12 @@
 		levelForExperience,
 		validateCharacterName,
 	} from "./characterLogic";
+	import {
+		commitResourceDraftValue,
+		formatMapSeedValue,
+		parseMapSeedDraft,
+		resolveResourceDisplayValue,
+	} from "./characterFieldLogic";
 	import { adaptEditorSavePayload } from "../../types/editorAdapters";
 	import { DEFAULT_SKILL_SLOT_COUNT, resizeSkillSlots } from "../skills/skillSlots";
 
@@ -105,7 +107,9 @@
 		clampInteger(save.attributes.level.value, 1, 99)
 	);
 	const goldInventoryMax = $derived(MAX_GOLD_PER_LEVEL * normalizedLevelForGold);
-	const mapSeedDisplayValue = $derived(formatMapSeed(save.character.map_seed, mapSeedDisplayMode));
+	const mapSeedDisplayValue = $derived(
+		formatMapSeedValue(save.character.map_seed, mapSeedDisplayMode)
+	);
 
 	$effect(() => {
 		if (!isMapSeedEditing && mapSeedDraft !== mapSeedDisplayValue) {
@@ -203,9 +207,9 @@
 
 	function resourceDisplayValue(attributeId) {
 		const attribute = save.attributes[attributeId];
-		const rawMaxValue = Math.pow(2, attribute.bit_length) - 1;
-		return fixedPointToDisplay(
-			clampInteger(attribute.value, ATTRIBUTE_MIN, rawMaxValue),
+		return resolveResourceDisplayValue(
+			attribute.value,
+			attribute.bit_length,
 			RESOURCE_Q8_SCALE,
 		);
 	}
@@ -222,18 +226,14 @@
 
 	function commitQ8Draft(fieldId, attributeId) {
 		const draftValue = resourceDraftByField[fieldId] ?? "";
-		const parsedValue = Number.parseFloat(draftValue.trim());
-		const clampedDisplayValue = clampInteger(
-			Number.isFinite(parsedValue) ? parsedValue : resourceDisplayValue(attributeId),
+		const attribute = save.attributes[attributeId];
+		attribute.value = commitResourceDraftValue(
+			draftValue,
+			resourceDisplayValue(attributeId),
+			attribute.bit_length,
 			RESOURCE_DISPLAY_MIN,
 			RESOURCE_DISPLAY_MAX,
-		);
-		const attribute = save.attributes[attributeId];
-		const rawMaxValue = Math.pow(2, attribute.bit_length) - 1;
-		attribute.value = clampInteger(
-			displayToFixedPoint(clampedDisplayValue, RESOURCE_Q8_SCALE),
-			ATTRIBUTE_MIN,
-			rawMaxValue,
+			RESOURCE_Q8_SCALE,
 		);
 		if (!(fieldId in resourceDraftByField)) {
 			return;
@@ -243,34 +243,8 @@
 		resourceDraftByField = nextDraftByField;
 	}
 
-	function formatMapSeed(value, mode) {
-		const normalized = toUInt32OrNull(value);
-		if (normalized == null) {
-			return "";
-		}
-		if (mode === "hex") {
-			return `0x${normalized.toString(16).toUpperCase().padStart(8, "0")}`;
-		}
-		return String(normalized);
-	}
-
-	function parseMapSeedInput(value) {
-		const normalizedValue = value.trim();
-		let parsed = Number.NaN;
-		if (/^0x[0-9a-f]+$/i.test(normalizedValue)) {
-			parsed = Number.parseInt(normalizedValue.slice(2), 16);
-		} else if (/^[0-9]+$/.test(normalizedValue)) {
-			parsed = Number.parseInt(normalizedValue, 10);
-		}
-		if (!Number.isFinite(parsed)) {
-			return null;
-		}
-		const clamped = clampInteger(parsed, 0, MAP_SEED_MAX);
-		return clamped >>> 0;
-	}
-
 	function commitMapSeedDraft() {
-		const parsed = parseMapSeedInput(mapSeedDraft);
+		const parsed = parseMapSeedDraft(mapSeedDraft, MAP_SEED_MAX);
 		if (parsed == null) {
 			if (mapSeedInputRef != null) {
 				mapSeedInputRef.setCustomValidity("Use decimal digits or 0x-prefixed hex.");
@@ -281,7 +255,7 @@
 			return;
 		}
 		save.character.map_seed = parsed;
-		mapSeedDraft = formatMapSeed(parsed, mapSeedDisplayMode);
+		mapSeedDraft = formatMapSeedValue(parsed, mapSeedDisplayMode);
 	}
 
 	function handleMapSeedKeydown(event) {
@@ -339,7 +313,7 @@
 			save.attributes = newSave.attributes;
 			updateTitle();
 		} catch (err) {
-			classChangeError = String(err ?? "Failed to change class.");
+			classChangeError = getErrorMessage(err, "Failed to change class.");
 			selectedClassForEdit = normalizeClassForVersion(save.version, save.character.class);
 		}
 	}

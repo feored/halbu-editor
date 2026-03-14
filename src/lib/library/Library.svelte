@@ -5,6 +5,7 @@
 	import { Message, buildMessage } from "../utils/Message.svelte";
 	import { invoke } from "@tauri-apps/api/core";
 	import * as settings from "../utils/settings.js";
+	import { getErrorMessage } from "../utils/errorMessage.js";
 	import { AlertCircleIcon } from "lucide-svelte";
 	import {
 		adaptBackendOpenPayload,
@@ -30,7 +31,7 @@
 				getExistingCharacters();
 			})
 			.catch((err) => {
-				libraryError = `Failed to initialize settings: ${String(err ?? "unknown error")}`;
+				libraryError = `Failed to initialize settings: ${getErrorMessage(err, "unknown error")}`;
 			});
 	});
 
@@ -65,7 +66,7 @@
 			}
 			await loadSavePath(selectedPath);
 		} catch (err) {
-			libraryError = `Failed to open save picker: ${String(err ?? "unknown error")}`;
+			libraryError = `Failed to open save picker: ${getErrorMessage(err, "unknown error")}`;
 		}
 	}
 
@@ -83,7 +84,7 @@
 			});
 			dispatchMessage(Message.CharacterPicked, adaptBackendOpenPayload(response, path));
 		} catch (err) {
-			libraryError = `Failed to load save file: ${String(err ?? "unknown error")}`;
+			libraryError = `Failed to load save file: ${getErrorMessage(err, "unknown error")}`;
 		}
 	}
 
@@ -116,7 +117,7 @@
 				computedChecksum: null,
 			});
 		} catch (err) {
-			libraryError = `Failed to create new save: ${String(err ?? "unknown error")}`;
+			libraryError = `Failed to create new save: ${getErrorMessage(err, "unknown error")}`;
 		}
 	}
 
@@ -140,7 +141,7 @@
 			saveFilesFound = response;
 			saveFolderSet = true;
 		} catch (err) {
-			libraryError = `Failed to scan save folder: ${String(err ?? "unknown error")}`;
+			libraryError = `Failed to scan save folder: ${getErrorMessage(err, "unknown error")}`;
 			saveFolderSet = false;
 		}
 	}

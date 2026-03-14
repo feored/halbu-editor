@@ -2,6 +2,13 @@
 	import * as Settings from "../../utils/settings.js";
 	import { onDestroy } from "svelte";
 	import acts from "./actquests.json";
+	import {
+		applyQuestRewards,
+		countActProgress,
+		getQuestFlagsForBulkToggle,
+		getRenderedActQuests,
+		getStandardActQuests,
+	} from "./questsLogic";
 	let { save = $bindable() } = $props();
 
 	let showPrologue = $state(Settings.get(Settings.Key.QuestsShowPrologue));
@@ -49,28 +56,6 @@
 		{ id: "CompletedBefore", display: "Completed Before" },
 	];
 
-	const questRewards = [
-		{ act: "act1", quest: "q1", attribute: "newskills", value: 1 },
-		{ act: "act2", quest: "q1", attribute: "newskills", value: 1 },
-		{ act: "act4", quest: "q1", attribute: "newskills", value: 2 },
-		{ act: "act3", quest: "q1", attribute: "statpts", value: 5 },
-		{ act: "act3", quest: "q4", attribute: "maxhp", value: 20 },
-		{ act: "act3", quest: "q4", attribute: "hitpoints", value: 20 },
-	];
-	const rewardAttributeScaleById = {
-		hitpoints: 256,
-		maxhp: 256,
-		mana: 256,
-		maxmana: 256,
-		stamina: 256,
-		maxstamina: 256,
-	};
-	const rewardAttributeLabels = {
-		newskills: "Skill Points",
-		statpts: "Stat Points",
-		maxhp: "Base Life",
-		hitpoints: "Current Life",
-	};
 	const REWARD_FEEDBACK_INFO_TIMEOUT_MS = 3500;
 	const REWARD_FEEDBACK_WARNING_TIMEOUT_MS = 6000;
 	let rewardFeedbackByQuest = $state({});
@@ -82,55 +67,17 @@
 		rewardFeedbackTimeouts.clear();
 	});
 
-	function shouldShowQuest(quest) {
-		return quest.id !== "prologue" || showPrologue;
-	}
-
-	function getStandardActQuests(act) {
-		return act.quests.filter(shouldShowQuest);
-	}
-
-	function getRenderedActQuests(act) {
-		const standardQuests = getStandardActQuests(act);
-		if (!advancedFlags || !advancedAllQuests) {
-			return standardQuests;
-		}
-		return [...standardQuests, ...unused_act_quests[act.id]];
-	}
-
-	function isQuestCompletedState(stateFlags) {
-		return (
-			stateFlags.includes("RewardGranted") ||
-			stateFlags.includes("CompletedNow") ||
-			stateFlags.includes("CompletedBefore") ||
-			stateFlags.includes("PrimaryGoalDone")
-		);
-	}
-
-	function isQuestCompleted(difficultyId, actId, questId) {
-		const stateFlags = save.quests[difficultyId][actId][questId].state;
-		return isQuestCompletedState(stateFlags);
-	}
-
-	function countActProgress(difficultyId, act) {
-		const visibleQuests = getStandardActQuests(act);
-		let completed = 0;
-		for (const quest of visibleQuests) {
-			if (isQuestCompleted(difficultyId, act.id, quest.id)) {
-				completed += 1;
-			}
-		}
-		const total = visibleQuests.length;
-		const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
-		return { completed, total, percent };
-	}
-
 	const totalQuestProgress = $derived.by(() => {
 		let completed = 0;
 		let total = 0;
 		for (const difficulty of difficulties) {
 			for (const act of acts) {
-				const actProgress = countActProgress(difficulty.id, act);
+				const actProgress = countActProgress(
+					difficulty.id,
+					act,
+					save.quests,
+					showPrologue,
+				);
 				completed += actProgress.completed;
 				total += actProgress.total;
 			}
@@ -195,93 +142,21 @@
 		return rewardFeedbackByQuest[key] ?? null;
 	}
 
-	function formatSignedDelta(value) {
-		if (value === 0) {
-			return "0";
-		}
-		const absValue = Math.abs(value);
-		const formattedValue = Number.isInteger(absValue)
-			? `${absValue}`
-			: absValue.toFixed(2).replace(/\.?0+$/, "");
-		return value > 0 ? `+${formattedValue}` : `-${formattedValue}`;
-	}
-
-	function getRewardStorageScale(attributeId) {
-		return rewardAttributeScaleById[attributeId] ?? 1;
-	}
-
-	function toStoredRewardValue(attributeId, gameValue) {
-		return gameValue * getRewardStorageScale(attributeId);
-	}
-
-	function toDisplayedRewardDelta(attributeId, storedDelta) {
-		return storedDelta / getRewardStorageScale(attributeId);
-	}
-
 	function handleRewards(difficultyId, actId, questId, flagId, add) {
 		if (flagId !== "RewardGranted") {
 			return;
 		}
-
-		const rewardLines = questRewards.filter((rewardLine) => {
-			return rewardLine.act === actId && rewardLine.quest === questId;
-		});
-		if (rewardLines.length < 1) {
+		const rewardFeedback = applyQuestRewards(save.attributes, actId, questId, add);
+		if (rewardFeedback == null) {
 			clearRewardFeedback(difficultyId, actId, questId);
 			return;
 		}
-
-		let hasClampedChange = false;
-		const rewardChanges = [];
-		const clampedChanges = [];
-		for (const rewardLine of rewardLines) {
-			const attribute = save.attributes[rewardLine.attribute];
-			const previousValue = attribute.value;
-			const maxValue = Math.pow(2, attribute.bit_length) - 1;
-			const rewardStoredValue = toStoredRewardValue(rewardLine.attribute, rewardLine.value);
-			const targetValue = add
-				? previousValue + rewardStoredValue
-				: previousValue - rewardStoredValue;
-			const nextValue = Math.max(0, Math.min(targetValue, maxValue));
-			attribute.value = nextValue;
-
-			const effectiveDelta = nextValue - previousValue;
-			if (add && effectiveDelta !== rewardStoredValue) {
-				hasClampedChange = true;
-			}
-			if (!add && effectiveDelta !== -rewardStoredValue) {
-				hasClampedChange = true;
-			}
-
-			const attributeLabel =
-				rewardAttributeLabels[rewardLine.attribute] ?? rewardLine.attribute;
-			const expectedDelta = add ? rewardStoredValue : -rewardStoredValue;
-			const displayedDelta = toDisplayedRewardDelta(rewardLine.attribute, effectiveDelta);
-			if (hasClampedChange && effectiveDelta !== expectedDelta) {
-				clampedChanges.push(`${formatSignedDelta(displayedDelta)} ${attributeLabel} (at limit)`);
-			}
-
-			if (effectiveDelta !== 0) {
-				rewardChanges.push(`${formatSignedDelta(displayedDelta)} ${attributeLabel}`);
-			}
-		}
-
-		const feedbackPrefix = add ? "Reward applied:" : "Reward removed:";
-		const feedbackBody =
-			rewardChanges.length > 0 ? rewardChanges.join(", ") : "no effective stat change.";
-		const warningSummary = add
-			? "Reward was only partially applied because this stat reached its limit."
-			: "Reward was only partially removed because this stat is already at its minimum.";
-		const warningDetails =
-			clampedChanges.length > 0 ? ` ${add ? "Applied" : "Removed"}: ${clampedChanges.join(", ")}.` : "";
 		setRewardFeedback(
 			difficultyId,
 			actId,
 			questId,
-			hasClampedChange ? "warning" : "info",
-			hasClampedChange
-				? `${warningSummary}${warningDetails}`
-				: `${feedbackPrefix} ${feedbackBody}`
+			rewardFeedback.kind,
+			rewardFeedback.text,
 		);
 	}
 
@@ -350,23 +225,12 @@
 		return storedState.includes(flagId);
 	}
 
-	function getQuestFlagsForBulkToggle(quest, advancedMode) {
-		if (advancedMode) {
-			return questFlags.map((flag) => flag.id);
-		}
-		const flags = new Set();
-		for (const state of quest.states) {
-			for (const flag of state.flags) {
-				flags.add(flag);
-			}
-		}
-		return Array.from(flags);
-	}
-
 	function setActQuests(difficultyId, act, advancedMode, value) {
-		const quests = advancedMode ? getRenderedActQuests(act) : getStandardActQuests(act);
+		const quests = advancedMode
+			? getRenderedActQuests(act, showPrologue, advancedAllQuests, unused_act_quests)
+			: getStandardActQuests(act, showPrologue);
 		for (const quest of quests) {
-			const flags = getQuestFlagsForBulkToggle(quest, advancedMode);
+			const flags = getQuestFlagsForBulkToggle(quest, advancedMode, questFlags);
 			for (const flagId of flags) {
 				if (value) {
 					addFlag(difficultyId, act.id, quest.id, flagId);
@@ -419,7 +283,7 @@
 			{#each actColumns as actColumn}
 				<div class="grid content-start gap-2.5">
 					{#each actColumn as act}
-						{@const actProgress = countActProgress(activeDifficulty.id, act)}
+						{@const actProgress = countActProgress(activeDifficulty.id, act, save.quests, showPrologue)}
 						<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
 							<div class="mb-1.5 flex items-start justify-between gap-2">
 								<div class="min-w-0">
@@ -455,7 +319,7 @@
 
 							<div class="grid gap-1.5">
 								{#if advancedFlags}
-									{#each getRenderedActQuests(act) as quest}
+									{#each getRenderedActQuests(act, showPrologue, advancedAllQuests, unused_act_quests) as quest}
 										{@const isCompletionQuest = quest.id === "completion"}
 										{@const rewardFeedback = getRewardFeedback(activeDifficulty.id, act.id, quest.id)}
 										<article
@@ -495,7 +359,7 @@
 										</article>
 									{/each}
 								{:else}
-									{#each getStandardActQuests(act) as quest}
+									{#each getStandardActQuests(act, showPrologue) as quest}
 										{@const isCompletionQuest = quest.id === "completion"}
 										{@const rewardFeedback = getRewardFeedback(activeDifficulty.id, act.id, quest.id)}
 										<article

@@ -3,6 +3,7 @@
 	import { invoke } from "@tauri-apps/api/core";
 	import Button from "../components/ui/button/button.svelte";
 	import * as Settings from "../utils/settings.js";
+	import { getErrorMessage } from "../utils/errorMessage.js";
 	import { toPositiveInteger } from "../utils/numbers.js";
 	import { onMount } from "svelte";
 	import { getVersion } from "@tauri-apps/api/app";
@@ -37,7 +38,7 @@
 				selectedPath == null ? "" : selectedPath
 			);
 		} catch (err) {
-			await message(String(err ?? "Failed to set save folder."), {
+			await message(getErrorMessage(err, "Failed to set save folder."), {
 				title: "Settings",
 				kind: "error",
 			});
@@ -72,7 +73,7 @@
 		try {
 			await invoke("open_backup_folder");
 		} catch (error) {
-			await message(String(error ?? "Failed to open backup folder."), {
+			await message(getErrorMessage(error, "Failed to open backup folder."), {
 				title: "Backups",
 				kind: "error",
 			});
@@ -120,7 +121,7 @@
 				console.warn("[backup failures]", result.errors.join(" | "));
 			}
 		} catch (error) {
-			await message(String(error ?? "Backup-all failed."), {
+			await message(getErrorMessage(error, "Backup-all failed."), {
 				title: "Backups",
 				kind: "error",
 			});

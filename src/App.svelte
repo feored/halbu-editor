@@ -8,6 +8,7 @@
 		get as getSetting,
 		Key as SettingKey,
 	} from "./lib/utils/settings.js";
+	import { getErrorMessage } from "./lib/utils/errorMessage.js";
 	import { getSaveTargetVersion } from "./lib/utils/GameSupport";
 
 	import AppLayout from "./lib/layout/AppLayout.svelte";
@@ -25,8 +26,14 @@
 	import Quests from "./lib/editor/quests/Quests.svelte";
 	import Mercenary from "./lib/editor/mercenary/Mercenary.svelte";
 	import Save from "./lib/editor/save/Save.svelte";
-	import { editorSkillsToBackendSkills } from "./lib/editor/skills/skillAdapters";
-	import { DEFAULT_SKILL_SLOT_COUNT } from "./lib/editor/skills/skillSlots";
+	import {
+		buildBlockingCompatibilityMessage,
+		buildSaveCommandPayload,
+		buildSavePathContext,
+		getBlockingCompatibilityIssues,
+		resolveBackupSourcePath,
+		resolveTargetVersion,
+	} from "./lib/editor/save/saveWorkflow";
 	import type { AppMessage } from "./lib/utils/Message.svelte";
 	import type {
 		CompatibilityIssue,
@@ -104,7 +111,9 @@
 		currentCompatibilityIssues.some((issue) => issue.blocking)
 	);
 	const currentSaveTargetVersion = $derived.by(() =>
-		currentSave == null ? null : resolveTargetVersion(currentSave)
+		currentSave == null
+			? null
+			: resolveTargetVersion(currentSave, selectedCompatibilityTargetVersion)
 	);
 	const saveBlocked = $derived(
 		hasEditValidationErrors || compatibilityCheckError.length > 0 || hasBlockingCompatibilityIssues
@@ -132,26 +141,6 @@
 		handleParseModeChange(getSetting(SettingKey.ParseMode));
 	});
 
-	function buildSaveCommandPayload(saveData: EditorSave) {
-		return {
-			...saveData,
-			skills: editorSkillsToBackendSkills(saveData.skills, DEFAULT_SKILL_SLOT_COUNT),
-		};
-	}
-
-	function resolveTargetVersion(
-		saveData: EditorSave,
-		targetVersion: number | null | undefined = null
-	) {
-		if (targetVersion != null) {
-			return targetVersion;
-		}
-		if (selectedCompatibilityTargetVersion != null) {
-			return selectedCompatibilityTargetVersion;
-		}
-		return getSaveTargetVersion(saveData);
-	}
-
 	async function refreshOutputFormatOptions() {
 		try {
 			const outputFormats = await invoke<OutputFormatOption[]>("get_supported_output_formats");
@@ -178,7 +167,11 @@
 		const targetVersion = input.targetVersion ?? null;
 		const saveAs = input.saveAs === true;
 		const hasExplicitTargetVersion = targetVersion != null;
-		const resolvedTargetVersion = resolveTargetVersion(currentSave, targetVersion);
+		const resolvedTargetVersion = resolveTargetVersion(
+			currentSave,
+			selectedCompatibilityTargetVersion,
+			targetVersion
+		);
 		if (resolvedTargetVersion == null) {
 			await message(
 				"No compatible output format was selected for this save. Choose an encodable target format (v99 or v105).",
@@ -193,7 +186,7 @@
 		try {
 			compatibilityIssues = await checkCompatibility(currentSave, resolvedTargetVersion);
 		} catch (error) {
-			const detail = String(error ?? "Compatibility check failed.");
+			const detail = getErrorMessage(error, "Compatibility check failed.");
 			await message(detail, {
 				title: "Save blocked",
 				kind: "error",
@@ -204,13 +197,10 @@
 			currentCompatibilityIssues = compatibilityIssues;
 			compatibilityCheckError = "";
 		}
-		const blockingIssues = compatibilityIssues.filter((issue) => issue.blocking);
+		const blockingIssues = getBlockingCompatibilityIssues(compatibilityIssues);
 		if (blockingIssues.length > 0) {
-			const detail = blockingIssues
-				.map((issue) => `- ${issue.message}`)
-				.join("\n");
 			await message(
-				`Cannot save to v${resolvedTargetVersion} because of blocking compatibility issues:\n${detail}`,
+				buildBlockingCompatibilityMessage(resolvedTargetVersion, blockingIssues),
 				{
 					title: "Save blocked",
 					kind: "warning",
@@ -219,17 +209,17 @@
 			return;
 		}
 		const savePayload = buildSaveCommandPayload(currentSave);
-		const isCrossVersionSave = resolvedTargetVersion !== currentSave.version;
-		const defaultNameSuffix =
-			isCrossVersionSave ? `_v${resolvedTargetVersion}` : "";
-		const defaultPath =
-			currentSourcePath ?? `${currentSave.character.name}${defaultNameSuffix}`;
-		const forcePicker = saveAs || currentSourcePath == null || isCrossVersionSave;
+		const savePathContext = buildSavePathContext(
+			currentSave,
+			currentSourcePath,
+			resolvedTargetVersion
+		);
+		const forcePicker = saveAs || savePathContext.forcePicker;
 		const filePath =
 			!forcePicker && currentSourcePath != null && currentSourcePath.length > 0
 				? currentSourcePath
 				: ((await save({
-						defaultPath,
+						defaultPath: savePathContext.defaultPath,
 						filters: [
 							{
 								name: "D2R Save File",
@@ -242,7 +232,7 @@
 		}
 		const backupsEnabled = getSetting(SettingKey.BackupsEnabled);
 		const backupsPerCharacter = getSetting(SettingKey.BackupsPerCharacter);
-		const backupSourcePath = saveAs ? filePath : currentSourcePath ?? filePath;
+		const backupSourcePath = resolveBackupSourcePath(filePath, currentSourcePath, saveAs);
 
 		try {
 			const result = await invoke<SaveCommandResult>("save_file_as_version", {
@@ -266,7 +256,7 @@
 			saveRevision += 1;
 			return;
 		} catch (error) {
-			const detail = String(error ?? "Unknown error");
+			const detail = getErrorMessage(error, "Unknown error");
 			await message(detail, {
 				title: "Save failed",
 				kind: "error",
@@ -284,7 +274,7 @@
 			return;
 		}
 
-		const targetVersion = resolveTargetVersion(saveData);
+		const targetVersion = resolveTargetVersion(saveData, selectedCompatibilityTargetVersion);
 		if (targetVersion == null) {
 			currentCompatibilityIssues = [];
 			compatibilityCheckError =
@@ -308,7 +298,7 @@
 					return;
 				}
 				currentCompatibilityIssues = [];
-				compatibilityCheckError = String(error ?? "Compatibility check failed.");
+				compatibilityCheckError = getErrorMessage(error, "Compatibility check failed.");
 			})
 			.finally(() => {
 				if (token === compatibilityCheckToken) {

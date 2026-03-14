@@ -163,7 +163,7 @@ function createCalculator({
 			console.warn("Failed to evaluate skill expression", {
 				expression,
 				normalized,
-				error: String(error),
+				error,
 			});
 			return 0;
 		}
