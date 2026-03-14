@@ -28,15 +28,6 @@
 		}
 	}
 
-	function variantIDToInfo(variantID) {
-		const result = variants.filter((info) => info.id == variantID);
-		if (result.length != 1) {
-			console.error(`Error trying to get variant from variant id ${variantID}.`);
-			return variants[0];
-		}
-		return JSON.parse(JSON.stringify(result[0]));
-	}
-
 	// Check if mercenary is hired and disable everything if not.
 	let isHired = $state(save.character.mercenary.id != 0);
 	$effect(() => {
@@ -47,16 +38,16 @@
 		isHired = nextHired;
 		save.character.mercenary.id = nextHired ? Math.floor(Math.random() * U32_MAX) : 0;
 		if (!nextHired) {
-			save.character.mercenary.dead = false;
+			save.character.mercenary.is_dead = false;
 		}
 	}
 
-	function setAlive(nextAlive) {
-		save.character.mercenary.dead = !nextAlive;
-	}
-
 	// Variants
-	let mercVariant = $state(variantIDToInfo(save.character.mercenary.variant_id));
+	let mercVariant = $state(
+		structuredClone(
+			variants.find((info) => info.id == save.character.mercenary.variant_id) ?? variants[0],
+		),
+	);
 
 	let possibleVariants = $state(
 		variants.filter(
@@ -76,7 +67,7 @@
 			possibleVariants.find((merc) => merc.variant == mercVariant.variant) ??
 			possibleVariants[0];
 
-		mercVariant = JSON.parse(JSON.stringify(matchedVariant));
+		mercVariant = structuredClone(matchedVariant);
 		save.character.mercenary.variant_id = matchedVariant.id;
 		changeExperience();
 	}
@@ -109,12 +100,11 @@
 	}
 
 	$effect(() => {
-		if (variantNames.length > 0) {
-			const index = Math.max(
-				0,
-				Math.min(save.character.mercenary.name_id, variantNames.length - 1),
-			);
-			save.character.mercenary.name = variantNames[index];
+		if (variantNames.length === 0) {
+			return;
+		}
+		if (save.character.mercenary.name_id >= variantNames.length) {
+			save.character.mercenary.name_id = variantNames.length - 1;
 		}
 	});
 </script>
@@ -122,7 +112,7 @@
 <div class="grid max-w-3xl content-start gap-2.5">
 	<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
 		<h3 class="editor-card-title mb-1.5">Status</h3>
-		<div class="grid gap-1 text-[0.92rem]">
+		<div class="grid gap-1 text-sm">
 			<label class="inline-flex items-center gap-2">
 				<input
 					class="form-check-input mt-0"
@@ -140,8 +130,8 @@
 					type="checkbox"
 					id="alive"
 					name="alive"
-					checked={!save.character.mercenary.dead}
-					onchange={(event) => setAlive(event.currentTarget.checked)}
+					checked={!save.character.mercenary.is_dead}
+					onchange={(event) => (save.character.mercenary.is_dead = !event.currentTarget.checked)}
 					disabled={!isHired}
 				/>
 				<span>Alive</span>
@@ -161,7 +151,7 @@
 	>
 		<h3 class="editor-card-title mb-1.5">Identity</h3>
 		<div
-			class="grid grid-cols-[8rem_minmax(0,1fr)] items-center gap-x-2 gap-y-1.5"
+			class="grid grid-cols-form-32 items-center gap-x-2 gap-y-1.5"
 		>
 			<label class="form-label mb-0" for="name_id">Name</label>
 			<select
@@ -199,7 +189,7 @@
 	>
 		<h3 class="editor-card-title mb-1.5">Type</h3>
 		<div
-			class="grid grid-cols-[8rem_minmax(0,1fr)] items-center gap-x-2 gap-y-1.5"
+			class="grid grid-cols-form-32 items-center gap-x-2 gap-y-1.5"
 		>
 			<label class="form-label mb-0" for="class">Class</label>
 			<select
@@ -256,7 +246,7 @@
 	>
 		<h3 class="editor-card-title mb-1.5">Progression</h3>
 		<div
-			class="grid grid-cols-[8rem_minmax(0,1fr)] items-center gap-x-2 gap-y-1.5"
+			class="grid grid-cols-form-32 items-center gap-x-2 gap-y-1.5"
 		>
 			<label class="form-label mb-0" for="level">Level</label>
 			<input

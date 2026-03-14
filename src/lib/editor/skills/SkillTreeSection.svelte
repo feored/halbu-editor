@@ -2,7 +2,7 @@
 	import SkillConnectorLayer from "./SkillConnectorLayer.svelte";
 	import SkillNodeLayer from "./SkillNodeLayer.svelte";
 	import SkillTierGuideLayer from "./SkillTierGuideLayer.svelte";
-	import { computeTreeLayout } from "./treeLayout.js";
+	import { computeTreeLayout } from "./treeLayout";
 
 let {
 		skills,
@@ -62,7 +62,7 @@ let {
 
 	.tree-scroll {
 		overflow: auto;
-		padding-bottom: 0.1rem;
+		padding-bottom: 0.125rem;
 	}
 
 	.tree-surface {

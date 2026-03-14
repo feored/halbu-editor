@@ -1,7 +1,7 @@
 <script>
 	import { confirm } from "@tauri-apps/plugin-dialog";
 	import Button from "../../components/ui/button/button.svelte";
-	import { buildChangeReview } from "../status/reviewChanges.js";
+	import { buildChangeReview } from "../status/reviewChanges";
 
 	let {
 		save,
@@ -27,28 +27,22 @@
 	let advancedConversionDetailsOpen = $state(false);
 	let reviewDialogRef;
 
-	const editValidationErrors = $derived(
-		Array.isArray(editValidation?.errors) ? editValidation.errors : [],
-	);
-	const editValidationWarnings = $derived(
-		Array.isArray(editValidation?.warnings) ? editValidation.warnings : [],
-	);
+	const editValidationErrors = $derived(editValidation.errors);
+	const editValidationWarnings = $derived(editValidation.warnings);
 	const editValidationErrorCount = $derived(editValidationErrors.length);
 	const editValidationWarningCount = $derived(editValidationWarnings.length);
 	const hasEditValidationErrors = $derived(editValidationErrorCount > 0);
 	const hasEditValidationWarnings = $derived(editValidationWarningCount > 0);
-	const compatibilityIssuesList = $derived(
-		Array.isArray(compatibilityIssues) ? compatibilityIssues : [],
-	);
+	const compatibilityIssuesList = $derived(compatibilityIssues);
 	const blockingCompatibilityIssues = $derived(
-		compatibilityIssuesList.filter((issue) => issue?.blocking === true),
+		compatibilityIssuesList.filter((issue) => issue.blocking),
 	);
 	const nonBlockingCompatibilityIssues = $derived(
-		compatibilityIssuesList.filter((issue) => issue?.blocking !== true),
+		compatibilityIssuesList.filter((issue) => !issue.blocking),
 	);
 	const hasBlockingCompatibilityIssues = $derived(blockingCompatibilityIssues.length > 0);
 	const hasCompatibilityIssues = $derived(compatibilityIssuesList.length > 0);
-	const outputFormats = $derived(Array.isArray(outputFormatOptions) ? outputFormatOptions : []);
+	const outputFormats = $derived(outputFormatOptions);
 	const validationSummary = $derived.by(() => {
 		if (hasEditValidationErrors || hasBlockingCompatibilityIssues) {
 			return "Blocked";
@@ -84,53 +78,30 @@
 			compatibilityError.length > 0,
 	);
 	const formattedCompatibilityTargetVersion = $derived.by(() => {
-		const parsed = Number(compatibilityTargetVersion);
-		return Number.isFinite(parsed) && parsed > 0 ? `v${Math.trunc(parsed)}` : "unknown";
+		return compatibilityTargetVersion == null ? "unknown" : `v${compatibilityTargetVersion}`;
 	});
-	const currentVersion = $derived(Number(save?.version) || 0);
-	const targetVersion = $derived.by(() => {
-		const parsed = Number(compatibilityTargetVersion);
-		return Number.isFinite(parsed) && parsed > 0 ? Math.trunc(parsed) : null;
-	});
-	const isCrossVersionTarget = $derived(
-		targetVersion != null && targetVersion !== currentVersion,
-	);
+	const currentVersion = $derived(save.version);
+	const targetVersion = $derived(compatibilityTargetVersion);
 	const changeReview = $derived(buildChangeReview(baselineSave, save));
 	const reviewChangeCount = $derived(changeReview.totalChanges);
 	const reviewChangeGroups = $derived(changeReview.groups);
-	const COMPATIBILITY_CODE_LABELS = Object.freeze({
+	const COMPATIBILITY_CODE_LABELS = {
 		WarlockRequiresRotw: "Warlock requires RotW edition target.",
 		WarlockRequiresRotwExpansion: "Warlock requires Reign of the Warlock expansion mode.",
-		RotwExpansionRequiresV105:
-			"Reign of the Warlock expansion mode requires a RotW edition target.",
 		RotwExpansionRequiresRotwEdition:
 			"Reign of the Warlock expansion mode requires a RotW edition target.",
 		ExpansionClassRequiresExpansionMode:
 			"Druid and Assassin require Expansion or Reign of the Warlock mode.",
 		UnknownClassRequiresKnownTarget:
 			"Unknown classes cannot be safely converted to known target formats.",
-	});
-
-	function compatibilityCode(issue) {
-		const rawCode = issue?.code;
-		if (typeof rawCode === "string") {
-			return rawCode;
-		}
-		if (rawCode != null && typeof rawCode === "object") {
-			const keys = Object.keys(rawCode);
-			if (keys.length > 0) {
-				return keys[0];
-			}
-		}
-		return "";
-	}
+	};
 
 	function compatibilityMessage(issue) {
-		const message = String(issue?.message ?? "").trim();
+		const message = issue.message.trim();
 		if (message.length > 0) {
 			return message;
 		}
-		const code = compatibilityCode(issue);
+		const code = issue.code;
 		if (code.length > 0 && code in COMPATIBILITY_CODE_LABELS) {
 			return COMPATIBILITY_CODE_LABELS[code];
 		}
@@ -138,27 +109,24 @@
 	}
 
 	function handleAdvancedSaveOptionsToggle(event) {
-		const isOpen = event?.currentTarget?.open === true;
+		const isOpen = event.currentTarget.open === true;
 		advancedConversionDetailsOpen = isOpen;
-		onToggleAdvancedSaveOptions?.(isOpen);
+		onToggleAdvancedSaveOptions(isOpen);
 	}
 
 	function handleValidationDetailsToggle(event) {
-		validationDetailsOpen = event?.currentTarget?.open === true;
+		validationDetailsOpen = event.currentTarget.open === true;
 	}
 
 	function handleCompatibilityTargetVersionChange(event) {
-		const parsed = Number(event?.currentTarget?.value);
-		if (!Number.isFinite(parsed) || parsed <= 0) {
+		const selectedVersion = Number(event.currentTarget.value);
+		if (!Number.isInteger(selectedVersion) || selectedVersion < 1) {
 			return;
 		}
-		onSelectCompatibilityTargetVersion?.(Math.trunc(parsed));
+		onSelectCompatibilityTargetVersion(selectedVersion);
 	}
 
 	async function saveCurrentVersion() {
-		if (typeof onSave !== "function") {
-			return;
-		}
 		statusError = "";
 		saveInProgress = true;
 		try {
@@ -171,9 +139,6 @@
 	}
 
 	async function saveAsCurrentVersion() {
-		if (typeof onSave !== "function") {
-			return;
-		}
 		statusError = "";
 		saveInProgress = true;
 		try {
@@ -201,7 +166,7 @@
 	}
 
 	async function undoAllChanges() {
-		if (reviewChangeCount < 1 || typeof onRestore !== "function") {
+		if (reviewChangeCount < 1) {
 			return;
 		}
 
@@ -264,12 +229,12 @@
 			>
 				<summary class="flex cursor-pointer list-none items-center justify-between gap-2">
 					<span class="inline-flex items-center gap-1.5">
-						<span aria-hidden="true" class="text-[0.86rem] text-halbu-textMuted">
+						<span aria-hidden="true" class="text-sm text-halbu-textMuted">
 							{validationDetailsOpen ? "▾" : "▸"}
 						</span>
 						<span class="form-label mb-0">Validation</span>
 					</span>
-					<span class={`text-[0.9rem] ${validationSummaryClass}`}
+					<span class={`text-sm ${validationSummaryClass}`}
 						>{validationSummary}</span
 					>
 				</summary>
@@ -278,7 +243,7 @@
 					<div class="grid gap-0.5">
 						<div class="form-label mb-0">Edit validation</div>
 						<div
-							class={`text-[0.9rem] ${
+							class={`text-sm ${
 								hasEditValidationErrors
 									? "text-halbu-danger"
 									: hasEditValidationWarnings
@@ -295,7 +260,7 @@
 							{/if}
 						</div>
 						{#if hasEditValidationErrors || hasEditValidationWarnings}
-							<ul class="m-0 pl-4 text-[0.86rem] text-halbu-textMuted">
+							<ul class="m-0 pl-4 text-sm text-halbu-textMuted">
 								{#each editValidationErrors as issue}
 									<li>{issue}</li>
 								{/each}
@@ -311,29 +276,29 @@
 							Compatibility preflight ({formattedCompatibilityTargetVersion})
 						</div>
 						{#if compatibilityPending}
-							<div class="text-[0.9rem] text-halbu-textMuted">
+							<div class="text-sm text-halbu-textMuted">
 								Checking compatibility...
 							</div>
 						{:else if compatibilityError.length > 0}
-							<div class="text-[0.9rem] text-halbu-warning">
+							<div class="text-sm text-halbu-warning">
 								Compatibility check failed: {compatibilityError}
 							</div>
 						{:else if hasBlockingCompatibilityIssues}
-							<div class="text-[0.9rem] text-halbu-danger">
+							<div class="text-sm text-halbu-danger">
 								Blocked ({blockingCompatibilityIssues.length} blocking issue(s))
 							</div>
 						{:else if hasCompatibilityIssues}
-							<div class="text-[0.9rem] text-halbu-warning">
+							<div class="text-sm text-halbu-warning">
 								Ready with warnings ({nonBlockingCompatibilityIssues.length})
 							</div>
 						{:else}
-							<div class="text-[0.9rem] text-halbu-text">Compatible</div>
+							<div class="text-sm text-halbu-text">Compatible</div>
 						{/if}
 						{#if hasCompatibilityIssues}
-							<ul class="m-0 pl-4 text-[0.86rem] text-halbu-textMuted">
+							<ul class="m-0 pl-4 text-sm text-halbu-textMuted">
 								{#each compatibilityIssuesList as issue}
-									<li class={issue?.blocking === true ? "text-halbu-danger" : ""}>
-										{issue?.blocking === true ? "Blocking" : "Warning"}:
+									<li class={issue.blocking ? "text-halbu-danger" : ""}>
+										{issue.blocking ? "Blocking" : "Warning"}:
 										{compatibilityMessage(issue)}
 									</li>
 								{/each}
@@ -350,29 +315,29 @@
 			>
 				<summary class="flex cursor-pointer list-none items-center justify-between gap-2">
 					<span class="inline-flex items-center gap-1.5">
-						<span aria-hidden="true" class="text-[0.86rem] text-halbu-textMuted">
+						<span aria-hidden="true" class="text-sm text-halbu-textMuted">
 							{advancedConversionDetailsOpen ? "▾" : "▸"}
 						</span>
 						<span class="form-label mb-0">Conversion</span>
 					</span>
-					<span class="text-[0.88rem] text-halbu-textMuted">
+					<span class="text-sm text-halbu-textMuted">
 						{advancedConversionDetailsOpen ? "Enabled" : "Disabled"}
 					</span>
 				</summary>
 				<div class="mt-1 grid gap-1">
 					{#if advancedConversionDetailsOpen}
-						<div class="grid grid-cols-[8rem_minmax(0,1fr)] items-center gap-x-2">
+						<div class="grid grid-cols-form-32 items-center gap-x-2">
 							<label class="form-label mb-0" for="save-target-format"
 								>Output format</label
 							>
 							<select
 								id="save-target-format"
 								class="form-select"
-								value={targetVersion == null ? "" : String(targetVersion)}
+								value={targetVersion == null ? "" : targetVersion}
 								onchange={handleCompatibilityTargetVersionChange}
 							>
 								{#each outputFormats as format}
-									<option value={String(format.version)}>
+									<option value={format.version}>
 										{format.formatId} (v{format.version}) - {format.gameEdition}
 									</option>
 								{/each}
@@ -384,7 +349,7 @@
 
 			<div class="rounded-xs border border-halbu-border bg-halbu-panel2 px-2 py-1.5">
 				<div class="grid gap-1 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-					<div class="text-[0.88rem] text-halbu-text">
+					<div class="text-sm text-halbu-text">
 						Current version: v{currentVersion}
 						<span aria-hidden="true" class="mx-1 text-halbu-textMuted">·</span>
 						Target version: v{targetVersion ?? currentVersion}
@@ -406,18 +371,12 @@
 						>
 							Save As...
 						</Button>
-						<Button
-							onclick={saveCurrentVersion}
-							disabled={saveDisabled || saveInProgress}
-						>
-							{#if saveInProgress}
-								Saving...
-							{:else if isCrossVersionTarget}
-								Save
-							{:else}
-								Save
-							{/if}
-						</Button>
+							<Button
+								onclick={saveCurrentVersion}
+								disabled={saveDisabled || saveInProgress}
+							>
+								{saveInProgress ? "Saving..." : "Save"}
+							</Button>
 					</div>
 				</div>
 			</div>
@@ -432,7 +391,7 @@
 <dialog
 	bind:this={reviewDialogRef}
 	onclose={handleReviewDialogClose}
-	class="w-[min(58rem,96vw)] rounded-sm border border-halbu-borderStrong bg-halbu-panel p-2.5 text-halbu-text shadow-lg backdrop:bg-black/45"
+	class="w-[96vw] max-w-4xl rounded-sm border border-halbu-borderStrong bg-halbu-panel p-2.5 text-halbu-text shadow-lg backdrop:bg-black/45"
 	aria-label="Review changes"
 >
 	<div class="flex items-start justify-between gap-2">
@@ -465,10 +424,10 @@
 								<div
 									class="grid gap-0.5 border-b border-halbu-border pb-0.5 last:border-b-0 last:pb-0"
 								>
-									<div class="text-[0.84rem] font-semibold text-halbu-text">
+									<div class="text-sm font-semibold text-halbu-text">
 										{change.label}
 									</div>
-									<div class="text-[0.84rem] text-halbu-textMuted">
+									<div class="text-sm text-halbu-textMuted">
 										{change.before} → {change.after}
 									</div>
 								</div>

@@ -77,7 +77,7 @@
 			{#each difficulties as difficulty}
 				<button
 					type="button"
-					class={`rounded-xs border px-3 py-1.5 text-[0.92rem] font-medium leading-none transition ${
+					class={`rounded-xs border px-3 py-1.5 text-sm font-medium leading-none transition ${
 						activeDifficultyId === difficulty.id
 							? "border-halbu-primary bg-halbu-panel2 text-halbu-text"
 							: "border-halbu-border bg-halbu-panel text-halbu-textMuted hover:bg-halbu-panel2 hover:text-halbu-text"
@@ -91,7 +91,7 @@
 			{/each}
 		</div>
 		<div class="flex min-h-10 min-w-56 flex-1 flex-col justify-center rounded-sm border border-halbu-border bg-halbu-panel px-2 py-1.5">
-			<div class="mb-1 flex items-center justify-between gap-2 text-[0.84rem]">
+			<div class="mb-1 flex items-center justify-between gap-2 text-sm">
 				<span class="text-halbu-textMuted">Total waypoint progress</span>
 				<span class="text-halbu-text">
 					{totalWaypointProgress.acquired}/{totalWaypointProgress.total} ({totalWaypointProgress.percent}%)
@@ -116,26 +116,26 @@
 							<div class="mb-1.5 flex items-start justify-between gap-2">
 								<div class="min-w-0">
 									<h3 class="editor-card-title">{act.display}</h3>
-									<p class="m-0 mt-0.5 text-[0.8rem] text-halbu-textMuted">
+									<p class="m-0 mt-0.5 text-xs text-halbu-textMuted">
 										{actCounts.acquired}/{actCounts.total} acquired
 									</p>
 								</div>
 								<div class="inline-flex shrink-0 items-center gap-1">
 									<button
 										type="button"
-										class="rounded-xs border border-halbu-border bg-halbu-panel2 px-2 py-0.5 text-[0.8rem] font-medium text-halbu-text hover:bg-halbu-panel"
+										class="rounded-xs border border-halbu-border bg-halbu-panel2 px-2 py-0.5 text-xs font-medium text-halbu-text hover:bg-halbu-panel"
 										onclick={() => setActWaypoints(difficulty, act, true)}
 									>
 										All
 									</button>
 									<button
 										type="button"
-										class="rounded-xs border border-halbu-border bg-halbu-panel2 px-2 py-0.5 text-[0.8rem] font-medium text-halbu-textMuted hover:bg-halbu-panel hover:text-halbu-text"
+										class="rounded-xs border border-halbu-border bg-halbu-panel2 px-2 py-0.5 text-xs font-medium text-halbu-textMuted hover:bg-halbu-panel hover:text-halbu-text"
 										onclick={() => setActWaypoints(difficulty, act, false)}
 									>
 										None
 									</button>
-									<span class="ml-0.5 text-[0.82rem] text-halbu-textMuted">{actPercent}%</span>
+									<span class="ml-0.5 text-sm text-halbu-textMuted">{actPercent}%</span>
 								</div>
 							</div>
 
@@ -149,7 +149,7 @@
 							<div class="grid gap-0.5">
 								{#each save.waypoints[difficulty.id][act.id] as wp}
 									<label
-										class={`grid grid-cols-[auto_minmax(0,1fr)] items-start gap-2 rounded-xs border px-2 py-1 text-[0.88rem] ${
+										class={`grid grid-cols-[auto_minmax(0,1fr)] items-start gap-2 rounded-xs border px-2 py-1 text-sm ${
 											wp.id === ROGUE_ENCAMPMENT
 												? "border-halbu-border bg-halbu-panel2 text-halbu-textMuted"
 												: "border-halbu-border bg-halbu-panel2 text-halbu-text"

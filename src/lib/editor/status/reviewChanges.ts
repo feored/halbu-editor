@@ -1,15 +1,37 @@
-import { normalizeSkillSlots } from "../skills/skillSlots.js";
+import type { EditorSave } from "../../types/editor";
 
-function isPlainObject(value) {
-	return value != null && typeof value === "object" && !Array.isArray(value);
-}
+type DiffPathSegment = string | number;
+type DiffPath = DiffPathSegment[];
 
-function prettifyKey(value) {
-	const text = String(value ?? "");
-	if (text.length === 0) {
+type DiffEntry = {
+	path: DiffPath;
+	before: string;
+	after: string;
+};
+
+export type ChangeReviewEntry = {
+	label: string;
+	before: string;
+	after: string;
+};
+
+export type ChangeReviewGroup = {
+	section: string;
+	changes: ChangeReviewEntry[];
+};
+
+export type ChangeReview = {
+	totalChanges: number;
+	groups: ChangeReviewGroup[];
+};
+
+type UnknownRecord = Record<string, unknown>;
+
+function prettifyKey(value: string): string {
+	if (value.length === 0) {
 		return "Value";
 	}
-	return text
+	return value
 		.replace(/_/g, " ")
 		.replace(/([a-z0-9])([A-Z])/g, "$1 $2")
 		.replace(/\s+/g, " ")
@@ -17,14 +39,14 @@ function prettifyKey(value) {
 		.replace(/\b\w/g, (match) => match.toUpperCase());
 }
 
-function formatPathSegment(segment) {
+function formatPathSegment(segment: DiffPathSegment): string {
 	if (typeof segment === "number") {
 		return `#${segment + 1}`;
 	}
 	return prettifyKey(segment);
 }
 
-function formatValue(value) {
+function formatValue(value: unknown): string {
 	if (value === undefined) {
 		return "∅";
 	}
@@ -48,13 +70,13 @@ function formatValue(value) {
 	}
 }
 
-function sectionLabelFromPath(path) {
+function sectionLabelFromPath(path: DiffPath): string {
 	const root = path[0];
 	if (typeof root !== "string") {
 		return "General";
 	}
 
-	const mappedSections = {
+	const mappedSections: Record<string, string> = {
 		character: "Character",
 		attributes: "Attributes",
 		skills: "Skills",
@@ -68,7 +90,7 @@ function sectionLabelFromPath(path) {
 	return mappedSections[root] ?? prettifyKey(root);
 }
 
-function labelFromPath(path) {
+function labelFromPath(path: DiffPath): string {
 	if (path.length <= 1) {
 		return "Value";
 	}
@@ -78,7 +100,16 @@ function labelFromPath(path) {
 		.join(" > ");
 }
 
-function collectDiffs(originalValue, currentValue, path, diffs) {
+function isPlainObject(value: unknown): value is UnknownRecord {
+	return value != null && typeof value === "object" && !Array.isArray(value);
+}
+
+function collectDiffs(
+	originalValue: unknown,
+	currentValue: unknown,
+	path: DiffPath,
+	diffs: DiffEntry[],
+): void {
 	if (Object.is(originalValue, currentValue)) {
 		return;
 	}
@@ -115,40 +146,28 @@ function collectDiffs(originalValue, currentValue, path, diffs) {
 	});
 }
 
-function cloneForReview(value) {
-	try {
-		return structuredClone(value);
-	} catch {
-		return JSON.parse(JSON.stringify(value));
-	}
-}
-
-function normalizeSaveForReview(save) {
-	if (save == null || typeof save !== "object") {
-		return save;
-	}
-	const normalized = cloneForReview(save);
-	normalized.skills = normalizeSkillSlots(normalized.skills);
-	return normalized;
-}
-
-export function buildChangeReview(originalSave, currentSave) {
+export function buildChangeReview(
+	originalSave: EditorSave | null,
+	currentSave: EditorSave | null,
+): ChangeReview {
 	if (originalSave == null || currentSave == null) {
 		return { totalChanges: 0, groups: [] };
 	}
 
-	const normalizedOriginal = normalizeSaveForReview(originalSave);
-	const normalizedCurrent = normalizeSaveForReview(currentSave);
-	const diffs = [];
-	collectDiffs(normalizedOriginal, normalizedCurrent, [], diffs);
+	const diffs: DiffEntry[] = [];
+	collectDiffs(originalSave, currentSave, [], diffs);
 
-	const groupsMap = new Map();
+	const groupsMap = new Map<string, ChangeReviewEntry[]>();
 	for (const diff of diffs) {
 		const section = sectionLabelFromPath(diff.path);
 		if (!groupsMap.has(section)) {
 			groupsMap.set(section, []);
 		}
-		groupsMap.get(section).push({
+		const sectionChanges = groupsMap.get(section);
+		if (sectionChanges == null) {
+			throw new Error(`Missing change group for section "${section}".`);
+		}
+		sectionChanges.push({
 			label: labelFromPath(diff.path),
 			before: diff.before,
 			after: diff.after,

@@ -2,7 +2,7 @@
 	import { cn } from "../../../utils/cn";
 
 	const BASE =
-		"inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-sm text-[0.93rem] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-halbu-primary/45 disabled:pointer-events-none disabled:opacity-50";
+		"inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-sm text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-halbu-primary/45 disabled:pointer-events-none disabled:opacity-50";
 
 	const VARIANTS = {
 		default:

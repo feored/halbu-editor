@@ -7,6 +7,7 @@ export let initialized = false;
 const store = new LazyStore("settings.json");
 let cachedSettings = {};
 let initializationPromise = null;
+let defaultSettingsCache = null;
 const settingsStoreWritable = writable({});
 export const settingsStore = readonly(settingsStoreWritable);
 
@@ -29,6 +30,49 @@ export const Key = {
 	QuestsShowPrologue: "quests_show_prologue",
 };
 
+const THEMES = new Set(["auto", "light", "dark"]);
+const PARSE_MODES = new Set(["lax", "strict"]);
+
+function normalizeBoolean(value, fallback) {
+	if (typeof value === "boolean") {
+		return value;
+	}
+	return fallback;
+}
+
+function normalizePositiveInteger(value, fallback) {
+	const parsed = Number(value);
+	if (!Number.isInteger(parsed) || parsed < 1) {
+		return fallback;
+	}
+	return parsed;
+}
+
+function normalizeSettingValue(key, value, defaults) {
+	switch (key) {
+		case Key.Theme:
+			return typeof value === "string" && THEMES.has(value) ? value : defaults[Key.Theme];
+		case Key.ParseMode:
+			return typeof value === "string" && PARSE_MODES.has(value)
+				? value
+				: defaults[Key.ParseMode];
+		case Key.SaveFolder:
+			return typeof value === "string" ? value : defaults[Key.SaveFolder];
+		case Key.BackupsEnabled:
+			return normalizeBoolean(value, defaults[Key.BackupsEnabled]);
+		case Key.BackupsPerCharacter:
+			return normalizePositiveInteger(value, defaults[Key.BackupsPerCharacter]);
+		case Key.QuestsAdvancedFlags:
+			return normalizeBoolean(value, defaults[Key.QuestsAdvancedFlags]);
+		case Key.QuestsAdvancedAllQuests:
+			return normalizeBoolean(value, defaults[Key.QuestsAdvancedAllQuests]);
+		case Key.QuestsShowPrologue:
+			return normalizeBoolean(value, defaults[Key.QuestsShowPrologue]);
+		default:
+			return value;
+	}
+}
+
 async function getDefaultSettings() {
 	let save_folder = "";
 	const osType = await type();
@@ -49,7 +93,7 @@ async function getDefaultSettings() {
 }
 
 export async function apply() {
-	let theme = await get(Key.Theme);
+	let theme = get(Key.Theme);
 	if (theme === "auto") {
 		theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 	}
@@ -75,16 +119,22 @@ export async function initialize() {
 
 	initializationPromise = (async () => {
 		const defaultSettings = await getDefaultSettings();
+		defaultSettingsCache = defaultSettings;
 		cachedSettings = {};
 		let keys = Object.values(Key);
 		for (let i = 0; i < keys.length; i++) {
 			const key = keys[i];
 			let present = await store.has(key);
+			let rawValue;
 			if (present) {
-				cachedSettings[key] = await store.get(key);
+				rawValue = await store.get(key);
 			} else {
-				cachedSettings[key] = defaultSettings[key];
-				await store.set(key, defaultSettings[key]);
+				rawValue = defaultSettings[key];
+			}
+			const normalizedValue = normalizeSettingValue(key, rawValue, defaultSettings);
+			cachedSettings[key] = normalizedValue;
+			if (!present || normalizedValue !== rawValue) {
+				await store.set(key, normalizedValue);
 			}
 		}
 		await store.save();
@@ -105,8 +155,12 @@ export function get(key) {
 
 export async function set(key, value) {
 	await initializeIfNecessary();
-	cachedSettings[key] = value;
-	await store.set(key, value);
+	if (defaultSettingsCache == null) {
+		defaultSettingsCache = await getDefaultSettings();
+	}
+	const normalizedValue = normalizeSettingValue(key, value, defaultSettingsCache);
+	cachedSettings[key] = normalizedValue;
+	await store.set(key, normalizedValue);
 	await store.save();
 	publishSettings();
 }

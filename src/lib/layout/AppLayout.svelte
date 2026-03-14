@@ -17,7 +17,7 @@
 
 	<div class="app-layout__body relative z-[1] flex min-h-0 flex-1">
 		{#if showSidebar}
-			<aside class="app-layout__sidebar h-full w-[16.8rem] flex-none">
+			<aside class="app-layout__sidebar h-full w-64 flex-none">
 				{@render sidebar?.()}
 			</aside>
 		{/if}

@@ -1,5 +1,6 @@
 <script>
 	import Button from "../../components/ui/button/button.svelte";
+	import { clampSkillPoints } from "./skillSlots";
 
 let {
 		pointsLeft,
@@ -11,7 +12,7 @@ let {
 	function handlePointsChange(event) {
 		const parsed = Number(event.currentTarget.value);
 		if (Number.isFinite(parsed)) {
-			onPointsLeftChange(Math.max(0, Math.min(255, Math.trunc(parsed))));
+			onPointsLeftChange(clampSkillPoints(parsed));
 		}
 	}
 </script>
@@ -22,7 +23,7 @@ let {
 			<label class="form-label mb-0" for="skills-points-left">Available points</label>
 			<input
 				id="skills-points-left"
-				class="form-control h-7 w-[8.5rem] text-right"
+				class="form-control h-7 w-32 text-right"
 				type="number"
 				min="0"
 				max="255"

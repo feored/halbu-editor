@@ -28,7 +28,7 @@
 	class="rounded-sm border border-halbu-borderStrong border-l-2 border-l-halbu-borderStrong bg-halbu-bg px-2.5 py-2"
 >
 	{#if skillDetails == null}
-		<p class="m-0 text-[0.9rem] text-halbu-textMuted">
+		<p class="m-0 text-sm text-halbu-textMuted">
 			Select a skill to inspect details and edit points.
 		</p>
 	{:else}
@@ -36,7 +36,7 @@
 				<h3 class="editor-card-title">{skillDetails.name}</h3>
 				<div class="mt-1 flex flex-wrap items-center gap-1">
 					<span
-						class="inline-flex items-center gap-1 rounded-xs border border-halbu-border bg-halbu-panel2 px-1.5 py-0.5 text-[0.82rem] font-medium text-halbu-textMuted"
+						class="inline-flex items-center gap-1 rounded-xs border border-halbu-border bg-halbu-panel2 px-1.5 py-0.5 text-sm font-medium text-halbu-textMuted"
 					>
 						{#if skillDetails.available}
 							<CheckIcon size={12} strokeWidth={2} />
@@ -46,7 +46,7 @@
 						{skillDetails.available ? "Ready" : "Locked"}
 					</span>
 					<span
-						class="inline-flex items-center gap-1 rounded-xs border border-halbu-border bg-halbu-panel2 px-1.5 py-0.5 text-[0.82rem] font-medium text-halbu-textMuted"
+						class="inline-flex items-center gap-1 rounded-xs border border-halbu-border bg-halbu-panel2 px-1.5 py-0.5 text-sm font-medium text-halbu-textMuted"
 					>
 						{#if skillDetails.levelRequirementMet}
 							<CheckIcon size={12} strokeWidth={2} />
@@ -95,8 +95,8 @@
 
 			{#if skillDetails.extraLines.length > 0}
 				<section class="mt-2 border-t border-halbu-border pt-2">
-					<h4 class="mb-1 text-[0.88rem] font-medium text-halbu-textMuted">Misc</h4>
-					<ul class="m-0 grid list-none gap-0.5 p-0 text-[0.9rem]">
+					<h4 class="mb-1 text-sm font-medium text-halbu-textMuted">Misc</h4>
+					<ul class="m-0 grid list-none gap-0.5 p-0 text-sm">
 						{#each skillDetails.extraLines as line}
 							<li class="text-halbu-text">{line}</li>
 						{/each}
@@ -105,11 +105,11 @@
 			{/if}
 
 		<section class="mt-2 border-t border-halbu-border pt-2">
-			<h4 class="mb-1 text-[0.88rem] font-medium text-halbu-textMuted">Requirements</h4>
+			<h4 class="mb-1 text-sm font-medium text-halbu-textMuted">Requirements</h4>
 			{#if skillDetails.prerequisites.length === 0}
-				<p class="m-0 text-[0.9rem] text-halbu-textMuted">Prerequisites: none</p>
+				<p class="m-0 text-sm text-halbu-textMuted">Prerequisites: none</p>
 			{:else}
-				<ul class="m-0 grid list-none gap-0.5 p-0 text-[0.9rem]">
+				<ul class="m-0 grid list-none gap-0.5 p-0 text-sm">
 					{#each skillDetails.prerequisites as prerequisite}
 						<li class="inline-flex items-center gap-1 text-halbu-text">
 							{#if prerequisite.met}
@@ -124,7 +124,7 @@
 			{/if}
 
 			{#if skillDetails.lockReasons.length > 0}
-				<ul class="m-0 mt-1 grid list-none gap-0.5 p-0 text-[0.9rem]">
+				<ul class="m-0 mt-1 grid list-none gap-0.5 p-0 text-sm">
 					{#each skillDetails.lockReasons as reason}
 						<li class="inline-flex items-center gap-1 text-halbu-textMuted">
 							<AlertCircleIcon size={13} strokeWidth={2} class="shrink-0 text-halbu-textMuted" />
@@ -147,7 +147,7 @@
 						/>
 						<span>First Level Stats</span>
 					</summary>
-					<ul class="m-0 mt-1 grid list-none gap-0.5 p-0 text-[0.9rem]">
+					<ul class="m-0 mt-1 grid list-none gap-0.5 p-0 text-sm">
 						{#each skillDetails.currentLines as line}
 						<li class="text-halbu-text">{line}</li>
 					{/each}
@@ -157,8 +157,8 @@
 
 		{#if skillDetails.currentPoints > 0 && skillDetails.currentLines.length > 0}
 			<section class="mt-2 border-t border-halbu-border pt-2">
-				<h4 class="mb-1 text-[0.88rem] font-medium text-halbu-textMuted">Current</h4>
-				<ul class="m-0 grid list-none gap-0.5 p-0 text-[0.9rem]">
+				<h4 class="mb-1 text-sm font-medium text-halbu-textMuted">Current</h4>
+				<ul class="m-0 grid list-none gap-0.5 p-0 text-sm">
 					{#each skillDetails.currentLines as line}
 						<li class="text-halbu-text">{line}</li>
 					{/each}
@@ -168,8 +168,8 @@
 
 		{#if skillDetails.currentPoints > 0 && skillDetails.nextLevelLines.length > 0}
 			<section class="mt-2 border-t border-halbu-border pt-2">
-				<h4 class="mb-1 text-[0.88rem] font-medium text-halbu-textMuted">Next level</h4>
-				<ul class="m-0 grid list-none gap-0.5 p-0 text-[0.9rem]">
+				<h4 class="mb-1 text-sm font-medium text-halbu-textMuted">Next level</h4>
+				<ul class="m-0 grid list-none gap-0.5 p-0 text-sm">
 					{#each skillDetails.nextLevelLines as line}
 						<li class="text-halbu-text">{line}</li>
 					{/each}
@@ -189,7 +189,7 @@
 						/>
 						<span>Synergies</span>
 					</summary>
-					<ul class="m-0 mt-1 grid list-none gap-0.5 p-0 text-[0.9rem]">
+					<ul class="m-0 mt-1 grid list-none gap-0.5 p-0 text-sm">
 						{#each skillDetails.synergyEntries as synergy}
 						<li class="inline-flex items-center gap-1 text-halbu-text">
 							{#if synergy.acquired === true}
@@ -216,7 +216,7 @@
 						/>
 						<span>Description</span>
 					</summary>
-					<p class="m-0 mt-1 whitespace-pre-line text-[0.9rem] text-halbu-text">
+					<p class="m-0 mt-1 whitespace-pre-line text-sm text-halbu-text">
 						{skillDetails.description}
 					</p>
 				</details>
@@ -228,10 +228,10 @@
 	.collapsible-summary {
 		display: flex;
 		align-items: center;
-		gap: 0.24rem;
+		gap: 0.25rem;
 		cursor: pointer;
 		list-style: none;
-		font-size: 0.88rem;
+		font-size: 0.875rem;
 		font-weight: 500;
 		color: var(--halbu-text-muted);
 	}

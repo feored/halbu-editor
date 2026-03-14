@@ -3,6 +3,7 @@
 	import { invoke } from "@tauri-apps/api/core";
 	import Button from "../components/ui/button/button.svelte";
 	import * as Settings from "../utils/settings.js";
+	import { toPositiveInteger } from "../utils/numbers.js";
 	import { onMount } from "svelte";
 	import { getVersion } from "@tauri-apps/api/app";
 
@@ -16,7 +17,7 @@
 	let backupAllInProgress = $state(false);
 	onMount(() => {
 		const unsubscribe = Settings.settingsStore.subscribe((nextSettings) => {
-			currentSettings = nextSettings ?? {};
+			currentSettings = nextSettings;
 		});
 		getVersion().then((version) => {
 			appVersion = version;
@@ -31,22 +32,19 @@
 				directory: true,
 				title: "Set D2R Save Folder",
 			});
-			const resolvedSaveFolder = Array.isArray(selectedPath)
-				? selectedPath[0]
-				: selectedPath;
 			await Settings.set(
 				Settings.Key.SaveFolder,
-				resolvedSaveFolder == null ? "" : resolvedSaveFolder
+				selectedPath == null ? "" : selectedPath
 			);
 		} catch (err) {
-			console.error(err);
+			await message(String(err ?? "Failed to set save folder."), {
+				title: "Settings",
+				kind: "error",
+			});
 		}
 	};
 
 	async function setTheme(event) {
-		if (event.currentTarget.value == null) {
-			return;
-		}
 		await Settings.set(Settings.Key.Theme, event.currentTarget.value);
 		await Settings.apply();
 	}
@@ -54,7 +52,7 @@
 	async function setParseMode(event) {
 		const nextParseMode = event.currentTarget.value === "strict" ? "strict" : "lax";
 		await Settings.set(Settings.Key.ParseMode, nextParseMode);
-		onParseModeChange?.(nextParseMode);
+		onParseModeChange(nextParseMode);
 	}
 
 	async function setQuestsAdvancedFlags(event) {
@@ -66,8 +64,7 @@
 	}
 
 	async function setBackupsPerCharacter(event) {
-		const parsed = Number(event.currentTarget.value);
-		const normalized = Number.isFinite(parsed) ? Math.max(1, Math.trunc(parsed)) : 20;
+		const normalized = toPositiveInteger(event.currentTarget.value, 20);
 		await Settings.set(Settings.Key.BackupsPerCharacter, normalized);
 	}
 
@@ -83,7 +80,7 @@
 	}
 
 	async function backupAllDetectedSaves() {
-		const saveFolder = String(currentSettings[Settings.Key.SaveFolder] ?? "").trim();
+		const saveFolder = (currentSettings[Settings.Key.SaveFolder] ?? "").trim();
 		if (saveFolder.length === 0) {
 			await message("Set a save folder first, then run backup-all.", {
 				title: "Backups",
@@ -92,33 +89,34 @@
 			return;
 		}
 
-		const parsed = Number(currentSettings[Settings.Key.BackupsPerCharacter]);
-		const backupsPerCharacter =
-			Number.isFinite(parsed) && parsed >= 1 ? Math.trunc(parsed) : 20;
+		const backupsPerCharacter = toPositiveInteger(
+			currentSettings[Settings.Key.BackupsPerCharacter],
+			20
+		);
 
 		backupAllInProgress = true;
 		try {
+			/** @type {import("../types/editor").BackupAllDetectedSavesResult} */
 			const result = await invoke("backup_all_detected_saves", {
 				folderPath: saveFolder,
 				parseMode,
 				backupsPerCharacter,
 			});
 			const summary = [
-				`Detected saves: ${result?.detectedFiles ?? 0}`,
-				`Backed up: ${result?.backedUp ?? 0}`,
-				`Skipped (unchanged): ${result?.skippedUnchanged ?? 0}`,
-				`Failed: ${result?.failed ?? 0}`,
+				`Detected saves: ${result.detectedFiles}`,
+				`Backed up: ${result.backedUp}`,
+				`Skipped (unchanged): ${result.skippedUnchanged}`,
+				`Failed: ${result.failed}`,
 			].join("\n");
-			const hasWarnings =
-				(result?.failed ?? 0) > 0 || (result?.cleanupWarnings?.length ?? 0) > 0;
+			const hasWarnings = result.failed > 0 || result.cleanupWarnings.length > 0;
 			await message(summary, {
 				title: "Backup All Detected Saves",
 				kind: hasWarnings ? "warning" : "info",
 			});
-			if ((result?.cleanupWarnings?.length ?? 0) > 0) {
+			if (result.cleanupWarnings.length > 0) {
 				console.warn("[backup cleanup warning]", result.cleanupWarnings.join(" | "));
 			}
-			if ((result?.errors?.length ?? 0) > 0) {
+			if (result.errors.length > 0) {
 				console.warn("[backup failures]", result.errors.join(" | "));
 			}
 		} catch (error) {
@@ -152,7 +150,7 @@
 				<div class="flex flex-wrap gap-1.5">
 					<label
 						for="auto"
-						class="inline-flex items-center gap-1.5 rounded-xs border border-halbu-border bg-halbu-panel2 px-2 py-1 text-[0.9rem] text-halbu-text"
+						class="inline-flex items-center gap-1.5 rounded-xs border border-halbu-border bg-halbu-panel2 px-2 py-1 text-sm text-halbu-text"
 					>
 						<input
 							class="form-check-input mt-0"
@@ -167,7 +165,7 @@
 					</label>
 					<label
 						for="light"
-						class="inline-flex items-center gap-1.5 rounded-xs border border-halbu-border bg-halbu-panel2 px-2 py-1 text-[0.9rem] text-halbu-text"
+						class="inline-flex items-center gap-1.5 rounded-xs border border-halbu-border bg-halbu-panel2 px-2 py-1 text-sm text-halbu-text"
 					>
 						<input
 							class="form-check-input mt-0"
@@ -182,7 +180,7 @@
 					</label>
 					<label
 						for="dark"
-						class="inline-flex items-center gap-1.5 rounded-xs border border-halbu-border bg-halbu-panel2 px-2 py-1 text-[0.9rem] text-halbu-text"
+						class="inline-flex items-center gap-1.5 rounded-xs border border-halbu-border bg-halbu-panel2 px-2 py-1 text-sm text-halbu-text"
 					>
 						<input
 							class="form-check-input mt-0"
@@ -198,7 +196,7 @@
 				</div>
 			</fieldset>
 
-			<div class="grid gap-1 sm:grid-cols-[8.7rem_minmax(0,1fr)] sm:items-center sm:gap-x-2.5">
+			<div class="grid gap-1 sm:grid-cols-form-36 sm:items-center sm:gap-x-2.5">
 				<label class="form-label mb-0" for="parse-mode-setting">Parse mode</label>
 				<select
 					id="parse-mode-setting"
@@ -218,7 +216,7 @@
 
 		<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
 			<h3 class="editor-card-title mb-1.5">Paths</h3>
-			<div class="grid gap-1 sm:grid-cols-[8.7rem_minmax(0,1fr)] sm:items-center sm:gap-x-2.5">
+			<div class="grid gap-1 sm:grid-cols-form-36 sm:items-center sm:gap-x-2.5">
 				<label class="form-label mb-0" for="settings-save-folder">Save folder</label>
 				<div class="grid gap-1.5 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
 					<Button onclick={setSaveFolder}>Set Save Folder</Button>
@@ -233,12 +231,12 @@
 			</div>
 
 			<div
-				class="mt-2 grid gap-1 sm:grid-cols-[8.7rem_minmax(0,1fr)] sm:items-center sm:gap-x-2.5"
+				class="mt-2 grid gap-1 sm:grid-cols-form-36 sm:items-center sm:gap-x-2.5"
 			>
 				<label class="form-label mb-0" for="settings-backups-enabled">Backups</label>
 				<label
 					for="settings-backups-enabled"
-					class="inline-flex w-fit items-center gap-1.5 rounded-xs border border-halbu-border bg-halbu-panel2 px-2 py-1.5 text-[0.92rem] text-halbu-text"
+					class="inline-flex w-fit items-center gap-1.5 rounded-xs border border-halbu-border bg-halbu-panel2 px-2 py-1.5 text-sm text-halbu-text"
 				>
 					<input
 						id="settings-backups-enabled"
@@ -253,7 +251,7 @@
 			</div>
 
 				<div
-					class="mt-1 grid gap-1 sm:grid-cols-[8.7rem_minmax(0,1fr)] sm:items-center sm:gap-x-2.5"
+					class="mt-1 grid gap-1 sm:grid-cols-form-36 sm:items-center sm:gap-x-2.5"
 				>
 				<label class="form-label mb-0" for="settings-backups-per-character">
 					Backups per character
@@ -270,7 +268,7 @@
 			</div>
 
 			<div
-				class="mt-1.5 grid gap-1.5 sm:grid-cols-[8.7rem_minmax(0,1fr)] sm:items-center sm:gap-x-2.5"
+				class="mt-1.5 grid gap-1.5 sm:grid-cols-form-36 sm:items-center sm:gap-x-2.5"
 			>
 				<div></div>
 				<div class="flex flex-wrap gap-1.5">
@@ -291,7 +289,7 @@
 				for="advanced-flags"
 				class="grid gap-0.5 rounded-xs border border-halbu-border bg-halbu-panel2 px-2 py-1.5"
 			>
-				<span class="inline-flex items-center gap-1.5 text-[0.92rem] text-halbu-text">
+				<span class="inline-flex items-center gap-1.5 text-sm text-halbu-text">
 					<input
 						class="form-check-input mt-0"
 						type="checkbox"
@@ -314,7 +312,7 @@
 					!currentSettings[Settings.Key.QuestsAdvancedFlags] ? "opacity-70" : ""
 				}`}
 			>
-				<span class="inline-flex items-center gap-1.5 text-[0.92rem] text-halbu-text">
+				<span class="inline-flex items-center gap-1.5 text-sm text-halbu-text">
 					<input
 						type="checkbox"
 						class="form-check-input mt-0"
@@ -335,7 +333,7 @@
 				for="show-prologue"
 				class="grid gap-0.5 rounded-xs border border-halbu-border bg-halbu-panel2 px-2 py-1.5"
 			>
-				<span class="inline-flex items-center gap-1.5 text-[0.92rem] text-halbu-text">
+				<span class="inline-flex items-center gap-1.5 text-sm text-halbu-text">
 					<input
 						class="form-check-input mt-0"
 						id="show-prologue"
@@ -354,5 +352,5 @@
 		</div>
 	</section>
 
-	<div class="text-right font-monospace text-[0.82rem] text-halbu-textMuted">Version {appVersion}</div>
+	<div class="text-right font-monospace text-sm text-halbu-textMuted">Version {appVersion}</div>
 </div>

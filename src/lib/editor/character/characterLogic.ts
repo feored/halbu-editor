@@ -1,7 +1,15 @@
+import type { EditValidation } from "../../types/editor";
+
 const NAME_PATTERN = /^\p{L}[\p{L}_-]*$/u;
 
-export function validateCharacterName(value) {
-	const normalizedValue = String(value ?? "");
+export type CharacterNameValidationResult = {
+	valid: boolean;
+	message: string;
+	value: string;
+};
+
+export function validateCharacterName(value: string): CharacterNameValidationResult {
+	const normalizedValue = value;
 	let message = "";
 	const characters = Array.from(normalizedValue).length;
 	if (characters < 2 || characters > 15) {
@@ -30,27 +38,31 @@ export function validateCharacterName(value) {
 	};
 }
 
-export function experienceForLevel(level, table) {
-	return table[Number(level) - 1];
+export function experienceForLevel(level: number, table: readonly number[]): number {
+	return table[level - 1];
 }
 
-export function levelForExperience(experience, table) {
+export function levelForExperience(experience: number, table: readonly number[]): number {
 	let resolvedLevel = table.length;
-	for (let i = 0; i < table.length; i++) {
-		if (table[i] > experience) {
-			resolvedLevel = i;
+	for (let index = 0; index < table.length; index += 1) {
+		if (table[index] > experience) {
+			resolvedLevel = index;
 			break;
 		}
 	}
 	return resolvedLevel;
 }
 
-export function buildCharacterEditValidation(validName, nameValidationMessage, classSupportWarning) {
-	const errors = [];
-	const warnings = [];
+export function buildCharacterEditValidation(
+	validName: boolean,
+	nameValidationMessage: string,
+	classSupportWarning: string,
+): EditValidation {
+	const errors: string[] = [];
+	const warnings: string[] = [];
 	if (!validName) {
 		errors.push(
-			nameValidationMessage.length > 0 ? nameValidationMessage : "Character name is invalid."
+			nameValidationMessage.length > 0 ? nameValidationMessage : "Character name is invalid.",
 		);
 	}
 	if (classSupportWarning.length > 0) {

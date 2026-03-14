@@ -25,21 +25,33 @@
 	import Quests from "./lib/editor/quests/Quests.svelte";
 	import Mercenary from "./lib/editor/mercenary/Mercenary.svelte";
 	import Save from "./lib/editor/save/Save.svelte";
+	import { editorSkillsToBackendSkills } from "./lib/editor/skills/skillAdapters";
+	import { DEFAULT_SKILL_SLOT_COUNT } from "./lib/editor/skills/skillSlots";
+	import type { AppMessage } from "./lib/utils/Message.svelte";
+	import type {
+		CompatibilityIssue,
+		EditValidation,
+		EditorOpenPayload,
+		ParseMode as EditorParseMode,
+		SaveCommandResult,
+		ParseIssue,
+		EditorSave,
+		OutputFormatOption,
+	} from "./lib/types/editor";
 
-	const AppMode = Object.freeze({
+	const AppMode = {
 		Library: "library",
 		Editor: "editor",
 		Settings: "settings",
-	} as const);
+	} as const;
 	type AppMode = (typeof AppMode)[keyof typeof AppMode];
 
-	const ParseMode = Object.freeze({
+	const ParseMode = {
 		Lax: "lax",
 		Strict: "strict",
-	} as const);
-	type ParseMode = (typeof ParseMode)[keyof typeof ParseMode];
+	} as const;
 
-	const EditorSection = Object.freeze({
+	const EditorSection = {
 		Status: "status",
 		Save: "save",
 		Character: "character",
@@ -48,43 +60,15 @@
 		Quests: "quests",
 		Mercenary: "mercenary",
 		Inventory: "inventory",
-	} as const);
+	} as const;
 	type EditorSection = (typeof EditorSection)[keyof typeof EditorSection];
-
-	type EditValidation = {
-		errors: unknown[];
-		warnings: unknown[];
-	};
-
-	type SaveCommandResult = {
-		message?: string;
-		backupPerformed?: boolean;
-		backupPath?: string | null;
-		cleanupWarning?: string | null;
-	};
-	type CompatibilityIssue = {
-		code?: unknown;
-		blocking?: boolean;
-		message?: string;
-	};
-	type OutputFormatOption = {
-		formatId?: unknown;
-		version?: unknown;
-		gameEdition?: unknown;
-	};
-	type NormalizedOutputFormatOption = {
-		formatId: string;
-		version: number;
-		gameEdition: string;
-	};
-	const SKILL_SLOT_COUNT = 30;
 
 	type SaveCharacterOptions = {
 		targetVersion?: number | null;
 		saveAs?: boolean;
 	};
 
-	const EDITOR_NAV = Object.freeze([
+	const EDITOR_NAV = [
 		{ id: EditorSection.Character, label: "Character" },
 		{ id: EditorSection.Skills, label: "Skills" },
 		{ id: EditorSection.Waypoints, label: "Waypoints" },
@@ -92,18 +76,18 @@
 		{ id: EditorSection.Mercenary, label: "Mercenary" },
 		{ id: EditorSection.Save, label: "Save", dividerBefore: true },
 		{ id: EditorSection.Status, label: "Status" },
-	]);
+	] as const;
 
-	let currentSave = $state<any>(null);
+	let currentSave = $state<EditorSave | null>(null);
 	let currentParseIssueCount = $state<number>(0);
-	let currentParseIssues = $state<unknown[]>([]);
+	let currentParseIssues = $state<ParseIssue[]>([]);
 	let currentHeaderChecksum = $state<number | null>(null);
 	let currentComputedChecksum = $state<number | null>(null);
 	let currentSourceFileSize = $state<number | null>(null);
 	let currentSourcePath = $state<string | null>(null);
-	let currentSaveBaseline = $state<any>(null);
+	let currentSaveBaseline = $state<EditorSave | null>(null);
 	let currentCompatibilityIssues = $state<CompatibilityIssue[]>([]);
-	let outputFormatOptions = $state<NormalizedOutputFormatOption[]>([]);
+	let outputFormatOptions = $state<OutputFormatOption[]>([]);
 	let advancedSaveOptionsEnabled = $state(false);
 	let selectedCompatibilityTargetVersion = $state<number | null>(null);
 	let compatibilityCheckPending = $state(false);
@@ -114,26 +98,21 @@
 	let appMode = $state<AppMode>(AppMode.Library);
 	let settingsOriginMode = $state<AppMode>(AppMode.Library);
 	let currentEditorSection = $state<EditorSection>(EditorSection.Status);
-	let parseMode = $state<ParseMode>(ParseMode.Lax);
-	const hasEditValidationErrors = $derived(
-		Array.isArray(editValidation?.errors) && editValidation.errors.length > 0
-	);
+	let parseMode = $state<EditorParseMode>(ParseMode.Lax);
+	const hasEditValidationErrors = $derived(editValidation.errors.length > 0);
 	const hasBlockingCompatibilityIssues = $derived.by(() =>
-		currentCompatibilityIssues.some((issue) => issue?.blocking === true)
+		currentCompatibilityIssues.some((issue) => issue.blocking)
 	);
 	const currentSaveTargetVersion = $derived.by(() =>
-		currentSave == null ? null : resolveTargetVersion(currentSave, null)
+		currentSave == null ? null : resolveTargetVersion(currentSave)
 	);
 	const saveBlocked = $derived(
 		hasEditValidationErrors || compatibilityCheckError.length > 0 || hasBlockingCompatibilityIssues
 	);
 
-	const topbarMode = $derived.by(() => {
-		if (appMode === AppMode.Settings) {
-			return settingsOriginMode;
-		}
-		return appMode;
-	});
+	const topbarMode = $derived.by(() =>
+		appMode === AppMode.Settings ? settingsOriginMode : appMode
+	);
 	const sidebarItems = $derived.by(() => {
 		if (currentSave != null) {
 			return EDITOR_NAV.map((item) =>
@@ -144,79 +123,28 @@
 		}
 		return [];
 	});
-	const activeSidebarItem = $derived.by(() => {
-		if (appMode === AppMode.Settings) {
-			return null;
-		}
-		if (currentSave != null) {
-			return currentEditorSection;
-		}
-		return AppMode.Library;
-	});
+	const activeSidebarItem = $derived.by(() =>
+		appMode === AppMode.Settings ? null : currentSave != null ? currentEditorSection : AppMode.Library
+	);
 
 	initializeSettings().then(() => {
 		applySettings();
 		handleParseModeChange(getSetting(SettingKey.ParseMode));
 	});
 
-	function cloneSaveSnapshot(saveData: any) {
-		if (saveData == null) {
-			return null;
-		}
-		try {
-			return structuredClone(saveData);
-		} catch {
-			return JSON.parse(JSON.stringify(saveData));
-		}
-	}
-
-	function clampSkillPoint(value: unknown) {
-		const parsed = Number(value);
-		if (!Number.isFinite(parsed)) {
-			return 0;
-		}
-		return Math.max(0, Math.min(255, Math.trunc(parsed)));
-	}
-
-	function normalizeSkillPointsForSave(skills: any) {
-		const points = Array.from({ length: SKILL_SLOT_COUNT }, () => 0);
-		if (Array.isArray(skills)) {
-			for (let index = 0; index < SKILL_SLOT_COUNT; index += 1) {
-				const slot = skills[index];
-				if (typeof slot === "number") {
-					points[index] = clampSkillPoint(slot);
-					continue;
-				}
-				if (slot != null && typeof slot === "object") {
-					points[index] = clampSkillPoint((slot as { points?: unknown }).points);
-				}
-			}
-			return points;
-		}
-
-		if (skills != null && typeof skills === "object" && Array.isArray(skills.points)) {
-			for (let index = 0; index < SKILL_SLOT_COUNT; index += 1) {
-				points[index] = clampSkillPoint(skills.points[index]);
-			}
-		}
-		return points;
-	}
-
-	function buildSaveCommandPayload(saveData: any) {
-		const payload = cloneSaveSnapshot(saveData);
-		if (payload == null || typeof payload !== "object") {
-			return saveData;
-		}
-		payload.skills = {
-			points: normalizeSkillPointsForSave(saveData?.skills),
+	function buildSaveCommandPayload(saveData: EditorSave) {
+		return {
+			...saveData,
+			skills: editorSkillsToBackendSkills(saveData.skills, DEFAULT_SKILL_SLOT_COUNT),
 		};
-		return payload;
 	}
 
-	function resolveTargetVersion(saveData: any, targetVersion: unknown) {
-		const explicitTargetVersion = Number(targetVersion);
-		if (Number.isFinite(explicitTargetVersion) && explicitTargetVersion > 0) {
-			return Math.trunc(explicitTargetVersion);
+	function resolveTargetVersion(
+		saveData: EditorSave,
+		targetVersion: number | null | undefined = null
+	) {
+		if (targetVersion != null) {
+			return targetVersion;
 		}
 		if (selectedCompatibilityTargetVersion != null) {
 			return selectedCompatibilityTargetVersion;
@@ -224,106 +152,32 @@
 		return getSaveTargetVersion(saveData);
 	}
 
-	function normalizeOutputFormatOption(format: OutputFormatOption): NormalizedOutputFormatOption | null {
-		const version = Number(format?.version);
-		if (!Number.isFinite(version) || version <= 0) {
-			return null;
-		}
-		return {
-			formatId: String(format?.formatId ?? `V${Math.trunc(version)}`),
-			version: Math.trunc(version),
-			gameEdition: String(format?.gameEdition ?? "Unknown"),
-		};
-	}
-
 	async function refreshOutputFormatOptions() {
 		try {
-			const rawFormats = await invoke<OutputFormatOption[]>("get_supported_output_formats");
-			const normalizedFormats = (Array.isArray(rawFormats) ? rawFormats : [])
-				.map(normalizeOutputFormatOption)
-				.filter((format): format is NormalizedOutputFormatOption => format != null)
-				.sort((left, right) => left.version - right.version);
-			outputFormatOptions = normalizedFormats;
+			const outputFormats = await invoke<OutputFormatOption[]>("get_supported_output_formats");
+			outputFormatOptions = outputFormats.sort(
+				(left, right) => left.version - right.version
+			);
 		} catch (error) {
 			console.warn("Unable to load supported output formats", error);
 			outputFormatOptions = [];
 		}
 	}
 
-	function setAdvancedSaveOptionsEnabled(enabled: boolean) {
-		advancedSaveOptionsEnabled = enabled === true;
-	}
-
-	function setSelectedCompatibilityTargetVersion(nextValue: number) {
-		const parsed = Number(nextValue);
-		if (!Number.isFinite(parsed) || parsed <= 0) {
-			return;
-		}
-		selectedCompatibilityTargetVersion = Math.trunc(parsed);
-	}
-
-	async function checkCompatibility(saveData: any, targetVersion: number) {
-		const savePayload = buildSaveCommandPayload(saveData);
-		const rawIssues = await invoke<CompatibilityIssue[]>("check_save_compatibility", {
-			save: savePayload,
+	async function checkCompatibility(saveData: EditorSave, targetVersion: number) {
+		return invoke<CompatibilityIssue[]>("check_save_compatibility", {
+			save: buildSaveCommandPayload(saveData),
 			targetVersion,
 		});
-		return Array.isArray(rawIssues) ? rawIssues : [];
 	}
 
-	function restoreToBaseline() {
-		if (currentSaveBaseline == null) {
-			return;
-		}
-		currentSave = cloneSaveSnapshot(currentSaveBaseline);
-		editValidation = { errors: [], warnings: [] };
-	}
-
-	function resolveSaveCharacterOptions(input?: SaveCharacterOptions | number | null) {
-		if (typeof input === "number" || input == null) {
-			return {
-				targetVersion: input,
-				saveAs: false,
-			};
-		}
-		return {
-			targetVersion: input.targetVersion ?? null,
-			saveAs: input.saveAs === true,
-		};
-	}
-
-	async function pickSavePath({
-		defaultPath,
-		forcePicker,
-	}: {
-		defaultPath: string;
-		forcePicker: boolean;
-	}) {
-		if (!forcePicker && typeof currentSourcePath === "string" && currentSourcePath.length > 0) {
-			return currentSourcePath;
-		}
-
-		const filePath = await save({
-			defaultPath,
-			filters: [
-				{
-					name: "D2R Save File",
-					extensions: ["d2s"],
-				},
-			],
-		});
-
-		return filePath ?? null;
-	}
-
-	async function saveCharacter(input?: SaveCharacterOptions | number | null) {
+	async function saveCharacter(input: SaveCharacterOptions = {}) {
 		if (currentSave == null) {
 			return;
 		}
-		const { targetVersion, saveAs } = resolveSaveCharacterOptions(input);
-		const explicitTargetVersion = Number(targetVersion);
-		const hasExplicitTargetVersion =
-			Number.isFinite(explicitTargetVersion) && explicitTargetVersion > 0;
+		const targetVersion = input.targetVersion ?? null;
+		const saveAs = input.saveAs === true;
+		const hasExplicitTargetVersion = targetVersion != null;
 		const resolvedTargetVersion = resolveTargetVersion(currentSave, targetVersion);
 		if (resolvedTargetVersion == null) {
 			await message(
@@ -350,10 +204,10 @@
 			currentCompatibilityIssues = compatibilityIssues;
 			compatibilityCheckError = "";
 		}
-		const blockingIssues = compatibilityIssues.filter((issue) => issue?.blocking === true);
+		const blockingIssues = compatibilityIssues.filter((issue) => issue.blocking);
 		if (blockingIssues.length > 0) {
 			const detail = blockingIssues
-				.map((issue) => `- ${String(issue?.message ?? "Unsupported save configuration.")}`)
+				.map((issue) => `- ${issue.message}`)
 				.join("\n");
 			await message(
 				`Cannot save to v${resolvedTargetVersion} because of blocking compatibility issues:\n${detail}`,
@@ -365,24 +219,29 @@
 			return;
 		}
 		const savePayload = buildSaveCommandPayload(currentSave);
-		const isCrossVersionSave = resolvedTargetVersion !== Number(currentSave.version);
+		const isCrossVersionSave = resolvedTargetVersion !== currentSave.version;
 		const defaultNameSuffix =
 			isCrossVersionSave ? `_v${resolvedTargetVersion}` : "";
 		const defaultPath =
 			currentSourcePath ?? `${currentSave.character.name}${defaultNameSuffix}`;
-		const filePath = await pickSavePath({
-			defaultPath,
-			forcePicker: saveAs || currentSourcePath == null || isCrossVersionSave,
-		});
+		const forcePicker = saveAs || currentSourcePath == null || isCrossVersionSave;
+		const filePath =
+			!forcePicker && currentSourcePath != null && currentSourcePath.length > 0
+				? currentSourcePath
+				: ((await save({
+						defaultPath,
+						filters: [
+							{
+								name: "D2R Save File",
+								extensions: ["d2s"],
+							},
+						],
+					})) ?? null);
 		if (filePath == null) {
 			return;
 		}
-		const backupsEnabled = getSetting(SettingKey.BackupsEnabled) !== false;
-		const configuredBackupsPerCharacter = Number(getSetting(SettingKey.BackupsPerCharacter));
-		const backupsPerCharacter =
-			Number.isFinite(configuredBackupsPerCharacter) && configuredBackupsPerCharacter >= 1
-				? Math.trunc(configuredBackupsPerCharacter)
-				: 20;
+		const backupsEnabled = getSetting(SettingKey.BackupsEnabled);
+		const backupsPerCharacter = getSetting(SettingKey.BackupsPerCharacter);
 		const backupSourcePath = saveAs ? filePath : currentSourcePath ?? filePath;
 
 		try {
@@ -399,13 +258,11 @@
 
 			currentSourcePath = filePath;
 			currentSave.version = resolvedTargetVersion;
-			if (currentSave?.meta != null && typeof currentSave.meta === "object") {
-				currentSave.meta.format = resolvedTargetVersion === 99 ? "V99" : "V105";
-			}
-			if (typeof result?.cleanupWarning === "string" && result.cleanupWarning.length > 0) {
+			currentSave.meta.format = resolvedTargetVersion === 99 ? "V99" : "V105";
+			if (result.cleanupWarning != null && result.cleanupWarning.length > 0) {
 				console.warn(`[backup cleanup warning] ${result.cleanupWarning}`);
 			}
-			currentSaveBaseline = cloneSaveSnapshot(currentSave);
+			currentSaveBaseline = structuredClone(currentSave);
 			saveRevision += 1;
 			return;
 		} catch (error) {
@@ -427,7 +284,7 @@
 			return;
 		}
 
-		const targetVersion = resolveTargetVersion(saveData, null);
+		const targetVersion = resolveTargetVersion(saveData);
 		if (targetVersion == null) {
 			currentCompatibilityIssues = [];
 			compatibilityCheckError =
@@ -461,17 +318,17 @@
 	});
 
 	$effect(() => {
-		const hasSave = currentSave != null;
 		const options = outputFormatOptions;
 		if (options.length < 1) {
 			selectedCompatibilityTargetVersion = null;
 			return;
 		}
-		if (!hasSave) {
+		const saveData = currentSave;
+		if (saveData == null) {
 			selectedCompatibilityTargetVersion = null;
 			return;
 		}
-		const saveTargetVersion = getSaveTargetVersion(currentSave);
+		const saveTargetVersion = getSaveTargetVersion(saveData);
 		const selectionIsValid = options.some(
 			(option) => option.version === selectedCompatibilityTargetVersion
 		);
@@ -480,43 +337,22 @@
 		}
 	});
 
-	function resolveInitialEditorSection(parseIssueCount: number): EditorSection {
-		if (parseIssueCount > 0) {
-			return EditorSection.Status;
-		}
-		return EditorSection.Character;
-	}
-
-	function openEditor(
-		saveData,
-		parseIssueCount = 0,
-		parseIssues = [],
-		headerChecksum = null,
-		computedChecksum = null,
-		sourceFileSize = null,
-		sourcePath = null
-	) {
-		currentSave = saveData;
-		const normalizedIssues = Array.isArray(parseIssues) ? parseIssues : [];
-		currentParseIssueCount = Math.max(Number(parseIssueCount) || 0, normalizedIssues.length);
-		currentParseIssues = normalizedIssues;
-		currentHeaderChecksum = Number.isFinite(Number(headerChecksum))
-			? Number(headerChecksum)
-			: null;
-		currentComputedChecksum = Number.isFinite(Number(computedChecksum))
-			? Number(computedChecksum)
-			: null;
-		currentSourceFileSize = Number.isFinite(Number(sourceFileSize))
-			? Number(sourceFileSize)
-			: null;
-		currentSourcePath = typeof sourcePath === "string" && sourcePath.length > 0 ? sourcePath : null;
-		currentSaveBaseline = cloneSaveSnapshot(saveData);
-		selectedCompatibilityTargetVersion = getSaveTargetVersion(saveData);
+	function openEditor(payload: EditorOpenPayload) {
+		currentSave = payload.save;
+		currentParseIssueCount = payload.parseIssueCount;
+		currentParseIssues = payload.parseIssues;
+		currentHeaderChecksum = payload.headerChecksum;
+		currentComputedChecksum = payload.computedChecksum;
+		currentSourceFileSize = payload.sourceFileSize;
+		currentSourcePath = payload.sourcePath;
+		currentSaveBaseline = structuredClone(payload.save);
+		selectedCompatibilityTargetVersion = getSaveTargetVersion(payload.save);
 		currentCompatibilityIssues = [];
 		compatibilityCheckError = "";
 		compatibilityCheckPending = false;
 		editValidation = { errors: [], warnings: [] };
-		currentEditorSection = resolveInitialEditorSection(currentParseIssueCount);
+		currentEditorSection =
+			currentParseIssueCount > 0 ? EditorSection.Status : EditorSection.Character;
 		appMode = AppMode.Editor;
 	}
 
@@ -556,34 +392,26 @@
 		appMode = AppMode.Settings;
 	}
 
-	function handleSidebarSelection(itemId) {
+	function handleSidebarSelection(itemId: AppMode | EditorSection) {
 		if (currentSave != null) {
-			currentEditorSection = itemId;
+			currentEditorSection = itemId as EditorSection;
 			appMode = AppMode.Editor;
 			return;
 		}
-		appMode = itemId;
+		appMode = itemId as AppMode;
 	}
 
-	function handleParseModeChange(nextMode) {
-		parseMode = nextMode === ParseMode.Strict ? ParseMode.Strict : ParseMode.Lax;
+	function handleParseModeChange(nextMode: EditorParseMode) {
+		parseMode = nextMode;
 	}
 
-	function handleMessages(message) {
-		switch (message.id) {
+	function handleMessages(nextMessage: AppMessage) {
+		switch (nextMessage.id) {
 			case Message.CharacterUnpicked:
 				closeEditor();
 				break;
 			case Message.CharacterPicked:
-				openEditor(
-					message.data.save,
-					message.data.parseIssueCount ?? 0,
-					message.data.parseIssues ?? [],
-					message.data.headerChecksum ?? null,
-					message.data.computedChecksum ?? null,
-					message.data.sourceFileSize ?? null,
-					message.data.sourcePath ?? null
-				);
+				openEditor(nextMessage.data);
 				break;
 			case Message.SaveFile:
 				saveCharacter();
@@ -646,10 +474,19 @@
 				outputFormatOptions={outputFormatOptions}
 				advancedSaveOptionsEnabled={advancedSaveOptionsEnabled}
 				saveDisabled={saveBlocked}
-				onToggleAdvancedSaveOptions={setAdvancedSaveOptionsEnabled}
-				onSelectCompatibilityTargetVersion={setSelectedCompatibilityTargetVersion}
+				onToggleAdvancedSaveOptions={(enabled) =>
+					(advancedSaveOptionsEnabled = enabled === true)}
+				onSelectCompatibilityTargetVersion={(nextValue) => {
+					selectedCompatibilityTargetVersion = nextValue;
+				}}
 				onSave={saveCharacter}
-				onRestore={restoreToBaseline}
+				onRestore={() => {
+					if (currentSaveBaseline == null) {
+						return;
+					}
+					currentSave = structuredClone(currentSaveBaseline);
+					editValidation = { errors: [], warnings: [] };
+				}}
 			/>
 		{:else if currentEditorSection === EditorSection.Character}
 			<Character bind:editValidation bind:save={currentSave} />

@@ -15,7 +15,7 @@
 	} = $props();
 
 	function skillsForPage(pageIndex) {
-		return skillsData.filter((skill) => Number(skill.page) === Number(pageIndex) + 1);
+		return skillsData.filter((skill) => skill.page === pageIndex + 1);
 	}
 
 	function pageTitle(pageIndex) {
@@ -29,8 +29,8 @@
 			{#each pageIndexes as pageIndex}
 				<button
 					type="button"
-					class={`rounded-xs border px-3 py-1.5 text-[0.92rem] font-medium leading-none transition ${
-						Number(activePageIndex) === Number(pageIndex)
+					class={`rounded-xs border px-3 py-1.5 text-sm font-medium leading-none transition ${
+						activePageIndex === pageIndex
 							? "border-halbu-primary bg-halbu-panel2 text-halbu-text"
 							: "border-halbu-border bg-halbu-panel text-halbu-textMuted hover:bg-halbu-panel2 hover:text-halbu-text"
 					}`}

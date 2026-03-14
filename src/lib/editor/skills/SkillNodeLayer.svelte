@@ -13,7 +13,7 @@
 
 <div class="skill-node-layer">
 	{#each nodeRects as nodeRect (nodeRect.id)}
-		{@const skillState = skillStatesById[Number(nodeRect.id)]}
+		{@const skillState = skillStatesById[nodeRect.id]}
 		<div
 			class="skill-node-shell"
 			style={`left:${nodeRect.x}px;top:${nodeRect.y}px;width:${nodeRect.width}px;height:${nodeRect.height}px;`}
@@ -22,7 +22,7 @@
 				skillData={nodeRect.skill}
 				points={skillState.points}
 				nodeState={skillState.state}
-				isSelected={Number(selectedSkillId) === Number(nodeRect.id)}
+				isSelected={selectedSkillId === nodeRect.id}
 				canIncrement={skillState.canIncrement}
 				canDecrement={skillState.canDecrement}
 				onSelect={onSelect}

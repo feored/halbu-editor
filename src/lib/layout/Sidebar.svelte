@@ -16,7 +16,7 @@
 	} = $props();
 
 	function selectItem(itemId) {
-		onSelect?.(itemId);
+		onSelect(itemId);
 	}
 </script>
 
@@ -25,7 +25,7 @@
 		<Button
 			variant="ghost"
 			class={cn(
-				"w-full justify-start rounded-none border-l-2 border-l-transparent px-2 py-1.5 text-[0.91rem]",
+				"w-full justify-start rounded-none border-l-2 border-l-transparent px-2 py-1.5 text-sm",
 				libraryActive
 					? "bg-halbu-panel2 border-l-halbu-primary text-halbu-text"
 					: "text-halbu-text hover:bg-halbu-panel2"
@@ -39,11 +39,11 @@
 	{#if items.length > 0}
 		<div class="sidebar-nav__main flex min-h-0 flex-col gap-2">
 			{#if title.length > 0}
-					<h1 class="sidebar-nav__title m-0 px-1.5 py-0.5 text-[0.74rem] font-semibold tracking-[0.02em] text-halbu-textDim">
+					<h1 class="sidebar-nav__title m-0 px-1.5 py-0.5 text-xs font-semibold tracking-[0.02em] text-halbu-textDim">
 					{title}
 				</h1>
 			{:else}
-					<h1 class="sidebar-nav__title m-0 px-1.5 py-0.5 text-[0.74rem] font-semibold tracking-[0.02em] text-halbu-textDim">
+					<h1 class="sidebar-nav__title m-0 px-1.5 py-0.5 text-xs font-semibold tracking-[0.02em] text-halbu-textDim">
 					SECTIONS
 				</h1>
 			{/if}
@@ -59,7 +59,7 @@
 						<Button
 							variant="ghost"
 							class={cn(
-								"w-full justify-start rounded-none border-l-2 border-l-transparent px-2 py-1.5 text-[0.91rem] hover:bg-halbu-panel2 hover:text-halbu-text",
+								"w-full justify-start rounded-none border-l-2 border-l-transparent px-2 py-1.5 text-sm hover:bg-halbu-panel2 hover:text-halbu-text",
 								activeId === item.id &&
 									"bg-halbu-panel2 border-l-halbu-primary text-halbu-text"
 							)}
@@ -87,7 +87,7 @@
 		<Button
 			variant="ghost"
 			class={cn(
-				"w-full justify-start rounded-none border-l-2 border-l-transparent px-2 py-1.5 text-[0.91rem]",
+				"w-full justify-start rounded-none border-l-2 border-l-transparent px-2 py-1.5 text-sm",
 				settingsActive
 					? "bg-halbu-panel2 border-l-halbu-primary text-halbu-text"
 					: "text-halbu-text hover:bg-halbu-panel2"

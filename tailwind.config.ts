@@ -65,6 +65,16 @@ export default {
 				xl: "10px",
 				xl2: "8px",
 			},
+
+			gridTemplateColumns: {
+				"form-24": "6rem minmax(0,1fr)",
+				"form-28": "7rem minmax(0,1fr)",
+				"form-28-2": "7rem minmax(0,1fr) minmax(0,1fr)",
+				"form-32": "8rem minmax(0,1fr)",
+				"form-36": "9rem minmax(0,1fr)",
+				"form-48": "12rem minmax(0,1fr)",
+				skills: "minmax(0,2fr) minmax(20rem,1fr)",
+			},
 		},
 	},
 	plugins: [],

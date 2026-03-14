@@ -7,6 +7,10 @@
 	import * as settings from "../utils/settings.js";
 	import { AlertCircleIcon } from "lucide-svelte";
 	import {
+		adaptBackendOpenPayload,
+		adaptEditorSavePayload,
+	} from "../types/editorAdapters";
+	import {
 		KNOWN_SAVE_VERSIONS,
 		DEFAULT_NEW_SAVE_VERSION,
 		getSupportedClasses,
@@ -16,7 +20,7 @@
 	let { onmessage, parseMode = "lax" } = $props();
 
 	function dispatchMessage(id, data) {
-		onmessage?.(buildMessage(id, data));
+		onmessage(buildMessage(id, data));
 	}
 
 	onMount(() => {
@@ -26,7 +30,7 @@
 				getExistingCharacters();
 			})
 			.catch((err) => {
-				console.error(err);
+				libraryError = `Failed to initialize settings: ${String(err ?? "unknown error")}`;
 			});
 	});
 
@@ -34,6 +38,7 @@
 	let saveFilesFound = $state([]);
 	let currentSaveDirectory = $state("");
 	let filterText = $state("");
+	let libraryError = $state("");
 
 	let selectedVersion = $state(DEFAULT_NEW_SAVE_VERSION);
 	let selectedClass = $state(normalizeClassForVersion(DEFAULT_NEW_SAVE_VERSION, null));
@@ -43,6 +48,7 @@
 	});
 
 	async function readFileContents() {
+		libraryError = "";
 		try {
 			const selectedPath = await open({
 				multiple: false,
@@ -52,41 +58,32 @@
 						extensions: ["d2s"],
 					},
 				],
-				title: "Open .d2s file",
+					title: "Open .d2s file",
 			});
+			if (selectedPath == null || Array.isArray(selectedPath)) {
+				return;
+			}
 			await loadSavePath(selectedPath);
 		} catch (err) {
-			console.error(err);
+			libraryError = `Failed to open save picker: ${String(err ?? "unknown error")}`;
 		}
 	}
 
 	async function loadSavePath(path) {
-		if (typeof path !== "string" || path.length === 0) {
+		if (path.length === 0) {
 			return;
 		}
 
+		libraryError = "";
 		try {
-			let parsed = await invoke("get_character_from_path_with_meta", {
+			/** @type {import("../types/editorAdapters").BackendOpenPayloadDto} */
+			const response = await invoke("get_character_from_path_with_meta", {
 				path: path,
 				parseMode,
 			});
-			dispatchMessage(Message.CharacterPicked, {
-				save: parsed.save,
-				parseIssueCount: Number(parsed.parse_issue_count) || 0,
-				parseIssues: Array.isArray(parsed.parse_issues) ? parsed.parse_issues : [],
-				sourceFileSize: Number(parsed.source_file_size) || null,
-				sourcePath: path,
-				headerChecksum:
-					Number.isFinite(Number(parsed.header_checksum))
-						? Number(parsed.header_checksum)
-						: null,
-				computedChecksum:
-					Number.isFinite(Number(parsed.computed_checksum))
-						? Number(parsed.computed_checksum)
-						: null,
-			});
+			dispatchMessage(Message.CharacterPicked, adaptBackendOpenPayload(response, path));
 		} catch (err) {
-			console.error(err);
+			libraryError = `Failed to load save file: ${String(err ?? "unknown error")}`;
 		}
 	}
 
@@ -101,11 +98,14 @@
 		if (selectedClass == null) {
 			return;
 		}
+		libraryError = "";
 		try {
-			let newSave = await invoke("new_save", {
-				version: Number(selectedVersion),
+			/** @type {import("../types/editorAdapters").BackendEditorSaveDto} */
+			const response = await invoke("new_save", {
+				version: selectedVersion,
 				class: selectedClass,
 			});
+			const newSave = adaptEditorSavePayload(response);
 			dispatchMessage(Message.CharacterPicked, {
 				save: newSave,
 				parseIssueCount: 0,
@@ -116,13 +116,13 @@
 				computedChecksum: null,
 			});
 		} catch (err) {
-			console.error(err);
+			libraryError = `Failed to create new save: ${String(err ?? "unknown error")}`;
 		}
 	}
 
 	async function getExistingCharacters() {
-		const configuredSaveFolder = await settings.get(settings.Key.SaveFolder);
-		const saveFolder = typeof configuredSaveFolder === "string" ? configuredSaveFolder : "";
+		libraryError = "";
+		const saveFolder = settings.get(settings.Key.SaveFolder);
 		currentSaveDirectory = saveFolder;
 
 		if (saveFolder.length < 1) {
@@ -132,14 +132,15 @@
 			return;
 		}
 		try {
-			let characters = await invoke("summary_folder", {
+			/** @type {import("../types/editor").SaveSummaryEntry[]} */
+			const response = await invoke("summary_folder", {
 				path: saveFolder,
 				parseMode,
 			});
-			saveFilesFound = characters;
+			saveFilesFound = response;
 			saveFolderSet = true;
 		} catch (err) {
-			console.error(err);
+			libraryError = `Failed to scan save folder: ${String(err ?? "unknown error")}`;
 			saveFolderSet = false;
 		}
 	}
@@ -150,9 +151,9 @@
 			return saveFilesFound;
 		}
 		return saveFilesFound.filter((saveFile) => {
-			const name = String(saveFile?.name ?? "").toLowerCase();
-			const className = String(saveFile?.className ?? "").toLowerCase();
-			const edition = String(saveFile?.gameEdition ?? "").toLowerCase();
+			const name = (saveFile.name ?? "").toLowerCase();
+			const className = (saveFile.className ?? "").toLowerCase();
+			const edition = (saveFile.gameEdition ?? "").toLowerCase();
 			return name.includes(query) || className.includes(query) || edition.includes(query);
 		});
 	});
@@ -188,6 +189,12 @@
 				</div>
 			</div>
 		</div>
+
+		{#if libraryError.length > 0}
+			<div class="rounded border border-halbu-warning bg-halbu-warningSoft p-2 text-sm text-halbu-warning">
+				{libraryError}
+			</div>
+		{/if}
 
 		{#if !saveFolderSet}
 			<div class="text-center text-bg-warning p-3 m-3 rounded">
@@ -226,28 +233,28 @@
 						>
 							<td class="py-3">
 								<span class="font-semibold text-halbu-text">
-									{#if typeof saveFile.title === "string" && saveFile.title.length > 0}
+									{#if saveFile.title != null && saveFile.title.length > 0}
 										{saveFile.title}{" "}
 									{/if}
-									{#if typeof saveFile.name === "string" && saveFile.name.length > 0}
+									{#if saveFile.name != null && saveFile.name.length > 0}
 										{saveFile.name}
 									{:else}
 										Corrupted Name
 									{/if}
 								</span>
 							</td>
-							<td class="py-3">{saveFile?.className ?? "-"}</td>
-							<td class="py-3">{saveFile?.level ?? "-"}</td>
+							<td class="py-3">{saveFile.className ?? "-"}</td>
+							<td class="py-3">{saveFile.level ?? "-"}</td>
 							<td class="py-3">
-								{#if saveFile?.hardcore === true}
+								{#if saveFile.hardcore === true}
 									<span
-										class="inline-flex items-center rounded-full bg-halbu-dangerSoft px-2 py-0.5 text-[0.78rem] font-semibold text-halbu-danger"
+										class="inline-flex items-center rounded-full bg-halbu-dangerSoft px-2 py-0.5 text-xs font-semibold text-halbu-danger"
 									>
 										Hardcore
 									</span>
-								{:else if saveFile?.hardcore === false}
+								{:else if saveFile.hardcore === false}
 									<span
-										class="inline-flex items-center rounded-full bg-halbu-panel2 px-2 py-0.5 text-[0.78rem] font-semibold text-halbu-textMuted"
+										class="inline-flex items-center rounded-full bg-halbu-panel2 px-2 py-0.5 text-xs font-semibold text-halbu-textMuted"
 									>
 										Softcore
 									</span>
@@ -256,13 +263,13 @@
 								{/if}
 							</td>
 							<td class="py-3">
-								<small class="text-halbu-text">{saveFile?.expansionType ?? "-"}</small>
+								<small class="text-halbu-text">{saveFile.expansionType ?? "-"}</small>
 							</td>
 							<td class="py-3">
-								<small class="text-halbu-text">{saveFile?.gameEdition ?? "-"}</small>
+								<small class="text-halbu-text">{saveFile.gameEdition ?? "-"}</small>
 							</td>
 							<td class="py-3">
-								<small class="font-monospace text-halbu-text">{saveFile?.version ?? "-"}</small>
+								<small class="font-monospace text-halbu-text">{saveFile.version ?? "-"}</small>
 							</td>
 						</tr>
 					{/each}
@@ -288,9 +295,6 @@
 						name="newCharacterVersion"
 						id="newCharacterVersion"
 						bind:value={selectedVersion}
-						onchange={(event) => {
-							selectedVersion = Number(event.currentTarget.value);
-						}}
 					>
 						{#each KNOWN_SAVE_VERSIONS as version}
 							<option value={version}>{version}</option>
@@ -315,17 +319,17 @@
 
 <style>
 	.save-directory-field {
-		min-height: 1.85rem;
+		min-height: 1.75rem;
 		display: flex;
 		align-items: center;
 		justify-content: flex-start;
 		gap: 0.5rem;
-		padding: 0.3rem 0.62rem;
+		padding: 0.25rem 0.625rem;
 		border: 1px solid var(--halbu-border);
 		border-radius: var(--app-radius-sm);
 		background: var(--halbu-panel);
 		color: var(--halbu-text-muted);
-		font-size: 0.94rem;
+		font-size: 1rem;
 		cursor: default;
 	}
 
@@ -337,7 +341,7 @@
 	}
 
 	.library-table thead th {
-		font-size: 0.84rem;
+		font-size: 0.875rem;
 		line-height: 1.2;
 		letter-spacing: 0.005em;
 		font-weight: 500;
@@ -348,8 +352,8 @@
 	}
 
 	.library-table tbody td {
-		padding-top: 0.7rem;
-		padding-bottom: 0.7rem;
+		padding-top: 0.75rem;
+		padding-bottom: 0.75rem;
 	}
 
 	.library-table tbody tr:nth-of-type(even) > * {

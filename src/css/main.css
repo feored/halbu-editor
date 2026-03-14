@@ -72,9 +72,9 @@
   --halbu-danger-soft: rgb(var(--halbu-danger-rgb) / 0.14);
   --halbu-info: rgb(var(--halbu-info-rgb));
   --halbu-info-soft: rgb(var(--halbu-info-rgb) / 0.14);
-  --app-radius-sm: 0.25rem;
-  --app-radius-md: 0.4rem;
-  --app-radius-lg: 0.55rem;
+  --app-radius-sm: theme("borderRadius.sm");
+  --app-radius-md: theme("borderRadius.md");
+  --app-radius-lg: theme("borderRadius.lg");
   --app-font: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
   --app-soft-shadow: theme("boxShadow.panel");
   --app-focus-ring: theme("boxShadow.focus");
@@ -203,10 +203,10 @@ body {
 .app-layout__top {
   position: relative;
   z-index: 2;
-  min-height: 2.65rem;
+  min-height: 2.75rem;
   display: flex;
   align-items: center;
-  padding: 0.38rem 0.7rem;
+  padding: 0.375rem 0.75rem;
   background: var(--app-topbar-bg);
   border-bottom: 1px solid var(--bs-border-color);
 }
@@ -224,7 +224,7 @@ body {
   min-height: 0;
   background: var(--app-sidebar-bg);
   border-right: 1px solid var(--bs-border-color);
-  padding: 0.62rem 0.5rem;
+  padding: 0.625rem 0.5rem;
 }
 
 .app-layout__content {
@@ -232,7 +232,7 @@ body {
   min-height: 0;
   overflow: auto;
   background: var(--app-content-bg);
-  padding: 0.82rem;
+  padding: 0.875rem;
 }
 
 .app-layout__content > * {
@@ -290,18 +290,18 @@ body {
 }
 
 .table thead th {
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   letter-spacing: 0.04em;
   color: var(--bs-secondary-color);
   font-weight: 700;
-  padding-top: 0.62rem;
-  padding-bottom: 0.62rem;
+  padding-top: 0.625rem;
+  padding-bottom: 0.625rem;
   border-bottom-width: 1px;
 }
 
 .table tbody td {
-  padding-top: 0.68rem;
-  padding-bottom: 0.68rem;
+  padding-top: 0.625rem;
+  padding-bottom: 0.625rem;
   vertical-align: middle;
 }
 
@@ -312,36 +312,36 @@ body {
 /* Forms */
 .form-label,
 .col-form-label {
-  font-size: 0.84rem;
+  font-size: 0.875rem;
   line-height: 1.2;
   letter-spacing: 0.005em;
   font-weight: 500;
   color: color-mix(in srgb, var(--halbu-text) 78%, var(--halbu-text-muted));
-  margin-bottom: 0.22rem;
+  margin-bottom: 0.25rem;
 }
 
 legend {
-  font-size: 0.86rem;
+  font-size: 0.875rem;
   line-height: 1.2;
   letter-spacing: 0.01em;
   font-weight: 600;
   color: var(--halbu-text-muted);
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.25rem;
 }
 
 .form-text {
-  font-size: 0.82rem;
+  font-size: 0.875rem;
   color: var(--bs-secondary-color);
 }
 
 .form-control,
 .form-select,
 .input-group-text {
-  min-height: 1.85rem;
+  min-height: 1.75rem;
   background: var(--app-input-bg);
   border-color: var(--app-input-border);
   color: var(--bs-body-color);
-  font-size: 0.96rem;
+  font-size: 1rem;
   border-radius: var(--app-radius-sm);
   box-shadow: none;
 }
@@ -395,8 +395,8 @@ legend {
 /* Buttons */
 .btn {
   --bs-btn-font-weight: 600;
-  --bs-btn-border-radius: 0.34rem;
-  min-height: 1.85rem;
+  --bs-btn-border-radius: var(--app-radius-sm);
+  min-height: 1.75rem;
   line-height: 1;
   box-shadow: none;
 }
@@ -479,14 +479,14 @@ legend {
 
 /* Nav pills */
 .nav-pills {
-  gap: 0.14rem;
+  gap: 0.125rem;
 }
 
 .nav-pills .nav-link {
   position: relative;
   border: 1px solid transparent;
-  padding: 0.42rem 0.58rem;
-  font-size: 0.94rem;
+  padding: 0.375rem 0.625rem;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--bs-secondary-color);
   background: transparent;
@@ -507,13 +507,13 @@ legend {
 /* Nav tabs */
 .nav-tabs {
   border-bottom: 1px solid color-mix(in srgb, var(--bs-border-color) 94%, transparent);
-  padding-bottom: 0.14rem;
-  gap: 0.14rem;
+  padding-bottom: 0.125rem;
+  gap: 0.125rem;
 }
 
 .nav-tabs .nav-link {
   border: 1px solid transparent;
-  padding: 0.36rem 0.56rem;
+  padding: 0.375rem 0.5rem;
   color: var(--bs-secondary-color);
   font-weight: 600;
   border-radius: var(--app-radius-sm);
@@ -545,8 +545,8 @@ h6 {
 
 .editor-card-title {
   margin: 0;
-  margin-bottom: 0.3rem;
-  font-size: 0.94rem;
+  margin-bottom: 0.25rem;
+  font-size: 1rem;
   line-height: 1.2;
   font-weight: 600;
   letter-spacing: 0.01em;
@@ -556,7 +556,7 @@ h6 {
 hr {
   border-top: 1px solid color-mix(in srgb, var(--bs-border-color) 88%, transparent);
   opacity: 1;
-  margin: 0.85rem 0;
+  margin: 0.875rem 0;
 }
 
 a {
@@ -579,8 +579,8 @@ a:hover {
 .tooltip .tooltip-inner {
   border: 1px solid var(--bs-border-color);
   box-shadow: var(--app-soft-shadow);
-  font-size: 0.9rem;
-  padding: 0.45rem 0.55rem;
+  font-size: 0.875rem;
+  padding: 0.5rem 0.5rem;
 }
 
 .popover {
@@ -625,10 +625,10 @@ a:hover {
   }
 
   .app-layout__sidebar {
-    width: 11.75rem;
+    width: 12rem;
   }
 
   .app-layout__content {
-    padding: 0.62rem;
+    padding: 0.625rem;
   }
 }

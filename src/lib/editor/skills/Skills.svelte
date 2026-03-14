@@ -4,12 +4,12 @@
 	import SkillTreeCanvas from "./SkillTreeCanvas.svelte";
 	import SkillInspectorPanel from "./SkillInspectorPanel.svelte";
 	import {
-		addSkillPoints,
+		clampSkillPoints,
 		getSkillPoints,
-		normalizeSkillSlots,
-		refundAllSkillPoints,
-		skillsEquivalent,
-	} from "./skillSlots.js";
+		resizeSkillSlots,
+		withAddedSkillPoints,
+		withAllSkillPointsRefunded,
+	} from "./skillSlots";
 	import {
 		buildPageNotices,
 		buildSkillStatesById,
@@ -17,21 +17,24 @@
 		deriveSkillsData,
 		resolveActivePageIndex,
 		resolveSelectedSkillId,
-	} from "./skillsLogic.js";
+	} from "./skillsLogic";
 	import {
 		classLabel,
 		getSkillPageNames,
 		getSkillsDataset,
 		skillIdToSaveId,
 	} from "../../utils/GameSupport";
-	import { buildSkillDetails } from "./skillDetails.js";
+	import { buildSkillDetails } from "./skillDetails";
 
 	let { save = $bindable() } = $props();
 	let skillsContext = $state(null);
 	let skillsContextError = $state("");
 	let isSkillsContextLoading = $state(false);
+	let skillsContextRequestToken = 0;
 
-	const skillSlotCount = $derived(skillsContext?.skill_slot_count ?? 30);
+	const skillSlotCount = $derived(
+		skillsContext == null ? 30 : skillsContext.skill_slot_count
+	);
 
 	$effect(() => {
 		save.version;
@@ -40,36 +43,41 @@
 	});
 
 	async function refreshSkillsContext() {
+		const requestToken = ++skillsContextRequestToken;
 		isSkillsContextLoading = true;
 		skillsContextError = "";
 		try {
-			skillsContext = await invoke("get_skills_context", {
-				version: Number(save.version),
+			/** @type {import("../../types/editor").SkillsContext} */
+			const nextSkillsContext = await invoke("get_skills_context", {
+				version: save.version,
 				class: save.character.class,
 			});
+			if (requestToken !== skillsContextRequestToken) {
+				return;
+			}
+			save.skills = resizeSkillSlots(save.skills, nextSkillsContext.skill_slot_count);
+			skillsContext = nextSkillsContext;
 		} catch (error) {
+			if (requestToken !== skillsContextRequestToken) {
+				return;
+			}
 			skillsContext = null;
 			skillsContextError = String(error);
 		} finally {
-			isSkillsContextLoading = false;
+			if (requestToken === skillsContextRequestToken) {
+				isSkillsContextLoading = false;
+			}
 		}
 	}
-
-	$effect(() => {
-		const normalizedSkills = normalizeSkillSlots(save.skills, skillSlotCount);
-		if (!skillsEquivalent(save.skills, normalizedSkills)) {
-			save.skills = normalizedSkills;
-		}
-	});
 
 	const skillsDataset = $derived(getSkillsDataset(save.version));
 	const hasKnownVersionSkills = $derived(skillsDataset != null);
 
 	const skillsData = $derived(deriveSkillsData(skillsDataset, save.version, save.character.class));
 	const hasBackendClassSupport = $derived(
-		skillsContext == null ? true : Boolean(skillsContext.class_supported_for_version)
+		skillsContext == null ? true : skillsContext.class_supported_for_version
 	);
-	const skillSlotsReady = $derived(Array.isArray(save.skills) && save.skills.length >= skillSlotCount);
+	const skillSlotsReady = $derived(save.skills.length === skillSlotCount);
 	const hasClassSkills = $derived(skillsData.length > 0 && hasBackendClassSupport);
 	const pageIndexes = $derived(derivePageIndexes(skillsData));
 	const skillPageNames = $derived(getSkillPageNames(save.version, save.character.class, skillsData));
@@ -83,7 +91,7 @@
 			skillSlotsReady,
 			version: save.version,
 			classLabel: classLabel(save.character.class),
-			supportedClasses: skillsContext?.supported_classes ?? [],
+			supportedClasses: skillsContext == null ? [] : skillsContext.supported_classes,
 		})
 	);
 
@@ -118,13 +126,12 @@
 	);
 
 	function skillStateFor(skillId) {
-		return skillStatesById[Number(skillId)];
+		return skillStatesById[skillId];
 	}
 
-	function handleSkillPointChange(skillId, rawDelta) {
+	function handleSkillPointChange(skillId, delta) {
 		const skillNum = getSkillSlot(skillId);
-		const delta = Number(rawDelta);
-		if (skillNum < 0 || !Number.isFinite(delta) || delta === 0) {
+		if (skillNum < 0 || delta === 0) {
 			return;
 		}
 
@@ -140,30 +147,35 @@
 			if (save.attributes.newskills.value < delta) {
 				return;
 			}
-			if (addSkillPoints(save.skills, skillNum, delta)) {
+			const nextSkills = withAddedSkillPoints(save.skills, skillNum, delta);
+			if (nextSkills !== save.skills) {
 				save.attributes.newskills.value -= delta;
-				save.skills = [...save.skills];
+				save.skills = nextSkills;
 			}
 		} else {
 			const pointsToRefund = Math.abs(delta);
 			if (skillState.points < pointsToRefund) {
 				return;
 			}
-			if (addSkillPoints(save.skills, skillNum, delta)) {
+			const nextSkills = withAddedSkillPoints(save.skills, skillNum, delta);
+			if (nextSkills !== save.skills) {
 				save.attributes.newskills.value += pointsToRefund;
-				save.skills = [...save.skills];
+				save.skills = nextSkills;
 			}
 		}
 	}
 
 	function refund() {
-		save.attributes.newskills.value += refundAllSkillPoints(save.skills);
-		// only so that svelte detects the change
-		save.skills = [...save.skills];
+		const { skills: nextSkills, refundedPoints } = withAllSkillPointsRefunded(save.skills);
+		if (refundedPoints < 1) {
+			return;
+		}
+		save.attributes.newskills.value += refundedPoints;
+		save.skills = nextSkills;
 	}
 
 	const selectedSkill = $derived.by(() =>
-		skillsData.find((skill) => Number(skill.id) === Number(selectedSkillId))
+		skillsData.find((skill) => skill.id === selectedSkillId)
 	);
 	const selectedSkillDetails = $derived.by(() =>
 		selectedSkill == null
@@ -181,18 +193,15 @@
 	);
 
 	function selectSkill(skillId) {
-		selectedSkillId = Number(skillId);
+		selectedSkillId = skillId;
 	}
 
 	function selectSkillPage(pageIndex) {
-		activePageIndex = Number(pageIndex);
+		activePageIndex = pageIndex;
 	}
 
 	function setPointsLeft(value) {
-		const parsed = Number(value);
-		if (Number.isFinite(parsed)) {
-			save.attributes.newskills.value = Math.max(0, Math.min(255, Math.trunc(parsed)));
-		}
+		save.attributes.newskills.value = clampSkillPoints(value);
 	}
 
 	function incrementSelectedSkill() {
@@ -213,12 +222,8 @@
 		if (selectedSkill == null) {
 			return;
 		}
-		const parsed = Number(nextPoints);
-		if (!Number.isFinite(parsed)) {
-			return;
-		}
-		const current = getSkillPoints(save.skills, Number(selectedSkill.saveId));
-		const clamped = Math.max(0, Math.min(255, Math.trunc(parsed)));
+		const current = getSkillPoints(save.skills, selectedSkill.saveId);
+		const clamped = clampSkillPoints(nextPoints);
 		const delta = clamped - current;
 		if (delta !== 0) {
 			handleSkillPointChange(selectedSkill.id, delta);
@@ -243,7 +248,7 @@
 	/>
 
 	{#if isSkillsContextLoading}
-		<div class="rounded-sm border border-halbu-info bg-halbu-infoSoft px-2 py-1.5 text-[0.9rem] text-halbu-info">
+		<div class="rounded-sm border border-halbu-info bg-halbu-infoSoft px-2 py-1.5 text-sm text-halbu-info">
 			Loading skills context...
 		</div>
 	{/if}
@@ -252,7 +257,7 @@
 		<div class="grid gap-1.5">
 			{#each pageNotices as notice}
 				<div
-					class={`rounded-sm border px-2 py-1.5 text-[0.9rem] ${
+					class={`rounded-sm border px-2 py-1.5 text-sm ${
 						notice.level === "warning"
 							? "border-halbu-warning bg-halbu-warningSoft text-halbu-warning"
 							: "border-halbu-info bg-halbu-infoSoft text-halbu-info"
@@ -264,7 +269,7 @@
 		</div>
 	{/if}
 
-	<div class="grid min-w-0 gap-2 xl:grid-cols-[minmax(0,2.1fr)_minmax(18.5rem,1fr)]">
+		<div class="grid min-w-0 gap-2 xl:grid-cols-skills">
 		<div class="min-w-0">
 			{#if canRenderTrees}
 				<SkillTreeCanvas
@@ -280,7 +285,7 @@
 					onDecrement={decrementSkill}
 				/>
 			{:else}
-				<div class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2 text-[0.9rem] text-halbu-textMuted">
+				<div class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2 text-sm text-halbu-textMuted">
 					Skill tree is unavailable for this save context.
 				</div>
 			{/if}

@@ -1,5 +1,6 @@
 <script>
 	import * as Settings from "../../utils/settings.js";
+	import { onDestroy } from "svelte";
 	import acts from "./actquests.json";
 	let { save = $bindable() } = $props();
 
@@ -56,24 +57,30 @@
 		{ act: "act3", quest: "q4", attribute: "maxhp", value: 20 },
 		{ act: "act3", quest: "q4", attribute: "hitpoints", value: 20 },
 	];
-	const rewardAttributeScaleById = Object.freeze({
+	const rewardAttributeScaleById = {
 		hitpoints: 256,
 		maxhp: 256,
 		mana: 256,
 		maxmana: 256,
 		stamina: 256,
 		maxstamina: 256,
-	});
-	const rewardAttributeLabels = Object.freeze({
+	};
+	const rewardAttributeLabels = {
 		newskills: "Skill Points",
 		statpts: "Stat Points",
 		maxhp: "Base Life",
 		hitpoints: "Current Life",
-	});
+	};
 	const REWARD_FEEDBACK_INFO_TIMEOUT_MS = 3500;
 	const REWARD_FEEDBACK_WARNING_TIMEOUT_MS = 6000;
 	let rewardFeedbackByQuest = $state({});
 	const rewardFeedbackTimeouts = new Map();
+	onDestroy(() => {
+		for (const timeoutId of rewardFeedbackTimeouts.values()) {
+			clearTimeout(timeoutId);
+		}
+		rewardFeedbackTimeouts.clear();
+	});
 
 	function shouldShowQuest(quest) {
 		return quest.id !== "prologue" || showPrologue;
@@ -92,9 +99,6 @@
 	}
 
 	function isQuestCompletedState(stateFlags) {
-		if (!Array.isArray(stateFlags)) {
-			return false;
-		}
 		return (
 			stateFlags.includes("RewardGranted") ||
 			stateFlags.includes("CompletedNow") ||
@@ -104,7 +108,7 @@
 	}
 
 	function isQuestCompleted(difficultyId, actId, questId) {
-		const stateFlags = save?.quests?.[difficultyId]?.[actId]?.[questId]?.state ?? [];
+		const stateFlags = save.quests[difficultyId][actId][questId].state;
 		return isQuestCompletedState(stateFlags);
 	}
 
@@ -141,7 +145,7 @@
 	const actColumns = [acts.slice(0, 3), acts.slice(3)];
 
 	function getQuestStateRef(difficultyId, actId, questId) {
-		return save?.quests?.[difficultyId]?.[actId]?.[questId]?.state ?? null;
+		return save.quests[difficultyId][actId][questId].state;
 	}
 
 	function rewardFeedbackKey(difficultyId, actId, questId) {
@@ -192,15 +196,14 @@
 	}
 
 	function formatSignedDelta(value) {
-		const parsed = Number(value);
-		if (!Number.isFinite(parsed) || parsed === 0) {
+		if (value === 0) {
 			return "0";
 		}
-		const absValue = Math.abs(parsed);
+		const absValue = Math.abs(value);
 		const formattedValue = Number.isInteger(absValue)
 			? `${absValue}`
 			: absValue.toFixed(2).replace(/\.?0+$/, "");
-		return parsed > 0 ? `+${formattedValue}` : `-${formattedValue}`;
+		return value > 0 ? `+${formattedValue}` : `-${formattedValue}`;
 	}
 
 	function getRewardStorageScale(attributeId) {
@@ -208,11 +211,11 @@
 	}
 
 	function toStoredRewardValue(attributeId, gameValue) {
-		return Number(gameValue) * getRewardStorageScale(attributeId);
+		return gameValue * getRewardStorageScale(attributeId);
 	}
 
 	function toDisplayedRewardDelta(attributeId, storedDelta) {
-		return Number(storedDelta) / getRewardStorageScale(attributeId);
+		return storedDelta / getRewardStorageScale(attributeId);
 	}
 
 	function handleRewards(difficultyId, actId, questId, flagId, add) {
@@ -232,11 +235,8 @@
 		const rewardChanges = [];
 		const clampedChanges = [];
 		for (const rewardLine of rewardLines) {
-			const attribute = save.attributes?.[rewardLine.attribute];
-			if (attribute == null) {
-				continue;
-			}
-			const previousValue = Number(attribute.value) || 0;
+			const attribute = save.attributes[rewardLine.attribute];
+			const previousValue = attribute.value;
 			const maxValue = Math.pow(2, attribute.bit_length) - 1;
 			const rewardStoredValue = toStoredRewardValue(rewardLine.attribute, rewardLine.value);
 			const targetValue = add
@@ -287,9 +287,6 @@
 
 	function removeFlag(difficultyId, actId, questId, flagId) {
 		const questState = getQuestStateRef(difficultyId, actId, questId);
-		if (!Array.isArray(questState)) {
-			return;
-		}
 		if (questState.includes(flagId)) {
 			save.quests[difficultyId][actId][questId].state = save.quests[difficultyId][actId][
 				questId
@@ -300,9 +297,6 @@
 
 	function addFlag(difficultyId, actId, questId, flagId) {
 		const questState = getQuestStateRef(difficultyId, actId, questId);
-		if (!Array.isArray(questState)) {
-			return;
-		}
 		if (!questState.includes(flagId)) {
 			save.quests[difficultyId][actId][questId].state = [
 				flagId,
@@ -314,10 +308,7 @@
 
 	function toggleFlag(difficultyId, actId, questId, flagId) {
 		const questState = getQuestStateRef(difficultyId, actId, questId);
-		if (!Array.isArray(questState)) {
-			return;
-		}
-		let flagPresent = questState.includes(flagId);
+		const flagPresent = questState.includes(flagId);
 		if (flagPresent) {
 			removeFlag(difficultyId, actId, questId, flagId);
 		} else {
@@ -327,9 +318,6 @@
 
 	function isStateIndetermined(difficultyId, actId, questId, questState) {
 		const storedState = getQuestStateRef(difficultyId, actId, questId);
-		if (!Array.isArray(storedState)) {
-			return false;
-		}
 		let flagsPresent = 0;
 		questState.flags.forEach((flag) => {
 			flagsPresent += storedState.includes(flag) ? 1 : 0;
@@ -339,9 +327,6 @@
 
 	function isStatePresent(difficultyId, actId, questId, questState) {
 		const storedState = getQuestStateRef(difficultyId, actId, questId);
-		if (!Array.isArray(storedState)) {
-			return false;
-		}
 		return questState.flags.every((flag) => {
 			return storedState.includes(flag);
 		});
@@ -362,9 +347,6 @@
 
 	function hasFlag(difficultyId, actId, questId, flagId) {
 		const storedState = getQuestStateRef(difficultyId, actId, questId);
-		if (!Array.isArray(storedState)) {
-			return false;
-		}
 		return storedState.includes(flagId);
 	}
 
@@ -373,8 +355,8 @@
 			return questFlags.map((flag) => flag.id);
 		}
 		const flags = new Set();
-		for (const state of quest.states ?? []) {
-			for (const flag of state.flags ?? []) {
+		for (const state of quest.states) {
+			for (const flag of state.flags) {
 				flags.add(flag);
 			}
 		}
@@ -402,7 +384,7 @@
 			{#each difficulties as difficulty}
 				<button
 					type="button"
-					class={`rounded-xs border px-3 py-1.5 text-[0.92rem] font-medium leading-none transition ${
+					class={`rounded-xs border px-3 py-1.5 text-sm font-medium leading-none transition ${
 						activeDifficultyId === difficulty.id
 							? "border-halbu-primary bg-halbu-panel2 text-halbu-text"
 							: "border-halbu-border bg-halbu-panel text-halbu-textMuted hover:bg-halbu-panel2 hover:text-halbu-text"
@@ -417,7 +399,7 @@
 		</div>
 
 		<div class="flex min-h-10 min-w-56 flex-1 flex-col justify-center rounded-sm border border-halbu-border bg-halbu-panel px-2 py-1.5">
-			<div class="mb-1 flex items-center justify-between gap-2 text-[0.84rem]">
+			<div class="mb-1 flex items-center justify-between gap-2 text-sm">
 				<span class="text-halbu-textMuted">Total quest progress</span>
 				<span class="text-halbu-text">
 					{totalQuestProgress.completed}/{totalQuestProgress.total} ({totalQuestProgress.percent}%)
@@ -442,26 +424,26 @@
 							<div class="mb-1.5 flex items-start justify-between gap-2">
 								<div class="min-w-0">
 									<h3 class="editor-card-title">{act.display}</h3>
-									<p class="m-0 mt-0.5 text-[0.8rem] text-halbu-textMuted">
+									<p class="m-0 mt-0.5 text-xs text-halbu-textMuted">
 										{actProgress.completed}/{actProgress.total} completed
 									</p>
 								</div>
 								<div class="inline-flex shrink-0 items-center gap-1">
 									<button
 										type="button"
-										class="rounded-xs border border-halbu-border bg-halbu-panel2 px-2 py-0.5 text-[0.8rem] font-medium text-halbu-text hover:bg-halbu-panel"
+										class="rounded-xs border border-halbu-border bg-halbu-panel2 px-2 py-0.5 text-xs font-medium text-halbu-text hover:bg-halbu-panel"
 										onclick={() => setActQuests(activeDifficulty.id, act, advancedFlags, true)}
 									>
 										All
 									</button>
 									<button
 										type="button"
-										class="rounded-xs border border-halbu-border bg-halbu-panel2 px-2 py-0.5 text-[0.8rem] font-medium text-halbu-textMuted hover:bg-halbu-panel hover:text-halbu-text"
+										class="rounded-xs border border-halbu-border bg-halbu-panel2 px-2 py-0.5 text-xs font-medium text-halbu-textMuted hover:bg-halbu-panel hover:text-halbu-text"
 										onclick={() => setActQuests(activeDifficulty.id, act, advancedFlags, false)}
 									>
 										None
 									</button>
-									<span class="ml-0.5 text-[0.82rem] text-halbu-textMuted">{actProgress.percent}%</span>
+									<span class="ml-0.5 text-sm text-halbu-textMuted">{actProgress.percent}%</span>
 								</div>
 							</div>
 							<div class="mb-1.5 h-1 overflow-hidden rounded-xs bg-halbu-border">
@@ -485,7 +467,7 @@
 											<div class="mt-1 grid gap-0.5">
 												{#each questFlags as flag}
 													<label
-														class="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-1.5 rounded-xs px-0.5 py-px text-[0.86rem] text-halbu-text"
+														class="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-1.5 rounded-xs px-0.5 py-px text-sm text-halbu-text"
 														for={activeDifficulty.id + "-" + act.id + "-" + quest.id + "-" + flag.id}
 													>
 														<input
@@ -501,7 +483,7 @@
 											</div>
 											{#if rewardFeedback != null}
 												<div
-													class={`mt-1 rounded-xs border px-1.5 py-1 text-[0.8rem] ${
+													class={`mt-1 rounded-xs border px-1.5 py-1 text-xs ${
 														rewardFeedback.kind === "warning"
 															? "border-halbu-warning bg-halbu-warningSoft text-halbu-warning"
 															: "border-halbu-border bg-halbu-panel text-halbu-textMuted"
@@ -525,7 +507,7 @@
 											<div class="mt-1 grid gap-0.5">
 												{#each quest.states as state}
 													<label
-														class="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-1.5 rounded-xs px-0.5 py-px text-[0.86rem] text-halbu-text"
+														class="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-1.5 rounded-xs px-0.5 py-px text-sm text-halbu-text"
 														for={activeDifficulty.id + "-" + act.id + "-" + quest.id + "-" + state.display}
 													>
 														<input
@@ -557,7 +539,7 @@
 											</div>
 											{#if rewardFeedback != null}
 												<div
-													class={`mt-1 rounded-xs border px-1.5 py-1 text-[0.8rem] ${
+													class={`mt-1 rounded-xs border px-1.5 py-1 text-xs ${
 														rewardFeedback.kind === "warning"
 															? "border-halbu-warning bg-halbu-warningSoft text-halbu-warning"
 															: "border-halbu-border bg-halbu-panel text-halbu-textMuted"

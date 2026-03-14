@@ -82,14 +82,14 @@
 	.skill-node {
 		display: grid;
 		grid-template-rows: 1fr auto;
-		row-gap: 0.08rem;
+		row-gap: 0.125rem;
 		width: 100%;
 		height: 100%;
 		min-height: 0;
 		border: 1px solid var(--halbu-border);
-		border-radius: 0.25rem;
+		border-radius: var(--app-radius-sm);
 		background: var(--halbu-panel2);
-		padding: 0.28rem 0.34rem 0.2rem;
+		padding: 0.25rem 0.375rem 0.25rem;
 		text-align: left;
 		cursor: pointer;
 		overflow: hidden;
@@ -108,11 +108,11 @@
 		display: flex;
 		align-items: flex-start;
 		justify-content: space-between;
-		gap: 0.22rem;
+		gap: 0.25rem;
 	}
 
 	.skill-node__name {
-		font-size: 0.84rem;
+		font-size: 0.875rem;
 		font-weight: 600;
 		line-height: 1.12;
 		word-break: break-word;
@@ -123,20 +123,20 @@
 		display: flex;
 		align-items: flex-end;
 		justify-content: center;
-		gap: 0.2rem;
+		gap: 0.25rem;
 	}
 
 	.skill-node__points {
 		display: inline-flex;
-		min-width: 1.16rem;
-		height: 1.16rem;
-		padding: 0 0.22rem;
+		min-width: 1.25rem;
+		height: 1.25rem;
+		padding: 0 0.25rem;
 		align-items: center;
 		justify-content: center;
-		border-radius: 0.22rem;
+		border-radius: var(--app-radius-sm);
 		background: var(--halbu-panel);
 		color: var(--halbu-text);
-		font-size: 0.8rem;
+		font-size: 0.75rem;
 		font-weight: 600;
 		border: 1px solid var(--halbu-border-strong);
 		flex: 0 0 auto;
@@ -145,7 +145,7 @@
 	.skill-node__quick-edit {
 		display: flex;
 		justify-content: center;
-		gap: 0.2rem;
+		gap: 0.25rem;
 		opacity: 0;
 		visibility: hidden;
 		transition: opacity 0.15s ease;
@@ -155,13 +155,13 @@
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		width: 1.08rem;
-		height: 1.08rem;
+		width: 1rem;
+		height: 1rem;
 		padding: 0;
 		line-height: 1.1;
-		font-size: 0.8rem;
+		font-size: 0.75rem;
 		font-weight: 700;
-		border-radius: 0.2rem;
+		border-radius: var(--app-radius-sm);
 		border: 1px solid var(--halbu-border-strong);
 		background: var(--halbu-panel);
 		color: var(--halbu-textMuted);

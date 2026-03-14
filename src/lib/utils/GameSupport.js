@@ -2,7 +2,7 @@ import skillpages from "../editor/skills/skillpages.json";
 import skillsDataV99 from "../../../static/data/generated/skills/v99/skills_complete.json";
 import skillsDataV105 from "../../../static/data/generated/skills/v105/skills_complete.json";
 
-const BASE_CLASSES = Object.freeze([
+const BASE_CLASSES = [
 	"Amazon",
 	"Assassin",
 	"Barbarian",
@@ -10,34 +10,34 @@ const BASE_CLASSES = Object.freeze([
 	"Necromancer",
 	"Paladin",
 	"Sorceress",
-]);
+];
 
 const FEMALE_CLASSES = new Set(["Amazon", "Assassin", "Sorceress"]);
 
-const VERSION_CAPABILITIES = Object.freeze({
-	99: Object.freeze({
+const VERSION_CAPABILITIES = {
+	99: {
 		label: "v99",
 		classes: BASE_CLASSES,
-		classesRequiringExpansion: Object.freeze(["Druid", "Assassin"]),
+		classesRequiringExpansion: ["Druid", "Assassin"],
 		skillsData: skillsDataV99,
 		skillPages: skillpages,
-	}),
-	105: Object.freeze({
+	},
+	105: {
 		label: "v105",
-		classes: Object.freeze([...BASE_CLASSES, "Warlock"]),
-		classesRequiringExpansion: Object.freeze(["Druid", "Assassin", "Warlock"]),
+		classes: [...BASE_CLASSES, "Warlock"],
+		classesRequiringExpansion: ["Druid", "Assassin", "Warlock"],
 		skillsData: skillsDataV105,
-		skillPages: Object.freeze({
+		skillPages: {
 			...skillpages,
-			Warlock: Object.freeze(["Chaos", "Eldritch", "Demon"]),
-		}),
-	}),
-});
+			Warlock: ["Chaos", "Eldritch", "Demon"],
+		},
+	},
+};
 
 const SKILL_INDEX_CACHE = new Map();
 const SAVE_EXPANSION_TYPES = new Set(["Classic", "Expansion", "RotW"]);
 
-export const KNOWN_SAVE_VERSIONS = Object.freeze(
+export const KNOWN_SAVE_VERSIONS = (
 	Object.keys(VERSION_CAPABILITIES)
 		.map(Number)
 		.sort((a, b) => a - b)
@@ -46,8 +46,10 @@ export const KNOWN_SAVE_VERSIONS = Object.freeze(
 export const DEFAULT_NEW_SAVE_VERSION = KNOWN_SAVE_VERSIONS[KNOWN_SAVE_VERSIONS.length - 1];
 
 function normalizeVersion(version) {
-	const parsed = Number(version);
-	return Number.isFinite(parsed) ? parsed : NaN;
+	if (!Number.isInteger(version)) {
+		throw new Error(`Invalid save version: ${version}.`);
+	}
+	return version;
 }
 
 function getCapabilities(version) {
@@ -55,89 +57,63 @@ function getCapabilities(version) {
 	return VERSION_CAPABILITIES[normalizedVersion] ?? null;
 }
 
-function enumVariantLabel(value) {
-	if (typeof value === "string") {
-		return value;
+function unknownVariantPayload(value) {
+	if (typeof value !== "string") {
+		return null;
 	}
-	if (value && typeof value === "object") {
-		const keys = Object.keys(value);
-		if (keys.length > 0) {
-			return keys[0];
-		}
-	}
-	return null;
+	const match = /^Unknown\((\d+)\)$/.exec(value);
+	return match == null ? null : Number(match[1]);
 }
 
-export function normalizeExpansionType(value) {
-	const label = enumVariantLabel(value);
-	return label != null && SAVE_EXPANSION_TYPES.has(label) ? label : null;
+export function parseExpansionTypeLabel(value) {
+	if (typeof value !== "string" || !SAVE_EXPANSION_TYPES.has(value)) {
+		throw new Error(`Invalid expansion type label: ${String(value)}.`);
+	}
+	return value;
 }
 
 export function getSaveExpansionType(save) {
-	const normalized = normalizeExpansionType(save?.expansion_type);
-	if (normalized != null) {
-		return normalized;
-	}
-	return save?.character?.status?.expansion ? "Expansion" : "Classic";
+	return save.expansion_type;
 }
 
 export function isExpandedMode(expansionType) {
-	const normalized = normalizeExpansionType(expansionType);
-	return normalized != null && normalized !== "Classic";
+	return expansionType !== "Classic";
 }
 
 export function getSaveFormatIdLabel(save) {
-	const format = save?.meta?.format;
-	if (format === "V99" || format === "V105") {
-		return format;
+	const format = save.meta.format;
+	const unknownPayload = unknownVariantPayload(format);
+	if (unknownPayload != null) {
+		return `Unknown(${unknownPayload})`;
 	}
-	if (format && typeof format === "object" && "Unknown" in format) {
-		return `Unknown(${format.Unknown})`;
-	}
-	const version = normalizeVersion(save?.version);
-	if (version === 99) {
-		return "V99";
-	}
-	if (version === 105) {
-		return "V105";
-	}
-	return `Unknown(${save?.version ?? "?"})`;
+	return format;
 }
 
 export function getSaveTargetVersion(save) {
-	const format = save?.meta?.format;
+	const format = save.meta.format;
 	if (format === "V99") {
 		return 99;
 	}
 	if (format === "V105") {
 		return 105;
 	}
-	const version = normalizeVersion(save?.version);
+	const version = save.version;
 	return version === 99 || version === 105 ? version : null;
 }
 
 export function getSaveEditionLabel(save) {
-	const format = save?.meta?.format;
+	const format = save.meta.format;
 	if (format === "V99") {
 		return "D2R Legacy";
 	}
 	if (format === "V105") {
 		return "D2R RotW";
 	}
-	if (format && typeof format === "object" && "Unknown" in format) {
-		return `unknown (${format.Unknown})`;
+	const unknownPayload = unknownVariantPayload(format);
+	if (unknownPayload != null) {
+		return `unknown (${unknownPayload})`;
 	}
-
-	const version = normalizeVersion(save?.version);
-	if (version === 99) {
-		return "D2R Legacy";
-	}
-
-	if (version === 105) {
-		return "D2R RotW";
-	}
-
-	return `unknown (${save?.version ?? "?"})`;
+	return "unknown";
 }
 
 export function isKnownSaveVersion(version) {
@@ -167,13 +143,7 @@ export function getSkillsDataset(version) {
 }
 
 export function classLabel(classValue) {
-	if (typeof classValue === "string") {
-		return classValue;
-	}
-	if (classValue && typeof classValue === "object" && "Unknown" in classValue) {
-		return `Unknown (${classValue.Unknown})`;
-	}
-	return String(classValue ?? "Unknown");
+	return classValue;
 }
 
 export function isFemaleClass(className) {
@@ -190,7 +160,7 @@ export function requiresExpansion(version, className) {
 
 function deriveSkillPageNames(classSkills) {
 	const pages = Array.from(
-		new Set(classSkills.map((skill) => Number(skill.page)).filter(Number.isFinite))
+		new Set(classSkills.map((skill) => skill.page))
 	).sort((a, b) => a - b);
 
 	if (pages.length === 0) {
@@ -206,7 +176,7 @@ export function getSkillPageNames(version, className, classSkills = []) {
 	}
 
 	const mapped = caps.skillPages[className];
-	if (Array.isArray(mapped) && mapped.length > 0) {
+	if (mapped != null && mapped.length > 0) {
 		return mapped;
 	}
 	return deriveSkillPageNames(classSkills);
@@ -228,7 +198,7 @@ function buildSkillIndex(version, className) {
 		if (skill.class !== className) {
 			continue;
 		}
-		index.set(Number(skill.id), Number(skill.saveId));
+		index.set(skill.id, skill.saveId);
 	}
 	SKILL_INDEX_CACHE.set(key, index);
 	return index;
@@ -239,5 +209,5 @@ export function skillIdToSaveId(version, className, skillId) {
 	if (index == null) {
 		return -1;
 	}
-	return index.get(Number(skillId)) ?? -1;
+	return index.get(skillId) ?? -1;
 }

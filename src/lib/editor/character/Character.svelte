@@ -8,6 +8,10 @@
 		RESOURCE_Q8_SCALE,
 	} from "../../utils/resources.js";
 	import {
+		clampInteger,
+		toUInt32OrNull,
+	} from "../../utils/numbers.js";
+	import {
 		classLabel,
 		getSaveExpansionType,
 		getSupportedClasses,
@@ -15,7 +19,7 @@
 		isClassSupportedForVersion,
 		isKnownSaveVersion,
 		normalizeClassForVersion,
-		normalizeExpansionType,
+		parseExpansionTypeLabel,
 	} from "../../utils/GameSupport";
 
 	import experienceTable from "./experience.json";
@@ -25,7 +29,9 @@
 		experienceForLevel,
 		levelForExperience,
 		validateCharacterName,
-	} from "./characterLogic.js";
+	} from "./characterLogic";
+	import { adaptEditorSavePayload } from "../../types/editorAdapters";
+	import { DEFAULT_SKILL_SLOT_COUNT, resizeSkillSlots } from "../skills/skillSlots";
 
 	let { save = $bindable(), editValidation = $bindable({ errors: [], warnings: [] }) } = $props();
 
@@ -36,15 +42,59 @@
 	const STAT_POINTS_MAX = 1023;
 	const SKILL_POINTS_MAX = 255;
 	const MAP_SEED_MAX = 0xffffffff;
-	const QUICK_ADJUST_NEGATIVE_STEPS = Object.freeze([-10]);
-	const QUICK_ADJUST_POSITIVE_STEPS = Object.freeze([10]);
+	const QUICK_ADJUST_STEP = 10;
 	const RESOURCE_DISPLAY_MIN = 1;
 	const RESOURCE_DISPLAY_MAX = 8181;
-	const RESOURCE_INPUT_STEP = "1";
+	const primaryAttributes = [
+		{ id: "strength", label: "Strength", attribute: "strength", max: ATTRIBUTE_MAX },
+		{ id: "dexterity", label: "Dexterity", attribute: "dexterity", max: ATTRIBUTE_MAX },
+		{ id: "vitality", label: "Vitality", attribute: "vitality", max: ATTRIBUTE_MAX },
+		{ id: "energy", label: "Energy", attribute: "energy", max: ATTRIBUTE_MAX },
+	];
+	const pointFields = [
+		{
+			id: "statPointsLeft",
+			label: "Stat points left",
+			attribute: "statpts",
+			max: STAT_POINTS_MAX,
+			ariaLabel: "stat points",
+		},
+		{
+			id: "skillPointsLeft",
+			label: "Skill points left",
+			attribute: "newskills",
+			max: SKILL_POINTS_MAX,
+			ariaLabel: "skill points",
+		},
+	];
+	const resourceFields = [
+		{
+			label: "Life",
+			currentId: "lifeCurrent",
+			currentAttr: "hitpoints",
+			baseId: "lifeBase",
+			baseAttr: "maxhp",
+		},
+		{
+			label: "Mana",
+			currentId: "manaCurrent",
+			currentAttr: "mana",
+			baseId: "manaBase",
+			baseAttr: "maxmana",
+		},
+		{
+			label: "Stamina",
+			currentId: "staminaCurrent",
+			currentAttr: "stamina",
+			baseId: "staminaBase",
+			baseAttr: "maxstamina",
+		},
+	];
 
 	let nameRef;
 	let validName = $state(true);
 	let nameValidationMessage = $state("");
+	let classChangeError = $state("");
 	let mapSeedDisplayMode = $state("decimal");
 	let mapSeedDraft = $state("");
 	let mapSeedInputRef;
@@ -52,17 +102,10 @@
 	let resourceDraftByField = $state({});
 
 	const normalizedLevelForGold = $derived.by(() =>
-		clampInteger(save.attributes?.level?.value, 1, 99)
+		clampInteger(save.attributes.level.value, 1, 99)
 	);
 	const goldInventoryMax = $derived(MAX_GOLD_PER_LEVEL * normalizedLevelForGold);
-	const normalizedMapSeed = $derived.by(() => {
-		const parsed = Number(save?.character?.map_seed);
-		if (!Number.isFinite(parsed)) {
-			return null;
-		}
-		return Math.trunc(parsed) >>> 0;
-	});
-	const mapSeedDisplayValue = $derived(formatMapSeed(normalizedMapSeed, mapSeedDisplayMode));
+	const mapSeedDisplayValue = $derived(formatMapSeed(save.character.map_seed, mapSeedDisplayMode));
 
 	$effect(() => {
 		if (!isMapSeedEditing && mapSeedDraft !== mapSeedDisplayValue) {
@@ -72,12 +115,7 @@
 
 	// Title & Progression
 
-	const difficultiesToBeat = ["None", "Normal", "Nightmare", "Hell"];
-	const expansionTypeOptions = Object.freeze([
-		{ value: "Classic", label: "Classic" },
-		{ value: "Expansion", label: "Expansion" },
-		{ value: "RotW", label: "Reign of the Warlock" },
-	]);
+	const DIFFICULTY_BEATEN_ORDER = ["None", "Normal", "Nightmare", "Hell"];
 	let difficultyBeaten = $state(calcDifficultyBeaten(save.character, getSaveExpansionType(save)));
 	let title = $state("");
 	updateTitle();
@@ -91,10 +129,7 @@
 			return `Class editing is disabled for unsupported save version ${save.version}.`;
 		}
 
-		if (
-			typeof save.character.class !== "string" ||
-			!isClassSupportedForVersion(save.version, save.character.class)
-		) {
+		if (!isClassSupportedForVersion(save.version, save.character.class)) {
 			return `Current class (${classLabel(save.character.class)}) is not recognized for version ${save.version}. Select a supported class to continue.`;
 		}
 		return "";
@@ -116,14 +151,14 @@
 		const expansionType = getSaveExpansionType(save);
 		save.character.progression =
 			(4 + (isExpandedMode(expansionType) ? 1 : 0)) *
-			difficultiesToBeat.indexOf(difficultyBeaten);
+			DIFFICULTY_BEATEN_ORDER.indexOf(difficultyBeaten);
 		title = calcTitle(save.character, expansionType);
 	}
 
 	function setExpansionType(nextExpansionType) {
-		const normalizedExpansionType = normalizeExpansionType(nextExpansionType) ?? "Classic";
+		const normalizedExpansionType = parseExpansionTypeLabel(nextExpansionType);
 		save.expansion_type = normalizedExpansionType;
-		if (Number(save.version) === 99) {
+		if (save.version === 99) {
 			save.character.status.expansion = normalizedExpansionType !== "Classic";
 		}
 		updateTitle();
@@ -131,7 +166,7 @@
 
 	// Level & XP
 
-	async function changeLevel() {
+	function changeLevel() {
 		if (save.character.level == save.attributes.level.value) {
 			return; // if we have changed to the same value, don't erase old xp
 		}
@@ -142,119 +177,64 @@
 		);
 	}
 
-	async function changeExperience() {
-		const new_level = levelForExperience(save.attributes.experience.value, experienceTable);
-		if (new_level != save.attributes.level.value) {
-			save.attributes.level.value = new_level;
-			save.character.level = new_level;
+	function changeExperience() {
+		const newLevel = levelForExperience(save.attributes.experience.value, experienceTable);
+		if (newLevel != save.attributes.level.value) {
+			save.attributes.level.value = newLevel;
+			save.character.level = newLevel;
 		}
 	}
 
-	function clampInteger(value, min, max) {
-		const parsed = Number(value);
-		const normalized = Number.isFinite(parsed) ? Math.trunc(parsed) : min;
-		return Math.max(min, Math.min(max, normalized));
-	}
-
 	$effect(() => {
-		const currentGold = clampInteger(save.attributes?.gold?.value, 0, 2500000);
+		const currentGold = clampInteger(save.attributes.gold.value, 0, 2500000);
 		if (currentGold > goldInventoryMax) {
 			save.attributes.gold.value = goldInventoryMax;
 		}
 	});
 
-	function getAttributeValue(attributeId) {
-		return clampInteger(save.attributes?.[attributeId]?.value, ATTRIBUTE_MIN, ATTRIBUTE_MAX);
+	function setClamped(attribute, nextValue, maxValue = ATTRIBUTE_MAX) {
+		attribute.value = clampInteger(nextValue, ATTRIBUTE_MIN, maxValue);
 	}
 
-	function setAttributeValue(attributeId, rawValue) {
-		if (save.attributes?.[attributeId] == null) {
-			return;
-		}
-		save.attributes[attributeId].value = clampInteger(rawValue, ATTRIBUTE_MIN, ATTRIBUTE_MAX);
+	function isClampedAtBoundary(value, maxValue, delta) {
+		const clamped = clampInteger(value, ATTRIBUTE_MIN, maxValue);
+		return delta < 0 ? clamped <= ATTRIBUTE_MIN : clamped >= maxValue;
 	}
 
-	function adjustAttributeValue(attributeId, delta) {
-		const currentValue = getAttributeValue(attributeId);
-		setAttributeValue(attributeId, currentValue + Number(delta || 0));
+	function resourceDisplayValue(attributeId) {
+		const attribute = save.attributes[attributeId];
+		const rawMaxValue = Math.pow(2, attribute.bit_length) - 1;
+		return fixedPointToDisplay(
+			clampInteger(attribute.value, ATTRIBUTE_MIN, rawMaxValue),
+			RESOURCE_Q8_SCALE,
+		);
 	}
 
-	function isAttributeAdjustmentDisabled(attributeId, delta) {
-		const currentValue = getAttributeValue(attributeId);
-		return delta < 0 ? currentValue <= ATTRIBUTE_MIN : currentValue >= ATTRIBUTE_MAX;
-	}
-
-	function getPointsValue(pointsKey, maxValue) {
-		return clampInteger(save.attributes?.[pointsKey]?.value, ATTRIBUTE_MIN, maxValue);
-	}
-
-	function setPointsValue(pointsKey, rawValue, maxValue) {
-		if (save.attributes?.[pointsKey] == null) {
-			return;
-		}
-		save.attributes[pointsKey].value = clampInteger(rawValue, ATTRIBUTE_MIN, maxValue);
-	}
-
-	function adjustPointsValue(pointsKey, delta, maxValue) {
-		const currentValue = getPointsValue(pointsKey, maxValue);
-		setPointsValue(pointsKey, currentValue + Number(delta || 0), maxValue);
-	}
-
-	function isPointsAdjustmentDisabled(pointsKey, delta, maxValue) {
-		const currentValue = getPointsValue(pointsKey, maxValue);
-		return delta < 0 ? currentValue <= ATTRIBUTE_MIN : currentValue >= maxValue;
-	}
-
-	function getResourceAttribute(attributeId) {
-		return save.attributes?.[attributeId] ?? null;
-	}
-
-	function getResourceRawValue(attributeId) {
-		const attribute = getResourceAttribute(attributeId);
-		if (attribute == null) {
-			return 0;
-		}
-		const maxValue = Math.pow(2, attribute.bit_length) - 1;
-		return clampInteger(attribute.value, 0, maxValue);
-	}
-
-	function setResourceRawValue(attributeId, rawValue) {
-		const attribute = getResourceAttribute(attributeId);
-		if (attribute == null) {
-			return;
-		}
-		const maxValue = Math.pow(2, attribute.bit_length) - 1;
-		attribute.value = clampInteger(rawValue, 0, maxValue);
-	}
-
-	function getResourceDisplayValue(attributeId) {
-		return fixedPointToDisplay(getResourceRawValue(attributeId), RESOURCE_Q8_SCALE);
-	}
-
-	function clampResourceDisplayValue(displayValue) {
-		return clampInteger(displayValue, RESOURCE_DISPLAY_MIN, RESOURCE_DISPLAY_MAX);
-	}
-
-	function formatResourceDisplayValue(displayValue) {
-		return `${clampResourceDisplayValue(displayValue)}`;
-	}
-
-	function getResourceInputValue(fieldId, attributeId) {
+	function resourceInputValue(fieldId, attributeId) {
 		const draftValue = resourceDraftByField[fieldId];
-		if (typeof draftValue === "string") {
+		if (draftValue != null) {
 			return draftValue;
 		}
-		return formatResourceDisplayValue(getResourceDisplayValue(attributeId));
+		return String(
+			clampInteger(resourceDisplayValue(attributeId), RESOURCE_DISPLAY_MIN, RESOURCE_DISPLAY_MAX),
+		);
 	}
 
-	function setResourceDraft(fieldId, value) {
-		resourceDraftByField = {
-			...resourceDraftByField,
-			[fieldId]: String(value ?? ""),
-		};
-	}
-
-	function clearResourceDraft(fieldId) {
+	function commitQ8Draft(fieldId, attributeId) {
+		const draftValue = resourceDraftByField[fieldId] ?? "";
+		const parsedValue = Number.parseFloat(draftValue.trim());
+		const clampedDisplayValue = clampInteger(
+			Number.isFinite(parsedValue) ? parsedValue : resourceDisplayValue(attributeId),
+			RESOURCE_DISPLAY_MIN,
+			RESOURCE_DISPLAY_MAX,
+		);
+		const attribute = save.attributes[attributeId];
+		const rawMaxValue = Math.pow(2, attribute.bit_length) - 1;
+		attribute.value = clampInteger(
+			displayToFixedPoint(clampedDisplayValue, RESOURCE_Q8_SCALE),
+			ATTRIBUTE_MIN,
+			rawMaxValue,
+		);
 		if (!(fieldId in resourceDraftByField)) {
 			return;
 		}
@@ -263,70 +243,24 @@
 		resourceDraftByField = nextDraftByField;
 	}
 
-	function commitResourceDraft(fieldId, attributeId) {
-		const draftValue = resourceDraftByField[fieldId];
-		const fallbackDisplayValue = getResourceDisplayValue(attributeId);
-		const parsedValue = Number.parseFloat(
-			typeof draftValue === "string" ? draftValue.trim() : "",
-		);
-		const normalizedDisplayValue = Number.isFinite(parsedValue)
-			? parsedValue
-			: fallbackDisplayValue;
-		const clampedDisplayValue = clampResourceDisplayValue(normalizedDisplayValue);
-		setResourceRawValue(
-			attributeId,
-			displayToFixedPoint(clampedDisplayValue, RESOURCE_Q8_SCALE),
-		);
-		clearResourceDraft(fieldId);
-	}
-
-	function handleResourceFocus(fieldId, attributeId) {
-		setResourceDraft(fieldId, formatResourceDisplayValue(getResourceDisplayValue(attributeId)));
-	}
-
-	function handleResourceInput(fieldId, event) {
-		setResourceDraft(fieldId, event.currentTarget.value);
-	}
-
-	function handleResourceBlur(fieldId, attributeId) {
-		if (!(fieldId in resourceDraftByField)) {
-			return;
-		}
-		commitResourceDraft(fieldId, attributeId);
-	}
-
-	function handleResourceKeydown(event, fieldId, attributeId) {
-		if (event.key === "Enter") {
-			event.preventDefault();
-			commitResourceDraft(fieldId, attributeId);
-			event.currentTarget.blur();
-			return;
-		}
-		if (event.key === "Escape") {
-			event.preventDefault();
-			clearResourceDraft(fieldId);
-			event.currentTarget.blur();
-		}
-	}
-
 	function formatMapSeed(value, mode) {
-		if (!Number.isFinite(value)) {
+		const normalized = toUInt32OrNull(value);
+		if (normalized == null) {
 			return "";
 		}
-		const normalized = Math.trunc(value) >>> 0;
 		if (mode === "hex") {
 			return `0x${normalized.toString(16).toUpperCase().padStart(8, "0")}`;
 		}
 		return String(normalized);
 	}
 
-	function parseMapSeedInput(rawValue) {
-		const value = String(rawValue ?? "").trim();
+	function parseMapSeedInput(value) {
+		const normalizedValue = value.trim();
 		let parsed = Number.NaN;
-		if (/^0x[0-9a-f]+$/i.test(value)) {
-			parsed = Number.parseInt(value.slice(2), 16);
-		} else if (/^[0-9]+$/.test(value)) {
-			parsed = Number.parseInt(value, 10);
+		if (/^0x[0-9a-f]+$/i.test(normalizedValue)) {
+			parsed = Number.parseInt(normalizedValue.slice(2), 16);
+		} else if (/^[0-9]+$/.test(normalizedValue)) {
+			parsed = Number.parseInt(normalizedValue, 10);
 		}
 		if (!Number.isFinite(parsed)) {
 			return null;
@@ -336,9 +270,6 @@
 	}
 
 	function commitMapSeedDraft() {
-		if (save?.character == null) {
-			return;
-		}
 		const parsed = parseMapSeedInput(mapSeedDraft);
 		if (parsed == null) {
 			if (mapSeedInputRef != null) {
@@ -353,22 +284,6 @@
 		mapSeedDraft = formatMapSeed(parsed, mapSeedDisplayMode);
 	}
 
-	function handleMapSeedInput(event) {
-		mapSeedDraft = event.currentTarget.value;
-		if (mapSeedInputRef != null) {
-			mapSeedInputRef.setCustomValidity("");
-		}
-	}
-
-	function handleMapSeedFocus() {
-		isMapSeedEditing = true;
-	}
-
-	function handleMapSeedBlur() {
-		commitMapSeedDraft();
-		isMapSeedEditing = false;
-	}
-
 	function handleMapSeedKeydown(event) {
 		if (event.key !== "Enter") {
 			return;
@@ -376,10 +291,6 @@
 		event.preventDefault();
 		commitMapSeedDraft();
 		event.currentTarget.blur();
-	}
-
-	function setMapSeedDisplayMode(nextMode) {
-		mapSeedDisplayMode = nextMode === "hex" ? "hex" : "decimal";
 	}
 
 	// Name validation
@@ -408,13 +319,17 @@
 			return;
 		}
 
+		classChangeError = "";
 		try {
-			let newSave = await invoke("new_save", {
-				version: Number(save.version),
+			/** @type {import("../../types/editorAdapters").BackendEditorSaveDto} */
+			const response = await invoke("new_save", {
+				version: save.version,
 				class: nextClass,
 			});
+			const newSave = adaptEditorSavePayload(response);
 			save.character.class = nextClass;
-			save.skills = newSave.skills;
+			const slotCount = save.skills.length > 0 ? save.skills.length : DEFAULT_SKILL_SLOT_COUNT;
+			save.skills = resizeSkillSlots(newSave.skills, slotCount);
 			newSave.attributes.statpts.value = save.attributes.statpts.value;
 			newSave.attributes.newskills.value = save.attributes.newskills.value;
 			newSave.attributes.experience.value = save.attributes.experience.value;
@@ -424,7 +339,7 @@
 			save.attributes = newSave.attributes;
 			updateTitle();
 		} catch (err) {
-			console.error(err);
+			classChangeError = String(err ?? "Failed to change class.");
 			selectedClassForEdit = normalizeClassForVersion(save.version, save.character.class);
 		}
 	}
@@ -437,16 +352,15 @@
 		>
 			<h3 class="editor-card-title mb-1.5">Identity</h3>
 			<div
-				class="grid grid-cols-[7.6rem_minmax(0,1fr)] items-center gap-x-2.5 gap-y-1"
+				class="grid grid-cols-form-32 items-center gap-x-2.5 gap-y-1"
 			>
 				<label class="form-label mb-0" for="name">Name</label>
-				<input
-					class="form-control"
-					onkeydown={validateName}
-					oninput={validateName}
-					onchange={validateName}
-					title="2-15 characters"
-					bind:this={nameRef}
+					<input
+						class="form-control"
+						oninput={validateName}
+						onchange={validateName}
+						title="2-15 characters"
+						bind:this={nameRef}
 					type="text"
 					id="name"
 					placeholder="default"
@@ -465,7 +379,7 @@
 			</div>
 
 			<div
-				class="mt-1 grid grid-cols-[7.6rem_minmax(0,1fr)] items-center gap-x-2.5"
+				class="mt-1 grid grid-cols-form-32 items-center gap-x-2.5"
 			>
 				<label class="form-label mb-0" for="class">Class</label>
 				{#if canEditClass}
@@ -474,9 +388,7 @@
 						bind:value={selectedClassForEdit}
 						name="class"
 						id="class"
-						onchange={() => {
-							changeClass(selectedClassForEdit);
-						}}
+						onchange={() => changeClass(selectedClassForEdit)}
 					>
 						{#each supportedClasses as className}
 							<option value={className}>{className}</option>
@@ -493,14 +405,17 @@
 					/>
 				{/if}
 			</div>
-			{#if classSupportWarning.length > 0}
-				<div class="form-text mt-1 text-halbu-warning sm:pl-32">
-					{classSupportWarning}
-				</div>
-			{/if}
+				{#if classSupportWarning.length > 0}
+					<div class="form-text mt-1 text-halbu-warning sm:pl-32">
+						{classSupportWarning}
+					</div>
+				{/if}
+				{#if classChangeError.length > 0}
+					<div class="form-text mt-1 text-halbu-warning sm:pl-32">{classChangeError}</div>
+				{/if}
 
 			<div
-				class="mt-1 grid grid-cols-[7.6rem_minmax(0,1fr)] items-start gap-x-2.5 gap-y-0.5"
+				class="mt-1 grid grid-cols-form-32 items-start gap-x-2.5 gap-y-0.5"
 			>
 				<label class="form-label mb-0" for="expansionType">Expansion</label>
 				<select
@@ -510,17 +425,17 @@
 					value={getSaveExpansionType(save)}
 					onchange={(event) => setExpansionType(event.currentTarget.value)}
 				>
-					{#each expansionTypeOptions as expansionType}
-						<option value={expansionType.value}>{expansionType.label}</option>
-					{/each}
+					<option value="Classic">Classic</option>
+					<option value="Expansion">Expansion</option>
+					<option value="RotW">Reign of the Warlock</option>
 				</select>
 			</div>
 
 			<div
-				class="grid grid-cols-[7.6rem_minmax(0,1fr)] items-start gap-x-2.5 gap-y-0.5"
+				class="grid grid-cols-form-32 items-start gap-x-2.5 gap-y-0.5"
 			>
 				<span class="form-label mb-0">Game Flags</span>
-				<div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.9rem]">
+				<div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
 					<label class="inline-flex items-center gap-1.5">
 						<input
 							class="form-check-input mt-0"
@@ -563,7 +478,7 @@
 		>
 			<h3 class="editor-card-title mb-1.5">Progression</h3>
 			<div class="grid grid-cols-1 gap-1 sm:grid-cols-2 sm:gap-x-3">
-				<div class="grid grid-cols-[6.5rem_minmax(0,1fr)] items-center gap-x-2">
+				<div class="grid grid-cols-form-24 items-center gap-x-2">
 					<label class="form-label mb-0" for="level">Level</label>
 					<input
 						class="form-control"
@@ -579,7 +494,7 @@
 					/>
 				</div>
 
-				<div class="grid grid-cols-[6.5rem_minmax(0,1fr)] items-center gap-x-2">
+				<div class="grid grid-cols-form-24 items-center gap-x-2">
 					<label class="form-label mb-0" for="experience">Experience</label>
 					<input
 						class="form-control"
@@ -595,7 +510,7 @@
 					/>
 				</div>
 
-				<div class="grid grid-cols-[6.5rem_minmax(0,1fr)] items-center gap-x-2">
+				<div class="grid grid-cols-form-24 items-center gap-x-2">
 					<label class="form-label mb-0" for="currentAct">Act</label>
 					<select
 						class="form-select"
@@ -611,7 +526,7 @@
 					</select>
 				</div>
 
-				<div class="grid grid-cols-[6.5rem_minmax(0,1fr)] items-center gap-x-2">
+				<div class="grid grid-cols-form-24 items-center gap-x-2">
 					<label class="form-label mb-0" for="currentDifficulty">Difficulty</label>
 					<select
 						class="form-select"
@@ -625,7 +540,7 @@
 					</select>
 				</div>
 
-				<div class="grid grid-cols-[6.5rem_minmax(0,1fr)] items-center gap-x-2">
+				<div class="grid grid-cols-form-24 items-center gap-x-2">
 					<label class="form-label mb-0" for="difficultyBeaten">Difficulty beaten</label>
 					<select
 						class="form-select"
@@ -645,7 +560,7 @@
 					</select>
 				</div>
 
-				<div class="grid grid-cols-[6.5rem_minmax(0,1fr)] items-center gap-x-2">
+				<div class="grid grid-cols-form-24 items-center gap-x-2">
 					<label class="form-label mb-0" for="title">Title</label>
 					<input
 						class="form-control form-control-readonly"
@@ -664,7 +579,7 @@
 		>
 			<h3 class="editor-card-title mb-1.5">Gold</h3>
 			<div
-				class="grid grid-cols-[7.4rem_minmax(0,1fr)] gap-y-1 sm:grid-cols-[8rem_minmax(0,1fr)] sm:gap-x-2.5"
+				class="grid grid-cols-form-28 gap-y-1 sm:grid-cols-form-32 sm:gap-x-2.5"
 			>
 				<label class="form-label mb-0" for="goldInventory">Inventory</label>
 				<input
@@ -699,33 +614,33 @@
 		>
 			<h3 class="editor-card-title mb-1.5">Map Seed</h3>
 			<div
-				class="grid grid-cols-[7.4rem_minmax(0,1fr)] items-center gap-x-2 gap-y-1"
+				class="grid grid-cols-form-28 items-center gap-x-2 gap-y-1"
 			>
 				<span class="form-label mb-0">Format</span>
 				<div
 					class="inline-flex w-fit overflow-hidden rounded-xs border border-halbu-borderStrong"
 				>
-						<button
-							type="button"
-							class={`h-7 min-w-20 px-2 text-[0.82rem] font-semibold transition ${
-								mapSeedDisplayMode === "decimal"
-									? "bg-halbu-infoSoft text-halbu-info"
-									: "bg-halbu-panel2 text-halbu-text hover:bg-halbu-infoSoft"
-							}`}
-							onclick={() => setMapSeedDisplayMode("decimal")}
-						>
-							Decimal
+					<button
+						type="button"
+						class={`h-7 min-w-20 px-2 text-sm font-semibold transition ${
+							mapSeedDisplayMode === "decimal"
+								? "bg-halbu-infoSoft text-halbu-info"
+								: "bg-halbu-panel2 text-halbu-text hover:bg-halbu-infoSoft"
+						}`}
+						onclick={() => (mapSeedDisplayMode = "decimal")}
+					>
+						Decimal
 					</button>
-						<button
-							type="button"
-							class={`h-7 min-w-20 border-l border-halbu-borderStrong px-2 text-[0.82rem] font-semibold transition ${
-								mapSeedDisplayMode === "hex"
-									? "bg-halbu-infoSoft text-halbu-info"
-									: "bg-halbu-panel2 text-halbu-text hover:bg-halbu-infoSoft"
-							}`}
-							onclick={() => setMapSeedDisplayMode("hex")}
-						>
-							Hex
+					<button
+						type="button"
+						class={`h-7 min-w-20 border-l border-halbu-borderStrong px-2 text-sm font-semibold transition ${
+							mapSeedDisplayMode === "hex"
+								? "bg-halbu-infoSoft text-halbu-info"
+								: "bg-halbu-panel2 text-halbu-text hover:bg-halbu-infoSoft"
+						}`}
+						onclick={() => (mapSeedDisplayMode = "hex")}
+					>
+						Hex
 					</button>
 				</div>
 
@@ -738,9 +653,17 @@
 					placeholder="123456789 or 0x075BCD15"
 					bind:this={mapSeedInputRef}
 					bind:value={mapSeedDraft}
-					onfocus={handleMapSeedFocus}
-					oninput={handleMapSeedInput}
-					onblur={handleMapSeedBlur}
+					onfocus={() => (isMapSeedEditing = true)}
+					oninput={(event) => {
+						mapSeedDraft = event.currentTarget.value;
+						if (mapSeedInputRef != null) {
+							mapSeedInputRef.setCustomValidity("");
+						}
+					}}
+					onblur={() => {
+						commitMapSeedDraft();
+						isMapSeedEditing = false;
+					}}
 					onkeydown={handleMapSeedKeydown}
 				/>
 
@@ -750,289 +673,127 @@
 	</div>
 
 	<div class="grid content-start gap-2.5">
-		<section
-			class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2"
-		>
+		<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
 			<h3 class="editor-card-title mb-1.5">Attributes</h3>
 			<div class="grid gap-y-1">
-				<div class="grid grid-cols-[7.1rem_minmax(0,1fr)] items-center gap-x-2.5">
-					<label class="form-label mb-0" for="strength">Strength</label>
-					<div class="flex items-center gap-1">
-						{#each QUICK_ADJUST_NEGATIVE_STEPS as delta}
+				{#each primaryAttributes as field}
+					<div class="grid grid-cols-form-28 items-center gap-x-2.5">
+						<label class="form-label mb-0" for={field.id}>{field.label}</label>
+						<div class="flex items-center gap-1">
 							<button
 								type="button"
-								class="h-8 min-w-9 rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-1 text-[0.76rem] font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
-								onclick={() => adjustAttributeValue("strength", delta)}
-								disabled={isAttributeAdjustmentDisabled("strength", delta)}
-								aria-label={`${delta < 0 ? "Decrease" : "Increase"} strength by ${Math.abs(delta)}`}
+								class="h-8 min-w-9 rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-1 text-xs font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
+								onclick={() =>
+									setClamped(
+										save.attributes[field.attribute],
+										save.attributes[field.attribute].value - QUICK_ADJUST_STEP,
+										field.max,
+									)}
+								disabled={isClampedAtBoundary(
+									save.attributes[field.attribute].value,
+									field.max,
+									-QUICK_ADJUST_STEP,
+								)}
+								aria-label={`Decrease ${field.label.toLowerCase()} by ${QUICK_ADJUST_STEP}`}
 							>
-								{delta > 0 ? `+${delta}` : `${delta}`}
+								-{QUICK_ADJUST_STEP}
 							</button>
-						{/each}
-						<input
-							class="form-control max-w-20 text-center"
-							type="number"
-							name="strength"
-							id="strength"
-							min="0"
-							max="1023"
-							step="1"
-							use:enforceMinMax
-							bind:value={save.attributes.strength.value}
-							onchange={(event) =>
-								setAttributeValue("strength", event.currentTarget.value)}
-						/>
-						{#each QUICK_ADJUST_POSITIVE_STEPS as delta}
+							<input
+								class="form-control max-w-20 text-center"
+								type="number"
+								name={field.id}
+								id={field.id}
+								min="0"
+								max={field.max}
+								step="1"
+								use:enforceMinMax
+								bind:value={save.attributes[field.attribute].value}
+								onchange={(event) =>
+									setClamped(save.attributes[field.attribute], event.currentTarget.value, field.max)}
+							/>
 							<button
 								type="button"
-								class="h-8 min-w-9 rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-1 text-[0.76rem] font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
-								onclick={() => adjustAttributeValue("strength", delta)}
-								disabled={isAttributeAdjustmentDisabled("strength", delta)}
-								aria-label={`${delta < 0 ? "Decrease" : "Increase"} strength by ${Math.abs(delta)}`}
+								class="h-8 min-w-9 rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-1 text-xs font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
+								onclick={() =>
+									setClamped(
+										save.attributes[field.attribute],
+										save.attributes[field.attribute].value + QUICK_ADJUST_STEP,
+										field.max,
+									)}
+								disabled={isClampedAtBoundary(
+									save.attributes[field.attribute].value,
+									field.max,
+									QUICK_ADJUST_STEP,
+								)}
+								aria-label={`Increase ${field.label.toLowerCase()} by ${QUICK_ADJUST_STEP}`}
 							>
-								{delta > 0 ? `+${delta}` : `${delta}`}
+								+{QUICK_ADJUST_STEP}
 							</button>
-						{/each}
+						</div>
 					</div>
-				</div>
-
-				<div class="grid grid-cols-[7.1rem_minmax(0,1fr)] items-center gap-x-2.5">
-					<label class="form-label mb-0" for="dexterity">Dexterity</label>
-					<div class="flex items-center gap-1">
-						{#each QUICK_ADJUST_NEGATIVE_STEPS as delta}
-							<button
-								type="button"
-								class="h-8 min-w-9 rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-1 text-[0.76rem] font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
-								onclick={() => adjustAttributeValue("dexterity", delta)}
-								disabled={isAttributeAdjustmentDisabled("dexterity", delta)}
-								aria-label={`${delta < 0 ? "Decrease" : "Increase"} dexterity by ${Math.abs(delta)}`}
-							>
-								{delta > 0 ? `+${delta}` : `${delta}`}
-							</button>
-						{/each}
-						<input
-							class="form-control max-w-20 text-center"
-							type="number"
-							name="dexterity"
-							id="dexterity"
-							min="0"
-							max="1023"
-							step="1"
-							use:enforceMinMax
-							bind:value={save.attributes.dexterity.value}
-							onchange={(event) =>
-								setAttributeValue("dexterity", event.currentTarget.value)}
-						/>
-						{#each QUICK_ADJUST_POSITIVE_STEPS as delta}
-							<button
-								type="button"
-								class="h-8 min-w-9 rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-1 text-[0.76rem] font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
-								onclick={() => adjustAttributeValue("dexterity", delta)}
-								disabled={isAttributeAdjustmentDisabled("dexterity", delta)}
-								aria-label={`${delta < 0 ? "Decrease" : "Increase"} dexterity by ${Math.abs(delta)}`}
-							>
-								{delta > 0 ? `+${delta}` : `${delta}`}
-							</button>
-						{/each}
-					</div>
-				</div>
-
-				<div class="grid grid-cols-[7.1rem_minmax(0,1fr)] items-center gap-x-2.5">
-					<label class="form-label mb-0" for="vitality">Vitality</label>
-					<div class="flex items-center gap-1">
-						{#each QUICK_ADJUST_NEGATIVE_STEPS as delta}
-							<button
-								type="button"
-								class="h-8 min-w-9 rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-1 text-[0.76rem] font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
-								onclick={() => adjustAttributeValue("vitality", delta)}
-								disabled={isAttributeAdjustmentDisabled("vitality", delta)}
-								aria-label={`${delta < 0 ? "Decrease" : "Increase"} vitality by ${Math.abs(delta)}`}
-							>
-								{delta > 0 ? `+${delta}` : `${delta}`}
-							</button>
-						{/each}
-						<input
-							class="form-control max-w-20 text-center"
-							type="number"
-							name="vitality"
-							id="vitality"
-							min="0"
-							max="1023"
-							step="1"
-							use:enforceMinMax
-							bind:value={save.attributes.vitality.value}
-							onchange={(event) =>
-								setAttributeValue("vitality", event.currentTarget.value)}
-						/>
-						{#each QUICK_ADJUST_POSITIVE_STEPS as delta}
-							<button
-								type="button"
-								class="h-8 min-w-9 rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-1 text-[0.76rem] font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
-								onclick={() => adjustAttributeValue("vitality", delta)}
-								disabled={isAttributeAdjustmentDisabled("vitality", delta)}
-								aria-label={`${delta < 0 ? "Decrease" : "Increase"} vitality by ${Math.abs(delta)}`}
-							>
-								{delta > 0 ? `+${delta}` : `${delta}`}
-							</button>
-						{/each}
-					</div>
-				</div>
-
-				<div class="grid grid-cols-[7.1rem_minmax(0,1fr)] items-center gap-x-2.5">
-					<label class="form-label mb-0" for="energy">Energy</label>
-					<div class="flex items-center gap-1">
-						{#each QUICK_ADJUST_NEGATIVE_STEPS as delta}
-							<button
-								type="button"
-								class="h-8 min-w-9 rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-1 text-[0.76rem] font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
-								onclick={() => adjustAttributeValue("energy", delta)}
-								disabled={isAttributeAdjustmentDisabled("energy", delta)}
-								aria-label={`${delta < 0 ? "Decrease" : "Increase"} energy by ${Math.abs(delta)}`}
-							>
-								{delta > 0 ? `+${delta}` : `${delta}`}
-							</button>
-						{/each}
-						<input
-							class="form-control max-w-20 text-center"
-							type="number"
-							name="energy"
-							id="energy"
-							min="0"
-							max="1023"
-							step="1"
-							use:enforceMinMax
-							bind:value={save.attributes.energy.value}
-							onchange={(event) =>
-								setAttributeValue("energy", event.currentTarget.value)}
-						/>
-						{#each QUICK_ADJUST_POSITIVE_STEPS as delta}
-							<button
-								type="button"
-								class="h-8 min-w-9 rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-1 text-[0.76rem] font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
-								onclick={() => adjustAttributeValue("energy", delta)}
-								disabled={isAttributeAdjustmentDisabled("energy", delta)}
-								aria-label={`${delta < 0 ? "Decrease" : "Increase"} energy by ${Math.abs(delta)}`}
-							>
-								{delta > 0 ? `+${delta}` : `${delta}`}
-							</button>
-						{/each}
-					</div>
-				</div>
+				{/each}
 			</div>
 		</section>
 
-		<section
-			class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2"
-		>
+		<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
 			<h3 class="editor-card-title mb-1.5">Points</h3>
 			<div class="grid gap-y-1">
-				<div class="grid grid-cols-[7.4rem_minmax(0,1fr)] items-center gap-x-2.5">
-					<label class="form-label mb-0" for="statPointsLeft">Stat points left</label>
-					<div class="flex items-center gap-1">
-						{#each QUICK_ADJUST_NEGATIVE_STEPS as delta}
+				{#each pointFields as field}
+					<div class="grid grid-cols-form-28 items-center gap-x-2.5">
+						<label class="form-label mb-0" for={field.id}>{field.label}</label>
+						<div class="flex items-center gap-1">
 							<button
 								type="button"
-								class="h-8 min-w-9 rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-1 text-[0.76rem] font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
-								onclick={() => adjustPointsValue("statpts", delta, STAT_POINTS_MAX)}
-								disabled={isPointsAdjustmentDisabled(
-									"statpts",
-									delta,
-									STAT_POINTS_MAX,
-								)}
-								aria-label={`${delta < 0 ? "Decrease" : "Increase"} stat points by ${Math.abs(delta)}`}
-							>
-								{delta > 0 ? `+${delta}` : `${delta}`}
-							</button>
-						{/each}
-						<input
-							class="form-control max-w-20 text-center"
-							use:enforceMinMax
-							type="number"
-							name="statPointsLeft"
-							id="statPointsLeft"
-							min="0"
-							max={STAT_POINTS_MAX}
-							step="1"
-							bind:value={save.attributes.statpts.value}
-							onchange={(event) =>
-								setPointsValue(
-									"statpts",
-									event.currentTarget.value,
-									STAT_POINTS_MAX,
-								)}
-						/>
-						{#each QUICK_ADJUST_POSITIVE_STEPS as delta}
-							<button
-								type="button"
-								class="h-8 min-w-9 rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-1 text-[0.76rem] font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
-								onclick={() => adjustPointsValue("statpts", delta, STAT_POINTS_MAX)}
-								disabled={isPointsAdjustmentDisabled(
-									"statpts",
-									delta,
-									STAT_POINTS_MAX,
-								)}
-								aria-label={`${delta < 0 ? "Decrease" : "Increase"} stat points by ${Math.abs(delta)}`}
-							>
-								{delta > 0 ? `+${delta}` : `${delta}`}
-							</button>
-						{/each}
-					</div>
-				</div>
-
-				<div class="grid grid-cols-[7.4rem_minmax(0,1fr)] items-center gap-x-2.5">
-					<label class="form-label mb-0" for="skillPointsLeft">Skill points left</label>
-					<div class="flex items-center gap-1">
-						{#each QUICK_ADJUST_NEGATIVE_STEPS as delta}
-							<button
-								type="button"
-								class="h-8 min-w-9 rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-1 text-[0.76rem] font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
+								class="h-8 min-w-9 rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-1 text-xs font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
 								onclick={() =>
-									adjustPointsValue("newskills", delta, SKILL_POINTS_MAX)}
-								disabled={isPointsAdjustmentDisabled(
-									"newskills",
-									delta,
-									SKILL_POINTS_MAX,
+									setClamped(
+										save.attributes[field.attribute],
+										save.attributes[field.attribute].value - QUICK_ADJUST_STEP,
+										field.max,
+									)}
+								disabled={isClampedAtBoundary(
+									save.attributes[field.attribute].value,
+									field.max,
+									-QUICK_ADJUST_STEP,
 								)}
-								aria-label={`${delta < 0 ? "Decrease" : "Increase"} skill points by ${Math.abs(delta)}`}
+								aria-label={`Decrease ${field.ariaLabel} by ${QUICK_ADJUST_STEP}`}
 							>
-								{delta > 0 ? `+${delta}` : `${delta}`}
+								-{QUICK_ADJUST_STEP}
 							</button>
-						{/each}
-						<input
-							class="form-control max-w-20 text-center"
-							use:enforceMinMax
-							type="number"
-							name="skillPointsLeft"
-							id="skillPointsLeft"
-							min="0"
-							max={SKILL_POINTS_MAX}
-							step="1"
-							bind:value={save.attributes.newskills.value}
-							onchange={(event) =>
-								setPointsValue(
-									"newskills",
-									event.currentTarget.value,
-									SKILL_POINTS_MAX,
-								)}
-						/>
-						{#each QUICK_ADJUST_POSITIVE_STEPS as delta}
+							<input
+								class="form-control max-w-20 text-center"
+								use:enforceMinMax
+								type="number"
+								name={field.id}
+								id={field.id}
+								min="0"
+								max={field.max}
+								step="1"
+								bind:value={save.attributes[field.attribute].value}
+								onchange={(event) =>
+									setClamped(save.attributes[field.attribute], event.currentTarget.value, field.max)}
+							/>
 							<button
 								type="button"
-								class="h-8 min-w-9 rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-1 text-[0.76rem] font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
+								class="h-8 min-w-9 rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-1 text-xs font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
 								onclick={() =>
-									adjustPointsValue("newskills", delta, SKILL_POINTS_MAX)}
-								disabled={isPointsAdjustmentDisabled(
-									"newskills",
-									delta,
-									SKILL_POINTS_MAX,
+									setClamped(
+										save.attributes[field.attribute],
+										save.attributes[field.attribute].value + QUICK_ADJUST_STEP,
+										field.max,
+									)}
+								disabled={isClampedAtBoundary(
+									save.attributes[field.attribute].value,
+									field.max,
+									QUICK_ADJUST_STEP,
 								)}
-								aria-label={`${delta < 0 ? "Decrease" : "Increase"} skill points by ${Math.abs(delta)}`}
+								aria-label={`Increase ${field.ariaLabel} by ${QUICK_ADJUST_STEP}`}
 							>
-								{delta > 0 ? `+${delta}` : `${delta}`}
+								+{QUICK_ADJUST_STEP}
 							</button>
-						{/each}
+						</div>
 					</div>
-				</div>
+				{/each}
 			</div>
 		</section>
 
@@ -1041,105 +802,64 @@
 		>
 			<h3 class="editor-card-title mb-1.5">Resources</h3>
 			<div
-				class="grid grid-cols-[7rem_minmax(0,1fr)_minmax(0,1fr)] items-center gap-x-2.5 gap-y-1"
+				class="grid grid-cols-form-28-2 items-center gap-x-2.5 gap-y-1"
 			>
 				<div></div>
-				<div class="text-[0.84rem] text-halbu-textMuted">Current</div>
-				<div class="text-[0.84rem] text-halbu-textMuted">Base</div>
-
-					<div class="text-[0.9rem] text-halbu-text">Life</div>
-					<input
-						class="form-control"
-						type="number"
-						name="lifeCurrent"
-						id="lifeCurrent"
-						min={RESOURCE_DISPLAY_MIN}
-						max={RESOURCE_DISPLAY_MAX}
-						step={RESOURCE_INPUT_STEP}
-						value={getResourceInputValue("lifeCurrent", "hitpoints")}
-						onfocus={() => handleResourceFocus("lifeCurrent", "hitpoints")}
-						oninput={(event) => handleResourceInput("lifeCurrent", event)}
-						onblur={() => handleResourceBlur("lifeCurrent", "hitpoints")}
-						onkeydown={(event) =>
-							handleResourceKeydown(event, "lifeCurrent", "hitpoints")}
-					/>
-					<input
-						class="form-control"
-						type="number"
-						name="lifeBase"
-						id="lifeBase"
-						min={RESOURCE_DISPLAY_MIN}
-						max={RESOURCE_DISPLAY_MAX}
-						step={RESOURCE_INPUT_STEP}
-						value={getResourceInputValue("lifeBase", "maxhp")}
-						onfocus={() => handleResourceFocus("lifeBase", "maxhp")}
-						oninput={(event) => handleResourceInput("lifeBase", event)}
-						onblur={() => handleResourceBlur("lifeBase", "maxhp")}
-						onkeydown={(event) => handleResourceKeydown(event, "lifeBase", "maxhp")}
-					/>
-
-					<div class="text-[0.9rem] text-halbu-text">Mana</div>
-					<input
-						class="form-control"
-						type="number"
-						name="manaCurrent"
-						id="manaCurrent"
-						min={RESOURCE_DISPLAY_MIN}
-						max={RESOURCE_DISPLAY_MAX}
-						step={RESOURCE_INPUT_STEP}
-						value={getResourceInputValue("manaCurrent", "mana")}
-						onfocus={() => handleResourceFocus("manaCurrent", "mana")}
-						oninput={(event) => handleResourceInput("manaCurrent", event)}
-						onblur={() => handleResourceBlur("manaCurrent", "mana")}
-						onkeydown={(event) => handleResourceKeydown(event, "manaCurrent", "mana")}
-					/>
-					<input
-						class="form-control"
-						type="number"
-						name="manaBase"
-						id="manaBase"
-						min={RESOURCE_DISPLAY_MIN}
-						max={RESOURCE_DISPLAY_MAX}
-						step={RESOURCE_INPUT_STEP}
-						value={getResourceInputValue("manaBase", "maxmana")}
-						onfocus={() => handleResourceFocus("manaBase", "maxmana")}
-						oninput={(event) => handleResourceInput("manaBase", event)}
-						onblur={() => handleResourceBlur("manaBase", "maxmana")}
-						onkeydown={(event) =>
-							handleResourceKeydown(event, "manaBase", "maxmana")}
-					/>
-
-					<div class="text-[0.9rem] text-halbu-text">Stamina</div>
-					<input
-						class="form-control"
-						type="number"
-						name="staminaCurrent"
-						id="staminaCurrent"
-						min={RESOURCE_DISPLAY_MIN}
-						max={RESOURCE_DISPLAY_MAX}
-						step={RESOURCE_INPUT_STEP}
-						value={getResourceInputValue("staminaCurrent", "stamina")}
-						onfocus={() => handleResourceFocus("staminaCurrent", "stamina")}
-						oninput={(event) => handleResourceInput("staminaCurrent", event)}
-						onblur={() => handleResourceBlur("staminaCurrent", "stamina")}
-						onkeydown={(event) =>
-							handleResourceKeydown(event, "staminaCurrent", "stamina")}
-					/>
-					<input
-						class="form-control"
-						type="number"
-						name="staminaBase"
-						id="staminaBase"
-						min={RESOURCE_DISPLAY_MIN}
-						max={RESOURCE_DISPLAY_MAX}
-						step={RESOURCE_INPUT_STEP}
-						value={getResourceInputValue("staminaBase", "maxstamina")}
-						onfocus={() => handleResourceFocus("staminaBase", "maxstamina")}
-						oninput={(event) => handleResourceInput("staminaBase", event)}
-						onblur={() => handleResourceBlur("staminaBase", "maxstamina")}
-						onkeydown={(event) =>
-							handleResourceKeydown(event, "staminaBase", "maxstamina")}
-					/>
+				<div class="text-sm text-halbu-textMuted">Current</div>
+				<div class="text-sm text-halbu-textMuted">Base</div>
+				{#each resourceFields as resource}
+					<div class="text-sm text-halbu-text">{resource.label}</div>
+					{#each [
+						{ id: resource.currentId, attributeId: resource.currentAttr },
+						{ id: resource.baseId, attributeId: resource.baseAttr },
+					] as field}
+						<input
+							class="form-control"
+							type="number"
+							name={field.id}
+							id={field.id}
+							min={RESOURCE_DISPLAY_MIN}
+							max={RESOURCE_DISPLAY_MAX}
+							step="1"
+							value={resourceInputValue(field.id, field.attributeId)}
+							onfocus={() => {
+								resourceDraftByField = {
+									...resourceDraftByField,
+									[field.id]: resourceInputValue(field.id, field.attributeId),
+								};
+							}}
+							oninput={(event) => {
+								resourceDraftByField = {
+									...resourceDraftByField,
+									[field.id]: event.currentTarget.value,
+								};
+							}}
+							onblur={() => {
+								if (!(field.id in resourceDraftByField)) {
+									return;
+								}
+								commitQ8Draft(field.id, field.attributeId);
+							}}
+							onkeydown={(event) => {
+								if (event.key === "Enter") {
+									event.preventDefault();
+									commitQ8Draft(field.id, field.attributeId);
+									event.currentTarget.blur();
+									return;
+								}
+								if (event.key === "Escape") {
+									event.preventDefault();
+									if (field.id in resourceDraftByField) {
+										const nextDraftByField = { ...resourceDraftByField };
+										delete nextDraftByField[field.id];
+										resourceDraftByField = nextDraftByField;
+									}
+									event.currentTarget.blur();
+								}
+							}}
+						/>
+					{/each}
+				{/each}
 			</div>
 		</section>
 	</div>

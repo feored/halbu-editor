@@ -1,29 +1,55 @@
-import { getSkillPoints } from "./skillSlots.js";
+import { getSkillPoints } from "./skillSlots";
+import type { SkillSlot } from "../../types/editor";
+import type { SkillData } from "./skillTypes";
 
-export function deriveSkillsData(skillsDataset, version, characterClass) {
+export type PageNotice = {
+	level: "warning" | "info";
+	text: string;
+};
+
+export type BuildPageNoticesOptions = {
+	skillsContextError: string;
+	hasKnownVersionSkills: boolean;
+	hasBackendClassSupport: boolean;
+	hasClassSkills: boolean;
+	skillSlotsReady: boolean;
+	version: number;
+	classLabel: string;
+	supportedClasses: string[];
+};
+
+export function deriveSkillsData(
+	skillsDataset: readonly SkillData[] | null,
+	version: number,
+	characterClass: string,
+): SkillData[] {
 	if (skillsDataset == null) {
 		return [];
 	}
 	return skillsDataset
-		.filter((skillData) => skillData.class == characterClass)
+		.filter((skillData) => skillData.class === characterClass)
 		.map((skillData) => {
-			if (Number(version) === 105 && characterClass === "Warlock") {
+			if (version === 105 && characterClass === "Warlock") {
 				return {
 					...skillData,
-					page: 4 - Number(skillData.page),
+					page: 4 - skillData.page,
 				};
 			}
 			return skillData;
 		});
 }
 
-export function derivePageIndexes(skillsData) {
+export function derivePageIndexes(skillsData: readonly SkillData[]): number[] {
 	return Array.from(
-		new Set(skillsData.map((skill) => Number(skill.page) - 1).filter((page) => page >= 0))
-	).sort((a, b) => a - b);
+		new Set(skillsData.map((skill) => skill.page - 1).filter((page) => page >= 0)),
+	).sort((left, right) => left - right);
 }
 
-export function resolveActivePageIndex(canRenderTrees, pageIndexes, activePageIndex) {
+export function resolveActivePageIndex(
+	canRenderTrees: boolean,
+	pageIndexes: readonly number[],
+	activePageIndex: number | null,
+): number | null {
 	if (!canRenderTrees || pageIndexes.length === 0) {
 		return null;
 	}
@@ -33,27 +59,32 @@ export function resolveActivePageIndex(canRenderTrees, pageIndexes, activePageIn
 	return pageIndexes[0];
 }
 
-export function resolveSelectedSkillId(canRenderTrees, skillsData, activePageIndex, selectedSkillId) {
+export function resolveSelectedSkillId(
+	canRenderTrees: boolean,
+	skillsData: readonly SkillData[],
+	activePageIndex: number | null,
+	selectedSkillId: number | null,
+): number | null {
 	if (!canRenderTrees || skillsData.length === 0 || activePageIndex == null) {
 		return null;
 	}
 
 	const activePageSkills = skillsData.filter(
-		(skill) => Number(skill.page) === Number(activePageIndex) + 1
+		(skill) => skill.page === activePageIndex + 1,
 	);
 	if (
 		selectedSkillId != null &&
-		activePageSkills.some((skill) => Number(skill.id) === Number(selectedSkillId))
+		activePageSkills.some((skill) => skill.id === selectedSkillId)
 	) {
 		return selectedSkillId;
 	}
 
 	const orderedSkills = [...activePageSkills].sort((left, right) => {
-		const rowDelta = Number(left.row) - Number(right.row);
+		const rowDelta = left.row - right.row;
 		if (rowDelta !== 0) {
 			return rowDelta;
 		}
-		return Number(left.column) - Number(right.column);
+		return left.column - right.column;
 	});
 	return orderedSkills.length > 0 ? orderedSkills[0].id : null;
 }
@@ -67,8 +98,8 @@ export function buildPageNotices({
 	version,
 	classLabel,
 	supportedClasses,
-}) {
-	const notices = [];
+}: BuildPageNoticesOptions): PageNotice[] {
+	const notices: PageNotice[] = [];
 	if (skillsContextError.length > 0) {
 		notices.push({
 			level: "warning",
@@ -99,14 +130,32 @@ export function buildPageNotices({
 	return notices;
 }
 
-export function buildSkillState(skillData, options) {
-	const {
-		saveSkills,
-		characterLevel,
-		availableSkillPoints,
-		getSkillSlot,
-	} = options;
-	const reqLevel = Number(skillData.reqlevel);
+export type SkillState = {
+	id: number;
+	saveId: number;
+	points: number;
+	available: boolean;
+	levelRequirementMet: boolean;
+	prerequisitesMet: boolean;
+	state: "available" | "invested" | "locked-level" | "locked-prereq";
+	canIncrement: boolean;
+	canDecrement: boolean;
+};
+
+export type BuildSkillStateOptions = {
+	saveSkills: readonly SkillSlot[];
+	characterLevel: number;
+	availableSkillPoints: number;
+	getSkillSlot: (skillId: number) => number;
+	skillSlotsReady?: boolean;
+};
+
+export function buildSkillState(
+	skillData: SkillData,
+	options: BuildSkillStateOptions,
+): SkillState {
+	const { saveSkills, characterLevel, availableSkillPoints, getSkillSlot } = options;
+	const reqLevel = skillData.reqlevel;
 	const levelRequirementMet = characterLevel >= reqLevel;
 	const unmetPrerequisites = skillData.reqskills.filter((requiredSkillId) => {
 		const requiredSaveId = getSkillSlot(requiredSkillId);
@@ -114,12 +163,12 @@ export function buildSkillState(skillData, options) {
 	});
 	const prerequisitesMet = unmetPrerequisites.length === 0;
 	const available = levelRequirementMet && prerequisitesMet;
-	const saveId = Number(skillData.saveId);
+	const saveId = skillData.saveId;
 	const points = getSkillPoints(saveSkills, saveId);
 	const canIncrement = points < 255 && available && availableSkillPoints > 0;
 	const canDecrement = points > 0;
 
-	let state = "available";
+	let state: SkillState["state"] = "available";
 	if (points > 0) {
 		state = "invested";
 	} else if (!levelRequirementMet) {
@@ -129,7 +178,7 @@ export function buildSkillState(skillData, options) {
 	}
 
 	return {
-		id: Number(skillData.id),
+		id: skillData.id,
 		saveId,
 		points,
 		available,
@@ -141,13 +190,16 @@ export function buildSkillState(skillData, options) {
 	};
 }
 
-export function buildSkillStatesById(skillsData, options) {
+export function buildSkillStatesById(
+	skillsData: readonly SkillData[],
+	options: BuildSkillStateOptions,
+): Record<number, SkillState> {
 	if (!options.skillSlotsReady) {
 		return {};
 	}
-	const states = {};
+	const states: Record<number, SkillState> = {};
 	for (const skill of skillsData) {
-		states[Number(skill.id)] = buildSkillState(skill, options);
+		states[skill.id] = buildSkillState(skill, options);
 	}
 	return states;
 }
