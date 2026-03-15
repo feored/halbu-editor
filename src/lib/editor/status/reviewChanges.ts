@@ -8,6 +8,7 @@ import {
 	REQUIRED_EDITOR_ATTRIBUTE_IDS,
 	type ActId,
 	type DifficultyId,
+	type EditorActWaypoints,
 	type EditorQuest,
 	type EditorSave,
 	type EditorWaypoint,
@@ -324,9 +325,18 @@ function questLabel(actId: ActId, questId: string): string {
 	return actQuestLabels[questId] ?? QUEST_FALLBACK_LABELS[questId] ?? questId;
 }
 
-function toWaypointMap(waypoints: readonly EditorWaypoint[]): Map<string, EditorWaypoint> {
+function formatWaypointIdForReview(waypointId: string): string {
+	return waypointId.replace(/([a-z0-9])([A-Z])/g, "$1 $2");
+}
+
+function toWaypointMap(
+	actWaypoints: EditorActWaypoints | null | undefined,
+): Map<string, EditorWaypoint> {
 	const result = new Map<string, EditorWaypoint>();
-	for (const waypoint of waypoints) {
+	if (actWaypoints == null) {
+		return result;
+	}
+	for (const waypoint of actWaypoints.waypoints) {
 		result.set(waypoint.id, waypoint);
 	}
 	return result;
@@ -535,7 +545,7 @@ function buildWaypointSectionChanges(
 			for (const waypointId of waypointIds) {
 				const originalWaypoint = originalById.get(waypointId) ?? null;
 				const currentWaypoint = currentById.get(waypointId) ?? null;
-				const waypointName = currentWaypoint?.name ?? originalWaypoint?.name ?? waypointId;
+				const waypointName = formatWaypointIdForReview(waypointId);
 				const label = buildProgressLabel(difficultyId, actId, waypointName);
 
 				if (originalWaypoint == null && currentWaypoint != null) {

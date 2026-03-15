@@ -14,6 +14,12 @@
 		compatibilityPending = false,
 		compatibilityError = "",
 		outputFormatOptions = [],
+		unknownFormatSession = false,
+		editionHint = null,
+		suggestedTargetVersion = null,
+		parserLayoutVersion = null,
+		suggestedTargetAutoSelected = false,
+		requiresTargetSelection = false,
 		advancedSaveOptionsEnabled = false,
 		onToggleAdvancedSaveOptions,
 		onSelectCompatibilityTargetVersion,
@@ -43,24 +49,40 @@
 	const hasBlockingCompatibilityIssues = $derived(blockingCompatibilityIssues.length > 0);
 	const hasCompatibilityIssues = $derived(compatibilityIssuesList.length > 0);
 	const outputFormats = $derived(outputFormatOptions);
+	const editionHintLabel = $derived.by(() => {
+		if (editionHint === "D2RLegacy") {
+			return "D2R Legacy";
+		}
+		if (editionHint === "RotW") {
+			return "RotW";
+		}
+		return "Unknown";
+	});
 	const currentVersion = $derived(save.version);
 	const targetVersion = $derived(compatibilityTargetVersion);
 	const effectiveTargetVersion = $derived(targetVersion ?? currentVersion);
+	const isSaveBlocked = $derived(
+		requiresTargetSelection ||
+			hasEditValidationErrors ||
+			hasBlockingCompatibilityIssues ||
+			compatibilityError.length > 0 ||
+			saveDisabled,
+	);
 	const isConversionRelevant = $derived(effectiveTargetVersion !== currentVersion);
 	const hasConversionWarnings = $derived(
 		compatibilityPending || compatibilityError.length > 0 || hasCompatibilityIssues,
 	);
 	const saveReadinessLabel = $derived.by(() => {
-		if (hasEditValidationErrors || hasBlockingCompatibilityIssues) {
-			return "Fix issues before saving";
+		if (isSaveBlocked) {
+			return "Blocked";
 		}
 		if (hasEditValidationWarnings || hasConversionWarnings) {
-			return "Ready to save with warnings";
+			return "Warning";
 		}
-		return "Ready to save";
+		return "Ready";
 	});
 	const saveReadinessClass = $derived.by(() => {
-		if (hasEditValidationErrors || hasBlockingCompatibilityIssues) {
+		if (isSaveBlocked) {
 			return "text-halbu-danger";
 		}
 		if (hasEditValidationWarnings || hasConversionWarnings) {
@@ -87,6 +109,9 @@
 		return "text-halbu-text";
 	});
 	const compatibilityChecksLabel = $derived.by(() => {
+		if (requiresTargetSelection) {
+			return "Target required";
+		}
 		if (compatibilityPending) {
 			return "Checking...";
 		}
@@ -102,16 +127,17 @@
 		return "Passed";
 	});
 	const compatibilityChecksClass = $derived.by(() => {
+		if (requiresTargetSelection || compatibilityPending || hasCompatibilityIssues) {
+			return "text-halbu-warning";
+		}
 		if (compatibilityError.length > 0 || hasBlockingCompatibilityIssues) {
 			return "text-halbu-danger";
-		}
-		if (compatibilityPending || hasCompatibilityIssues) {
-			return "text-halbu-warning";
 		}
 		return "text-halbu-text";
 	});
 	const hasValidationIssues = $derived(
-		hasEditValidationErrors ||
+		requiresTargetSelection ||
+			hasEditValidationErrors ||
 			hasEditValidationWarnings ||
 			hasCompatibilityIssues ||
 			compatibilityError.length > 0,
@@ -124,7 +150,7 @@
 			return `Converting to v${effectiveTargetVersion} (checking compatibility)`;
 		}
 		if (compatibilityError.length > 0) {
-			return `Converting to v${effectiveTargetVersion} (compatibility check failed)`;
+			return `Converting to v${effectiveTargetVersion} (validation failed)`;
 		}
 		return `Converting to v${effectiveTargetVersion}`;
 	});
@@ -152,22 +178,29 @@
 			: `${reviewChangeCount} unsaved changes`;
 	});
 	const nextActionLabel = $derived.by(() => {
-		if (hasEditValidationErrors || hasBlockingCompatibilityIssues) {
-			return "Fix validation issues before saving.";
+		if (requiresTargetSelection) {
+			return "Select an output format in Conversion before saving.";
 		}
-		if (reviewChangeCount > 0) {
-			return "Review changes, then save.";
+		if (
+			hasEditValidationErrors ||
+			hasBlockingCompatibilityIssues ||
+			compatibilityError.length > 0
+		) {
+			return "Fix validation issues before saving.";
 		}
 		if (saveDisabled) {
 			return "Saving is currently unavailable.";
+		}
+		if (reviewChangeCount > 0) {
+			return "Review changes, then save.";
 		}
 		return "Choose Save or Save As to finalize this file.";
 	});
 	const canChooseTargetFormat = $derived(outputFormats.length > 0);
 	const COMPATIBILITY_CODE_LABELS = {
-		WarlockRequiresRotw: "Warlock requires RotW edition target.",
-		WarlockRequiresRotwExpansion: "Warlock requires Reign of the Warlock expansion mode.",
-		RotwExpansionRequiresRotwEdition:
+		WarlockRequiresRotW: "Warlock requires RotW edition target.",
+		WarlockRequiresRotWExpansion: "Warlock requires Reign of the Warlock expansion mode.",
+		RotWExpansionRequiresRotWEdition:
 			"Reign of the Warlock expansion mode requires a RotW edition target.",
 		ExpansionClassRequiresExpansionMode:
 			"Druid and Assassin require Expansion or Reign of the Warlock mode.",
@@ -319,11 +352,41 @@
 			<dt class="form-label mb-0">Edit checks</dt>
 			<dd class={`m-0 text-sm font-semibold ${editChecksClass}`}>{editChecksLabel}</dd>
 
-			<dt class="form-label mb-0">Target compatibility (v{effectiveTargetVersion})</dt>
+			<dt class="form-label mb-0">
+				Target compatibility{#if !requiresTargetSelection}
+					(v{effectiveTargetVersion}){/if}
+			</dt>
 			<dd class={`m-0 text-sm font-semibold ${compatibilityChecksClass}`}>
 				{compatibilityChecksLabel}
 			</dd>
 		</dl>
+		{#if unknownFormatSession}
+			<div class="form-text mt-1 text-halbu-warning">
+				This save uses an unknown version ({save.version}).
+			</div>
+			{#if editionHint != null}
+				<div class="form-text mt-1">
+					Based on its structure, it appears to be a {editionHintLabel} save.
+				</div>
+			{/if}
+			{#if parserLayoutVersion != null}
+				<div class="form-text mt-1">Parsing the v{parserLayoutVersion} layout.</div>
+			{/if}
+			{#if suggestedTargetVersion != null}
+				<div class="form-text mt-1">
+					Suggested target: v{suggestedTargetVersion}.
+					{#if suggestedTargetAutoSelected}
+						This target was selected automatically based on the detected edition.
+					{:else if targetVersion != null && targetVersion !== suggestedTargetVersion}
+						Current selected target: v{targetVersion}.
+					{/if}
+				</div>
+			{:else}
+				<div class="form-text mt-1 text-halbu-warning">
+					Select an output format in Conversion before saving.
+				</div>
+			{/if}
+		{/if}
 		{#if hasEditValidationErrors || hasEditValidationWarnings}
 			<ul class="mt-1 mb-0 pl-4 text-sm text-halbu-textMuted">
 				{#each editValidationErrors as issue}
@@ -386,6 +449,9 @@
 						value={targetVersion == null ? "" : targetVersion}
 						onchange={handleCompatibilityTargetVersionChange}
 					>
+						{#if requiresTargetSelection}
+							<option value="">Select target format...</option>
+						{/if}
 						{#each outputFormats as format}
 							<option value={format.version}>
 								{format.formatId} (v{format.version}) - {format.gameEdition}

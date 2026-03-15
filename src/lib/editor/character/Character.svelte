@@ -161,9 +161,6 @@
 	function setExpansionType(nextExpansionType) {
 		const expansionType = toExpansionType(nextExpansionType);
 		save.expansion_type = expansionType;
-		if (save.version === 99) {
-			save.character.status.expansion = expansionType !== "Classic";
-		}
 		updateTitle();
 	}
 

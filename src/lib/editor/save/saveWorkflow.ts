@@ -1,18 +1,70 @@
 import { toBackendSkills } from "../skills/skillAdapters";
 import { DEFAULT_SKILL_SLOT_COUNT } from "../skills/skillSlots";
 import { getSaveTargetVersion } from "../../utils/GameSupport";
-import type { BackendSkillPoints, CompatibilityIssue, EditorSave } from "../../types/editor";
+import type {
+	BackendSkillPoints,
+	CompatibilityIssue,
+	EditorSave,
+	EncodableSaveFormatId,
+	KnownClassName,
+} from "../../types/editor";
 
-export type SaveCommandPayload = Omit<EditorSave, "skills"> & {
+export type SaveCommandPayload = Omit<EditorSave, "skills" | "character" | "meta"> & {
 	skills: BackendSkillPoints;
+	character: Omit<EditorSave["character"], "class"> & {
+		class: KnownClassName | { Unknown: number };
+	};
+	meta: Omit<EditorSave["meta"], "format"> & {
+		format: EncodableSaveFormatId | { Unknown: number };
+	};
 };
+
+function formatIdForVersion(version: number): "V99" | "V105" {
+	if (version === 99) {
+		return "V99";
+	}
+	if (version === 105) {
+		return "V105";
+	}
+	throw new Error(`Unsupported target save version: ${version}.`);
+}
+
+function parseUnknownEnumLabel(value: string): number | null {
+	const match = /^Unknown\((\d+)\)$/.exec(value);
+	return match == null ? null : Number(match[1]);
+}
+
+function toBackendEnumLabel<KnownLabel extends string>(
+	value: string,
+): KnownLabel | { Unknown: number } {
+	const unknownPayload = parseUnknownEnumLabel(value);
+	if (unknownPayload != null) {
+		return { Unknown: unknownPayload };
+	}
+	return value as KnownLabel;
+}
 
 export function buildSaveCommandPayload(
 	saveData: EditorSave,
+	sourceLayoutVersion: number | null = null,
 	skillSlotCount = DEFAULT_SKILL_SLOT_COUNT,
 ): SaveCommandPayload {
+	const sourceFormatLabel =
+		sourceLayoutVersion != null &&
+		parseUnknownEnumLabel(saveData.meta.format) != null
+			? formatIdForVersion(sourceLayoutVersion)
+			: saveData.meta.format;
+
 	return {
 		...saveData,
+		character: {
+			...saveData.character,
+			class: toBackendEnumLabel<KnownClassName>(saveData.character.class),
+		},
+		meta: {
+			...saveData.meta,
+			format: toBackendEnumLabel<EncodableSaveFormatId>(sourceFormatLabel),
+		},
 		skills: toBackendSkills(saveData.skills, skillSlotCount),
 	};
 }
@@ -29,6 +81,11 @@ export function resolveTargetVersion(
 		return selectedCompatibilityTargetVersion;
 	}
 	return getSaveTargetVersion(saveData);
+}
+
+export function applyTargetVersionToSave(saveData: EditorSave, targetVersion: number): void {
+	saveData.version = targetVersion;
+	saveData.meta.format = formatIdForVersion(targetVersion);
 }
 
 export function getBlockingCompatibilityIssues(

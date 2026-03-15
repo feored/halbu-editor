@@ -1,5 +1,9 @@
 <script>
-	import { getSaveEditionLabel, getSaveExpansionType } from "../utils/GameSupport";
+	import {
+		getSaveEditionLabel,
+		getSaveExpansionType,
+		isUnknownSaveFormat,
+	} from "../utils/GameSupport";
 
 	let {
 		save,
@@ -7,7 +11,12 @@
 
 	const fileName = $derived(save.character.name);
 	const levelLabel = $derived(`Level ${save.attributes.level.value}`);
-	const versionLabel = $derived(`${getSaveEditionLabel(save)} (${save.version})`);
+	const versionLabel = $derived.by(() => {
+		if (isUnknownSaveFormat(save)) {
+			return `Unknown (v${save.version})`;
+		}
+		return `${getSaveEditionLabel(save)} (v${save.version})`;
+	});
 	const expansionLabel = $derived(getSaveExpansionType(save));
 	const coreLabel = $derived(save.character.status.hardcore ? "Hardcore" : "Softcore");
 </script>

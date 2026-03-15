@@ -115,6 +115,9 @@
 				sourcePath: null,
 				headerChecksum: null,
 				computedChecksum: null,
+				editionHint: null,
+				suggestedTargetVersion: null,
+				parserLayoutVersion: null,
 			});
 		} catch (err) {
 			libraryError = `Failed to create new save: ${getErrorMessage(err, "unknown error")}`;

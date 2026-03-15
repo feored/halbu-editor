@@ -24,6 +24,7 @@ export type ActLabel = "Act1" | "Act2" | "Act3" | "Act4" | "Act5";
 export type DifficultyLabel = "Normal" | "Nightmare" | "Hell";
 export type ExpansionTypeLabel = "Classic" | "Expansion" | "RotW";
 export type GameEditionLabel = "D2R Legacy" | "RotW";
+export type EditionHintId = "D2RLegacy" | "RotW";
 export type ParseIssueSeverity = "Warning" | "Error";
 export type ParseIssueKind =
 	| "TruncatedSection"
@@ -33,9 +34,9 @@ export type ParseIssueKind =
 	| "InconsistentLayout"
 	| "Other";
 export type CompatibilityCode =
-	| "WarlockRequiresRotw"
-	| "WarlockRequiresRotwExpansion"
-	| "RotwExpansionRequiresRotwEdition"
+	| "WarlockRequiresRotW"
+	| "WarlockRequiresRotWExpansion"
+	| "RotWExpansionRequiresRotWEdition"
 	| "ExpansionClassRequiresExpansionMode"
 	| "UnknownClassRequiresKnownTarget";
 export type KnownClassName =
@@ -149,12 +150,15 @@ export type EditorQuests = Record<DifficultyId, Record<ActId, Record<QuestId, Ed
 
 export type EditorWaypoint = {
 	id: string;
-	act: ActLabel;
-	name: string;
 	acquired: boolean;
 };
 
-export type EditorWaypoints = Record<DifficultyId, Record<ActId, EditorWaypoint[]>>;
+export type EditorActWaypoints = {
+	act: ActLabel;
+	waypoints: EditorWaypoint[];
+};
+
+export type EditorWaypoints = Record<DifficultyId, Record<ActId, EditorActWaypoints>>;
 
 export type EditorSave = {
 	version: number;
@@ -210,6 +214,9 @@ export type EditorOpenPayload = {
 	computedChecksum: number | null;
 	sourceFileSize: number | null;
 	sourcePath: string | null;
+	editionHint: EditionHintId | null;
+	suggestedTargetVersion: 99 | 105 | null;
+	parserLayoutVersion: 99 | 105 | null;
 };
 
 export type SaveCommandResult = {

@@ -128,6 +128,10 @@ export function getSaveTargetVersion(save: EditorSave): KnownSaveVersion | null 
 	return version === 99 || version === 105 ? version : null;
 }
 
+export function isUnknownSaveFormat(save: EditorSave): boolean {
+	return getUnknownVariantPayload(save.meta.format) != null;
+}
+
 export function getSaveEditionLabel(save: EditorSave): string {
 	const format = save.meta.format;
 	if (format === "V99") {

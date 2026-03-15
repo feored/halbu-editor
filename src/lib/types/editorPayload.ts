@@ -2,6 +2,7 @@ import { toEditorSkills } from "../editor/skills/skillAdapters";
 import { DEFAULT_SKILL_SLOT_COUNT } from "../editor/skills/skillSlots";
 import type {
 	BackendSkillPoints,
+	EditionHintId,
 	EncodableSaveFormatId,
 	EditorOpenPayload,
 	EditorSave,
@@ -40,6 +41,9 @@ export type BackendOpenPayloadDto = {
 	source_file_size: number;
 	header_checksum: number | null;
 	computed_checksum: number | null;
+	edition_hint: EditionHintId | null;
+	suggested_target_version: 99 | 105 | null;
+	parser_layout_version: 99 | 105 | null;
 };
 
 function toEnumLabel<KnownLabel extends string>(
@@ -82,5 +86,8 @@ export function toEditorOpenPayload(
 		computedChecksum: backendPayload.computed_checksum,
 		sourceFileSize: backendPayload.source_file_size,
 		sourcePath,
+		editionHint: backendPayload.edition_hint,
+		suggestedTargetVersion: backendPayload.suggested_target_version,
+		parserLayoutVersion: backendPayload.parser_layout_version,
 	};
 }
