@@ -11,7 +11,7 @@ pub use backups::{
 };
 pub use parsing::{get_character_from_path_with_meta, summary_folder};
 pub use saving::{
-    check_save_compatibility, get_skills_context, get_supported_output_formats, new_save, save_file,
+    check_save_compatibility, get_skills_context, get_supported_output_formats, new_save,
     save_file_as_version,
 };
 

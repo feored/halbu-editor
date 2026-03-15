@@ -1,5 +1,5 @@
 use halbu::format::FormatId;
-use halbu::{Class, CompatibilityIssue, Save};
+use halbu::{Class, CompatibilityChecks, CompatibilityIssue, Save};
 use std::fs::{remove_file, OpenOptions};
 use std::io::ErrorKind;
 use std::io::Write;
@@ -105,7 +105,7 @@ pub fn get_skills_context(version: u32, class: Class) -> Result<SkillsContext, S
 
 #[tauri::command]
 pub fn get_supported_output_formats() -> Vec<OutputFormatOption> {
-    let mut options: Vec<OutputFormatOption> = Save::supported_output_formats()
+    let mut options: Vec<OutputFormatOption> = FormatId::encodable_formats()
         .into_iter()
         .map(|format| OutputFormatOption {
             format_id: format_id_label(format),
@@ -118,49 +118,6 @@ pub fn get_supported_output_formats() -> Vec<OutputFormatOption> {
         .collect();
     options.sort_by_key(|option| option.version);
     options
-}
-
-#[tauri::command]
-pub fn save_file(
-    app: tauri::AppHandle,
-    path: String,
-    save: Save,
-    backup_source_path: Option<String>,
-    backup_config: Option<BackupConfig>,
-) -> Result<SaveCommandResult, String> {
-    let path: &Path = Path::new(&path);
-    let source_path = backup_source_path
-        .as_deref()
-        .filter(|candidate| !candidate.is_empty())
-        .map(Path::new)
-        .unwrap_or(path);
-    let effective_backup_config = backup_config.unwrap_or(BackupConfig {
-        enabled: true,
-        backups_per_character: 20,
-    });
-
-    let backup_outcome = backup_existing_file(&app, source_path, &save, &effective_backup_config)?;
-    let generated_save = save.to_bytes().map_err(|e| e.to_string())?;
-    if let Err(write_error) = write_bytes_atomic(path, &generated_save) {
-        if let Some(backup_path) = backup_outcome.path.as_ref() {
-            return Err(format!(
-                "Save failed after backup. Save was aborted, and the original file is safely backed up at: {}. Write error: {}",
-                backup_path.display(),
-                write_error
-            ));
-        }
-        return Err(format!("Save failed. Write error: {write_error}"));
-    }
-
-    Ok(SaveCommandResult {
-        message: String::from("Success!"),
-        backup_performed: backup_outcome.performed,
-        backup_path: backup_outcome
-            .path
-            .as_ref()
-            .map(|path| path.to_string_lossy().to_string()),
-        cleanup_warning: backup_outcome.cleanup_warning,
-    })
 }
 
 #[tauri::command]
@@ -187,10 +144,8 @@ pub fn save_file_as_version(
     let target_format = FormatId::from_version(target_version)
         .ok_or_else(|| format!("Unsupported save version {target_version}."))?;
 
-    let mut save_for_output = save.clone();
-    save_for_output.set_format_id(target_format);
-    let generated_save = save_for_output
-        .to_bytes_for(target_format)
+    let generated_save = save
+        .encode_for(target_format, CompatibilityChecks::Enforce)
         .map_err(|e| e.to_string())?;
     if let Err(write_error) = write_bytes_atomic(path, &generated_save) {
         if let Some(backup_path) = backup_outcome.path.as_ref() {
