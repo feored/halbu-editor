@@ -2,7 +2,7 @@
 	import SkillConnectorLayer from "./SkillConnectorLayer.svelte";
 	import SkillNodeLayer from "./SkillNodeLayer.svelte";
 	import SkillTierGuideLayer from "./SkillTierGuideLayer.svelte";
-	import { computeTreeLayout } from "./treeLayout";
+	import { buildTreeLayout } from "./treeLayout";
 
 let {
 		skills,
@@ -14,7 +14,7 @@ let {
 	} = $props();
 
 	const treeLayout = $derived.by(() =>
-		computeTreeLayout({
+		buildTreeLayout({
 			skills,
 			selectedSkillId,
 		})

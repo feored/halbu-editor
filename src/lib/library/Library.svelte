@@ -4,18 +4,18 @@
 	import Button from "../components/ui/button/button.svelte";
 	import { Message, buildMessage } from "../utils/Message.svelte";
 	import { invoke } from "@tauri-apps/api/core";
-	import * as settings from "../utils/settings.js";
+	import * as settings from "../utils/settings";
 	import { getErrorMessage } from "../utils/errorMessage.js";
 	import { AlertCircleIcon } from "lucide-svelte";
 	import {
-		adaptBackendOpenPayload,
-		adaptEditorSavePayload,
-	} from "../types/editorAdapters";
+		toEditorOpenPayload,
+		toEditorSave,
+	} from "../types/editorPayload";
 	import {
 		KNOWN_SAVE_VERSIONS,
 		DEFAULT_NEW_SAVE_VERSION,
+		getSupportedClass,
 		getSupportedClasses,
-		normalizeClassForVersion,
 	} from "../utils/GameSupport";
 
 	let { onmessage, parseMode = "lax" } = $props();
@@ -42,10 +42,10 @@
 	let libraryError = $state("");
 
 	let selectedVersion = $state(DEFAULT_NEW_SAVE_VERSION);
-	let selectedClass = $state(normalizeClassForVersion(DEFAULT_NEW_SAVE_VERSION, null));
+	let selectedClass = $state(getSupportedClass(DEFAULT_NEW_SAVE_VERSION, null));
 	const availableClasses = $derived(getSupportedClasses(selectedVersion));
 	$effect(() => {
-		selectedClass = normalizeClassForVersion(selectedVersion, selectedClass);
+		selectedClass = getSupportedClass(selectedVersion, selectedClass);
 	});
 
 	async function readFileContents() {
@@ -77,12 +77,12 @@
 
 		libraryError = "";
 		try {
-			/** @type {import("../types/editorAdapters").BackendOpenPayloadDto} */
+			/** @type {import("../types/editorPayload").BackendOpenPayloadDto} */
 			const response = await invoke("get_character_from_path_with_meta", {
 				path: path,
 				parseMode,
 			});
-			dispatchMessage(Message.CharacterPicked, adaptBackendOpenPayload(response, path));
+			dispatchMessage(Message.CharacterPicked, toEditorOpenPayload(response, path));
 		} catch (err) {
 			libraryError = `Failed to load save file: ${getErrorMessage(err, "unknown error")}`;
 		}
@@ -101,12 +101,12 @@
 		}
 		libraryError = "";
 		try {
-			/** @type {import("../types/editorAdapters").BackendEditorSaveDto} */
+			/** @type {import("../types/editorPayload").BackendEditorSaveDto} */
 			const response = await invoke("new_save", {
 				version: selectedVersion,
 				class: selectedClass,
 			});
-			const newSave = adaptEditorSavePayload(response);
+			const newSave = toEditorSave(response);
 			dispatchMessage(Message.CharacterPicked, {
 				save: newSave,
 				parseIssueCount: 0,

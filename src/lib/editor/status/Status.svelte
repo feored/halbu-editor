@@ -57,20 +57,28 @@
 		}
 		return formatBytes(sourceFileSize);
 	});
-	const mapSeedHexLabel = $derived.by(() => {
-		return `0x${save.character.map_seed.toString(16).toUpperCase().padStart(8, "0")}`;
-	});
-	const mapSeedLabel = $derived.by(() => `${save.character.map_seed} (${mapSeedHexLabel})`);
 	const backupTotalLabel = $derived(backupStatus.totalBackups);
 	const canOpenBackupFolder = $derived.by(() => {
 		return sourcePath != null && sourcePath.length > 0;
 	});
 	const lastBackupLabel = $derived.by(() => {
-		if (backupStatus.lastBackupDatetime != null && backupStatus.lastBackupDatetime.length > 0) {
-			return backupStatus.lastBackupDatetime;
-		}
 		if (backupStatus.lastBackupTimestamp != null && backupStatus.lastBackupTimestamp.length > 0) {
-			return backupStatus.lastBackupTimestamp;
+			const formattedTimestamp = formatBackupTimestamp(
+				backupStatus.lastBackupTimestamp,
+			);
+			if (formattedTimestamp != null) {
+				return formattedTimestamp;
+			}
+		}
+		if (backupStatus.lastBackupDatetime != null && backupStatus.lastBackupDatetime.length > 0) {
+			const parsedFromDatetime = new Date(
+				backupStatus.lastBackupDatetime.replace(" ", "T"),
+			);
+			const formattedDatetime = formatDateTimeForDisplay(parsedFromDatetime);
+			if (formattedDatetime != null) {
+				return formattedDatetime;
+			}
+			return backupStatus.lastBackupDatetime;
 		}
 		return "Never";
 	});
@@ -98,10 +106,46 @@
 			return "-";
 		}
 		const date = new Date(unixSeconds * 1000);
+		return formatDateTimeForDisplay(date) ?? "-";
+	}
+
+	function formatDateTimeForDisplay(date) {
 		if (Number.isNaN(date.getTime())) {
-			return "-";
+			return null;
 		}
-		return date.toLocaleString();
+		const year = String(date.getFullYear());
+		const month = String(date.getMonth() + 1).padStart(2, "0");
+		const day = String(date.getDate()).padStart(2, "0");
+		const hours = String(date.getHours()).padStart(2, "0");
+		const minutes = String(date.getMinutes()).padStart(2, "0");
+		const seconds = String(date.getSeconds()).padStart(2, "0");
+		return `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
+	}
+
+	function formatBackupTimestamp(timestamp) {
+		if (timestamp.length < 19) {
+			return null;
+		}
+		const year = Number(timestamp.slice(0, 4));
+		const month = Number(timestamp.slice(4, 6));
+		const day = Number(timestamp.slice(6, 8));
+		const hour = Number(timestamp.slice(9, 11));
+		const minute = Number(timestamp.slice(11, 13));
+		const second = Number(timestamp.slice(13, 15));
+		const millisecond = Number(timestamp.slice(16, 19));
+		if (
+			!Number.isInteger(year) ||
+			!Number.isInteger(month) ||
+			!Number.isInteger(day) ||
+			!Number.isInteger(hour) ||
+			!Number.isInteger(minute) ||
+			!Number.isInteger(second) ||
+			!Number.isInteger(millisecond)
+		) {
+			return null;
+		}
+		const date = new Date(year, month - 1, day, hour, minute, second, millisecond);
+		return formatDateTimeForDisplay(date);
 	}
 
 	function severityClass(severity) {
@@ -163,139 +207,130 @@
 </script>
 
 <div class="grid content-start gap-2.5">
-	<div class="grid grid-cols-1 gap-2.5 xl:grid-cols-2">
-		<div class="grid content-start gap-2.5">
-			<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
-				<h3 class="editor-card-title mb-1.5">File Information</h3>
-				<dl class="m-0 grid grid-cols-form-48 items-baseline gap-x-2.5 gap-y-1">
-					<dt class="form-label mb-0">Format ID</dt>
-					<dd class="m-0 text-sm text-halbu-text">{getSaveFormatIdLabel(save)}</dd>
+	<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
+		<h3 class="editor-card-title mb-1.5">File Information</h3>
+		<dl class="m-0 grid grid-cols-form-48 items-baseline gap-x-2.5 gap-y-1">
+			<dt class="form-label mb-0">Format ID</dt>
+			<dd class="m-0 text-sm text-halbu-text">{getSaveFormatIdLabel(save)}</dd>
 
-					<dt class="form-label mb-0">Game edition</dt>
-					<dd class="m-0 text-sm text-halbu-text">{getSaveEditionLabel(save)}</dd>
+			<dt class="form-label mb-0">Game edition</dt>
+			<dd class="m-0 text-sm text-halbu-text">{getSaveEditionLabel(save)}</dd>
 
-					<dt class="form-label mb-0">Gameplay mode</dt>
-					<dd class="m-0 text-sm text-halbu-text">{getSaveExpansionType(save)}</dd>
+			<dt class="form-label mb-0">Gameplay mode</dt>
+			<dd class="m-0 text-sm text-halbu-text">{getSaveExpansionType(save)}</dd>
 
-					<dt class="form-label mb-0">Save version</dt>
-					<dd class="m-0 text-sm text-halbu-text">{save.version}</dd>
+			<dt class="form-label mb-0">Save version</dt>
+			<dd class="m-0 text-sm text-halbu-text">{save.version}</dd>
 
-					<dt class="form-label mb-0">Map seed</dt>
-					<dd class="m-0 text-sm text-halbu-text">{mapSeedLabel}</dd>
+			<dt class="form-label mb-0">Last played</dt>
+			<dd class="m-0 text-sm text-halbu-text">
+				{formatUnixTimestamp(lastPlayedUnix)}
+			</dd>
 
-					<dt class="form-label mb-0">Last played</dt>
-					<dd class="m-0 text-sm text-halbu-text">
-						{formatUnixTimestamp(lastPlayedUnix)}
-					</dd>
+			<dt class="form-label mb-0">Source file size</dt>
+			<dd class="m-0 text-sm text-halbu-text">{sourceFileSizeLabel}</dd>
 
-					<dt class="form-label mb-0">Source file size</dt>
-					<dd class="m-0 text-sm text-halbu-text">{sourceFileSizeLabel}</dd>
-				</dl>
-			</section>
+			<dt class="form-label mb-0">Header checksum</dt>
+			<dd class="m-0 font-mono text-sm text-halbu-text">{checksumHeaderLabel}</dd>
 
-			<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
-				<h3 class="editor-card-title mb-1.5">Parser Status</h3>
-				<dl class="m-0 grid grid-cols-form-48 items-baseline gap-x-2.5 gap-y-1">
-					<dt class="form-label mb-0">Parse mode</dt>
-					<dd class="m-0 text-sm text-halbu-text">{parseModeLabel}</dd>
+			<dt class="form-label mb-0">Computed checksum</dt>
+			<dd class="m-0 font-mono text-sm text-halbu-text">{checksumComputedLabel}</dd>
 
-					<dt class="form-label mb-0">Parse diagnostics found</dt>
-					<dd
-						class={`m-0 text-sm ${parseIssuesFound ? "text-halbu-warning" : "text-halbu-text"}`}
-					>
-						{parseIssuesFound ? `${parsedIssueCount} issue(s)` : "No"}
-					</dd>
+			<dt class="form-label mb-0">Checksum status</dt>
+			<dd class={`m-0 text-sm ${checksumStatusClass}`}>{checksumStatusLabel}</dd>
+		</dl>
+	</section>
 
-					<dt class="form-label mb-0">Header checksum</dt>
-					<dd class="m-0 font-mono text-sm text-halbu-text">{checksumHeaderLabel}</dd>
+	<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
+		<h3 class="editor-card-title mb-1.5">Parser Status</h3>
+		<dl class="m-0 grid grid-cols-form-48 items-baseline gap-x-2.5 gap-y-1">
+			<dt class="form-label mb-0">Parse mode</dt>
+			<dd class="m-0 text-sm text-halbu-text">{parseModeLabel}</dd>
 
-					<dt class="form-label mb-0">Computed checksum</dt>
-					<dd class="m-0 font-mono text-sm text-halbu-text">{checksumComputedLabel}</dd>
+			<dt class="form-label mb-0">Parse diagnostics found</dt>
+			<dd
+				class={`m-0 text-sm ${parseIssuesFound ? "text-halbu-warning" : "text-halbu-text"}`}
+			>
+				{parseIssuesFound ? `${parsedIssueCount} issue(s)` : "No"}
+			</dd>
+		</dl>
+	</section>
 
-					<dt class="form-label mb-0">Checksum status</dt>
-					<dd class={`m-0 text-sm ${checksumStatusClass}`}>{checksumStatusLabel}</dd>
-				</dl>
-			</section>
+	<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
+		<h3 class="editor-card-title mb-1.5">Backups</h3>
+		<dl class="m-0 grid grid-cols-form-48 items-baseline gap-x-2.5 gap-y-1">
+			<dt class="form-label mb-0">Backups stored</dt>
+			<dd class="m-0 text-sm text-halbu-text">{backupTotalLabel}</dd>
+
+			<dt class="form-label mb-0">Last backup</dt>
+			<dd class="m-0 text-sm text-halbu-text">{lastBackupLabel}</dd>
+		</dl>
+		<div class="mt-1">
+			<Button
+				variant="secondary"
+				onclick={openBackupFolderForSource}
+				disabled={!canOpenBackupFolder || openingBackupFolder}
+			>
+				{openingBackupFolder ? "Opening..." : "Open Backup Folder"}
+			</Button>
 		</div>
+		{#if backupStatusError.length > 0}
+			<div class="form-text text-halbu-warning mt-1">
+				Backup status unavailable: {backupStatusError}
+			</div>
+		{/if}
+		{#if backupFolderOpenError.length > 0}
+			<div class="form-text text-halbu-warning mt-1">{backupFolderOpenError}</div>
+		{/if}
+	</section>
 
-		<div class="grid content-start gap-2.5">
-			<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
-				<h3 class="editor-card-title mb-1.5">Backups</h3>
-				<dl class="m-0 grid grid-cols-form-48 items-baseline gap-x-2.5 gap-y-1">
-					<dt class="form-label mb-0">Backups stored</dt>
-					<dd class="m-0 text-sm text-halbu-text">{backupTotalLabel}</dd>
-
-					<dt class="form-label mb-0">Last backup</dt>
-					<dd class="m-0 text-sm text-halbu-text">{lastBackupLabel}</dd>
-				</dl>
-				<div class="mt-1">
-					<Button
-						variant="secondary"
-						onclick={openBackupFolderForSource}
-						disabled={!canOpenBackupFolder || openingBackupFolder}
-					>
-						{openingBackupFolder ? "Opening..." : "Open Backup Folder"}
-					</Button>
-				</div>
-				{#if backupStatusError.length > 0}
-					<div class="form-text text-halbu-warning mt-1">
-						Backup status unavailable: {backupStatusError}
-					</div>
-				{/if}
-				{#if backupFolderOpenError.length > 0}
-					<div class="form-text text-halbu-warning mt-1">{backupFolderOpenError}</div>
-				{/if}
-			</section>
-
-			<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
-				<h3 class="editor-card-title mb-1.5">Diagnostics</h3>
-				{#if parseIssuesList.length > 0}
-					<div class="overflow-auto rounded-xs border border-halbu-border bg-halbu-panel2">
-						<table class="w-full border-collapse text-sm">
-							<thead>
-								<tr class="border-b border-halbu-border text-halbu-textMuted">
-									<th class="px-1.5 py-1 text-left font-medium">Severity</th>
-									<th class="px-1.5 py-1 text-left font-medium">Kind</th>
-									<th class="px-1.5 py-1 text-left font-medium">Section</th>
-									<th class="px-1.5 py-1 text-left font-medium">Offset</th>
-									<th class="px-1.5 py-1 text-left font-medium">Expected</th>
-									<th class="px-1.5 py-1 text-left font-medium">Found</th>
-									<th class="px-1.5 py-1 text-left font-medium">Message</th>
-								</tr>
-							</thead>
-							<tbody>
-								{#each parseIssuesList as issue}
-									<tr class="border-b border-halbu-border align-top last:border-b-0">
-										<td class={`whitespace-nowrap px-1.5 py-1 ${severityClass(issue.severity)}`}>
-											{issue.severity}
-										</td>
-										<td class="whitespace-nowrap px-1.5 py-1 text-halbu-text">
-											{issue.kind}
-										</td>
-										<td class="whitespace-nowrap px-1.5 py-1 text-halbu-text">
-											{issue.section ?? "-"}
-										</td>
-										<td class="whitespace-nowrap px-1.5 py-1 text-halbu-text">
-											{issue.offset ?? "-"}
-										</td>
-										<td class="whitespace-nowrap px-1.5 py-1 text-halbu-text">
-											{issue.expected ?? "-"}
-										</td>
-										<td class="whitespace-nowrap px-1.5 py-1 text-halbu-text">
-											{issue.found ?? "-"}
-										</td>
-										<td class="min-w-64 px-1.5 py-1 text-halbu-text">
-											{issue.message}
-										</td>
-									</tr>
-								{/each}
-							</tbody>
-						</table>
-					</div>
-				{:else}
-					<div class="form-text">No parse diagnostics recorded.</div>
-				{/if}
-			</section>
-		</div>
-	</div>
+	<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
+		<h3 class="editor-card-title mb-1.5">Diagnostics</h3>
+		{#if parseIssuesList.length > 0}
+			<div class="overflow-auto rounded-xs border border-halbu-border bg-halbu-panel2">
+				<table class="w-full border-collapse text-sm">
+					<thead>
+						<tr class="border-b border-halbu-border text-halbu-textMuted">
+							<th class="px-1.5 py-1 text-left font-medium">Severity</th>
+							<th class="px-1.5 py-1 text-left font-medium">Kind</th>
+							<th class="px-1.5 py-1 text-left font-medium">Section</th>
+							<th class="px-1.5 py-1 text-left font-medium">Offset</th>
+							<th class="px-1.5 py-1 text-left font-medium">Expected</th>
+							<th class="px-1.5 py-1 text-left font-medium">Found</th>
+							<th class="px-1.5 py-1 text-left font-medium">Message</th>
+						</tr>
+					</thead>
+					<tbody>
+						{#each parseIssuesList as issue}
+							<tr class="border-b border-halbu-border align-top last:border-b-0">
+								<td class={`whitespace-nowrap px-1.5 py-1 ${severityClass(issue.severity)}`}>
+									{issue.severity}
+								</td>
+								<td class="whitespace-nowrap px-1.5 py-1 text-halbu-text">
+									{issue.kind}
+								</td>
+								<td class="whitespace-nowrap px-1.5 py-1 text-halbu-text">
+									{issue.section ?? "-"}
+								</td>
+								<td class="whitespace-nowrap px-1.5 py-1 text-halbu-text">
+									{issue.offset ?? "-"}
+								</td>
+								<td class="whitespace-nowrap px-1.5 py-1 text-halbu-text">
+									{issue.expected ?? "-"}
+								</td>
+								<td class="whitespace-nowrap px-1.5 py-1 text-halbu-text">
+									{issue.found ?? "-"}
+								</td>
+								<td class="min-w-64 px-1.5 py-1 text-halbu-text">
+									{issue.message}
+								</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			</div>
+		{:else}
+			<div class="form-text">No parse diagnostics recorded.</div>
+		{/if}
+	</section>
 </div>

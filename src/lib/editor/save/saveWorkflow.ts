@@ -1,4 +1,4 @@
-import { editorSkillsToBackendSkills } from "../skills/skillAdapters";
+import { toBackendSkills } from "../skills/skillAdapters";
 import { DEFAULT_SKILL_SLOT_COUNT } from "../skills/skillSlots";
 import { getSaveTargetVersion } from "../../utils/GameSupport";
 import type { BackendSkillPoints, CompatibilityIssue, EditorSave } from "../../types/editor";
@@ -13,7 +13,7 @@ export function buildSaveCommandPayload(
 ): SaveCommandPayload {
 	return {
 		...saveData,
-		skills: editorSkillsToBackendSkills(saveData.skills, skillSlotCount),
+		skills: toBackendSkills(saveData.skills, skillSlotCount),
 	};
 }
 

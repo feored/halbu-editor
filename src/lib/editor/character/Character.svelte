@@ -7,14 +7,13 @@
 		clampInteger,
 	} from "../../utils/numbers.js";
 	import {
-		classLabel,
+		getSupportedClass,
 		getSaveExpansionType,
 		getSupportedClasses,
 		isExpandedMode,
 		isClassSupportedForVersion,
 		isKnownSaveVersion,
-		normalizeClassForVersion,
-		parseExpansionTypeLabel,
+		toExpansionType,
 	} from "../../utils/GameSupport";
 	import { getErrorMessage } from "../../utils/errorMessage.js";
 
@@ -32,7 +31,7 @@
 		parseMapSeedDraft,
 		resolveResourceDisplayValue,
 	} from "./characterFieldLogic";
-	import { adaptEditorSavePayload } from "../../types/editorAdapters";
+	import { toEditorSave } from "../../types/editorPayload";
 	import { DEFAULT_SKILL_SLOT_COUNT, resizeSkillSlots } from "../skills/skillSlots";
 
 	let { save = $bindable(), editValidation = $bindable({ errors: [], warnings: [] }) } = $props();
@@ -134,7 +133,7 @@
 		}
 
 		if (!isClassSupportedForVersion(save.version, save.character.class)) {
-			return `Current class (${classLabel(save.character.class)}) is not recognized for version ${save.version}. Select a supported class to continue.`;
+			return `Current class (${save.character.class}) is not recognized for version ${save.version}. Select a supported class to continue.`;
 		}
 		return "";
 	});
@@ -148,7 +147,7 @@
 	});
 
 	$effect(() => {
-		selectedClassForEdit = normalizeClassForVersion(save.version, save.character.class);
+		selectedClassForEdit = getSupportedClass(save.version, save.character.class);
 	});
 
 	function updateTitle() {
@@ -160,10 +159,10 @@
 	}
 
 	function setExpansionType(nextExpansionType) {
-		const normalizedExpansionType = parseExpansionTypeLabel(nextExpansionType);
-		save.expansion_type = normalizedExpansionType;
+		const expansionType = toExpansionType(nextExpansionType);
+		save.expansion_type = expansionType;
 		if (save.version === 99) {
-			save.character.status.expansion = normalizedExpansionType !== "Classic";
+			save.character.status.expansion = expansionType !== "Classic";
 		}
 		updateTitle();
 	}
@@ -295,12 +294,12 @@
 
 		classChangeError = "";
 		try {
-			/** @type {import("../../types/editorAdapters").BackendEditorSaveDto} */
+			/** @type {import("../../types/editorPayload").BackendEditorSaveDto} */
 			const response = await invoke("new_save", {
 				version: save.version,
 				class: nextClass,
 			});
-			const newSave = adaptEditorSavePayload(response);
+			const newSave = toEditorSave(response);
 			save.character.class = nextClass;
 			const slotCount = save.skills.length > 0 ? save.skills.length : DEFAULT_SKILL_SLOT_COUNT;
 			save.skills = resizeSkillSlots(newSave.skills, slotCount);
@@ -314,7 +313,7 @@
 			updateTitle();
 		} catch (err) {
 			classChangeError = getErrorMessage(err, "Failed to change class.");
-			selectedClassForEdit = normalizeClassForVersion(save.version, save.character.class);
+			selectedClassForEdit = getSupportedClass(save.version, save.character.class);
 		}
 	}
 </script>
@@ -374,7 +373,7 @@
 						type="text"
 						name="class"
 						id="class"
-						value={classLabel(save.character.class)}
+						value={save.character.class}
 						readonly
 					/>
 				{/if}

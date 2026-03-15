@@ -3,20 +3,12 @@ import type { SkillSlot } from "../../types/editor";
 
 export const DEFAULT_SKILL_SLOT_COUNT = 30;
 
-export function resolveSkillSlotCount(slotCount: number): number {
-	if (!Number.isInteger(slotCount) || slotCount < 1) {
-		throw new Error(`Invalid skill slot count: ${slotCount}.`);
-	}
-	return slotCount;
-}
-
 export function clampSkillPoints(value: number): number {
 	return clampByte(value);
 }
 
 export function createEmptySkillSlots(slotCount = DEFAULT_SKILL_SLOT_COUNT): SkillSlot[] {
-	const safeSlotCount = resolveSkillSlotCount(slotCount);
-	return Array.from({ length: safeSlotCount }, (_, index) => ({
+	return Array.from({ length: slotCount }, (_, index) => ({
 		id: index,
 		points: 0,
 	}));
@@ -26,39 +18,28 @@ export function resizeSkillSlots(
 	skills: readonly SkillSlot[],
 	slotCount = DEFAULT_SKILL_SLOT_COUNT,
 ): SkillSlot[] {
-	const safeSlotCount = resolveSkillSlotCount(slotCount);
-	const resized = createEmptySkillSlots(safeSlotCount);
+	const resized = createEmptySkillSlots(slotCount);
 
-	const copyCount = Math.min(skills.length, safeSlotCount);
+	const copyCount = Math.min(skills.length, slotCount);
 	for (let index = 0; index < copyCount; index += 1) {
 		resized[index] = {
 			id: index,
-			points: clampSkillPoints(skills[index].points),
+			points: skills[index].points,
 		};
 	}
 	return resized;
 }
 
-export function getSkillPoints(skills: readonly SkillSlot[], slotIndex: number): number {
-	if (slotIndex < 0 || slotIndex >= skills.length) {
-		throw new Error(`Invalid skill slot index: ${slotIndex}.`);
-	}
-	return clampSkillPoints(skills[slotIndex].points);
-}
-
-export function withSkillPoints(
-	skills: readonly SkillSlot[],
+export function setSkillPoints(
+	skills: SkillSlot[],
 	slotIndex: number,
 	nextPoints: number,
 ): SkillSlot[] {
-	if (slotIndex < 0 || slotIndex >= skills.length) {
-		throw new Error(`Invalid skill slot index: ${slotIndex}.`);
-	}
 	const clampedPoints = clampSkillPoints(nextPoints);
-	if (getSkillPoints(skills, slotIndex) === clampedPoints) {
-		return skills as SkillSlot[];
+	if (skills[slotIndex].points === clampedPoints) {
+		return skills;
 	}
-	const updated = [...skills] as SkillSlot[];
+	const updated = [...skills];
 	updated[slotIndex] = {
 		id: slotIndex,
 		points: clampedPoints,
@@ -66,31 +47,31 @@ export function withSkillPoints(
 	return updated;
 }
 
-export function withAddedSkillPoints(
-	skills: readonly SkillSlot[],
+export function addSkillPoints(
+	skills: SkillSlot[],
 	slotIndex: number,
 	delta: number,
 ): SkillSlot[] {
-	const current = getSkillPoints(skills, slotIndex);
-	return withSkillPoints(skills, slotIndex, current + delta);
+	const current = skills[slotIndex].points;
+	return setSkillPoints(skills, slotIndex, current + delta);
 }
 
-export function withAllSkillPointsRefunded(skills: readonly SkillSlot[]): {
+export function refundAllSkillPoints(skills: SkillSlot[]): {
 	skills: SkillSlot[];
 	refundedPoints: number;
 } {
 	let refundedPoints = 0;
 	for (let index = 0; index < skills.length; index += 1) {
-		refundedPoints += getSkillPoints(skills, index);
+		refundedPoints += skills[index].points;
 	}
 	if (refundedPoints < 1) {
 		return {
-			skills: skills as SkillSlot[],
+			skills,
 			refundedPoints,
 		};
 	}
 	return {
-		skills: resizeSkillSlots([], skills.length),
+		skills: createEmptySkillSlots(skills.length),
 		refundedPoints,
 	};
 }

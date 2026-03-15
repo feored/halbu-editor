@@ -1,4 +1,4 @@
-import { adaptSkillsPayloadToEditorSkills } from "../editor/skills/skillAdapters";
+import { toEditorSkills } from "../editor/skills/skillAdapters";
 import { DEFAULT_SKILL_SLOT_COUNT } from "../editor/skills/skillSlots";
 import type {
 	BackendSkillPoints,
@@ -42,7 +42,7 @@ export type BackendOpenPayloadDto = {
 	computed_checksum: number | null;
 };
 
-function adaptUnknownEnumLabel<KnownLabel extends string>(
+function toEnumLabel<KnownLabel extends string>(
 	value: BackendEnumLabel<KnownLabel>,
 ): KnownLabel | UnknownEnumLabel {
 	if (typeof value === "string") {
@@ -51,7 +51,7 @@ function adaptUnknownEnumLabel<KnownLabel extends string>(
 	return `Unknown(${value.Unknown})` as UnknownEnumLabel;
 }
 
-export function adaptEditorSavePayload(
+export function toEditorSave(
 	backendSave: BackendEditorSaveDto,
 	slotCount = DEFAULT_SKILL_SLOT_COUNT,
 ): EditorSave {
@@ -59,23 +59,23 @@ export function adaptEditorSavePayload(
 		...backendSave,
 		character: {
 			...backendSave.character,
-			class: adaptUnknownEnumLabel(backendSave.character.class),
+			class: toEnumLabel(backendSave.character.class),
 		},
 		meta: {
 			...backendSave.meta,
-			format: adaptUnknownEnumLabel(backendSave.meta.format),
+			format: toEnumLabel(backendSave.meta.format),
 		},
-		skills: adaptSkillsPayloadToEditorSkills(backendSave.skills, slotCount),
+		skills: toEditorSkills(backendSave.skills, slotCount),
 	};
 }
 
-export function adaptBackendOpenPayload(
+export function toEditorOpenPayload(
 	backendPayload: BackendOpenPayloadDto,
 	sourcePath: string | null,
 	slotCount = DEFAULT_SKILL_SLOT_COUNT,
 ): EditorOpenPayload {
 	return {
-		save: adaptEditorSavePayload(backendPayload.save, slotCount),
+		save: toEditorSave(backendPayload.save, slotCount),
 		parseIssueCount: backendPayload.parse_issue_count,
 		parseIssues: backendPayload.parse_issues,
 		headerChecksum: backendPayload.header_checksum,

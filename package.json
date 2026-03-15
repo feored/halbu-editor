@@ -6,6 +6,8 @@
 	"scripts": {
 		"dev": "vite",
 		"build": "vite build",
+		"typecheck": "tsc --noEmit -p ./tsconfig.json",
+		"check": "npm run typecheck && svelte-check --tsconfig ./tsconfig.json",
 		"preview": "vite preview",
 		"preprocess:skills": "python3 static/tools/preprocess/main.py --all",
 		"tauri": "tauri"

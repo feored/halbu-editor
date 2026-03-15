@@ -7,7 +7,7 @@
 		apply as applySettings,
 		get as getSetting,
 		Key as SettingKey,
-	} from "./lib/utils/settings.js";
+	} from "./lib/utils/settings";
 	import { getErrorMessage } from "./lib/utils/errorMessage.js";
 	import { getSaveTargetVersion } from "./lib/utils/GameSupport";
 

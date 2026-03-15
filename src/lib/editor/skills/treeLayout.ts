@@ -35,10 +35,10 @@ type NodeRect = {
 	y: number;
 	width: number;
 	height: number;
-	top_port: Point;
-	bottom_port: Point;
-	left_port: Point;
-	right_port: Point;
+	topPort: Point;
+	bottomPort: Point;
+	leftPort: Point;
+	rightPort: Point;
 };
 
 type Connector = {
@@ -79,17 +79,17 @@ function buildConnectorPath(parentNodeRect: NodeRect, childNodeRect: NodeRect): 
 	if (sameRow) {
 		const parentPort =
 			parentNodeRect.x <= childNodeRect.x
-				? parentNodeRect.right_port
-				: parentNodeRect.left_port;
+				? parentNodeRect.rightPort
+				: parentNodeRect.leftPort;
 		const childPort =
 			parentNodeRect.x <= childNodeRect.x
-				? childNodeRect.left_port
-				: childNodeRect.right_port;
+				? childNodeRect.leftPort
+				: childNodeRect.rightPort;
 		return `M ${parentPort.x} ${parentPort.y} H ${childPort.x}`;
 	}
 
-	const parentBottomPort = parentNodeRect.bottom_port;
-	const childTopPort = childNodeRect.top_port;
+	const parentBottomPort = parentNodeRect.bottomPort;
+	const childTopPort = childNodeRect.topPort;
 	const midpointY = (parentBottomPort.y + childTopPort.y) / 2;
 	return `M ${parentBottomPort.x} ${parentBottomPort.y} V ${midpointY} H ${childTopPort.x} V ${childTopPort.y}`;
 }
@@ -117,26 +117,26 @@ function nodeRectangleForSkill(skill: SkillData): NodeRect {
 		y,
 		width,
 		height,
-		top_port: {
+		topPort: {
 			x: x + width / 2,
 			y,
 		},
-		bottom_port: {
+		bottomPort: {
 			x: x + width / 2,
 			y: y + height,
 		},
-		left_port: {
+		leftPort: {
 			x,
 			y: y + height / 2,
 		},
-		right_port: {
+		rightPort: {
 			x: x + width,
 			y: y + height / 2,
 		},
 	};
 }
 
-export function computeTreeLayout({
+export function buildTreeLayout({
 	skills,
 	selectedSkillId,
 }: {

@@ -5,21 +5,19 @@
 	import SkillInspectorPanel from "./SkillInspectorPanel.svelte";
 	import {
 		clampSkillPoints,
-		getSkillPoints,
 		resizeSkillSlots,
-		withAddedSkillPoints,
-		withAllSkillPointsRefunded,
+		addSkillPoints,
+		refundAllSkillPoints,
 	} from "./skillSlots";
 	import {
 		buildPageNotices,
 		buildSkillStatesById,
-		derivePageIndexes,
-		deriveSkillsData,
-		resolveActivePageIndex,
-		resolveSelectedSkillId,
+		getPageIndexes,
+		getSkillsData,
+		getActivePageIndex,
+		getSelectedSkillId,
 	} from "./skillsLogic";
 	import {
-		classLabel,
 		getSkillPageNames,
 		getSkillsDataset,
 		skillIdToSaveId,
@@ -74,13 +72,13 @@
 	const skillsDataset = $derived(getSkillsDataset(save.version));
 	const hasKnownVersionSkills = $derived(skillsDataset != null);
 
-	const skillsData = $derived(deriveSkillsData(skillsDataset, save.version, save.character.class));
+	const skillsData = $derived(getSkillsData(skillsDataset, save.version, save.character.class));
 	const hasBackendClassSupport = $derived(
 		skillsContext == null ? true : skillsContext.class_supported_for_version
 	);
 	const skillSlotsReady = $derived(save.skills.length === skillSlotCount);
 	const hasClassSkills = $derived(skillsData.length > 0 && hasBackendClassSupport);
-	const pageIndexes = $derived(derivePageIndexes(skillsData));
+	const pageIndexes = $derived(getPageIndexes(skillsData));
 	const skillPageNames = $derived(getSkillPageNames(save.version, save.character.class, skillsData));
 	const canRenderTrees = $derived(hasClassSkills && skillSlotsReady);
 	const pageNotices = $derived(
@@ -91,7 +89,7 @@
 			hasClassSkills,
 			skillSlotsReady,
 			version: save.version,
-			classLabel: classLabel(save.character.class),
+			className: save.character.class,
 			supportedClasses: skillsContext == null ? [] : skillsContext.supported_classes,
 		})
 	);
@@ -100,11 +98,11 @@
 	let selectedSkillId = $state(null);
 
 	$effect(() => {
-		activePageIndex = resolveActivePageIndex(canRenderTrees, pageIndexes, activePageIndex);
+		activePageIndex = getActivePageIndex(canRenderTrees, pageIndexes, activePageIndex);
 	});
 
 	$effect(() => {
-		selectedSkillId = resolveSelectedSkillId(
+		selectedSkillId = getSelectedSkillId(
 			canRenderTrees,
 			skillsData,
 			activePageIndex,
@@ -148,7 +146,7 @@
 			if (save.attributes.newskills.value < delta) {
 				return;
 			}
-			const nextSkills = withAddedSkillPoints(save.skills, skillNum, delta);
+			const nextSkills = addSkillPoints(save.skills, skillNum, delta);
 			if (nextSkills !== save.skills) {
 				save.attributes.newskills.value -= delta;
 				save.skills = nextSkills;
@@ -158,7 +156,7 @@
 			if (skillState.points < pointsToRefund) {
 				return;
 			}
-			const nextSkills = withAddedSkillPoints(save.skills, skillNum, delta);
+			const nextSkills = addSkillPoints(save.skills, skillNum, delta);
 			if (nextSkills !== save.skills) {
 				save.attributes.newskills.value += pointsToRefund;
 				save.skills = nextSkills;
@@ -167,7 +165,7 @@
 	}
 
 	function refund() {
-		const { skills: nextSkills, refundedPoints } = withAllSkillPointsRefunded(save.skills);
+		const { skills: nextSkills, refundedPoints } = refundAllSkillPoints(save.skills);
 		if (refundedPoints < 1) {
 			return;
 		}
@@ -223,7 +221,7 @@
 		if (selectedSkill == null) {
 			return;
 		}
-		const current = getSkillPoints(save.skills, selectedSkill.saveId);
+		const current = save.skills[selectedSkill.saveId].points;
 		const clamped = clampSkillPoints(nextPoints);
 		const delta = clamped - current;
 		if (delta !== 0) {

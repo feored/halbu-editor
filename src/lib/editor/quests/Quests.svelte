@@ -1,5 +1,5 @@
 <script>
-	import * as Settings from "../../utils/settings.js";
+	import * as Settings from "../../utils/settings";
 	import { onDestroy } from "svelte";
 	import acts from "./actquests.json";
 	import {

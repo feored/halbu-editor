@@ -1,4 +1,3 @@
-import { getSkillPoints } from "./skillSlots";
 import { skillIdToSaveId } from "../../utils/GameSupport";
 import type { EditorCharacter, SkillSlot } from "../../types/editor";
 import type { SkillData, SkillDescriptionLine } from "./skillTypes";
@@ -111,7 +110,7 @@ function createCalculator({
 	const currentId = skillData.saveId;
 
 	function points(slotIndex: number): number {
-		return getSkillPoints(skills, slotIndex);
+		return skills[slotIndex].points;
 	}
 
 	function slvl(skillId: number): number {
@@ -297,7 +296,7 @@ function buildSynergyEntries(
 
 		return {
 			line,
-			acquired: getSkillPoints(skills, synergySkill.saveId) > 0,
+			acquired: skills[synergySkill.saveId].points > 0,
 		};
 	});
 }
@@ -309,7 +308,7 @@ export function buildSkillDetails({
 	character,
 	version,
 }: BuildSkillDetailsOptions): SkillDetails {
-	const currentPoints = getSkillPoints(skills, skillData.saveId);
+	const currentPoints = skills[skillData.saveId].points;
 	const calculator = createCalculator({ version, character, skills, skillData, skillsData });
 	const reqLevel = skillData.reqlevel;
 	const characterLevel = character.level;
@@ -322,7 +321,7 @@ export function buildSkillDetails({
 		return {
 			id: requiredSkillId,
 			name: prerequisite?.name ?? `Skill ${requiredSkillId}`,
-			met: getSkillPoints(skills, saveId) > 0,
+			met: skills[saveId].points > 0,
 		};
 	});
 

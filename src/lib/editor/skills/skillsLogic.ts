@@ -1,4 +1,3 @@
-import { getSkillPoints } from "./skillSlots";
 import type { SkillSlot } from "../../types/editor";
 import type { SkillData } from "./skillTypes";
 
@@ -14,11 +13,11 @@ export type BuildPageNoticesOptions = {
 	hasClassSkills: boolean;
 	skillSlotsReady: boolean;
 	version: number;
-	classLabel: string;
+	className: string;
 	supportedClasses: string[];
 };
 
-export function deriveSkillsData(
+export function getSkillsData(
 	skillsDataset: readonly SkillData[] | null,
 	version: number,
 	characterClass: string,
@@ -39,13 +38,13 @@ export function deriveSkillsData(
 		});
 }
 
-export function derivePageIndexes(skillsData: readonly SkillData[]): number[] {
+export function getPageIndexes(skillsData: readonly SkillData[]): number[] {
 	return Array.from(
 		new Set(skillsData.map((skill) => skill.page - 1).filter((page) => page >= 0)),
 	).sort((left, right) => left - right);
 }
 
-export function resolveActivePageIndex(
+export function getActivePageIndex(
 	canRenderTrees: boolean,
 	pageIndexes: readonly number[],
 	activePageIndex: number | null,
@@ -59,7 +58,7 @@ export function resolveActivePageIndex(
 	return pageIndexes[0];
 }
 
-export function resolveSelectedSkillId(
+export function getSelectedSkillId(
 	canRenderTrees: boolean,
 	skillsData: readonly SkillData[],
 	activePageIndex: number | null,
@@ -96,7 +95,7 @@ export function buildPageNotices({
 	hasClassSkills,
 	skillSlotsReady,
 	version,
-	classLabel,
+	className,
 	supportedClasses,
 }: BuildPageNoticesOptions): PageNotice[] {
 	const notices: PageNotice[] = [];
@@ -114,12 +113,12 @@ export function buildPageNotices({
 	} else if (!hasBackendClassSupport) {
 		notices.push({
 			level: "warning",
-			text: `Skills editor is not available for class ${classLabel} in save version ${version}. Supported classes: ${supportedClasses.join(", ")}.`,
+			text: `Skills editor is not available for class ${className} in save version ${version}. Supported classes: ${supportedClasses.join(", ")}.`,
 		});
 	} else if (!hasClassSkills) {
 		notices.push({
 			level: "warning",
-			text: `Skills editor has no data for class ${classLabel} in save version ${version}.`,
+			text: `Skills editor has no data for class ${className} in save version ${version}.`,
 		});
 	} else if (!skillSlotsReady) {
 		notices.push({
@@ -159,12 +158,12 @@ export function buildSkillState(
 	const levelRequirementMet = characterLevel >= reqLevel;
 	const unmetPrerequisites = skillData.reqskills.filter((requiredSkillId) => {
 		const requiredSaveId = getSkillSlot(requiredSkillId);
-		return requiredSaveId < 0 || getSkillPoints(saveSkills, requiredSaveId) < 1;
+		return requiredSaveId < 0 || saveSkills[requiredSaveId].points < 1;
 	});
 	const prerequisitesMet = unmetPrerequisites.length === 0;
 	const available = levelRequirementMet && prerequisitesMet;
 	const saveId = skillData.saveId;
-	const points = getSkillPoints(saveSkills, saveId);
+	const points = saveSkills[saveId].points;
 	const canIncrement = points < 255 && available && availableSkillPoints > 0;
 	const canDecrement = points > 0;
 

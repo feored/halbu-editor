@@ -3,15 +3,15 @@ use halbu::{Save, Strictness};
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::ffi::OsStr;
-use std::fs::{self, read_dir, remove_file};
+use std::fs::{self, read_dir};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::{Mutex, OnceLock};
 use tauri::Manager;
 use uuid::Uuid;
 
-use super::{BackupAllResult, BackupConfig, BackupStatusResult};
 use super::parsing::parse_save_from_path;
+use super::{BackupAllResult, BackupConfig, BackupStatusResult};
 
 #[derive(Debug)]
 pub(crate) struct BackupOutcome {
@@ -27,7 +27,11 @@ fn backup_hash_cache() -> &'static Mutex<HashMap<String, String>> {
 }
 
 fn backup_root_dir(app: &tauri::AppHandle) -> Result<PathBuf, String> {
-    let root = app.path().app_data_dir().map_err(|e| e.to_string())?.join("backups");
+    let root = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| e.to_string())?
+        .join("backups");
     fs::create_dir_all(&root).map_err(|e| e.to_string())?;
     Ok(root)
 }
@@ -44,7 +48,10 @@ fn bucket_prefix_for_source(path: &Path) -> String {
     Uuid::new_v5(&Uuid::NAMESPACE_URL, path_key.as_bytes()).to_string()
 }
 
-fn list_bucket_dirs_for_source(app: &tauri::AppHandle, source_path: &Path) -> Result<Vec<PathBuf>, String> {
+fn list_bucket_dirs_for_source(
+    app: &tauri::AppHandle,
+    source_path: &Path,
+) -> Result<Vec<PathBuf>, String> {
     let backup_root = backup_root_dir(app)?;
     let uuid = bucket_prefix_for_source(source_path);
     let old_prefix = format!("{uuid}-");
@@ -82,14 +89,21 @@ fn latest_timestamp_in_bucket(bucket_dir: &Path) -> Option<String> {
             continue;
         }
         let timestamp = path.file_name()?.to_str()?.to_string();
-        if latest.as_ref().map(|current| timestamp > *current).unwrap_or(true) {
+        if latest
+            .as_ref()
+            .map(|current| timestamp > *current)
+            .unwrap_or(true)
+        {
             latest = Some(timestamp);
         }
     }
     latest
 }
 
-fn select_bucket_dir_for_source(app: &tauri::AppHandle, source_path: &Path) -> Result<PathBuf, String> {
+fn select_bucket_dir_for_source(
+    app: &tauri::AppHandle,
+    source_path: &Path,
+) -> Result<PathBuf, String> {
     let bucket_dirs = list_bucket_dirs_for_source(app, source_path)?;
     if bucket_dirs.is_empty() {
         return Err("No backups exist yet for this character.".to_string());
@@ -145,7 +159,9 @@ fn format_timestamp_for_display(value: &str) -> Option<String> {
     let minute = &value[11..13];
     let second = &value[13..15];
     let millis = &value[16..19];
-    Some(format!("{year}-{month}-{day} {hour}:{minute}:{second}.{millis}"))
+    Some(format!(
+        "{year}-{month}-{day} {hour}:{minute}:{second}.{millis}"
+    ))
 }
 
 fn enforce_backup_retention(bucket_dir: &Path, keep: usize) -> Result<(), String> {
@@ -173,7 +189,6 @@ fn enforce_backup_retention(bucket_dir: &Path, keep: usize) -> Result<(), String
 struct BackupSourceSummary {
     class_name: Option<String>,
     character_name: Option<String>,
-    level: Option<u8>,
 }
 
 fn summarize_save_for_backup_metadata(path: &Path) -> Option<BackupSourceSummary> {
@@ -182,7 +197,6 @@ fn summarize_save_for_backup_metadata(path: &Path) -> Option<BackupSourceSummary
     Some(BackupSourceSummary {
         class_name: summary.class.as_ref().map(ToString::to_string),
         character_name: summary.name,
-        level: summary.level,
     })
 }
 
@@ -195,7 +209,6 @@ fn determine_bucket_dir(
     let source_summary = summarize_save_for_backup_metadata(source_path).unwrap_or_default();
     let fallback_class = fallback_save.character.class.to_string();
     let fallback_name = fallback_save.character.name.clone();
-    let fallback_level = fallback_save.character.level.to_string();
     let class_name = sanitize_component(
         source_summary
             .class_name
@@ -212,12 +225,8 @@ fn determine_bucket_dir(
             .unwrap_or(&fallback_name),
         "character",
     );
-    let summary_level = source_summary.level.map(|level| level.to_string());
-    let character_level = sanitize_component(summary_level.as_deref().unwrap_or(&fallback_level), "level");
     let uuid = bucket_prefix_for_source(source_path);
-    Ok(backup_root.join(format!(
-        "{character_name}-{class_name}-lvl{character_level}-{uuid}"
-    )))
+    Ok(backup_root.join(format!("{character_name}-{class_name}-{uuid}")))
 }
 
 fn open_path_in_file_manager(path: &Path) -> Result<(), String> {
@@ -312,7 +321,8 @@ pub(crate) fn backup_existing_file(
         cache.insert(path_key, source_hash);
     }
 
-    let backups_to_keep = usize::try_from(backup_config.backups_per_character).unwrap_or(usize::MAX);
+    let backups_to_keep =
+        usize::try_from(backup_config.backups_per_character).unwrap_or(usize::MAX);
     let cleanup_warning = match enforce_backup_retention(&bucket_dir, backups_to_keep) {
         Ok(()) => None,
         Err(error) => Some(format!(

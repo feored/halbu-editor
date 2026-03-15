@@ -1,5 +1,5 @@
 <script>
-	import { classLabel, getSaveEditionLabel, getSaveExpansionType } from "../utils/GameSupport";
+	import { getSaveEditionLabel, getSaveExpansionType } from "../utils/GameSupport";
 
 	let {
 		save,
@@ -18,7 +18,7 @@
 	</div>
 
 	<p class="session-bar__meta-line m-0 min-w-0 flex-1 truncate text-base text-halbu-textMuted">
-		<span>{classLabel(save.character.class)}</span>
+		<span>{save.character.class}</span>
 		<span aria-hidden="true">·</span>
 		<span>{levelLabel}</span>
 		<span aria-hidden="true">·</span>

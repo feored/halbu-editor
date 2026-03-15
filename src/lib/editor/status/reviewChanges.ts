@@ -1,5 +1,10 @@
 import actQuestDefinitions from "../quests/actquests.json";
 import {
+	RESOURCE_Q8_SCALE,
+	fixedPointToDisplay,
+	formatDisplayNumber,
+} from "../../utils/resources.js";
+import {
 	REQUIRED_EDITOR_ATTRIBUTE_IDS,
 	type ActId,
 	type DifficultyId,
@@ -34,6 +39,29 @@ type ActDefinition = {
 	id: string;
 	display: string;
 	quests: QuestDefinition[];
+};
+
+type SectionBuilder = (originalSave: EditorSave, currentSave: EditorSave) => ChangeReviewEntry[];
+type CharacterFieldKey = keyof EditorSave["character"];
+type CharacterStatusKey = keyof EditorSave["character"]["status"];
+type CharacterNumberListFieldKey =
+	| "assigned_skills"
+	| "menu_appearance"
+	| "resurrected_menu_appearance";
+
+type CharacterFieldConfig = {
+	label: string;
+	key: CharacterFieldKey;
+};
+
+type CharacterStatusFieldConfig = {
+	label: string;
+	key: CharacterStatusKey;
+};
+
+type CharacterListFieldConfig = {
+	label: string;
+	key: CharacterNumberListFieldKey;
 };
 
 const DIFFICULTY_ORDER: DifficultyId[] = ["normal", "nightmare", "hell"];
@@ -91,20 +119,80 @@ const QUEST_FALLBACK_LABELS: Record<string, string> = {
 	unused_3: "Unused Quest 3",
 };
 
+const Q8_ATTRIBUTE_IDS = new Set([
+	"hitpoints",
+	"maxhp",
+	"mana",
+	"maxmana",
+	"stamina",
+	"maxstamina",
+]);
+
 const QUEST_ORDER_INDEX = new Map<string, number>(
 	QUEST_ORDER.map((questId, index) => [questId, index]),
 );
 
-const ACT_LABELS_BY_ID: Record<string, string> = {};
-const QUEST_LABELS_BY_ACT_ID: Record<string, Record<string, string>> = {};
+const CHARACTER_FIELDS: CharacterFieldConfig[] = [
+	{ label: "Name", key: "name" },
+	{ label: "Class", key: "class" },
+	{ label: "Level", key: "level" },
+	{ label: "Difficulty", key: "difficulty" },
+	{ label: "Act", key: "act" },
+	{ label: "Map Seed", key: "map_seed" },
+	{ label: "Last Played", key: "last_played" },
+	{ label: "Progression", key: "progression" },
+	{ label: "Weapon Switch", key: "weapon_switch" },
+	{ label: "Left Mouse Skill", key: "left_mouse_skill" },
+	{ label: "Right Mouse Skill", key: "right_mouse_skill" },
+	{ label: "Left Mouse Skill (Swap)", key: "left_mouse_switch_skill" },
+	{ label: "Right Mouse Skill (Swap)", key: "right_mouse_switch_skill" },
+];
 
-for (const actDefinition of actQuestDefinitions as ActDefinition[]) {
-	ACT_LABELS_BY_ID[actDefinition.id] = actDefinition.display;
-	const questLabels: Record<string, string> = {};
-	for (const questDefinition of actDefinition.quests) {
-		questLabels[questDefinition.id] = questDefinition.display;
+const CHARACTER_STATUS_FIELDS: CharacterStatusFieldConfig[] = [
+	{ label: "Hardcore", key: "hardcore" },
+	{ label: "Ladder", key: "ladder" },
+	{ label: "Died", key: "died" },
+	{ label: "Expansion Flag", key: "expansion" },
+];
+
+const CHARACTER_LIST_FIELDS: CharacterListFieldConfig[] = [
+	{ label: "Assigned Skills", key: "assigned_skills" },
+	{ label: "Menu Appearance", key: "menu_appearance" },
+	{ label: "Resurrected Menu Appearance", key: "resurrected_menu_appearance" },
+];
+
+const WAYPOINT_ACQUIRED_LABEL = "Acquired";
+const WAYPOINT_NOT_ACQUIRED_LABEL = "Not acquired";
+
+const { actLabelsById: ACT_LABELS_BY_ID, questLabelsByActId: QUEST_LABELS_BY_ACT_ID } =
+	buildQuestLabelMaps(actQuestDefinitions as ActDefinition[]);
+
+const REVIEW_SECTIONS: Array<{ section: string; build: SectionBuilder }> = [
+	{ section: "Save", build: buildSaveSectionChanges },
+	{ section: "Character", build: buildCharacterSectionChanges },
+	{ section: "Mercenary", build: buildMercenarySectionChanges },
+	{ section: "Attributes", build: buildAttributeSectionChanges },
+	{ section: "Skills", build: buildSkillSectionChanges },
+	{ section: "Quests", build: buildQuestSectionChanges },
+	{ section: "Waypoints", build: buildWaypointSectionChanges },
+	{ section: "Raw Data", build: buildRawDataSectionChanges },
+];
+
+function buildQuestLabelMaps(actDefinitions: readonly ActDefinition[]): {
+	actLabelsById: Record<string, string>;
+	questLabelsByActId: Record<string, Record<string, string>>;
+} {
+	const actLabelsById: Record<string, string> = {};
+	const questLabelsByActId: Record<string, Record<string, string>> = {};
+	for (const actDefinition of actDefinitions) {
+		actLabelsById[actDefinition.id] = actDefinition.display;
+		const questLabels: Record<string, string> = {};
+		for (const questDefinition of actDefinition.quests) {
+			questLabels[questDefinition.id] = questDefinition.display;
+		}
+		questLabelsByActId[actDefinition.id] = questLabels;
 	}
-	QUEST_LABELS_BY_ACT_ID[actDefinition.id] = questLabels;
+	return { actLabelsById, questLabelsByActId };
 }
 
 function formatValue(value: unknown): string {
@@ -123,12 +211,34 @@ function formatValue(value: unknown): string {
 	return String(value);
 }
 
-function formatNumberList(values: readonly number[]): string {
+function formatList(values: readonly string[] | readonly number[]): string {
 	return values.length > 0 ? values.join(", ") : "None";
 }
 
-function formatFlagList(flags: readonly string[]): string {
-	return flags.length > 0 ? flags.join(", ") : "None";
+function formatWaypointAcquiredState(acquired: boolean): string {
+	return acquired ? WAYPOINT_ACQUIRED_LABEL : WAYPOINT_NOT_ACQUIRED_LABEL;
+}
+
+function formatSkillSlot(slot: { id: number; points: number }): string {
+	return `Skill ${slot.id}, ${slot.points} point(s)`;
+}
+
+function listValuesEqual<T>(before: readonly T[], after: readonly T[]): boolean {
+	if (before.length !== after.length) {
+		return false;
+	}
+	return before.every((value, index) => value === after[index]);
+}
+
+function countChangedEntries<T>(before: readonly T[], after: readonly T[]): number {
+	const maxLength = Math.max(before.length, after.length);
+	let changedEntries = 0;
+	for (let index = 0; index < maxLength; index += 1) {
+		if (before[index] !== after[index]) {
+			changedEntries += 1;
+		}
+	}
+	return changedEntries;
 }
 
 function pushChange(
@@ -153,27 +263,14 @@ function pushListChange(
 	before: readonly number[],
 	after: readonly number[],
 ): void {
-	const sameLength = before.length === after.length;
-	const allEqual = sameLength && before.every((value, index) => value === after[index]);
-	if (allEqual) {
+	if (listValuesEqual(before, after)) {
 		return;
 	}
 	changes.push({
 		label,
-		before: formatNumberList(before),
-		after: formatNumberList(after),
+		before: formatList(before),
+		after: formatList(after),
 	});
-}
-
-function countChangedEntries(before: readonly number[], after: readonly number[]): number {
-	const maxLength = Math.max(before.length, after.length);
-	let changedEntries = 0;
-	for (let index = 0; index < maxLength; index += 1) {
-		if (before[index] !== after[index]) {
-			changedEntries += 1;
-		}
-	}
-	return changedEntries;
 }
 
 function pushByteDataChange(
@@ -200,24 +297,56 @@ function buildGroup(section: string, changes: ChangeReviewEntry[]): ChangeReview
 	return { section, changes };
 }
 
+function buildProgressLabel(difficultyId: DifficultyId, actId: ActId, entryLabel: string): string {
+	return `${DIFFICULTY_LABELS[difficultyId]} / ${ACT_LABELS_BY_ID[actId] ?? actId} / ${entryLabel}`;
+}
+
+function orderedQuestIds(
+	originalActQuests: Record<string, EditorQuest>,
+	currentActQuests: Record<string, EditorQuest>,
+): string[] {
+	const questIds = new Set<string>([
+		...Object.keys(originalActQuests),
+		...Object.keys(currentActQuests),
+	]);
+	return Array.from(questIds).sort((left, right) => {
+		const leftIndex = QUEST_ORDER_INDEX.get(left) ?? Number.MAX_SAFE_INTEGER;
+		const rightIndex = QUEST_ORDER_INDEX.get(right) ?? Number.MAX_SAFE_INTEGER;
+		if (leftIndex !== rightIndex) {
+			return leftIndex - rightIndex;
+		}
+		return left.localeCompare(right);
+	});
+}
+
+function questLabel(actId: ActId, questId: string): string {
+	const actQuestLabels = QUEST_LABELS_BY_ACT_ID[actId] ?? {};
+	return actQuestLabels[questId] ?? QUEST_FALLBACK_LABELS[questId] ?? questId;
+}
+
+function toWaypointMap(waypoints: readonly EditorWaypoint[]): Map<string, EditorWaypoint> {
+	const result = new Map<string, EditorWaypoint>();
+	for (const waypoint of waypoints) {
+		result.set(waypoint.id, waypoint);
+	}
+	return result;
+}
+
+function formatAttributeValueForReview(attributeId: string, rawValue: number): string | number {
+	if (!Q8_ATTRIBUTE_IDS.has(attributeId)) {
+		return rawValue;
+	}
+	return formatDisplayNumber(fixedPointToDisplay(rawValue, RESOURCE_Q8_SCALE));
+}
+
 function buildSaveSectionChanges(
 	originalSave: EditorSave,
 	currentSave: EditorSave,
 ): ChangeReviewEntry[] {
 	const changes: ChangeReviewEntry[] = [];
 	pushChange(changes, "Version", originalSave.version, currentSave.version);
-	pushChange(
-		changes,
-		"Expansion Mode",
-		originalSave.expansion_type,
-		currentSave.expansion_type,
-	);
-	pushChange(
-		changes,
-		"Format ID",
-		originalSave.meta.format,
-		currentSave.meta.format,
-	);
+	pushChange(changes, "Expansion Mode", originalSave.expansion_type, currentSave.expansion_type);
+	pushChange(changes, "Format ID", originalSave.meta.format, currentSave.meta.format);
 	return changes;
 }
 
@@ -229,92 +358,28 @@ function buildCharacterSectionChanges(
 	const originalCharacter = originalSave.character;
 	const currentCharacter = currentSave.character;
 
-	pushChange(changes, "Name", originalCharacter.name, currentCharacter.name);
-	pushChange(changes, "Class", originalCharacter.class, currentCharacter.class);
-	pushChange(changes, "Level", originalCharacter.level, currentCharacter.level);
-	pushChange(changes, "Difficulty", originalCharacter.difficulty, currentCharacter.difficulty);
-	pushChange(changes, "Act", originalCharacter.act, currentCharacter.act);
-	pushChange(changes, "Map Seed", originalCharacter.map_seed, currentCharacter.map_seed);
-	pushChange(
-		changes,
-		"Last Played",
-		originalCharacter.last_played,
-		currentCharacter.last_played,
-	);
-	pushChange(
-		changes,
-		"Progression",
-		originalCharacter.progression,
-		currentCharacter.progression,
-	);
-	pushChange(
-		changes,
-		"Weapon Switch",
-		originalCharacter.weapon_switch,
-		currentCharacter.weapon_switch,
-	);
-	pushChange(
-		changes,
-		"Left Mouse Skill",
-		originalCharacter.left_mouse_skill,
-		currentCharacter.left_mouse_skill,
-	);
-	pushChange(
-		changes,
-		"Right Mouse Skill",
-		originalCharacter.right_mouse_skill,
-		currentCharacter.right_mouse_skill,
-	);
-	pushChange(
-		changes,
-		"Left Mouse Skill (Swap)",
-		originalCharacter.left_mouse_switch_skill,
-		currentCharacter.left_mouse_switch_skill,
-	);
-	pushChange(
-		changes,
-		"Right Mouse Skill (Swap)",
-		originalCharacter.right_mouse_switch_skill,
-		currentCharacter.right_mouse_switch_skill,
-	);
-	pushChange(
-		changes,
-		"Hardcore",
-		originalCharacter.status.hardcore,
-		currentCharacter.status.hardcore,
-	);
-	pushChange(
-		changes,
-		"Ladder",
-		originalCharacter.status.ladder,
-		currentCharacter.status.ladder,
-	);
-	pushChange(changes, "Died", originalCharacter.status.died, currentCharacter.status.died);
-	pushChange(
-		changes,
-		"Expansion Flag",
-		originalCharacter.status.expansion,
-		currentCharacter.status.expansion,
-	);
+	for (const field of CHARACTER_FIELDS) {
+		pushChange(changes, field.label, originalCharacter[field.key], currentCharacter[field.key]);
+	}
 
-	pushListChange(
-		changes,
-		"Assigned Skills",
-		originalCharacter.assigned_skills,
-		currentCharacter.assigned_skills,
-	);
-	pushListChange(
-		changes,
-		"Menu Appearance",
-		originalCharacter.menu_appearance,
-		currentCharacter.menu_appearance,
-	);
-	pushListChange(
-		changes,
-		"Resurrected Menu Appearance",
-		originalCharacter.resurrected_menu_appearance,
-		currentCharacter.resurrected_menu_appearance,
-	);
+	for (const field of CHARACTER_STATUS_FIELDS) {
+		pushChange(
+			changes,
+			field.label,
+			originalCharacter.status[field.key],
+			currentCharacter.status[field.key],
+		);
+	}
+
+	for (const field of CHARACTER_LIST_FIELDS) {
+		pushListChange(
+			changes,
+			field.label,
+			originalCharacter[field.key],
+			currentCharacter[field.key],
+		);
+	}
+
 	pushByteDataChange(
 		changes,
 		"Raw Character Section",
@@ -336,12 +401,7 @@ function buildMercenarySectionChanges(
 	pushChange(changes, "ID", originalMercenary.id, currentMercenary.id);
 	pushChange(changes, "Dead", originalMercenary.is_dead, currentMercenary.is_dead);
 	pushChange(changes, "Variant", originalMercenary.variant_id, currentMercenary.variant_id);
-	pushChange(
-		changes,
-		"Experience",
-		originalMercenary.experience,
-		currentMercenary.experience,
-	);
+	pushChange(changes, "Experience", originalMercenary.experience, currentMercenary.experience);
 	pushChange(changes, "Name Index", originalMercenary.name_id, currentMercenary.name_id);
 
 	return changes;
@@ -354,11 +414,13 @@ function buildAttributeSectionChanges(
 	const changes: ChangeReviewEntry[] = [];
 	for (const attributeId of REQUIRED_EDITOR_ATTRIBUTE_IDS) {
 		const label = ATTRIBUTE_LABELS[attributeId] ?? attributeId;
+		const originalValue = originalSave.attributes[attributeId].value;
+		const currentValue = currentSave.attributes[attributeId].value;
 		pushChange(
 			changes,
 			label,
-			originalSave.attributes[attributeId].value,
-			currentSave.attributes[attributeId].value,
+			formatAttributeValueForReview(attributeId, originalValue),
+			formatAttributeValueForReview(attributeId, currentValue),
 		);
 	}
 	return changes;
@@ -390,7 +452,7 @@ function buildSkillSectionChanges(
 			changes.push({
 				label: `${slotLabel} Added`,
 				before: "None",
-				after: `Skill ${currentSlot.id}, ${currentSlot.points} point(s)`,
+				after: formatSkillSlot(currentSlot),
 			});
 			continue;
 		}
@@ -398,7 +460,7 @@ function buildSkillSectionChanges(
 		if (originalSlot != null && currentSlot == null) {
 			changes.push({
 				label: `${slotLabel} Removed`,
-				before: `Skill ${originalSlot.id}, ${originalSlot.points} point(s)`,
+				before: formatSkillSlot(originalSlot),
 				after: "None",
 			});
 			continue;
@@ -428,29 +490,6 @@ function buildSkillSectionChanges(
 	return changes;
 }
 
-function orderedQuestIds(
-	originalActQuests: Record<string, EditorQuest>,
-	currentActQuests: Record<string, EditorQuest>,
-): string[] {
-	const questIds = new Set<string>([
-		...Object.keys(originalActQuests),
-		...Object.keys(currentActQuests),
-	]);
-	return Array.from(questIds).sort((left, right) => {
-		const leftIndex = QUEST_ORDER_INDEX.get(left) ?? Number.MAX_SAFE_INTEGER;
-		const rightIndex = QUEST_ORDER_INDEX.get(right) ?? Number.MAX_SAFE_INTEGER;
-		if (leftIndex !== rightIndex) {
-			return leftIndex - rightIndex;
-		}
-		return left.localeCompare(right);
-	});
-}
-
-function questLabel(actId: ActId, questId: string): string {
-	const actQuestLabels = QUEST_LABELS_BY_ACT_ID[actId] ?? {};
-	return actQuestLabels[questId] ?? QUEST_FALLBACK_LABELS[questId] ?? questId;
-}
-
 function buildQuestSectionChanges(
 	originalSave: EditorSave,
 	currentSave: EditorSave,
@@ -464,31 +503,19 @@ function buildQuestSectionChanges(
 			for (const questId of orderedQuestIds(originalActQuests, currentActQuests)) {
 				const originalState = originalActQuests[questId]?.state ?? [];
 				const currentState = currentActQuests[questId]?.state ?? [];
-				const sameLength = originalState.length === currentState.length;
-				const sameState =
-					sameLength && originalState.every((flag, index) => flag === currentState[index]);
-				if (sameState) {
+				if (listValuesEqual(originalState, currentState)) {
 					continue;
 				}
-				const label = `${DIFFICULTY_LABELS[difficultyId]} / ${ACT_LABELS_BY_ID[actId] ?? actId} / ${questLabel(actId, questId)}`;
 				changes.push({
-					label,
-					before: formatFlagList(originalState),
-					after: formatFlagList(currentState),
+					label: buildProgressLabel(difficultyId, actId, questLabel(actId, questId)),
+					before: formatList(originalState),
+					after: formatList(currentState),
 				});
 			}
 		}
 	}
 
 	return changes;
-}
-
-function toWaypointMap(waypoints: readonly EditorWaypoint[]): Map<string, EditorWaypoint> {
-	const result = new Map<string, EditorWaypoint>();
-	for (const waypoint of waypoints) {
-		result.set(waypoint.id, waypoint);
-	}
-	return result;
 }
 
 function buildWaypointSectionChanges(
@@ -503,23 +530,19 @@ function buildWaypointSectionChanges(
 			const currentWaypoints = currentSave.waypoints[difficultyId][actId];
 			const originalById = toWaypointMap(originalWaypoints);
 			const currentById = toWaypointMap(currentWaypoints);
-			const waypointIds = new Set<string>([
-				...originalById.keys(),
-				...currentById.keys(),
-			]);
+			const waypointIds = new Set<string>([...originalById.keys(), ...currentById.keys()]);
 
 			for (const waypointId of waypointIds) {
 				const originalWaypoint = originalById.get(waypointId) ?? null;
 				const currentWaypoint = currentById.get(waypointId) ?? null;
-				const waypointName =
-					currentWaypoint?.name ?? originalWaypoint?.name ?? waypointId;
-				const label = `${DIFFICULTY_LABELS[difficultyId]} / ${ACT_LABELS_BY_ID[actId] ?? actId} / ${waypointName}`;
+				const waypointName = currentWaypoint?.name ?? originalWaypoint?.name ?? waypointId;
+				const label = buildProgressLabel(difficultyId, actId, waypointName);
 
 				if (originalWaypoint == null && currentWaypoint != null) {
 					changes.push({
 						label,
 						before: "Missing",
-						after: currentWaypoint.acquired ? "Acquired" : "Not acquired",
+						after: formatWaypointAcquiredState(currentWaypoint.acquired),
 					});
 					continue;
 				}
@@ -527,7 +550,7 @@ function buildWaypointSectionChanges(
 				if (originalWaypoint != null && currentWaypoint == null) {
 					changes.push({
 						label,
-						before: originalWaypoint.acquired ? "Acquired" : "Not acquired",
+						before: formatWaypointAcquiredState(originalWaypoint.acquired),
 						after: "Missing",
 					});
 					continue;
@@ -540,8 +563,8 @@ function buildWaypointSectionChanges(
 				if (originalWaypoint.acquired !== currentWaypoint.acquired) {
 					changes.push({
 						label,
-						before: originalWaypoint.acquired ? "Acquired" : "Not acquired",
-						after: currentWaypoint.acquired ? "Acquired" : "Not acquired",
+						before: formatWaypointAcquiredState(originalWaypoint.acquired),
+						after: formatWaypointAcquiredState(currentWaypoint.acquired),
 					});
 				}
 			}
@@ -570,27 +593,13 @@ export function buildChangeReview(
 	}
 
 	const groups: ChangeReviewGroup[] = [];
-	const sectionBuilders: Array<[string, (original: EditorSave, current: EditorSave) => ChangeReviewEntry[]]> = [
-		["Save", buildSaveSectionChanges],
-		["Character", buildCharacterSectionChanges],
-		["Mercenary", buildMercenarySectionChanges],
-		["Attributes", buildAttributeSectionChanges],
-		["Skills", buildSkillSectionChanges],
-		["Quests", buildQuestSectionChanges],
-		["Waypoints", buildWaypointSectionChanges],
-		["Raw Data", buildRawDataSectionChanges],
-	];
-
-	for (const [sectionName, buildSectionChanges] of sectionBuilders) {
-		const sectionGroup = buildGroup(sectionName, buildSectionChanges(originalSave, currentSave));
-		if (sectionGroup != null) {
-			groups.push(sectionGroup);
+	for (const { section, build } of REVIEW_SECTIONS) {
+		const group = buildGroup(section, build(originalSave, currentSave));
+		if (group != null) {
+			groups.push(group);
 		}
 	}
 
 	const totalChanges = groups.reduce((sum, group) => sum + group.changes.length, 0);
-	return {
-		totalChanges,
-		groups,
-	};
+	return { totalChanges, groups };
 }

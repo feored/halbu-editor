@@ -24,7 +24,6 @@
 	let statusError = $state("");
 	let saveInProgress = $state(false);
 	let reviewModalOpen = $state(false);
-	let validationDetailsOpen = $state(false);
 	let advancedConversionDetailsOpen = $state(false);
 	let reviewDialogRef;
 
@@ -44,30 +43,69 @@
 	const hasBlockingCompatibilityIssues = $derived(blockingCompatibilityIssues.length > 0);
 	const hasCompatibilityIssues = $derived(compatibilityIssuesList.length > 0);
 	const outputFormats = $derived(outputFormatOptions);
-	const validationSummary = $derived.by(() => {
+	const currentVersion = $derived(save.version);
+	const targetVersion = $derived(compatibilityTargetVersion);
+	const effectiveTargetVersion = $derived(targetVersion ?? currentVersion);
+	const isConversionRelevant = $derived(effectiveTargetVersion !== currentVersion);
+	const hasConversionWarnings = $derived(
+		compatibilityPending || compatibilityError.length > 0 || hasCompatibilityIssues,
+	);
+	const saveReadinessLabel = $derived.by(() => {
 		if (hasEditValidationErrors || hasBlockingCompatibilityIssues) {
-			return "Blocked";
+			return "Fix issues before saving";
 		}
-		if (
-			hasEditValidationWarnings ||
-			hasCompatibilityIssues ||
-			compatibilityError.length > 0 ||
-			compatibilityPending
-		) {
-			return "Ready with warnings";
+		if (hasEditValidationWarnings || hasConversionWarnings) {
+			return "Ready to save with warnings";
 		}
-		return "Ready";
+		return "Ready to save";
 	});
-	const validationSummaryClass = $derived.by(() => {
+	const saveReadinessClass = $derived.by(() => {
 		if (hasEditValidationErrors || hasBlockingCompatibilityIssues) {
 			return "text-halbu-danger";
 		}
-		if (
-			hasEditValidationWarnings ||
-			hasCompatibilityIssues ||
-			compatibilityError.length > 0 ||
-			compatibilityPending
-		) {
+		if (hasEditValidationWarnings || hasConversionWarnings) {
+			return "text-halbu-warning";
+		}
+		return "text-halbu-text";
+	});
+	const editChecksLabel = $derived.by(() => {
+		if (hasEditValidationErrors) {
+			return `Failed (${editValidationErrorCount} error(s))`;
+		}
+		if (hasEditValidationWarnings) {
+			return `Passed with warnings (${editValidationWarningCount})`;
+		}
+		return "Passed";
+	});
+	const editChecksClass = $derived.by(() => {
+		if (hasEditValidationErrors) {
+			return "text-halbu-danger";
+		}
+		if (hasEditValidationWarnings) {
+			return "text-halbu-warning";
+		}
+		return "text-halbu-text";
+	});
+	const compatibilityChecksLabel = $derived.by(() => {
+		if (compatibilityPending) {
+			return "Checking...";
+		}
+		if (compatibilityError.length > 0) {
+			return "Check failed";
+		}
+		if (hasBlockingCompatibilityIssues) {
+			return `Failed (${blockingCompatibilityIssues.length} blocking issue(s))`;
+		}
+		if (hasCompatibilityIssues) {
+			return `Passed with warnings (${nonBlockingCompatibilityIssues.length})`;
+		}
+		return "Passed";
+	});
+	const compatibilityChecksClass = $derived.by(() => {
+		if (compatibilityError.length > 0 || hasBlockingCompatibilityIssues) {
+			return "text-halbu-danger";
+		}
+		if (compatibilityPending || hasCompatibilityIssues) {
 			return "text-halbu-warning";
 		}
 		return "text-halbu-text";
@@ -78,14 +116,54 @@
 			hasCompatibilityIssues ||
 			compatibilityError.length > 0,
 	);
-	const formattedCompatibilityTargetVersion = $derived.by(() => {
-		return compatibilityTargetVersion == null ? "unknown" : `v${compatibilityTargetVersion}`;
+	const conversionStatusLabel = $derived.by(() => {
+		if (!isConversionRelevant) {
+			return "No conversion";
+		}
+		if (compatibilityPending) {
+			return `Converting to v${effectiveTargetVersion} (checking compatibility)`;
+		}
+		if (compatibilityError.length > 0) {
+			return `Converting to v${effectiveTargetVersion} (compatibility check failed)`;
+		}
+		return `Converting to v${effectiveTargetVersion}`;
 	});
-	const currentVersion = $derived(save.version);
-	const targetVersion = $derived(compatibilityTargetVersion);
+	const conversionStatusClass = $derived.by(() => {
+		if (compatibilityError.length > 0 || hasBlockingCompatibilityIssues) {
+			return "text-halbu-danger";
+		}
+		if (!isConversionRelevant) {
+			return "text-halbu-textMuted";
+		}
+		if (compatibilityPending || hasCompatibilityIssues) {
+			return "text-halbu-warning";
+		}
+		return "text-halbu-text";
+	});
 	const changeReview = $derived(buildChangeReview(baselineSave, save));
 	const reviewChangeCount = $derived(changeReview.totalChanges);
 	const reviewChangeGroups = $derived(changeReview.groups);
+	const unsavedChangesClass = $derived.by(() => {
+		return reviewChangeCount > 0 ? "text-halbu-info" : "text-halbu-textMuted";
+	});
+	const unsavedChangesLabel = $derived.by(() => {
+		return reviewChangeCount === 1
+			? "1 unsaved change"
+			: `${reviewChangeCount} unsaved changes`;
+	});
+	const nextActionLabel = $derived.by(() => {
+		if (hasEditValidationErrors || hasBlockingCompatibilityIssues) {
+			return "Fix validation issues before saving.";
+		}
+		if (reviewChangeCount > 0) {
+			return "Review changes, then save.";
+		}
+		if (saveDisabled) {
+			return "Saving is currently unavailable.";
+		}
+		return "Choose Save or Save As to finalize this file.";
+	});
+	const canChooseTargetFormat = $derived(outputFormats.length > 0);
 	const COMPATIBILITY_CODE_LABELS = {
 		WarlockRequiresRotw: "Warlock requires RotW edition target.",
 		WarlockRequiresRotwExpansion: "Warlock requires Reign of the Warlock expansion mode.",
@@ -109,22 +187,18 @@
 		return "Issue";
 	}
 
-	function handleAdvancedSaveOptionsToggle(event) {
-		const isOpen = event.currentTarget.open === true;
-		advancedConversionDetailsOpen = isOpen;
-		onToggleAdvancedSaveOptions(isOpen);
-	}
-
-	function handleValidationDetailsToggle(event) {
-		validationDetailsOpen = event.currentTarget.open === true;
-	}
-
 	function handleCompatibilityTargetVersionChange(event) {
 		const selectedVersion = Number(event.currentTarget.value);
 		if (!Number.isInteger(selectedVersion) || selectedVersion < 1) {
 			return;
 		}
 		onSelectCompatibilityTargetVersion(selectedVersion);
+	}
+
+	function handleAdvancedSaveOptionsToggle(event) {
+		const isOpen = event.currentTarget.open === true;
+		advancedConversionDetailsOpen = isOpen;
+		onToggleAdvancedSaveOptions(isOpen);
 	}
 
 	async function saveCurrentVersion() {
@@ -193,12 +267,6 @@
 	}
 
 	$effect(() => {
-		if (hasValidationIssues) {
-			validationDetailsOpen = true;
-		}
-	});
-
-	$effect(() => {
 		advancedConversionDetailsOpen = advancedSaveOptionsEnabled === true;
 	});
 
@@ -220,172 +288,150 @@
 </script>
 
 <div class="grid content-start gap-2.5">
+	<section class="rounded-sm border border-halbu-borderStrong bg-halbu-panel2 px-2.5 py-2">
+		<h3 class="editor-card-title mb-1.5">Save Summary</h3>
+		<dl class="m-0 grid grid-cols-form-48 items-baseline gap-x-2.5 gap-y-1">
+			<dt class="form-label mb-0">Save readiness</dt>
+			<dd class={`m-0 text-sm font-semibold ${saveReadinessClass}`}>{saveReadinessLabel}</dd>
+
+			<dt class="form-label mb-0">Unsaved changes</dt>
+			<dd class={`m-0 text-sm font-semibold ${unsavedChangesClass}`}>
+				{unsavedChangesLabel}
+			</dd>
+
+			<dt class="form-label mb-0">Source version</dt>
+			<dd class="m-0 text-sm text-halbu-text">v{currentVersion}</dd>
+
+			<dt class="form-label mb-0">Target version</dt>
+			<dd class="m-0 text-sm text-halbu-text">v{effectiveTargetVersion}</dd>
+
+			<dt class="form-label mb-0">Conversion</dt>
+			<dd class={`m-0 text-sm font-semibold ${conversionStatusClass}`}>
+				{conversionStatusLabel}
+			</dd>
+		</dl>
+		<div class="form-text mt-1">{nextActionLabel}</div>
+	</section>
+
 	<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
-		<h3 class="editor-card-title mb-1.5">Save</h3>
-		<div class="grid gap-1">
-			<details
-				bind:open={validationDetailsOpen}
-				ontoggle={handleValidationDetailsToggle}
-				class="rounded-xs border border-halbu-border bg-halbu-panel2 px-2 py-1.5"
-			>
-				<summary class="flex cursor-pointer list-none items-center justify-between gap-2">
-					<span class="inline-flex items-center gap-1.5">
-						<span aria-hidden="true" class="text-sm text-halbu-textMuted">
-							{validationDetailsOpen ? "▾" : "▸"}
-						</span>
-						<span class="form-label mb-0">Validation</span>
-					</span>
-					<span class={`text-sm ${validationSummaryClass}`}
-						>{validationSummary}</span
-					>
-				</summary>
+		<h3 class="editor-card-title mb-1.5">Validation</h3>
+		<dl class="m-0 grid grid-cols-form-48 items-baseline gap-x-2.5 gap-y-1">
+			<dt class="form-label mb-0">Edit checks</dt>
+			<dd class={`m-0 text-sm font-semibold ${editChecksClass}`}>{editChecksLabel}</dd>
 
-				<div class="mt-1 grid gap-1">
-					<div class="grid gap-0.5">
-						<div class="form-label mb-0">Edit validation</div>
-						<div
-							class={`text-sm ${
-								hasEditValidationErrors
-									? "text-halbu-danger"
-									: hasEditValidationWarnings
-										? "text-halbu-warning"
-										: "text-halbu-text"
-							}`}
-						>
-							{#if hasEditValidationErrors}
-								Blocked ({editValidationErrorCount} error(s))
-							{:else if hasEditValidationWarnings}
-								Ready with warnings ({editValidationWarningCount})
-							{:else}
-								Ready
-							{/if}
-						</div>
-						{#if hasEditValidationErrors || hasEditValidationWarnings}
-							<ul class="m-0 pl-4 text-sm text-halbu-textMuted">
-								{#each editValidationErrors as issue}
-									<li>{issue}</li>
-								{/each}
-								{#each editValidationWarnings as issue}
-									<li>{issue}</li>
-								{/each}
-							</ul>
-						{/if}
-					</div>
-
-					<div class="grid gap-0.5">
-						<div class="form-label mb-0">
-							Compatibility preflight ({formattedCompatibilityTargetVersion})
-						</div>
-						{#if compatibilityPending}
-							<div class="text-sm text-halbu-textMuted">
-								Checking compatibility...
-							</div>
-						{:else if compatibilityError.length > 0}
-							<div class="text-sm text-halbu-warning">
-								Compatibility check failed: {compatibilityError}
-							</div>
-						{:else if hasBlockingCompatibilityIssues}
-							<div class="text-sm text-halbu-danger">
-								Blocked ({blockingCompatibilityIssues.length} blocking issue(s))
-							</div>
-						{:else if hasCompatibilityIssues}
-							<div class="text-sm text-halbu-warning">
-								Ready with warnings ({nonBlockingCompatibilityIssues.length})
-							</div>
-						{:else}
-							<div class="text-sm text-halbu-text">Compatible</div>
-						{/if}
-						{#if hasCompatibilityIssues}
-							<ul class="m-0 pl-4 text-sm text-halbu-textMuted">
-								{#each compatibilityIssuesList as issue}
-									<li class={issue.blocking ? "text-halbu-danger" : ""}>
-										{issue.blocking ? "Blocking" : "Warning"}:
-										{compatibilityMessage(issue)}
-									</li>
-								{/each}
-							</ul>
-						{/if}
-					</div>
-				</div>
-			</details>
-
-			<details
-				bind:open={advancedConversionDetailsOpen}
-				ontoggle={handleAdvancedSaveOptionsToggle}
-				class="rounded-xs border border-halbu-border bg-halbu-panel2 px-2 py-1.5"
-			>
-				<summary class="flex cursor-pointer list-none items-center justify-between gap-2">
-					<span class="inline-flex items-center gap-1.5">
-						<span aria-hidden="true" class="text-sm text-halbu-textMuted">
-							{advancedConversionDetailsOpen ? "▾" : "▸"}
-						</span>
-						<span class="form-label mb-0">Conversion</span>
-					</span>
-					<span class="text-sm text-halbu-textMuted">
-						{advancedConversionDetailsOpen ? "Enabled" : "Disabled"}
-					</span>
-				</summary>
-				<div class="mt-1 grid gap-1">
-					{#if advancedConversionDetailsOpen}
-						<div class="grid grid-cols-form-32 items-center gap-x-2">
-							<label class="form-label mb-0" for="save-target-format"
-								>Output format</label
-							>
-							<select
-								id="save-target-format"
-								class="form-select"
-								value={targetVersion == null ? "" : targetVersion}
-								onchange={handleCompatibilityTargetVersionChange}
-							>
-								{#each outputFormats as format}
-									<option value={format.version}>
-										{format.formatId} (v{format.version}) - {format.gameEdition}
-									</option>
-								{/each}
-							</select>
-						</div>
-					{/if}
-				</div>
-			</details>
-
-			<div class="rounded-xs border border-halbu-border bg-halbu-panel2 px-2 py-1.5">
-				<div class="grid gap-1 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-					<div class="text-sm text-halbu-text">
-						Current version: v{currentVersion}
-						<span aria-hidden="true" class="mx-1 text-halbu-textMuted">·</span>
-						Target version: v{targetVersion ?? currentVersion}
-					</div>
-					<div
-						class="flex flex-wrap items-center gap-1.5 justify-self-start sm:justify-self-end"
-					>
-						<Button
-							variant="secondary"
-							onclick={openReviewModal}
-							disabled={reviewChangeCount < 1}
-						>
-							Review Changes ({reviewChangeCount})
-						</Button>
-						<Button
-							variant="secondary"
-							onclick={saveAsCurrentVersion}
-							disabled={saveDisabled || saveInProgress}
-						>
-							Save As...
-						</Button>
-							<Button
-								onclick={saveCurrentVersion}
-								disabled={saveDisabled || saveInProgress}
-							>
-								{saveInProgress ? "Saving..." : "Save"}
-							</Button>
-					</div>
-				</div>
+			<dt class="form-label mb-0">Target compatibility (v{effectiveTargetVersion})</dt>
+			<dd class={`m-0 text-sm font-semibold ${compatibilityChecksClass}`}>
+				{compatibilityChecksLabel}
+			</dd>
+		</dl>
+		{#if hasEditValidationErrors || hasEditValidationWarnings}
+			<ul class="mt-1 mb-0 pl-4 text-sm text-halbu-textMuted">
+				{#each editValidationErrors as issue}
+					<li class="text-halbu-danger">{issue}</li>
+				{/each}
+				{#each editValidationWarnings as issue}
+					<li>{issue}</li>
+				{/each}
+			</ul>
+		{/if}
+		{#if compatibilityError.length > 0}
+			<div class="form-text mt-1 text-halbu-danger">
+				Compatibility check failed: {compatibilityError}
 			</div>
+		{/if}
+		{#if hasCompatibilityIssues}
+			<ul class="mt-1 mb-0 pl-4 text-sm text-halbu-textMuted">
+				{#each compatibilityIssuesList as issue}
+					<li class={issue.blocking ? "text-halbu-danger" : ""}>
+						{issue.blocking ? "Blocking" : "Warning"}: {compatibilityMessage(issue)}
+					</li>
+				{/each}
+			</ul>
+		{/if}
+		{#if !hasValidationIssues && !compatibilityPending}
+			<div class="form-text mt-1">All checks passed for this save and target version.</div>
+		{/if}
+	</section>
 
-			{#if statusError.length > 0}
-				<div class="form-text text-halbu-warning">{statusError}</div>
+	<details
+		bind:open={advancedConversionDetailsOpen}
+		ontoggle={handleAdvancedSaveOptionsToggle}
+		class={`rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2 ${
+			!isConversionRelevant && !advancedConversionDetailsOpen ? "opacity-90" : ""
+		}`}
+	>
+		<summary class="flex cursor-pointer list-none items-center justify-between gap-2">
+			<span class="inline-flex items-center gap-1.5">
+				<span aria-hidden="true" class="text-sm text-halbu-textMuted">
+					{advancedConversionDetailsOpen ? "▾" : "▸"}
+				</span>
+				<span
+					class={`editor-card-title ${!isConversionRelevant ? "text-halbu-textMuted" : ""}`}
+				>
+					Conversion
+				</span>
+			</span>
+			<span class={`text-sm font-semibold ${conversionStatusClass}`}
+				>{conversionStatusLabel}</span
+			>
+		</summary>
+
+		{#if advancedConversionDetailsOpen}
+			{#if canChooseTargetFormat}
+				<div class="mt-1 grid grid-cols-form-48 items-center gap-x-2.5 gap-y-1">
+					<label class="form-label mb-0" for="save-target-format">Output format</label>
+					<select
+						id="save-target-format"
+						class="form-select"
+						value={targetVersion == null ? "" : targetVersion}
+						onchange={handleCompatibilityTargetVersionChange}
+					>
+						{#each outputFormats as format}
+							<option value={format.version}>
+								{format.formatId} (v{format.version}) - {format.gameEdition}
+							</option>
+						{/each}
+					</select>
+				</div>
+			{:else}
+				<div class="form-text mt-1">
+					No output format options are available for this save.
+				</div>
 			{/if}
+		{:else if !isConversionRelevant}
+			<div class="form-text mt-1">
+				No conversion is required. Expand to change target settings.
+			</div>
+		{/if}
+	</details>
+
+	<section class="rounded-sm border border-halbu-borderStrong bg-halbu-panel2 px-2.5 py-2">
+		<h3 class="editor-card-title mb-1.5">Actions</h3>
+		<div class="flex flex-wrap items-center gap-1.5">
+			<Button
+				variant="secondary"
+				class={reviewChangeCount > 0
+					? "border-halbu-borderStrong bg-halbu-infoSoft text-halbu-info hover:bg-halbu-infoSoft"
+					: ""}
+				onclick={openReviewModal}
+				disabled={reviewChangeCount < 1}
+			>
+				{reviewChangeCount > 0 ? `Review Changes (${reviewChangeCount})` : "Review Changes"}
+			</Button>
+			<Button
+				variant="secondary"
+				onclick={saveAsCurrentVersion}
+				disabled={saveDisabled || saveInProgress}
+			>
+				Save As...
+			</Button>
+			<Button onclick={saveCurrentVersion} disabled={saveDisabled || saveInProgress}>
+				{saveInProgress ? "Saving..." : "Save"}
+			</Button>
 		</div>
+		{#if statusError.length > 0}
+			<div class="form-text mt-1 text-halbu-warning">{statusError}</div>
+		{/if}
 	</section>
 </div>
 
@@ -416,7 +462,9 @@
 		{:else}
 			<div class="grid gap-2">
 				{#each reviewChangeGroups as group}
-					<section class="rounded-xs border border-halbu-border bg-halbu-panel px-2 py-1.5">
+					<section
+						class="rounded-xs border border-halbu-border bg-halbu-panel px-2 py-1.5"
+					>
 						<h4 class="editor-card-title mb-1">
 							{group.section} ({group.changes.length})
 						</h4>

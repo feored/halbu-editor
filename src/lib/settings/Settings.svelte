@@ -2,7 +2,7 @@
 	import { message, open } from "@tauri-apps/plugin-dialog";
 	import { invoke } from "@tauri-apps/api/core";
 	import Button from "../components/ui/button/button.svelte";
-	import * as Settings from "../utils/settings.js";
+	import * as Settings from "../utils/settings";
 	import { getErrorMessage } from "../utils/errorMessage.js";
 	import { toPositiveInteger } from "../utils/numbers.js";
 	import { onMount } from "svelte";
