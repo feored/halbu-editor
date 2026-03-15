@@ -126,6 +126,7 @@ pub fn save_file_as_version(
     path: String,
     save: Save,
     target_version: u32,
+    ignore_compatibility_checks: Option<bool>,
     backup_source_path: Option<String>,
     backup_config: Option<BackupConfig>,
 ) -> Result<SaveCommandResult, String> {
@@ -143,9 +144,14 @@ pub fn save_file_as_version(
     let backup_outcome = backup_existing_file(&app, source_path, &save, &effective_backup_config)?;
     let target_format = FormatId::from_version(target_version)
         .ok_or_else(|| format!("Unsupported save version {target_version}."))?;
+    let compatibility_checks = if ignore_compatibility_checks.unwrap_or(false) {
+        CompatibilityChecks::Ignore
+    } else {
+        CompatibilityChecks::Enforce
+    };
 
     let generated_save = save
-        .encode_for(target_format, CompatibilityChecks::Enforce)
+        .encode_for(target_format, compatibility_checks)
         .map_err(|e| e.to_string())?;
     if let Err(write_error) = write_bytes_atomic(path, &generated_save) {
         if let Some(backup_path) = backup_outcome.path.as_ref() {

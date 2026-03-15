@@ -75,6 +75,7 @@
 	type SaveCharacterOptions = {
 		targetVersion?: number | null;
 		saveAs?: boolean;
+		forceConvert?: boolean;
 	};
 
 	const EDITOR_NAV = [
@@ -106,6 +107,10 @@
 	let compatibilityCheckPending = $state(false);
 	let compatibilityCheckError = $state("");
 	let compatibilityCheckToken = 0;
+	let compatibilityCheckRunCounter = 0;
+	let activeCompatibilityCheckGeneration = $state(0);
+	let latestCompatibilityResultGeneration = $state(0);
+	let lastSaveUsedForceConversion = $state(false);
 	let saveRevision = $state<number>(0);
 	let editValidation = $state<EditValidation>({ errors: [], warnings: [] });
 	let appMode = $state<AppMode>(AppMode.Library);
@@ -124,6 +129,15 @@
 	const isUnknownFormatSession = $derived.by(() =>
 		currentSave == null ? false : isUnknownSaveFormat(currentSave)
 	);
+	const currentEditVersion = $derived.by(() => {
+		if (currentSave == null) {
+			return null;
+		}
+		if (isUnknownFormatSession) {
+			return currentParserLayoutVersion ?? currentSave.version;
+		}
+		return currentSave.version;
+	});
 	const missingRequiredTargetForUnknown = $derived(
 		isUnknownFormatSession && selectedCompatibilityTargetVersion == null
 	);
@@ -132,6 +146,17 @@
 			compatibilityCheckError.length > 0 ||
 			hasBlockingCompatibilityIssues ||
 			missingRequiredTargetForUnknown
+	);
+	const compatibilityResultIsCurrent = $derived(
+		activeCompatibilityCheckGeneration > 0 &&
+			latestCompatibilityResultGeneration === activeCompatibilityCheckGeneration &&
+			!compatibilityCheckPending &&
+			compatibilityCheckError.length === 0
+	);
+	const canForceConvert = $derived(
+		!missingRequiredTargetForUnknown &&
+			compatibilityResultIsCurrent &&
+			hasBlockingCompatibilityIssues
 	);
 
 	const topbarMode = $derived.by(() =>
@@ -184,7 +209,8 @@
 			return;
 		}
 		const targetVersion = input.targetVersion ?? null;
-		const saveAs = input.saveAs === true;
+		const forceConvert = input.forceConvert === true;
+		const saveAs = input.saveAs === true || forceConvert;
 		const unknownFormatSession = isUnknownSaveFormat(currentSave);
 		const sourceLayoutVersion = unknownFormatSession ? currentParserLayoutVersion : null;
 		if (unknownFormatSession && selectedCompatibilityTargetVersion == null) {
@@ -197,6 +223,28 @@
 				kind: "warning",
 			});
 			return;
+		}
+		if (forceConvert) {
+			if (!canForceConvert) {
+				await message(
+					"Force conversion is only available when compatibility results are current and include blocking issues.",
+					{
+						title: "Force save blocked",
+						kind: "warning",
+					}
+				);
+				return;
+			}
+			if (compatibilityCheckPending || compatibilityCheckError.length > 0) {
+				await message(
+					"Force conversion is unavailable while compatibility checks are pending or failed.",
+					{
+						title: "Force save blocked",
+						kind: "warning",
+					}
+				);
+				return;
+			}
 		}
 		const hasExplicitTargetVersion = targetVersion != null;
 		const resolvedTargetVersion = resolveTargetVersion(
@@ -234,7 +282,7 @@
 			compatibilityCheckError = "";
 		}
 		const blockingIssues = getBlockingCompatibilityIssues(compatibilityIssues);
-		if (blockingIssues.length > 0) {
+		if (blockingIssues.length > 0 && !forceConvert) {
 			await message(
 				buildBlockingCompatibilityMessage(resolvedTargetVersion, blockingIssues),
 				{
@@ -242,6 +290,13 @@
 					kind: "warning",
 				}
 			);
+			return;
+		}
+		if (forceConvert && blockingIssues.length < 1) {
+			await message("Blocking issues are no longer present. Use normal Save As.", {
+				title: "Force save not needed",
+				kind: "info",
+			});
 			return;
 		}
 		const savePayload = buildSaveCommandPayload(currentSave, sourceLayoutVersion);
@@ -275,6 +330,7 @@
 				path: filePath,
 				save: savePayload,
 				targetVersion: resolvedTargetVersion,
+				ignoreCompatibilityChecks: forceConvert,
 				backupSourcePath,
 				backupConfig: {
 					enabled: backupsEnabled,
@@ -288,6 +344,7 @@
 				console.warn(`[backup cleanup warning] ${result.cleanupWarning}`);
 			}
 			currentSaveBaseline = structuredClone(currentSave);
+			lastSaveUsedForceConversion = forceConvert;
 			saveRevision += 1;
 			return;
 		} catch (error) {
@@ -306,13 +363,20 @@
 			currentCompatibilityIssues = [];
 			compatibilityCheckError = "";
 			compatibilityCheckPending = false;
+			compatibilityCheckRunCounter = 0;
+			activeCompatibilityCheckGeneration = 0;
+			latestCompatibilityResultGeneration = 0;
 			return;
 		}
+		const checkGeneration = compatibilityCheckRunCounter + 1;
+		compatibilityCheckRunCounter = checkGeneration;
+		activeCompatibilityCheckGeneration = checkGeneration;
 		const unknownFormatSession = isUnknownSaveFormat(saveData);
 		if (unknownFormatSession && selectedCompatibilityTargetVersion == null) {
 			currentCompatibilityIssues = [];
 			compatibilityCheckError = "";
 			compatibilityCheckPending = false;
+			latestCompatibilityResultGeneration = 0;
 			return;
 		}
 
@@ -322,6 +386,7 @@
 			compatibilityCheckError =
 				"No encodable target format is available for this save. Use v99 or v105.";
 			compatibilityCheckPending = false;
+			latestCompatibilityResultGeneration = 0;
 			return;
 		}
 
@@ -335,6 +400,7 @@
 					return;
 				}
 				currentCompatibilityIssues = issues;
+				latestCompatibilityResultGeneration = checkGeneration;
 			})
 			.catch((error) => {
 				if (token !== compatibilityCheckToken) {
@@ -342,6 +408,7 @@
 				}
 				currentCompatibilityIssues = [];
 				compatibilityCheckError = getErrorMessage(error, "Compatibility check failed.");
+				latestCompatibilityResultGeneration = 0;
 			})
 			.finally(() => {
 				if (token === compatibilityCheckToken) {
@@ -408,6 +475,10 @@
 		currentCompatibilityIssues = [];
 		compatibilityCheckError = "";
 		compatibilityCheckPending = false;
+		compatibilityCheckRunCounter = 0;
+		activeCompatibilityCheckGeneration = 0;
+		latestCompatibilityResultGeneration = 0;
+		lastSaveUsedForceConversion = false;
 		editValidation = { errors: [], warnings: [] };
 		currentEditorSection =
 			currentParseIssueCount > 0 ? EditorSection.Status : EditorSection.Character;
@@ -430,6 +501,10 @@
 		currentCompatibilityIssues = [];
 		compatibilityCheckError = "";
 		compatibilityCheckPending = false;
+		compatibilityCheckRunCounter = 0;
+		activeCompatibilityCheckGeneration = 0;
+		latestCompatibilityResultGeneration = 0;
+		lastSaveUsedForceConversion = false;
 		saveRevision = 0;
 		editValidation = { errors: [], warnings: [] };
 		currentEditorSection = EditorSection.Status;
@@ -542,6 +617,8 @@
 					parserLayoutVersion={currentParserLayoutVersion}
 					suggestedTargetAutoSelected={suggestedTargetAutoSelected}
 					requiresTargetSelection={missingRequiredTargetForUnknown}
+					canForceConvert={canForceConvert}
+					lastSaveUsedForceConversion={lastSaveUsedForceConversion}
 					advancedSaveOptionsEnabled={advancedSaveOptionsEnabled}
 					saveDisabled={saveBlocked}
 					onToggleAdvancedSaveOptions={(enabled) =>
@@ -560,9 +637,13 @@
 					}}
 				/>
 		{:else if currentEditorSection === EditorSection.Character}
-			<Character bind:editValidation bind:save={currentSave} />
+			<Character
+				bind:editValidation
+				bind:save={currentSave}
+				parserLayoutVersion={currentEditVersion}
+			/>
 		{:else if currentEditorSection === EditorSection.Skills}
-			<Skills bind:save={currentSave} />
+			<Skills bind:save={currentSave} parserLayoutVersion={currentEditVersion} />
 		{:else if currentEditorSection === EditorSection.Waypoints}
 			<Waypoints bind:save={currentSave} />
 		{:else if currentEditorSection === EditorSection.Quests}

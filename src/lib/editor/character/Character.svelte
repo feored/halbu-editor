@@ -12,7 +12,6 @@
 		getSupportedClasses,
 		isExpandedMode,
 		isClassSupportedForVersion,
-		isKnownSaveVersion,
 		toExpansionType,
 	} from "../../utils/GameSupport";
 	import { getErrorMessage } from "../../utils/errorMessage.js";
@@ -34,7 +33,11 @@
 	import { toEditorSave } from "../../types/editorPayload";
 	import { DEFAULT_SKILL_SLOT_COUNT, resizeSkillSlots } from "../skills/skillSlots";
 
-	let { save = $bindable(), editValidation = $bindable({ errors: [], warnings: [] }) } = $props();
+	let {
+		save = $bindable(),
+		editValidation = $bindable({ errors: [], warnings: [] }),
+		parserLayoutVersion = null,
+	} = $props();
 
 	const MAX_GOLD_PER_LEVEL = 10000;
 	const MAX_XP = 3520485254;
@@ -124,16 +127,14 @@
 	updateTitle();
 
 	let selectedClassForEdit = $state(null);
-	const supportedClasses = $derived(getSupportedClasses(save.version));
-	const isKnownVersion = $derived(isKnownSaveVersion(save.version));
-	const canEditClass = $derived(isKnownVersion && selectedClassForEdit != null);
+	const effectiveVersion = $derived(
+		parserLayoutVersion == null ? save.version : parserLayoutVersion,
+	);
+	const supportedClasses = $derived(getSupportedClasses(effectiveVersion));
+	const canEditClass = $derived(selectedClassForEdit != null);
 	const classSupportWarning = $derived.by(() => {
-		if (!isKnownVersion) {
-			return `Class editing is disabled for unsupported save version ${save.version}.`;
-		}
-
-		if (!isClassSupportedForVersion(save.version, save.character.class)) {
-			return `Current class (${save.character.class}) is not recognized for version ${save.version}. Select a supported class to continue.`;
+		if (!isClassSupportedForVersion(effectiveVersion, save.character.class)) {
+			return `Current class (${save.character.class}) is not recognized for layout version ${effectiveVersion}. Select a supported class to continue.`;
 		}
 		return "";
 	});
@@ -147,7 +148,7 @@
 	});
 
 	$effect(() => {
-		selectedClassForEdit = getSupportedClass(save.version, save.character.class);
+		selectedClassForEdit = getSupportedClass(effectiveVersion, save.character.class);
 	});
 
 	function updateTitle() {
@@ -293,24 +294,17 @@
 		try {
 			/** @type {import("../../types/editorPayload").BackendEditorSaveDto} */
 			const response = await invoke("new_save", {
-				version: save.version,
+				version: effectiveVersion,
 				class: nextClass,
 			});
 			const newSave = toEditorSave(response);
 			save.character.class = nextClass;
 			const slotCount = save.skills.length > 0 ? save.skills.length : DEFAULT_SKILL_SLOT_COUNT;
 			save.skills = resizeSkillSlots(newSave.skills, slotCount);
-			newSave.attributes.statpts.value = save.attributes.statpts.value;
-			newSave.attributes.newskills.value = save.attributes.newskills.value;
-			newSave.attributes.experience.value = save.attributes.experience.value;
-			newSave.attributes.level.value = save.attributes.level.value;
-			newSave.attributes.gold.value = save.attributes.gold.value;
-			newSave.attributes.goldbank.value = save.attributes.goldbank.value;
-			save.attributes = newSave.attributes;
 			updateTitle();
 		} catch (err) {
 			classChangeError = getErrorMessage(err, "Failed to change class.");
-			selectedClassForEdit = getSupportedClass(save.version, save.character.class);
+			selectedClassForEdit = getSupportedClass(effectiveVersion, save.character.class);
 		}
 	}
 </script>

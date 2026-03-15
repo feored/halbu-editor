@@ -25,18 +25,22 @@
 	import { getErrorMessage } from "../../utils/errorMessage.js";
 	import { buildSkillDetails } from "./skillDetails";
 
-	let { save = $bindable() } = $props();
+	let { save = $bindable(), parserLayoutVersion = null } = $props();
 	let skillsContext = $state(null);
 	let skillsContextError = $state("");
 	let isSkillsContextLoading = $state(false);
 	let skillsContextRequestToken = 0;
+
+	const effectiveVersion = $derived(
+		parserLayoutVersion == null ? save.version : parserLayoutVersion,
+	);
 
 	const skillSlotCount = $derived(
 		skillsContext == null ? 30 : skillsContext.skill_slot_count
 	);
 
 	$effect(() => {
-		save.version;
+		effectiveVersion;
 		save.character.class;
 		refreshSkillsContext();
 	});
@@ -48,7 +52,7 @@
 		try {
 			/** @type {import("../../types/editor").SkillsContext} */
 			const nextSkillsContext = await invoke("get_skills_context", {
-				version: save.version,
+				version: effectiveVersion,
 				class: save.character.class,
 			});
 			if (requestToken !== skillsContextRequestToken) {
@@ -69,17 +73,19 @@
 		}
 	}
 
-	const skillsDataset = $derived(getSkillsDataset(save.version));
+	const skillsDataset = $derived(getSkillsDataset(effectiveVersion));
 	const hasKnownVersionSkills = $derived(skillsDataset != null);
 
-	const skillsData = $derived(getSkillsData(skillsDataset, save.version, save.character.class));
+	const skillsData = $derived(getSkillsData(skillsDataset, effectiveVersion, save.character.class));
 	const hasBackendClassSupport = $derived(
 		skillsContext == null ? true : skillsContext.class_supported_for_version
 	);
 	const skillSlotsReady = $derived(save.skills.length === skillSlotCount);
 	const hasClassSkills = $derived(skillsData.length > 0 && hasBackendClassSupport);
 	const pageIndexes = $derived(getPageIndexes(skillsData));
-	const skillPageNames = $derived(getSkillPageNames(save.version, save.character.class, skillsData));
+	const skillPageNames = $derived(
+		getSkillPageNames(effectiveVersion, save.character.class, skillsData),
+	);
 	const canRenderTrees = $derived(hasClassSkills && skillSlotsReady);
 	const pageNotices = $derived(
 		buildPageNotices({
@@ -88,7 +94,7 @@
 			hasBackendClassSupport,
 			hasClassSkills,
 			skillSlotsReady,
-			version: save.version,
+			version: effectiveVersion,
 			className: save.character.class,
 			supportedClasses: skillsContext == null ? [] : skillsContext.supported_classes,
 		})
@@ -111,7 +117,7 @@
 	});
 
 	function getSkillSlot(skillId) {
-		return skillIdToSaveId(save.version, save.character.class, skillId);
+		return skillIdToSaveId(effectiveVersion, save.character.class, skillId);
 	}
 
 	const skillStatesById = $derived(
@@ -184,7 +190,7 @@
 					skillsData,
 					skills: save.skills,
 					character: save.character,
-					version: save.version,
+					version: effectiveVersion,
 				})
 	);
 	const selectedSkillState = $derived.by(() =>

@@ -20,6 +20,8 @@
 		parserLayoutVersion = null,
 		suggestedTargetAutoSelected = false,
 		requiresTargetSelection = false,
+		canForceConvert = false,
+		lastSaveUsedForceConversion = false,
 		advancedSaveOptionsEnabled = false,
 		onToggleAdvancedSaveOptions,
 		onSelectCompatibilityTargetVersion,
@@ -30,8 +32,10 @@
 	let statusError = $state("");
 	let saveInProgress = $state(false);
 	let reviewModalOpen = $state(false);
+	let forceSaveModalOpen = $state(false);
 	let advancedConversionDetailsOpen = $state(false);
 	let reviewDialogRef;
+	let forceSaveDialogRef;
 
 	const editValidationErrors = $derived(editValidation.errors);
 	const editValidationWarnings = $derived(editValidation.warnings);
@@ -258,6 +262,34 @@
 		}
 	}
 
+	function openForceSaveModal() {
+		if (!canForceConvert || saveInProgress) {
+			return;
+		}
+		forceSaveModalOpen = true;
+	}
+
+	function closeForceSaveModal() {
+		forceSaveModalOpen = false;
+	}
+
+	function handleForceSaveDialogClose() {
+		forceSaveModalOpen = false;
+	}
+
+	async function forceSaveAsCurrentVersion() {
+		statusError = "";
+		saveInProgress = true;
+		forceSaveModalOpen = false;
+		try {
+			await onSave({ saveAs: true, forceConvert: true });
+		} catch (error) {
+			statusError = getErrorMessage(error, "Failed to force-save.");
+		} finally {
+			saveInProgress = false;
+		}
+	}
+
 	function openReviewModal() {
 		if (reviewChangeCount < 1) {
 			return;
@@ -318,6 +350,22 @@
 			dialog.close();
 		}
 	});
+
+	$effect(() => {
+		const dialog = forceSaveDialogRef;
+		if (dialog == null) {
+			return;
+		}
+		if (forceSaveModalOpen) {
+			if (!dialog.open) {
+				dialog.showModal();
+			}
+			return;
+		}
+		if (dialog.open) {
+			dialog.close();
+		}
+	});
 </script>
 
 <div class="grid content-start gap-2.5">
@@ -344,6 +392,11 @@
 			</dd>
 		</dl>
 		<div class="form-text mt-1">{nextActionLabel}</div>
+		{#if lastSaveUsedForceConversion}
+			<div class="form-text mt-1 text-halbu-warning">
+				Last save used force conversion; compatibility checks were bypassed.
+			</div>
+		{/if}
 	</section>
 
 	<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
@@ -370,7 +423,7 @@
 				</div>
 			{/if}
 			{#if parserLayoutVersion != null}
-				<div class="form-text mt-1">Parsing the v{parserLayoutVersion} layout.</div>
+				<div class="form-text mt-1">Halbu parsed it using the v{parserLayoutVersion} layout.</div>
 			{/if}
 			{#if suggestedTargetVersion != null}
 				<div class="form-text mt-1">
@@ -491,6 +544,15 @@
 			>
 				Save As...
 			</Button>
+			{#if canForceConvert}
+				<Button
+					variant="destructive"
+					onclick={openForceSaveModal}
+					disabled={saveInProgress}
+				>
+					Force Save As...
+				</Button>
+			{/if}
 			<Button onclick={saveCurrentVersion} disabled={saveDisabled || saveInProgress}>
 				{saveInProgress ? "Saving..." : "Save"}
 			</Button>
@@ -552,5 +614,52 @@
 				{/each}
 			</div>
 		{/if}
+	</div>
+</dialog>
+
+<dialog
+	bind:this={forceSaveDialogRef}
+	onclose={handleForceSaveDialogClose}
+	class="w-[96vw] max-w-2xl rounded-sm border border-halbu-borderStrong bg-halbu-panel p-2.5 text-halbu-text shadow-lg backdrop:bg-black/45"
+	aria-label="Force save warning"
+>
+	<div class="grid gap-2">
+		<div class="grid gap-0.5">
+			<h3 class="editor-card-title mb-0">Bypass compatibility checks?</h3>
+			<p class="form-text m-0">
+				This save has blocking compatibility issues for v{effectiveTargetVersion}.
+			</p>
+			<p class="form-text m-0">
+				Halbu can still write a converted file, but the output may load incorrectly, lose data,
+				or behave unexpectedly.
+			</p>
+			<p class="form-text m-0">
+				Force conversion writes to a new file only and bypasses compatibility checks.
+			</p>
+		</div>
+
+		{#if blockingCompatibilityIssues.length > 0}
+			<div class="rounded-xs border border-halbu-border bg-halbu-panel2 p-2">
+				<div class="text-sm font-semibold text-halbu-text">Blocking issues</div>
+				<ul class="mb-0 mt-1 pl-4 text-sm text-halbu-textMuted">
+					{#each blockingCompatibilityIssues as issue}
+						<li class="text-halbu-danger">{compatibilityMessage(issue)}</li>
+					{/each}
+				</ul>
+			</div>
+		{/if}
+
+		<div class="flex items-center justify-end gap-1.5">
+			<Button variant="secondary" onclick={closeForceSaveModal} disabled={saveInProgress}>
+				Cancel
+			</Button>
+			<Button
+				variant="destructive"
+				onclick={forceSaveAsCurrentVersion}
+				disabled={!canForceConvert || saveInProgress}
+			>
+				Force Save As...
+			</Button>
+		</div>
 	</div>
 </dialog>
