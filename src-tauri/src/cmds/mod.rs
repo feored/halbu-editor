@@ -1,5 +1,5 @@
 use halbu::format::FormatId;
-use halbu::{ParseIssue, Save, Strictness};
+use halbu::{GameEdition, ParseIssue, Save, Strictness};
 use serde::{Deserialize, Serialize};
 
 mod backups;
@@ -58,6 +58,9 @@ pub struct ParsedCharacter {
     source_file_size: usize,
     header_checksum: Option<u32>,
     computed_checksum: Option<u32>,
+    edition_hint: Option<GameEdition>,
+    suggested_target_version: Option<u32>,
+    parser_layout_version: Option<u32>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
