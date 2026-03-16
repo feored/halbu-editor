@@ -2,9 +2,10 @@
 	import Button from "../../components/ui/button/button.svelte";
 	import { clampSkillPoints } from "./skillSlots";
 
-let {
+	let {
 		pointsLeft,
 		disabled,
+		pointsInputDisabled = disabled,
 		onPointsLeftChange,
 		onRefund,
 	} = $props();
@@ -21,17 +22,17 @@ let {
 	<div class="flex flex-wrap items-center justify-end gap-1.5">
 		<div class="flex items-center gap-1.5">
 			<label class="form-label mb-0" for="skills-points-left">Available points</label>
-			<input
-				id="skills-points-left"
-				class="form-control h-7 w-32 text-right"
-				type="number"
-				min="0"
-				max="255"
-				step="1"
-				value={pointsLeft}
-				disabled={disabled}
-				oninput={handlePointsChange}
-			/>
+				<input
+					id="skills-points-left"
+					class="form-control h-7 w-32 text-right"
+					type="number"
+					min="0"
+					max="255"
+					step="1"
+					value={pointsLeft}
+					disabled={pointsInputDisabled}
+					oninput={handlePointsChange}
+				/>
 		</div>
 
 		<Button variant="secondary" type="button" onclick={onRefund} disabled={disabled}>

@@ -2,22 +2,20 @@
 	import { invoke } from "@tauri-apps/api/core";
 	import { enforceMinMax } from "../../utils/actions.js";
 	import { calcTitle, calcDifficultyBeaten } from "../../utils/Utils.svelte";
-	import { RESOURCE_Q8_SCALE } from "../../utils/resources.js";
-	import {
-		clampInteger,
-	} from "../../utils/numbers.js";
+	import { RESOURCE_Q8_SCALE } from "../../utils/resources";
+	import { clampInteger } from "../../utils/numbers";
 	import {
 		getSupportedClass,
 		getSaveExpansionType,
-		getSupportedClasses,
+		getSupportedClassNames,
 		isExpandedMode,
 		isClassSupportedForVersion,
 		toExpansionType,
 	} from "../../utils/GameSupport";
-	import { getErrorMessage } from "../../utils/errorMessage.js";
+	import { getErrorMessage } from "../../utils/errorMessage";
 
 	import experienceTable from "./experience.json";
-	import { Difficulty, Act } from "../../utils/constants.js";
+	import { Difficulty, Act } from "../../utils/constants";
 	import {
 		buildCharacterEditValidation,
 		experienceForLevel,
@@ -30,12 +28,16 @@
 		parseMapSeedDraft,
 		resolveResourceDisplayValue,
 	} from "./characterFieldLogic";
+	import { getGameRulesClassPrimaryAttributes } from "./gameRulesProjection";
 	import { toEditorSave } from "../../types/editorPayload";
 	import { DEFAULT_SKILL_SLOT_COUNT, resizeSkillSlots } from "../skills/skillSlots";
 
 	let {
 		save = $bindable(),
 		editValidation = $bindable({ errors: [], warnings: [] }),
+		editorDocumentMode = "raw",
+		effectiveDerivedValues = null,
+		effectiveDerivedValuesError = "",
 		parserLayoutVersion = null,
 	} = $props();
 
@@ -106,12 +108,38 @@
 	let resourceDraftByField = $state({});
 
 	const normalizedLevelForGold = $derived.by(() =>
-		clampInteger(save.attributes.level.value, 1, 99)
+		clampInteger(save.attributes.level.value, 1, 99),
 	);
 	const goldInventoryMax = $derived(MAX_GOLD_PER_LEVEL * normalizedLevelForGold);
 	const mapSeedDisplayValue = $derived(
-		formatMapSeedValue(save.character.map_seed, mapSeedDisplayMode)
+		formatMapSeedValue(save.character.map_seed, mapSeedDisplayMode),
 	);
+	const isGameRulesMode = $derived(editorDocumentMode === "game-rules");
+	const gameRulesClassPrimaryAttributes = $derived.by(() =>
+		getGameRulesClassPrimaryAttributes(save.character.class),
+	);
+	const derivedAttributeIds = new Set([
+		"hitpoints",
+		"maxhp",
+		"mana",
+		"maxmana",
+		"stamina",
+		"maxstamina",
+		"statpts",
+		"newskills",
+	]);
+
+	function effectiveAttributeValue(attributeId) {
+		if (
+			isGameRulesMode &&
+			effectiveDerivedValues != null &&
+			derivedAttributeIds.has(attributeId) &&
+			attributeId in effectiveDerivedValues
+		) {
+			return effectiveDerivedValues[attributeId];
+		}
+		return save.attributes[attributeId].value;
+	}
 
 	$effect(() => {
 		if (!isMapSeedEditing && mapSeedDraft !== mapSeedDisplayValue) {
@@ -119,18 +147,15 @@
 		}
 	});
 
-	// Title & Progression
-
 	const DIFFICULTY_BEATEN_ORDER = ["None", "Normal", "Nightmare", "Hell"];
 	let difficultyBeaten = $state(calcDifficultyBeaten(save.character, getSaveExpansionType(save)));
-	let title = $state("");
-	updateTitle();
+	let title = $state(calcTitle(save.character, getSaveExpansionType(save)));
 
 	let selectedClassForEdit = $state(null);
 	const effectiveVersion = $derived(
 		parserLayoutVersion == null ? save.version : parserLayoutVersion,
 	);
-	const supportedClasses = $derived(getSupportedClasses(effectiveVersion));
+	const supportedClasses = $derived(getSupportedClassNames(effectiveVersion));
 	const canEditClass = $derived(selectedClassForEdit != null);
 	const classSupportWarning = $derived.by(() => {
 		if (!isClassSupportedForVersion(effectiveVersion, save.character.class)) {
@@ -138,12 +163,25 @@
 		}
 		return "";
 	});
+	const progressionValidationWarning = $derived.by(() => {
+		const expansionType = getSaveExpansionType(save);
+		const difficultyIndex = DIFFICULTY_BEATEN_ORDER.indexOf(difficultyBeaten);
+		if (difficultyIndex < 0) {
+			return "";
+		}
+		const expectedProgression = (4 + (isExpandedMode(expansionType) ? 1 : 0)) * difficultyIndex;
+		if (save.character.progression === expectedProgression) {
+			return "";
+		}
+		return `Progression value ${save.character.progression} is non-canonical for ${difficultyBeaten} ${expansionType}. Re-select Difficulty beaten to normalize it.`;
+	});
 
 	$effect(() => {
 		editValidation = buildCharacterEditValidation(
 			validName,
 			nameValidationMessage,
 			classSupportWarning,
+			progressionValidationWarning,
 		);
 	});
 
@@ -151,12 +189,21 @@
 		selectedClassForEdit = getSupportedClass(effectiveVersion, save.character.class);
 	});
 
-	function updateTitle() {
+	function refreshTitle() {
+		const expansionType = getSaveExpansionType(save);
+		title = calcTitle(save.character, expansionType);
+	}
+
+	function applyProgressionFromDifficultyBeaten() {
 		const expansionType = getSaveExpansionType(save);
 		save.character.progression =
 			(4 + (isExpandedMode(expansionType) ? 1 : 0)) *
-			DIFFICULTY_BEATEN_ORDER.indexOf(difficultyBeaten);
-		title = calcTitle(save.character, expansionType);
+				DIFFICULTY_BEATEN_ORDER.indexOf(difficultyBeaten);
+	}
+
+	function updateTitle() {
+		applyProgressionFromDifficultyBeaten();
+		refreshTitle();
 	}
 
 	function setExpansionType(nextExpansionType) {
@@ -164,8 +211,6 @@
 		save.expansion_type = expansionType;
 		updateTitle();
 	}
-
-	// Level & XP
 
 	function changeLevel() {
 		if (save.character.level == save.attributes.level.value) {
@@ -193,20 +238,68 @@
 		}
 	});
 
-	function setClamped(attribute, nextValue, maxValue = ATTRIBUTE_MAX) {
-		attribute.value = clampInteger(nextValue, ATTRIBUTE_MIN, maxValue);
+	function setClamped(attribute, nextValue, maxValue = ATTRIBUTE_MAX, minValue = ATTRIBUTE_MIN) {
+		attribute.value = clampInteger(nextValue, minValue, maxValue);
 	}
 
-	function isClampedAtBoundary(value, maxValue, delta) {
-		const clamped = clampInteger(value, ATTRIBUTE_MIN, maxValue);
-		return delta < 0 ? clamped <= ATTRIBUTE_MIN : clamped >= maxValue;
+	function isClampedAtBoundary(value, maxValue, delta, minValue = ATTRIBUTE_MIN) {
+		const clamped = clampInteger(value, minValue, maxValue);
+		return delta < 0 ? clamped <= minValue : clamped >= maxValue;
+	}
+
+	function primaryAttributeMinimum(attributeId) {
+		if (!isGameRulesMode || gameRulesClassPrimaryAttributes == null) {
+			return ATTRIBUTE_MIN;
+		}
+		return gameRulesClassPrimaryAttributes[attributeId] ?? ATTRIBUTE_MIN;
+	}
+
+	function gameRulesAvailableStatPoints() {
+		if (!isGameRulesMode) {
+			return save.attributes.statpts.value;
+		}
+		if (effectiveDerivedValues == null || !("statpts" in effectiveDerivedValues)) {
+			return 0;
+		}
+		return Math.max(0, effectiveDerivedValues.statpts);
+	}
+
+	function setPrimaryAttributeValue(attributeId, nextValue, maxValue) {
+		const attribute = save.attributes[attributeId];
+		const minValue = primaryAttributeMinimum(attributeId);
+		const clampedTargetValue = clampInteger(nextValue, minValue, maxValue);
+		if (!isGameRulesMode) {
+			attribute.value = clampedTargetValue;
+			return;
+		}
+		if (clampedTargetValue <= attribute.value) {
+			attribute.value = clampedTargetValue;
+			return;
+		}
+		const allowedIncrease = gameRulesAvailableStatPoints();
+		attribute.value = Math.min(clampedTargetValue, attribute.value + allowedIncrease);
+	}
+
+	function adjustPrimaryAttribute(attributeId, delta, maxValue) {
+		setPrimaryAttributeValue(
+			attributeId,
+			save.attributes[attributeId].value + delta,
+			maxValue,
+		);
+	}
+
+	function setPrimaryAttributeFromInput(attributeId, inputValue, maxValue) {
+		const parsedValue = Number(inputValue);
+		if (!Number.isFinite(parsedValue)) {
+			return;
+		}
+		setPrimaryAttributeValue(attributeId, parsedValue, maxValue);
 	}
 
 	function resourceDisplayValue(attributeId) {
-		const attribute = save.attributes[attributeId];
 		return resolveResourceDisplayValue(
-			attribute.value,
-			attribute.bit_length,
+			effectiveAttributeValue(attributeId),
+			save.attributes[attributeId].bit_length,
 			RESOURCE_Q8_SCALE,
 		);
 	}
@@ -217,11 +310,18 @@
 			return draftValue;
 		}
 		return String(
-			clampInteger(resourceDisplayValue(attributeId), RESOURCE_DISPLAY_MIN, RESOURCE_DISPLAY_MAX),
+			clampInteger(
+				resourceDisplayValue(attributeId),
+				RESOURCE_DISPLAY_MIN,
+				RESOURCE_DISPLAY_MAX,
+			),
 		);
 	}
 
 	function commitQ8Draft(fieldId, attributeId) {
+		if (isGameRulesMode) {
+			return;
+		}
 		const draftValue = resourceDraftByField[fieldId] ?? "";
 		const attribute = save.attributes[attributeId];
 		attribute.value = commitResourceDraftValue(
@@ -239,6 +339,15 @@
 		delete nextDraftByField[fieldId];
 		resourceDraftByField = nextDraftByField;
 	}
+
+	$effect(() => {
+		if (!isGameRulesMode) {
+			return;
+		}
+		if (Object.keys(resourceDraftByField).length > 0) {
+			resourceDraftByField = {};
+		}
+	});
 
 	function commitMapSeedDraft() {
 		const parsed = parseMapSeedDraft(mapSeedDraft, MAP_SEED_MAX);
@@ -264,9 +373,7 @@
 		event.currentTarget.blur();
 	}
 
-	// Name validation
-
-	function validateName() {
+		function validateName() {
 		if (nameRef == null) {
 			return;
 		}
@@ -299,9 +406,10 @@
 			});
 			const newSave = toEditorSave(response);
 			save.character.class = nextClass;
-			const slotCount = save.skills.length > 0 ? save.skills.length : DEFAULT_SKILL_SLOT_COUNT;
-			save.skills = resizeSkillSlots(newSave.skills, slotCount);
-			updateTitle();
+			const slotCount =
+				save.skills.length > 0 ? save.skills.length : DEFAULT_SKILL_SLOT_COUNT;
+				save.skills = resizeSkillSlots(newSave.skills, slotCount);
+				refreshTitle();
 		} catch (err) {
 			classChangeError = getErrorMessage(err, "Failed to change class.");
 			selectedClassForEdit = getSupportedClass(effectiveVersion, save.character.class);
@@ -311,20 +419,16 @@
 
 <div class="grid grid-cols-1 content-start gap-2.5 xl:grid-cols-2">
 	<div class="grid content-start gap-2.5">
-		<section
-			class="rounded-sm border border-halbu-borderStrong bg-halbu-panel2 px-2.5 py-2"
-		>
+		<section class="rounded-sm border border-halbu-borderStrong bg-halbu-panel2 px-2.5 py-2">
 			<h3 class="editor-card-title mb-1.5">Identity</h3>
-			<div
-				class="grid grid-cols-form-32 items-center gap-x-2.5 gap-y-1"
-			>
+			<div class="grid grid-cols-form-32 items-center gap-x-2.5 gap-y-1">
 				<label class="form-label mb-0" for="name">Name</label>
-					<input
-						class="form-control"
-						oninput={validateName}
-						onchange={validateName}
-						title="2-15 characters"
-						bind:this={nameRef}
+				<input
+					class="form-control"
+					oninput={validateName}
+					onchange={validateName}
+					title="2-15 characters"
+					bind:this={nameRef}
 					type="text"
 					id="name"
 					placeholder="default"
@@ -342,9 +446,7 @@
 				</div>
 			</div>
 
-			<div
-				class="mt-1 grid grid-cols-form-32 items-center gap-x-2.5"
-			>
+			<div class="mt-1 grid grid-cols-form-32 items-center gap-x-2.5">
 				<label class="form-label mb-0" for="class">Class</label>
 				{#if canEditClass}
 					<select
@@ -369,18 +471,16 @@
 					/>
 				{/if}
 			</div>
-				{#if classSupportWarning.length > 0}
-					<div class="form-text mt-1 text-halbu-warning sm:pl-32">
-						{classSupportWarning}
-					</div>
-				{/if}
-				{#if classChangeError.length > 0}
-					<div class="form-text mt-1 text-halbu-warning sm:pl-32">{classChangeError}</div>
-				{/if}
+			{#if classSupportWarning.length > 0}
+				<div class="form-text mt-1 text-halbu-warning sm:pl-32">
+					{classSupportWarning}
+				</div>
+			{/if}
+			{#if classChangeError.length > 0}
+				<div class="form-text mt-1 text-halbu-warning sm:pl-32">{classChangeError}</div>
+			{/if}
 
-			<div
-				class="mt-1 grid grid-cols-form-32 items-start gap-x-2.5 gap-y-0.5"
-			>
+			<div class="mt-1 grid grid-cols-form-32 items-start gap-x-2.5 gap-y-0.5">
 				<label class="form-label mb-0" for="expansionType">Expansion</label>
 				<select
 					class="form-select h-7 w-full py-0"
@@ -395,9 +495,7 @@
 				</select>
 			</div>
 
-			<div
-				class="grid grid-cols-form-32 items-start gap-x-2.5 gap-y-0.5"
-			>
+			<div class="grid grid-cols-form-32 items-start gap-x-2.5 gap-y-0.5">
 				<span class="form-label mb-0">Game Flags</span>
 				<div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
 					<label class="inline-flex items-center gap-1.5">
@@ -407,7 +505,7 @@
 							id="hardcore"
 							name="hardcore"
 							bind:checked={save.character.status.hardcore}
-							onchange={updateTitle}
+							onchange={refreshTitle}
 						/>
 						<span>Hardcore</span>
 					</label>
@@ -437,9 +535,7 @@
 			</div>
 		</section>
 
-		<section
-			class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2"
-		>
+		<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
 			<h3 class="editor-card-title mb-1.5">Progression</h3>
 			<div class="grid grid-cols-1 gap-1 sm:grid-cols-2 sm:gap-x-3">
 				<div class="grid grid-cols-form-24 items-center gap-x-2">
@@ -538,13 +634,9 @@
 			</div>
 		</section>
 
-		<section
-			class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2"
-		>
+		<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
 			<h3 class="editor-card-title mb-1.5">Gold</h3>
-			<div
-				class="grid grid-cols-form-28 gap-y-1 sm:grid-cols-form-32 sm:gap-x-2.5"
-			>
+			<div class="grid grid-cols-form-28 gap-y-1 sm:grid-cols-form-32 sm:gap-x-2.5">
 				<label class="form-label mb-0" for="goldInventory">Inventory</label>
 				<input
 					class="form-control"
@@ -573,13 +665,9 @@
 			</div>
 		</section>
 
-		<section
-			class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2"
-		>
+		<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
 			<h3 class="editor-card-title mb-1.5">Map Seed</h3>
-			<div
-				class="grid grid-cols-form-28 items-center gap-x-2 gap-y-1"
-			>
+			<div class="grid grid-cols-form-28 items-center gap-x-2 gap-y-1">
 				<span class="form-label mb-0">Format</span>
 				<div
 					class="inline-flex w-fit overflow-hidden rounded-xs border border-halbu-borderStrong"
@@ -637,11 +725,106 @@
 	</div>
 
 	<div class="grid content-start gap-2.5">
-		<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
-			<h3 class="editor-card-title mb-1.5">Attributes</h3>
-			<div class="grid gap-y-1">
-				{#each primaryAttributes as field}
-					<div class="grid grid-cols-form-28 items-center gap-x-2.5">
+			<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
+				<h3 class="editor-card-title mb-1.5">Attributes</h3>
+				{#if isGameRulesMode}
+					<div class="form-text mb-1">
+						Game rules mode: increasing attributes spends recalculated stat points;
+						decreasing attributes refunds points. Class base attributes are the minimum.
+					</div>
+				{/if}
+				<div class="grid gap-y-1">
+					{#each primaryAttributes as field}
+						<div class="grid grid-cols-form-28 items-center gap-x-2.5">
+							<label class="form-label mb-0" for={field.id}>{field.label}</label>
+							<div class="flex items-center gap-1">
+							<button
+								type="button"
+								class="h-8 min-w-9 rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-1 text-xs font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
+									onclick={() =>
+										adjustPrimaryAttribute(field.attribute, -QUICK_ADJUST_STEP, field.max)}
+									disabled={isClampedAtBoundary(
+										save.attributes[field.attribute].value,
+										field.max,
+										-QUICK_ADJUST_STEP,
+										primaryAttributeMinimum(field.attribute),
+									)}
+									aria-label={`Decrease ${field.label.toLowerCase()} by ${QUICK_ADJUST_STEP}`}
+								>
+									-{QUICK_ADJUST_STEP}
+								</button>
+								{#if isGameRulesMode}
+									<input
+										class="form-control max-w-20 text-center"
+										type="number"
+										name={field.id}
+										id={field.id}
+										min={primaryAttributeMinimum(field.attribute)}
+										max={field.max}
+										step="1"
+										use:enforceMinMax
+										value={save.attributes[field.attribute].value}
+										onchange={(event) =>
+											setPrimaryAttributeFromInput(
+												field.attribute,
+												event.currentTarget.value,
+												field.max,
+											)}
+									/>
+								{:else}
+									<input
+										class="form-control max-w-20 text-center"
+										type="number"
+										name={field.id}
+										id={field.id}
+										min="0"
+										max={field.max}
+										step="1"
+										use:enforceMinMax
+										bind:value={save.attributes[field.attribute].value}
+										onchange={(event) =>
+											setClamped(
+												save.attributes[field.attribute],
+												event.currentTarget.value,
+												field.max,
+											)}
+									/>
+								{/if}
+								<button
+									type="button"
+									class="h-8 min-w-9 rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-1 text-xs font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
+									onclick={() =>
+										adjustPrimaryAttribute(field.attribute, QUICK_ADJUST_STEP, field.max)}
+									disabled={isClampedAtBoundary(
+										save.attributes[field.attribute].value,
+										field.max,
+										QUICK_ADJUST_STEP,
+										primaryAttributeMinimum(field.attribute),
+									) || (isGameRulesMode && gameRulesAvailableStatPoints() < 1)}
+									aria-label={`Increase ${field.label.toLowerCase()} by ${QUICK_ADJUST_STEP}`}
+								>
+									+{QUICK_ADJUST_STEP}
+							</button>
+						</div>
+					</div>
+				{/each}
+			</div>
+		</section>
+
+			<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
+				<h3 class="editor-card-title mb-1.5">Points</h3>
+				{#if isGameRulesMode}
+					<div class="form-text mb-1">
+						Game rules mode: points are recalculated from level, attributes, skills, and
+						completed quests.
+					</div>
+				{/if}
+				{#if isGameRulesMode && effectiveDerivedValuesError.length > 0}
+					<div class="form-text mb-1 text-halbu-warning">{effectiveDerivedValuesError}</div>
+				{/if}
+				<div class="grid gap-y-1">
+					{#each pointFields as field}
+						<div class="grid grid-cols-form-28 items-center gap-x-2.5">
 						<label class="form-label mb-0" for={field.id}>{field.label}</label>
 						<div class="flex items-center gap-1">
 							<button
@@ -653,45 +836,60 @@
 										save.attributes[field.attribute].value - QUICK_ADJUST_STEP,
 										field.max,
 									)}
-								disabled={isClampedAtBoundary(
-									save.attributes[field.attribute].value,
-									field.max,
-									-QUICK_ADJUST_STEP,
-								)}
-								aria-label={`Decrease ${field.label.toLowerCase()} by ${QUICK_ADJUST_STEP}`}
-							>
-								-{QUICK_ADJUST_STEP}
-							</button>
-							<input
-								class="form-control max-w-20 text-center"
-								type="number"
-								name={field.id}
-								id={field.id}
-								min="0"
-								max={field.max}
-								step="1"
-								use:enforceMinMax
-								bind:value={save.attributes[field.attribute].value}
-								onchange={(event) =>
-									setClamped(save.attributes[field.attribute], event.currentTarget.value, field.max)}
-							/>
-							<button
-								type="button"
-								class="h-8 min-w-9 rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-1 text-xs font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
+									disabled={isClampedAtBoundary(
+										save.attributes[field.attribute].value,
+										field.max,
+										-QUICK_ADJUST_STEP,
+									) || isGameRulesMode}
+									aria-label={`Decrease ${field.ariaLabel} by ${QUICK_ADJUST_STEP}`}
+								>
+									-{QUICK_ADJUST_STEP}
+								</button>
+								{#if isGameRulesMode}
+									<input
+										class="form-control form-control-readonly max-w-20 text-center"
+										type="number"
+										name={field.id}
+										id={field.id}
+										value={effectiveAttributeValue(field.attribute)}
+										readonly
+									/>
+								{:else}
+									<input
+										class="form-control max-w-20 text-center"
+										use:enforceMinMax
+										type="number"
+										name={field.id}
+										id={field.id}
+										min="0"
+										max={field.max}
+										step="1"
+										bind:value={save.attributes[field.attribute].value}
+										onchange={(event) =>
+											setClamped(
+												save.attributes[field.attribute],
+												event.currentTarget.value,
+												field.max,
+											)}
+									/>
+								{/if}
+								<button
+									type="button"
+									class="h-8 min-w-9 rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-1 text-xs font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
 								onclick={() =>
 									setClamped(
 										save.attributes[field.attribute],
 										save.attributes[field.attribute].value + QUICK_ADJUST_STEP,
 										field.max,
 									)}
-								disabled={isClampedAtBoundary(
-									save.attributes[field.attribute].value,
-									field.max,
-									QUICK_ADJUST_STEP,
-								)}
-								aria-label={`Increase ${field.label.toLowerCase()} by ${QUICK_ADJUST_STEP}`}
-							>
-								+{QUICK_ADJUST_STEP}
+									disabled={isClampedAtBoundary(
+										save.attributes[field.attribute].value,
+										field.max,
+										QUICK_ADJUST_STEP,
+									) || isGameRulesMode}
+									aria-label={`Increase ${field.ariaLabel} by ${QUICK_ADJUST_STEP}`}
+								>
+									+{QUICK_ADJUST_STEP}
 							</button>
 						</div>
 					</div>
@@ -699,96 +897,34 @@
 			</div>
 		</section>
 
-		<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
-			<h3 class="editor-card-title mb-1.5">Points</h3>
-			<div class="grid gap-y-1">
-				{#each pointFields as field}
-					<div class="grid grid-cols-form-28 items-center gap-x-2.5">
-						<label class="form-label mb-0" for={field.id}>{field.label}</label>
-						<div class="flex items-center gap-1">
-							<button
-								type="button"
-								class="h-8 min-w-9 rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-1 text-xs font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
-								onclick={() =>
-									setClamped(
-										save.attributes[field.attribute],
-										save.attributes[field.attribute].value - QUICK_ADJUST_STEP,
-										field.max,
-									)}
-								disabled={isClampedAtBoundary(
-									save.attributes[field.attribute].value,
-									field.max,
-									-QUICK_ADJUST_STEP,
-								)}
-								aria-label={`Decrease ${field.ariaLabel} by ${QUICK_ADJUST_STEP}`}
-							>
-								-{QUICK_ADJUST_STEP}
-							</button>
-							<input
-								class="form-control max-w-20 text-center"
-								use:enforceMinMax
-								type="number"
-								name={field.id}
-								id={field.id}
-								min="0"
-								max={field.max}
-								step="1"
-								bind:value={save.attributes[field.attribute].value}
-								onchange={(event) =>
-									setClamped(save.attributes[field.attribute], event.currentTarget.value, field.max)}
-							/>
-							<button
-								type="button"
-								class="h-8 min-w-9 rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-1 text-xs font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
-								onclick={() =>
-									setClamped(
-										save.attributes[field.attribute],
-										save.attributes[field.attribute].value + QUICK_ADJUST_STEP,
-										field.max,
-									)}
-								disabled={isClampedAtBoundary(
-									save.attributes[field.attribute].value,
-									field.max,
-									QUICK_ADJUST_STEP,
-								)}
-								aria-label={`Increase ${field.ariaLabel} by ${QUICK_ADJUST_STEP}`}
-							>
-								+{QUICK_ADJUST_STEP}
-							</button>
-						</div>
+			<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
+				<h3 class="editor-card-title mb-1.5">Resources</h3>
+				{#if isGameRulesMode}
+					<div class="form-text mb-1">
+						Game rules mode: resources are recalculated. Edit level or attributes to change
+						them.
 					</div>
-				{/each}
-			</div>
-		</section>
-
-		<section
-			class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2"
-		>
-			<h3 class="editor-card-title mb-1.5">Resources</h3>
-			<div
-				class="grid grid-cols-form-28-2 items-center gap-x-2.5 gap-y-1"
-			>
+				{/if}
+				<div class="grid grid-cols-form-28-2 items-center gap-x-2.5 gap-y-1">
 				<div></div>
 				<div class="text-sm text-halbu-textMuted">Current</div>
 				<div class="text-sm text-halbu-textMuted">Base</div>
 				{#each resourceFields as resource}
 					<div class="text-sm text-halbu-text">{resource.label}</div>
-					{#each [
-						{ id: resource.currentId, attributeId: resource.currentAttr },
-						{ id: resource.baseId, attributeId: resource.baseAttr },
-					] as field}
-						<input
-							class="form-control"
-							type="number"
-							name={field.id}
-							id={field.id}
-							min={RESOURCE_DISPLAY_MIN}
-							max={RESOURCE_DISPLAY_MAX}
-							step="1"
-							value={resourceInputValue(field.id, field.attributeId)}
-							onfocus={() => {
-								resourceDraftByField = {
-									...resourceDraftByField,
+					{#each [{ id: resource.currentId, attributeId: resource.currentAttr }, { id: resource.baseId, attributeId: resource.baseAttr }] as field}
+							<input
+								class={`form-control ${isGameRulesMode ? "form-control-readonly" : ""}`}
+								type="number"
+								name={field.id}
+								id={field.id}
+								min={RESOURCE_DISPLAY_MIN}
+								max={RESOURCE_DISPLAY_MAX}
+								step="1"
+								value={resourceInputValue(field.id, field.attributeId)}
+								disabled={isGameRulesMode}
+								onfocus={() => {
+									resourceDraftByField = {
+										...resourceDraftByField,
 									[field.id]: resourceInputValue(field.id, field.attributeId),
 								};
 							}}

@@ -1,5 +1,5 @@
-import { clampInteger, toUInt32OrNull } from "../../utils/numbers.js";
-import { displayToFixedPoint, fixedPointToDisplay } from "../../utils/resources.js";
+import { clampInteger, toUInt32OrNull } from "../../utils/numbers";
+import { displayToFixedPoint, fixedPointToDisplay } from "../../utils/resources";
 
 export function formatMapSeedValue(value: number, displayMode: string): string {
 	const normalizedValue = toUInt32OrNull(value);

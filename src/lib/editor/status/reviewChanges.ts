@@ -3,7 +3,7 @@ import {
 	RESOURCE_Q8_SCALE,
 	fixedPointToDisplay,
 	formatDisplayNumber,
-} from "../../utils/resources.js";
+} from "../../utils/resources";
 import {
 	REQUIRED_EDITOR_ATTRIBUTE_IDS,
 	type ActId,

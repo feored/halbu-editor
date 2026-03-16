@@ -2,18 +2,18 @@
 	import { cn } from "../../../utils/cn";
 
 	const BASE =
-		"inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-sm text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-halbu-primary/45 disabled:pointer-events-none disabled:opacity-50";
+		"inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-sm text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-halbu-primary/45 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-100";
 
 	const VARIANTS = {
 		default:
-			"bg-halbu-primary text-halbu-white hover:bg-halbu-primaryHover active:bg-halbu-primaryActive",
+			"bg-halbu-primary text-halbu-white hover:bg-halbu-primaryHover active:bg-halbu-primaryActive disabled:bg-halbu-panel2 disabled:text-halbu-textDim",
 		secondary:
-			"border border-halbu-border bg-halbu-panel text-halbu-text hover:bg-halbu-panel2 active:bg-halbu-panel2",
+			"border border-halbu-border bg-halbu-panel text-halbu-text hover:bg-halbu-panel2 active:bg-halbu-panel2 disabled:border-halbu-borderStrong disabled:bg-halbu-panel2 disabled:text-halbu-textDim",
 		outline:
-			"border border-halbu-borderStrong bg-transparent text-halbu-text hover:bg-halbu-primarySoft",
+			"border border-halbu-borderStrong bg-transparent text-halbu-text hover:bg-halbu-primarySoft disabled:border-halbu-border disabled:bg-halbu-panel disabled:text-halbu-textDim",
 		destructive:
-			"bg-halbu-danger text-halbu-text hover:bg-halbu-dangerHover active:bg-halbu-dangerActive",
-		ghost: "text-halbu-text hover:bg-halbu-primarySoft",
+			"bg-halbu-danger text-halbu-text hover:bg-halbu-dangerHover active:bg-halbu-dangerActive disabled:bg-halbu-panel2 disabled:text-halbu-textDim",
+		ghost: "text-halbu-text hover:bg-halbu-primarySoft disabled:text-halbu-textDim disabled:bg-halbu-panel",
 	};
 
 	const SIZES = {

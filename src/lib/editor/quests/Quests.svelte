@@ -9,7 +9,7 @@
 		getRenderedActQuests,
 		getStandardActQuests,
 	} from "./questsLogic";
-	let { save = $bindable() } = $props();
+	let { save = $bindable(), editorDocumentMode = "raw" } = $props();
 
 	let showPrologue = $state(Settings.get(Settings.Key.QuestsShowPrologue));
 	let advancedFlags = $state(Settings.get(Settings.Key.QuestsAdvancedFlags));

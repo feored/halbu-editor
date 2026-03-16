@@ -60,14 +60,14 @@
 
 			<section>
 				<label class="form-label mb-0.5" for="inspector-invested-points">Invested</label>
-			<div class="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-1">
-				<Button
-					type="button"
-					variant="secondary"
-					class="h-7 w-8 rounded-xs px-0"
-					onclick={onDecrement}
-					disabled={disabled || !canDecrement}
-				>
+				<div class="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-1">
+					<Button
+						type="button"
+						variant="secondary"
+						class="h-8 w-9 rounded-xs px-0"
+						onclick={onDecrement}
+						disabled={disabled || !canDecrement}
+					>
 					-
 				</Button>
 				<input
@@ -81,13 +81,13 @@
 					oninput={handlePointsInput}
 					disabled={disabled}
 				/>
-				<Button
-					type="button"
-					variant="secondary"
-					class="h-7 w-8 rounded-xs px-0"
-					onclick={onIncrement}
-					disabled={disabled || !canIncrement}
-				>
+					<Button
+						type="button"
+						variant="secondary"
+						class="h-8 w-9 rounded-xs px-0"
+						onclick={onIncrement}
+						disabled={disabled || !canIncrement}
+					>
 					+
 				</Button>
 				</div>

@@ -151,15 +151,15 @@
 		transition: opacity 0.15s ease;
 	}
 
-	.skill-node__control {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		width: 1rem;
-		height: 1rem;
-		padding: 0;
-		line-height: 1.1;
-		font-size: 0.75rem;
+		.skill-node__control {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			width: 1.25rem;
+			height: 1.25rem;
+			padding: 0;
+			line-height: 1.1;
+			font-size: 0.75rem;
 		font-weight: 700;
 		border-radius: var(--app-radius-sm);
 		border: 1px solid var(--halbu-border-strong);

@@ -1,5 +1,5 @@
 <script>
-	let { save = $bindable() } = $props();
+	let { save = $bindable(), editorDocumentMode = "raw" } = $props();
 
 	const ROGUE_ENCAMPMENT = "RogueEncampment";
 

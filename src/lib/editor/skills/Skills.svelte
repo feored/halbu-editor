@@ -22,10 +22,16 @@
 		getSkillsDataset,
 		skillIdToSaveId,
 	} from "../../utils/GameSupport";
-	import { getErrorMessage } from "../../utils/errorMessage.js";
+	import { getErrorMessage } from "../../utils/errorMessage";
 	import { buildSkillDetails } from "./skillDetails";
 
-	let { save = $bindable(), parserLayoutVersion = null } = $props();
+	let {
+		save = $bindable(),
+		editorDocumentMode = "raw",
+		effectiveDerivedValues = null,
+		effectiveDerivedValuesError = "",
+		parserLayoutVersion = null,
+	} = $props();
 	let skillsContext = $state(null);
 	let skillsContextError = $state("");
 	let isSkillsContextLoading = $state(false);
@@ -38,6 +44,13 @@
 	const skillSlotCount = $derived(
 		skillsContext == null ? 30 : skillsContext.skill_slot_count
 	);
+	const isGameRulesMode = $derived(editorDocumentMode === "game-rules");
+	const effectiveSkillPointsLeft = $derived.by(() => {
+		if (isGameRulesMode && effectiveDerivedValues != null) {
+			return effectiveDerivedValues.newskills;
+		}
+		return save.attributes.newskills.value;
+	});
 
 	$effect(() => {
 		effectiveVersion;
@@ -125,7 +138,7 @@
 			skillSlotsReady,
 			saveSkills: save.skills,
 			characterLevel: save.character.level,
-			availableSkillPoints: save.attributes.newskills.value,
+			availableSkillPoints: effectiveSkillPointsLeft,
 			getSkillSlot,
 		})
 	);
@@ -149,12 +162,14 @@
 			if (!skillState.available) {
 				return;
 			}
-			if (save.attributes.newskills.value < delta) {
+			if (effectiveSkillPointsLeft < delta) {
 				return;
 			}
 			const nextSkills = addSkillPoints(save.skills, skillNum, delta);
 			if (nextSkills !== save.skills) {
-				save.attributes.newskills.value -= delta;
+				if (!isGameRulesMode) {
+					save.attributes.newskills.value -= delta;
+				}
 				save.skills = nextSkills;
 			}
 		} else {
@@ -164,7 +179,9 @@
 			}
 			const nextSkills = addSkillPoints(save.skills, skillNum, delta);
 			if (nextSkills !== save.skills) {
-				save.attributes.newskills.value += pointsToRefund;
+				if (!isGameRulesMode) {
+					save.attributes.newskills.value += pointsToRefund;
+				}
 				save.skills = nextSkills;
 			}
 		}
@@ -175,7 +192,9 @@
 		if (refundedPoints < 1) {
 			return;
 		}
-		save.attributes.newskills.value += refundedPoints;
+		if (!isGameRulesMode) {
+			save.attributes.newskills.value += refundedPoints;
+		}
 		save.skills = nextSkills;
 	}
 
@@ -206,6 +225,9 @@
 	}
 
 	function setPointsLeft(value) {
+		if (isGameRulesMode) {
+			return;
+		}
 		save.attributes.newskills.value = clampSkillPoints(value);
 	}
 
@@ -244,13 +266,25 @@
 	}
 </script>
 
-<div class="skills-page grid content-start gap-2.5">
-	<SkillsHeader
-		pointsLeft={save.attributes.newskills.value}
-		disabled={!hasClassSkills || isSkillsContextLoading}
-		onRefund={refund}
-		onPointsLeftChange={setPointsLeft}
-	/>
+	<div class="skills-page grid content-start gap-2.5">
+		<SkillsHeader
+			pointsLeft={effectiveSkillPointsLeft}
+			disabled={!hasClassSkills || isSkillsContextLoading}
+			pointsInputDisabled={!hasClassSkills || isSkillsContextLoading || isGameRulesMode}
+			onRefund={refund}
+			onPointsLeftChange={setPointsLeft}
+		/>
+		{#if isGameRulesMode}
+			<div class="form-text">
+				Game rules mode: available points are recalculated from level, quests, and spent skill
+				points.
+			</div>
+		{/if}
+		{#if isGameRulesMode && effectiveDerivedValuesError.length > 0}
+			<div class="rounded-sm border border-halbu-warning bg-halbu-warningSoft px-2 py-1.5 text-sm text-halbu-warning">
+				{effectiveDerivedValuesError}
+			</div>
+		{/if}
 
 	{#if isSkillsContextLoading}
 		<div class="rounded-sm border border-halbu-info bg-halbu-infoSoft px-2 py-1.5 text-sm text-halbu-info">

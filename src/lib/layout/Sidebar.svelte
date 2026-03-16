@@ -7,33 +7,47 @@
 		title = "",
 		items = [],
 		activeId = null,
-		editorActive = false,
 		libraryActive = false,
+		newCharacterActive = false,
 		settingsActive = false,
 		onSelect,
 		onLibrary,
+		onNewCharacter,
 		onSettings,
 	} = $props();
-
-	function selectItem(itemId) {
-		onSelect(itemId);
-	}
 </script>
 
 <nav class="sidebar-nav flex h-full min-h-0 flex-col">
 	<div class="sidebar-nav__library mb-2 border-b border-halbu-border pb-2">
-		<Button
-			variant="ghost"
-			class={cn(
-				"w-full justify-start rounded-none border-l-2 border-l-transparent px-2 py-1.5 text-sm",
-				libraryActive
-					? "bg-halbu-panel2 border-l-halbu-primary text-halbu-text"
-					: "text-halbu-text hover:bg-halbu-panel2"
-			)}
-			onclick={onLibrary}
-		>
-			<span>{editorActive ? "← Library" : "Library"}</span>
-		</Button>
+		<h1 class="sidebar-nav__title m-0 px-1.5 py-0.5 text-xs font-semibold tracking-[0.02em] text-halbu-textDim">
+			CHARACTERS
+		</h1>
+		<div class="grid gap-1">
+				<Button
+					variant="ghost"
+					class={cn(
+						"w-full justify-start rounded-none border-l-2 border-l-transparent px-2 py-1.5 text-sm",
+						libraryActive
+							? "bg-halbu-panel2 border-l-halbu-primary text-halbu-text"
+							: "text-halbu-text hover:bg-halbu-panel2"
+					)}
+					onclick={onLibrary}
+				>
+					<span>Library</span>
+				</Button>
+			<Button
+				variant="ghost"
+				class={cn(
+					"w-full justify-start rounded-none border-l-2 border-l-transparent px-2 py-1.5 text-sm",
+					newCharacterActive
+						? "bg-halbu-panel2 border-l-halbu-primary text-halbu-text"
+						: "text-halbu-text hover:bg-halbu-panel2"
+				)}
+				onclick={onNewCharacter}
+			>
+				<span>New Character</span>
+			</Button>
+		</div>
 	</div>
 
 	{#if items.length > 0}
@@ -48,23 +62,25 @@
 				</h1>
 			{/if}
 
-			<ul class="sidebar-nav__list m-0 grid list-none gap-1 p-0">
-				{#each items as item (item.id)}
-					<li
-						class={cn(
-							"min-w-0",
-							item.dividerBefore === true && "mt-1.5 border-t border-halbu-border pt-1.5"
-						)}
-					>
-						<Button
-							variant="ghost"
-							class={cn(
+				<ul class="sidebar-nav__list m-0 grid list-none gap-1 p-0">
+					{#each items as item (item.id)}
+						{#if item.dividerBefore === true}
+							<li class="mt-1.5 border-t border-halbu-border pt-1.5">
+								<h2 class="sidebar-nav__title m-0 px-1.5 py-0.5 text-xs font-semibold tracking-[0.02em] text-halbu-textDim">
+									OVERVIEW
+								</h2>
+							</li>
+						{/if}
+						<li class="min-w-0">
+							<Button
+								variant="ghost"
+								class={cn(
 								"w-full justify-start rounded-none border-l-2 border-l-transparent px-2 py-1.5 text-sm hover:bg-halbu-panel2 hover:text-halbu-text",
 								activeId === item.id &&
 									"bg-halbu-panel2 border-l-halbu-primary text-halbu-text"
 							)}
 							disabled={item.disabled === true}
-							onclick={() => selectItem(item.id)}
+							onclick={() => onSelect(item.id)}
 						>
 							<span class="flex w-full min-w-0 items-center justify-between gap-2">
 								<span>{item.label}</span>

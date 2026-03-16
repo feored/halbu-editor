@@ -1,9 +1,9 @@
 <script>
 	import names from "./names.json";
 	import variants from "./variants.json";
-	import { Difficulty } from "../../utils/constants.js";
+	import { Difficulty } from "../../utils/constants";
 	import { enforceMinMax } from "../../utils/actions.js";
-	import { clampInteger } from "../../utils/numbers.js";
+	import { clampInteger } from "../../utils/numbers";
 
 	let { save = $bindable() } = $props();
 
@@ -31,7 +31,6 @@
 		}
 	}
 
-	// Check if mercenary is hired and disable everything if not.
 	let isHired = $state(save.character.mercenary.id != 0);
 	$effect(() => {
 		isHired = save.character.mercenary.id != 0;
@@ -45,7 +44,6 @@
 		}
 	}
 
-	// Variants
 	let mercVariant = $state(
 		structuredClone(
 			variants.find((info) => info.id == save.character.mercenary.variant_id) ?? variants[0],
@@ -75,7 +73,6 @@
 		changeExperience();
 	}
 
-	// Experience
 	let mercLevel = $state(1);
 	const mercenaryLevelCap = $derived(
 		clampInteger(save.attributes.level.value, MERCENARY_LEVEL_MIN, MERCENARY_LEVEL_MAX),
@@ -108,7 +105,6 @@
 		save.character.mercenary.experience = xpFromLevel(mercLevel, mercVariant.rate);
 	}
 
-	// Names
 	const variantNames = $derived(names[mercVariant.type] ?? []);
 
 	function updateName() {

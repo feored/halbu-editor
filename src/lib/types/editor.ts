@@ -22,9 +22,11 @@ export type DifficultyId = "normal" | "nightmare" | "hell";
 export type ActId = "act1" | "act2" | "act3" | "act4" | "act5";
 export type ActLabel = "Act1" | "Act2" | "Act3" | "Act4" | "Act5";
 export type DifficultyLabel = "Normal" | "Nightmare" | "Hell";
-export type ExpansionTypeLabel = "Classic" | "Expansion" | "RotW";
-export type GameEditionLabel = "D2R Legacy" | "RotW";
-export type EditionHintId = "D2RLegacy" | "RotW";
+export type EditorDocumentMode = "raw" | "game-rules";
+export const EXPANSION_TYPE_LABELS = ["Classic", "Expansion", "RotW"] as const;
+export type ExpansionTypeLabel = (typeof EXPANSION_TYPE_LABELS)[number];
+export const GAME_EDITIONS = ["D2R Legacy", "RotW"] as const;
+export type GameEdition = (typeof GAME_EDITIONS)[number];
 export type ParseIssueSeverity = "Warning" | "Error";
 export type ParseIssueKind =
 	| "TruncatedSection"
@@ -191,7 +193,7 @@ export type CompatibilityIssue = {
 export type OutputFormatOption = {
 	formatId: EncodableSaveFormatId;
 	version: number;
-	gameEdition: GameEditionLabel;
+	gameEdition: GameEdition;
 };
 
 export type ParseMode = "lax" | "strict";
@@ -214,7 +216,7 @@ export type EditorOpenPayload = {
 	computedChecksum: number | null;
 	sourceFileSize: number | null;
 	sourcePath: string | null;
-	editionHint: EditionHintId | null;
+	editionHint: GameEdition | null;
 	suggestedTargetVersion: 99 | 105 | null;
 	parserLayoutVersion: 99 | 105 | null;
 };
@@ -235,7 +237,7 @@ export type SaveSummaryEntry = {
 	formatId: SaveFormatId | null;
 	hardcore: boolean | null;
 	expansionType: ExpansionTypeLabel | null;
-	gameEdition: GameEditionLabel | null;
+	gameEdition: GameEdition | null;
 	version: number | null;
 	lastPlayed: number | null;
 	parseIssueCount: number;

@@ -57,6 +57,7 @@ export function buildCharacterEditValidation(
 	validName: boolean,
 	nameValidationMessage: string,
 	classSupportWarning: string,
+	progressionValidationWarning: string,
 ): EditValidation {
 	const errors: string[] = [];
 	const warnings: string[] = [];
@@ -67,6 +68,9 @@ export function buildCharacterEditValidation(
 	}
 	if (classSupportWarning.length > 0) {
 		warnings.push(classSupportWarning);
+	}
+	if (progressionValidationWarning.length > 0) {
+		warnings.push(progressionValidationWarning);
 	}
 	return { errors, warnings };
 }

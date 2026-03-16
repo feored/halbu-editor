@@ -11,7 +11,7 @@ use super::{format_id_label, strictness_from_parse_mode, ParsedCharacter, SaveSu
 pub(crate) fn parse_save_from_path(
     path: &Path,
     parse_mode: Option<&str>,
-) -> Result<(ParsedSave, usize, Option<GameEdition>), String> {
+) -> Result<(ParsedSave, usize), String> {
     let strictness = strictness_from_parse_mode(parse_mode);
     let parse_mode_label = match strictness {
         halbu::Strictness::Strict => "strict",
@@ -22,7 +22,6 @@ pub(crate) fn parse_save_from_path(
 
     let save_file: Vec<u8> = std::fs::read(path).map_err(|e| e.to_string())?;
     let source_file_size = save_file.len();
-    let edition_hint = halbu::format::detect_edition_hint(&save_file);
     let parsed = Save::parse(&save_file, strictness).map_err(|e| e.to_string())?;
     if !parsed.issues.is_empty() {
         debug!(
@@ -32,7 +31,7 @@ pub(crate) fn parse_save_from_path(
         );
     }
     debug!("File {0} parsed successfully.", path.display());
-    Ok((parsed, source_file_size, edition_hint))
+    Ok((parsed, source_file_size))
 }
 
 fn read_u32_le_at(bytes: &[u8], offset: usize) -> Option<u32> {
@@ -69,17 +68,21 @@ pub fn get_character_from_path_with_meta(
     parse_mode: Option<String>,
 ) -> Result<ParsedCharacter, String> {
     let path: &Path = Path::new(&path);
-    let (parsed, source_file_size, edition_hint) = parse_save_from_path(path, parse_mode.as_deref())?;
-    let parse_issue_count = parsed.issues.len();
-    let header_checksum = parsed.header_checksum;
-    let computed_checksum = parsed.computed_checksum;
-    let parse_issues = parsed.issues;
-    let parser_layout_version = match parsed.save.format() {
+    let (parsed, source_file_size) = parse_save_from_path(path, parse_mode.as_deref())?;
+    let ParsedSave {
+        save,
+        detected_format: _detected_format,
+        decoded_layout,
+        edition_hint,
+        issues: parse_issues,
+        header_checksum,
+        computed_checksum,
+    } = parsed;
+    let parse_issue_count = parse_issues.len();
+    let parser_layout_version = match decoded_layout {
         FormatId::V99 => Some(99),
         FormatId::V105 => Some(105),
-        FormatId::Unknown(version) => Some(
-            FormatId::fallback_for_unknown_version(version, edition_hint).version(),
-        ),
+        FormatId::Unknown(_) => None,
     };
     let suggested_target_version = match edition_hint {
         Some(GameEdition::D2RLegacy) => Some(99),
@@ -87,7 +90,7 @@ pub fn get_character_from_path_with_meta(
         None => None,
     };
     Ok(ParsedCharacter {
-        save: parsed.save,
+        save,
         parse_issue_count,
         parse_issues,
         source_file_size,

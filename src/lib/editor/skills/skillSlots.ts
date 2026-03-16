@@ -1,4 +1,4 @@
-import { clampByte } from "../../utils/numbers.js";
+import { clampByte } from "../../utils/numbers";
 import type { SkillSlot } from "../../types/editor";
 
 export const DEFAULT_SKILL_SLOT_COUNT = 30;

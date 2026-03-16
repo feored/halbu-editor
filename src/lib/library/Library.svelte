@@ -5,18 +5,9 @@
 	import { Message, buildMessage } from "../utils/Message.svelte";
 	import { invoke } from "@tauri-apps/api/core";
 	import * as settings from "../utils/settings";
-	import { getErrorMessage } from "../utils/errorMessage.js";
+	import { getErrorMessage } from "../utils/errorMessage";
 	import { AlertCircleIcon } from "lucide-svelte";
-	import {
-		toEditorOpenPayload,
-		toEditorSave,
-	} from "../types/editorPayload";
-	import {
-		KNOWN_SAVE_VERSIONS,
-		DEFAULT_NEW_SAVE_VERSION,
-		getSupportedClass,
-		getSupportedClasses,
-	} from "../utils/GameSupport";
+	import { toEditorOpenPayload } from "../types/editorPayload";
 
 	let { onmessage, parseMode = "lax" } = $props();
 
@@ -40,13 +31,6 @@
 	let currentSaveDirectory = $state("");
 	let filterText = $state("");
 	let libraryError = $state("");
-
-	let selectedVersion = $state(DEFAULT_NEW_SAVE_VERSION);
-	let selectedClass = $state(getSupportedClass(DEFAULT_NEW_SAVE_VERSION, null));
-	const availableClasses = $derived(getSupportedClasses(selectedVersion));
-	$effect(() => {
-		selectedClass = getSupportedClass(selectedVersion, selectedClass);
-	});
 
 	async function readFileContents() {
 		libraryError = "";
@@ -92,35 +76,6 @@
 		if (event.key === "Enter" || event.key === " ") {
 			event.preventDefault();
 			loadSavePath(path);
-		}
-	}
-
-	async function newSave() {
-		if (selectedClass == null) {
-			return;
-		}
-		libraryError = "";
-		try {
-			/** @type {import("../types/editorPayload").BackendEditorSaveDto} */
-			const response = await invoke("new_save", {
-				version: selectedVersion,
-				class: selectedClass,
-			});
-			const newSave = toEditorSave(response);
-			dispatchMessage(Message.CharacterPicked, {
-				save: newSave,
-				parseIssueCount: 0,
-				parseIssues: [],
-				sourceFileSize: null,
-				sourcePath: null,
-				headerChecksum: null,
-				computedChecksum: null,
-				editionHint: null,
-				suggestedTargetVersion: null,
-				parserLayoutVersion: null,
-			});
-		} catch (err) {
-			libraryError = `Failed to create new save: ${getErrorMessage(err, "unknown error")}`;
 		}
 	}
 
@@ -286,38 +241,6 @@
 			{/if}
 		{/if}
 
-		<div class="row">
-			<div class="col-4">
-				<p class="form-text">Create new character</p>
-			</div>
-			<div class="col-4"></div>
-			<div class="col-4 text-end">
-				<p class="form-text">New character</p>
-				<div class="input-group">
-					<select
-						class="form-select"
-						name="newCharacterVersion"
-						id="newCharacterVersion"
-						bind:value={selectedVersion}
-					>
-						{#each KNOWN_SAVE_VERSIONS as version}
-							<option value={version}>{version}</option>
-						{/each}
-					</select>
-					<select
-						class="form-select"
-						name="newCharacter"
-						id="newCharacter"
-						bind:value={selectedClass}
-					>
-						{#each availableClasses as className}
-							<option value={className}>{className}</option>
-						{/each}
-					</select>
-					<Button onclick={newSave} disabled={selectedClass == null}>New</Button>
-				</div>
-			</div>
-		</div>
 	</div>
 </div>
 

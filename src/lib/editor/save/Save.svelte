@@ -1,11 +1,13 @@
 <script>
-	import { confirm } from "@tauri-apps/plugin-dialog";
 	import Button from "../../components/ui/button/button.svelte";
-	import { getErrorMessage } from "../../utils/errorMessage.js";
+	import { getErrorMessage } from "../../utils/errorMessage";
 	import { buildChangeReview } from "../status/reviewChanges";
+	import SaveChangeReviewDialog from "./SaveChangeReviewDialog.svelte";
+	import SaveForceConvertDialog from "./SaveForceConvertDialog.svelte";
 
 	let {
 		save,
+		editorDocumentMode = "raw",
 		baselineSave = null,
 		editValidation = { errors: [], warnings: [] },
 		saveDisabled = false,
@@ -34,8 +36,6 @@
 	let reviewModalOpen = $state(false);
 	let forceSaveModalOpen = $state(false);
 	let advancedConversionDetailsOpen = $state(false);
-	let reviewDialogRef;
-	let forceSaveDialogRef;
 
 	const editValidationErrors = $derived(editValidation.errors);
 	const editValidationWarnings = $derived(editValidation.warnings);
@@ -65,6 +65,7 @@
 	const currentVersion = $derived(save.version);
 	const targetVersion = $derived(compatibilityTargetVersion);
 	const effectiveTargetVersion = $derived(targetVersion ?? currentVersion);
+	const isGameRulesMode = $derived(editorDocumentMode === "game-rules");
 	const isSaveBlocked = $derived(
 		requiresTargetSelection ||
 			hasEditValidationErrors ||
@@ -173,14 +174,12 @@
 	const changeReview = $derived(buildChangeReview(baselineSave, save));
 	const reviewChangeCount = $derived(changeReview.totalChanges);
 	const reviewChangeGroups = $derived(changeReview.groups);
-	const unsavedChangesClass = $derived.by(() => {
-		return reviewChangeCount > 0 ? "text-halbu-info" : "text-halbu-textMuted";
-	});
-	const unsavedChangesLabel = $derived.by(() => {
-		return reviewChangeCount === 1
-			? "1 unsaved change"
-			: `${reviewChangeCount} unsaved changes`;
-	});
+	const unsavedChangesClass = $derived(
+		reviewChangeCount > 0 ? "text-halbu-info" : "text-halbu-textMuted",
+	);
+	const unsavedChangesLabel = $derived(
+		reviewChangeCount === 1 ? "1 unsaved change" : `${reviewChangeCount} unsaved changes`,
+	);
 	const nextActionLabel = $derived.by(() => {
 		if (requiresTargetSelection) {
 			return "Select an output format in Conversion before saving.";
@@ -223,6 +222,9 @@
 		}
 		return "Issue";
 	}
+	const blockingIssueMessages = $derived(
+		blockingCompatibilityIssues.map((issue) => compatibilityMessage(issue)),
+	);
 
 	function handleCompatibilityTargetVersionChange(event) {
 		const selectedVersion = Number(event.currentTarget.value);
@@ -273,10 +275,6 @@
 		forceSaveModalOpen = false;
 	}
 
-	function handleForceSaveDialogClose() {
-		forceSaveModalOpen = false;
-	}
-
 	async function forceSaveAsCurrentVersion() {
 		statusError = "";
 		saveInProgress = true;
@@ -301,28 +299,10 @@
 		reviewModalOpen = false;
 	}
 
-	function handleReviewDialogClose() {
-		reviewModalOpen = false;
-	}
-
-	async function undoAllChanges() {
+	async function undoAllReviewChanges() {
 		if (reviewChangeCount < 1) {
 			return;
 		}
-
-		const confirmed = await confirm(
-			"Discard all unsaved changes?\n\nThis will restore the character to the state at the last open/save point.",
-			{
-				title: "Undo All Changes",
-				kind: "warning",
-				okLabel: "Discard Changes",
-				cancelLabel: "Cancel",
-			},
-		);
-		if (!confirmed) {
-			return;
-		}
-
 		try {
 			await onRestore();
 			closeReviewModal();
@@ -333,38 +313,6 @@
 
 	$effect(() => {
 		advancedConversionDetailsOpen = advancedSaveOptionsEnabled === true;
-	});
-
-	$effect(() => {
-		const dialog = reviewDialogRef;
-		if (dialog == null) {
-			return;
-		}
-		if (reviewModalOpen) {
-			if (!dialog.open) {
-				dialog.showModal();
-			}
-			return;
-		}
-		if (dialog.open) {
-			dialog.close();
-		}
-	});
-
-	$effect(() => {
-		const dialog = forceSaveDialogRef;
-		if (dialog == null) {
-			return;
-		}
-		if (forceSaveModalOpen) {
-			if (!dialog.open) {
-				dialog.showModal();
-			}
-			return;
-		}
-		if (dialog.open) {
-			dialog.close();
-		}
 	});
 </script>
 
@@ -392,6 +340,15 @@
 			</dd>
 		</dl>
 		<div class="form-text mt-1">{nextActionLabel}</div>
+		{#if isGameRulesMode}
+			<div class="form-text mt-1">
+				Game rules mode: Save writes recalculated life, mana, stamina, and remaining
+				stat/skill points.
+			</div>
+			<div class="form-text mt-1 text-halbu-warning">
+				Custom values may be replaced by recalculated values.
+			</div>
+		{/if}
 		{#if lastSaveUsedForceConversion}
 			<div class="form-text mt-1 text-halbu-warning">
 				Last save used force conversion; compatibility checks were bypassed.
@@ -415,29 +372,49 @@
 		</dl>
 		{#if unknownFormatSession}
 			<div class="form-text mt-1 text-halbu-warning">
-				This save uses an unknown version ({save.version}).
+				Unknown source format session.
 			</div>
-			{#if editionHint != null}
-				<div class="form-text mt-1">
-					Based on its structure, it appears to be a {editionHintLabel} save.
-				</div>
-			{/if}
-			{#if parserLayoutVersion != null}
-				<div class="form-text mt-1">Halbu parsed it using the v{parserLayoutVersion} layout.</div>
-			{/if}
-			{#if suggestedTargetVersion != null}
-				<div class="form-text mt-1">
-					Suggested target: v{suggestedTargetVersion}.
-					{#if suggestedTargetAutoSelected}
-						This target was selected automatically based on the detected edition.
-					{:else if targetVersion != null && targetVersion !== suggestedTargetVersion}
-						Current selected target: v{targetVersion}.
+			<dl class="m-0 mt-1 grid grid-cols-form-48 items-baseline gap-x-2.5 gap-y-1">
+				<dt class="form-label mb-0">Detected version</dt>
+				<dd class="m-0 text-sm text-halbu-text">v{save.version} (unknown)</dd>
+
+				<dt class="form-label mb-0">Parser layout</dt>
+				<dd class="m-0 text-sm text-halbu-text">
+					{#if parserLayoutVersion == null}
+						Not available
+					{:else}
+						v{parserLayoutVersion}
 					{/if}
-				</div>
-			{:else}
+				</dd>
+
+				<dt class="form-label mb-0">Edition hint</dt>
+				<dd class="m-0 text-sm text-halbu-text">
+					{#if editionHint == null}
+						Not detected
+					{:else}
+						{editionHintLabel} (heuristic)
+					{/if}
+				</dd>
+
+				<dt class="form-label mb-0">Suggested target</dt>
+				<dd class="m-0 text-sm text-halbu-text">
+					{#if suggestedTargetVersion == null}
+						Select manually
+					{:else}
+						v{suggestedTargetVersion}
+					{/if}
+				</dd>
+			</dl>
+			{#if suggestedTargetVersion == null}
 				<div class="form-text mt-1 text-halbu-warning">
 					Select an output format in Conversion before saving.
 				</div>
+			{:else if suggestedTargetAutoSelected}
+				<div class="form-text mt-1">
+					Suggested target was selected automatically from the detected edition hint.
+				</div>
+			{:else if targetVersion != null && targetVersion !== suggestedTargetVersion}
+				<div class="form-text mt-1">Current selected target: v{targetVersion}.</div>
 			{/if}
 		{/if}
 		{#if hasEditValidationErrors || hasEditValidationWarnings}
@@ -563,103 +540,20 @@
 	</section>
 </div>
 
-<dialog
-	bind:this={reviewDialogRef}
-	onclose={handleReviewDialogClose}
-	class="w-[96vw] max-w-4xl rounded-sm border border-halbu-borderStrong bg-halbu-panel p-2.5 text-halbu-text shadow-lg backdrop:bg-black/45"
-	aria-label="Review changes"
->
-	<div class="flex items-start justify-between gap-2">
-		<div class="grid gap-0.5">
-			<h3 class="editor-card-title mb-0">Review Changes ({reviewChangeCount})</h3>
-			<p class="form-text m-0">Compared against the state at open/last successful save.</p>
-		</div>
-		<div class="flex items-center gap-1.5">
-			<Button variant="destructive" onclick={undoAllChanges} disabled={reviewChangeCount < 1}>
-				Undo All Changes
-			</Button>
-			<Button variant="secondary" onclick={closeReviewModal}>Close</Button>
-		</div>
-	</div>
+<SaveChangeReviewDialog
+	open={reviewModalOpen}
+	{reviewChangeCount}
+	{reviewChangeGroups}
+	onClose={closeReviewModal}
+	onUndoAllChanges={undoAllReviewChanges}
+/>
 
-	<div
-		class="mt-2 max-h-[68vh] overflow-auto rounded-xs border border-halbu-border bg-halbu-panel2 p-2"
-	>
-		{#if reviewChangeGroups.length < 1}
-			<div class="form-text">No changes.</div>
-		{:else}
-			<div class="grid gap-2">
-				{#each reviewChangeGroups as group}
-					<section
-						class="rounded-xs border border-halbu-border bg-halbu-panel px-2 py-1.5"
-					>
-						<h4 class="editor-card-title mb-1">
-							{group.section} ({group.changes.length})
-						</h4>
-						<div class="grid gap-0.5">
-							{#each group.changes as change}
-								<div
-									class="grid gap-0.5 border-b border-halbu-border pb-0.5 last:border-b-0 last:pb-0"
-								>
-									<div class="text-sm font-semibold text-halbu-text">
-										{change.label}
-									</div>
-									<div class="text-sm text-halbu-textMuted">
-										{change.before} → {change.after}
-									</div>
-								</div>
-							{/each}
-						</div>
-					</section>
-				{/each}
-			</div>
-		{/if}
-	</div>
-</dialog>
-
-<dialog
-	bind:this={forceSaveDialogRef}
-	onclose={handleForceSaveDialogClose}
-	class="w-[96vw] max-w-2xl rounded-sm border border-halbu-borderStrong bg-halbu-panel p-2.5 text-halbu-text shadow-lg backdrop:bg-black/45"
-	aria-label="Force save warning"
->
-	<div class="grid gap-2">
-		<div class="grid gap-0.5">
-			<h3 class="editor-card-title mb-0">Bypass compatibility checks?</h3>
-			<p class="form-text m-0">
-				This save has blocking compatibility issues for v{effectiveTargetVersion}.
-			</p>
-			<p class="form-text m-0">
-				Halbu can still write a converted file, but the output may load incorrectly, lose data,
-				or behave unexpectedly.
-			</p>
-			<p class="form-text m-0">
-				Force conversion writes to a new file only and bypasses compatibility checks.
-			</p>
-		</div>
-
-		{#if blockingCompatibilityIssues.length > 0}
-			<div class="rounded-xs border border-halbu-border bg-halbu-panel2 p-2">
-				<div class="text-sm font-semibold text-halbu-text">Blocking issues</div>
-				<ul class="mb-0 mt-1 pl-4 text-sm text-halbu-textMuted">
-					{#each blockingCompatibilityIssues as issue}
-						<li class="text-halbu-danger">{compatibilityMessage(issue)}</li>
-					{/each}
-				</ul>
-			</div>
-		{/if}
-
-		<div class="flex items-center justify-end gap-1.5">
-			<Button variant="secondary" onclick={closeForceSaveModal} disabled={saveInProgress}>
-				Cancel
-			</Button>
-			<Button
-				variant="destructive"
-				onclick={forceSaveAsCurrentVersion}
-				disabled={!canForceConvert || saveInProgress}
-			>
-				Force Save As...
-			</Button>
-		</div>
-	</div>
-</dialog>
+<SaveForceConvertDialog
+	open={forceSaveModalOpen}
+	{effectiveTargetVersion}
+	{blockingIssueMessages}
+	{canForceConvert}
+	{saveInProgress}
+	onClose={closeForceSaveModal}
+	onConfirmForceSave={forceSaveAsCurrentVersion}
+/>

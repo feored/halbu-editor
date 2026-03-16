@@ -7,10 +7,11 @@
 		getSaveFormatIdLabel,
 		isUnknownSaveFormat,
 	} from "../../utils/GameSupport";
-	import { getErrorMessage } from "../../utils/errorMessage.js";
+	import { getErrorMessage } from "../../utils/errorMessage";
 
 	let {
 		save,
+		editorDocumentMode = "raw",
 		parseMode = "lax",
 		parseIssueCount = 0,
 		parseIssues = [],
@@ -19,6 +20,7 @@
 		sourceFileSize = null,
 		sourcePath = null,
 		editionHint = null,
+		suggestedTargetVersion = null,
 		parserLayoutVersion = null,
 		saveRevision = 0,
 	} = $props();
@@ -46,9 +48,15 @@
 	});
 	const parserLayoutLabel = $derived.by(() => {
 		if (parserLayoutVersion == null) {
-			return "Unknown";
+			return "Not available";
 		}
 		return `V${parserLayoutVersion}`;
+	});
+	const suggestedTargetLabel = $derived.by(() => {
+		if (suggestedTargetVersion == null) {
+			return "Select manually";
+		}
+		return `v${suggestedTargetVersion}`;
 	});
 	const parseIssuesList = $derived(parseIssues);
 	const parsedIssueCount = $derived(parseIssueCount);
@@ -230,14 +238,23 @@
 		<h3 class="editor-card-title mb-1.5">File Information</h3>
 		<dl class="m-0 grid grid-cols-form-48 items-baseline gap-x-2.5 gap-y-1">
 			{#if unknownFormatSession}
-				<dt class="form-label mb-0">Save version</dt>
-				<dd class="m-0 text-sm text-halbu-text">{save.version}</dd>
+				<dt class="form-label mb-0">Detected version</dt>
+				<dd class="m-0 text-sm text-halbu-text">v{save.version} (unknown format)</dd>
 
-				<dt class="form-label mb-0">Detected edition</dt>
-				<dd class="m-0 text-sm text-halbu-text">{editionHintLabel} (heuristic)</dd>
+				<dt class="form-label mb-0">Edition hint</dt>
+				<dd class="m-0 text-sm text-halbu-text">
+					{#if editionHint == null}
+						Not detected
+					{:else}
+						{editionHintLabel} (heuristic)
+					{/if}
+				</dd>
 
 				<dt class="form-label mb-0">Parser layout</dt>
-				<dd class="m-0 text-sm text-halbu-text">{parserLayoutLabel} (fallback)</dd>
+				<dd class="m-0 text-sm text-halbu-text">{parserLayoutLabel}</dd>
+
+				<dt class="form-label mb-0">Suggested target</dt>
+				<dd class="m-0 text-sm text-halbu-text">{suggestedTargetLabel}</dd>
 			{:else}
 				<dt class="form-label mb-0">Format ID</dt>
 				<dd class="m-0 text-sm text-halbu-text">{getSaveFormatIdLabel(save)}</dd>

@@ -2,7 +2,7 @@ import { toEditorSkills } from "../editor/skills/skillAdapters";
 import { DEFAULT_SKILL_SLOT_COUNT } from "../editor/skills/skillSlots";
 import type {
 	BackendSkillPoints,
-	EditionHintId,
+	GameEdition,
 	EncodableSaveFormatId,
 	EditorOpenPayload,
 	EditorSave,
@@ -41,7 +41,7 @@ export type BackendOpenPayloadDto = {
 	source_file_size: number;
 	header_checksum: number | null;
 	computed_checksum: number | null;
-	edition_hint: EditionHintId | null;
+	edition_hint: GameEdition | null;
 	suggested_target_version: 99 | 105 | null;
 	parser_layout_version: 99 | 105 | null;
 };

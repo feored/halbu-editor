@@ -9,6 +9,8 @@ import type {
 	KnownClassName,
 } from "../../types/editor";
 
+type ParserLayoutVersion = 99 | 105;
+
 export type SaveCommandPayload = Omit<EditorSave, "skills" | "character" | "meta"> & {
 	skills: BackendSkillPoints;
 	character: Omit<EditorSave["character"], "class"> & {
@@ -19,14 +21,11 @@ export type SaveCommandPayload = Omit<EditorSave, "skills" | "character" | "meta
 	};
 };
 
-function formatIdForVersion(version: number): "V99" | "V105" {
+function formatIdForVersion(version: ParserLayoutVersion): "V99" | "V105" {
 	if (version === 99) {
 		return "V99";
 	}
-	if (version === 105) {
-		return "V105";
-	}
-	throw new Error(`Unsupported target save version: ${version}.`);
+	return "V105";
 }
 
 function parseUnknownEnumLabel(value: string): number | null {
@@ -34,36 +33,34 @@ function parseUnknownEnumLabel(value: string): number | null {
 	return match == null ? null : Number(match[1]);
 }
 
-function toBackendEnumLabel<KnownLabel extends string>(
-	value: string,
-): KnownLabel | { Unknown: number } {
-	const unknownPayload = parseUnknownEnumLabel(value);
-	if (unknownPayload != null) {
-		return { Unknown: unknownPayload };
-	}
-	return value as KnownLabel;
-}
-
 export function buildSaveCommandPayload(
 	saveData: EditorSave,
-	sourceLayoutVersion: number | null = null,
+	sourceLayoutVersion: ParserLayoutVersion | null = null,
 	skillSlotCount = DEFAULT_SKILL_SLOT_COUNT,
 ): SaveCommandPayload {
+	const isUnknownSourceFormat = parseUnknownEnumLabel(saveData.meta.format) != null;
 	const sourceFormatLabel =
-		sourceLayoutVersion != null &&
-		parseUnknownEnumLabel(saveData.meta.format) != null
+		sourceLayoutVersion != null && isUnknownSourceFormat
 			? formatIdForVersion(sourceLayoutVersion)
 			: saveData.meta.format;
+	const unknownClass = parseUnknownEnumLabel(saveData.character.class);
+	const unknownFormat = parseUnknownEnumLabel(sourceFormatLabel);
 
 	return {
 		...saveData,
 		character: {
 			...saveData.character,
-			class: toBackendEnumLabel<KnownClassName>(saveData.character.class),
+			class:
+				unknownClass == null
+					? (saveData.character.class as KnownClassName)
+					: { Unknown: unknownClass },
 		},
 		meta: {
 			...saveData.meta,
-			format: toBackendEnumLabel<EncodableSaveFormatId>(sourceFormatLabel),
+			format:
+				unknownFormat == null
+					? (sourceFormatLabel as EncodableSaveFormatId)
+					: { Unknown: unknownFormat },
 		},
 		skills: toBackendSkills(saveData.skills, skillSlotCount),
 	};
@@ -84,6 +81,9 @@ export function resolveTargetVersion(
 }
 
 export function applyTargetVersionToSave(saveData: EditorSave, targetVersion: number): void {
+	if (targetVersion !== 99 && targetVersion !== 105) {
+		throw new Error(`Unsupported target save version: ${targetVersion}.`);
+	}
 	saveData.version = targetVersion;
 	saveData.meta.format = formatIdForVersion(targetVersion);
 }
@@ -115,17 +115,5 @@ export function buildSavePathContext(
 	return {
 		defaultPath,
 		forcePicker,
-		isCrossVersionSave,
 	};
-}
-
-export function resolveBackupSourcePath(
-	selectedFilePath: string,
-	currentSourcePath: string | null,
-	saveAs: boolean,
-): string {
-	if (saveAs) {
-		return selectedFilePath;
-	}
-	return currentSourcePath ?? selectedFilePath;
 }

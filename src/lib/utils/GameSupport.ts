@@ -15,21 +15,27 @@ type SkillPagesByClass = Readonly<Record<string, readonly string[]>>;
 
 type VersionCapabilities = {
 	label: `v${KnownSaveVersion}`;
-	classes: readonly KnownClassName[];
-	classesRequiringExpansion: readonly KnownClassName[];
+	classes: readonly { name: KnownClassName; requiredExpansion: ExpansionTypeLabel }[];
 	skillsData: readonly SkillData[];
 	skillPages: SkillPagesByClass;
+	expansionTypes: readonly ExpansionTypeLabel[];
 };
 
-const BASE_CLASSES = [
-	"Amazon",
-	"Assassin",
-	"Barbarian",
-	"Druid",
-	"Necromancer",
-	"Paladin",
-	"Sorceress",
-] as const satisfies readonly KnownClassName[];
+const V99_CLASSES = [
+	{ name: "Amazon", requiredExpansion: "Classic" },
+	{ name: "Assassin", requiredExpansion: "Expansion" },
+	{ name: "Barbarian", requiredExpansion: "Classic" },
+	{ name: "Druid", requiredExpansion: "Expansion" },
+	{ name: "Necromancer", requiredExpansion: "Classic" },
+	{ name: "Paladin", requiredExpansion: "Classic" },
+	{ name: "Sorceress", requiredExpansion: "Classic" },
+] satisfies ReadonlyArray<{ name: KnownClassName; requiredExpansion: ExpansionTypeLabel }>;
+
+const V105_CLASSES = [
+	...V99_CLASSES,
+	{ name: "Warlock", requiredExpansion: "RotW" },
+] satisfies ReadonlyArray<{ name: KnownClassName; requiredExpansion: ExpansionTypeLabel }>;
+
 
 const FEMALE_CLASSES = new Set<KnownClassName>(["Amazon", "Assassin", "Sorceress"]);
 
@@ -40,20 +46,20 @@ const SKILLS_DATA_V105 = skillsDataV105 as readonly SkillData[];
 const VERSION_CAPABILITIES: Record<KnownSaveVersion, VersionCapabilities> = {
 	99: {
 		label: "v99",
-		classes: BASE_CLASSES,
-		classesRequiringExpansion: ["Druid", "Assassin"],
+		classes: V99_CLASSES,
 		skillsData: SKILLS_DATA_V99,
 		skillPages: DEFAULT_SKILL_PAGES,
+		expansionTypes: ["Classic", "Expansion"]
 	},
 	105: {
 		label: "v105",
-		classes: [...BASE_CLASSES, "Warlock"],
-		classesRequiringExpansion: ["Druid", "Assassin", "Warlock"],
+		classes: V105_CLASSES,
 		skillsData: SKILLS_DATA_V105,
 		skillPages: {
 			...DEFAULT_SKILL_PAGES,
 			Warlock: ["Chaos", "Eldritch", "Demon"],
 		},
+		expansionTypes: ["Classic", "Expansion", "RotW"]
 	},
 };
 
@@ -151,20 +157,53 @@ export function isKnownSaveVersion(version: number): version is KnownSaveVersion
 	return getCapabilities(version) != null;
 }
 
-export function getSupportedClasses(version: number): readonly KnownClassName[] {
+export function getSupportedClasses(version: number): readonly { name: KnownClassName; requiredExpansion: ExpansionTypeLabel }[] {
 	const capabilities = getCapabilities(version);
 	return capabilities == null ? [] : capabilities.classes;
 }
 
+export function getSupportedClassesForExpansionType(
+	version: number,
+	expansionType: ExpansionTypeLabel,
+): readonly { name: KnownClassName; requiredExpansion: ExpansionTypeLabel }[] {
+	const capabilities = getCapabilities(version);
+	if (capabilities == null) {
+		return [];
+	}
+	let validExpansions: ExpansionTypeLabel[] = [];
+	switch (expansionType) {
+		case "Classic":
+			validExpansions = ["Classic"];
+			break;
+		case "Expansion":
+			validExpansions = ["Classic", "Expansion"];
+			break;
+		case "RotW":
+			validExpansions = ["Classic", "Expansion", "RotW"];
+			break;
+	}
+	return capabilities.classes
+		.filter((c) => validExpansions.includes(c.requiredExpansion));
+}
+
+export function getSupportedClassNames(version: number): readonly KnownClassName[] {
+	return getSupportedClasses(version).map((c) => c.name);
+}
+
 export function isClassSupportedForVersion(version: number, className: string): boolean {
-	return getSupportedClasses(version).includes(className as KnownClassName);
+	return getSupportedClassNames(version).includes(className as KnownClassName);
+}
+
+export function getSupportedExpansionTypes(version: number): readonly ExpansionTypeLabel[] {
+	const capabilities = getCapabilities(version);
+	return capabilities == null ? [] : capabilities.expansionTypes;
 }
 
 export function getSupportedClass(
 	version: number,
 	className: string | null,
 ): KnownClassName | null {
-	const classes = getSupportedClasses(version);
+	const classes = getSupportedClassNames(version);
 	if (classes.length === 0) {
 		return null;
 	}
@@ -180,13 +219,6 @@ export function isFemaleClass(className: string): boolean {
 	return FEMALE_CLASSES.has(className as KnownClassName);
 }
 
-export function requiresExpansion(version: number, className: string): boolean {
-	const capabilities = getCapabilities(version);
-	if (capabilities == null) {
-		return false;
-	}
-	return capabilities.classesRequiringExpansion.includes(className as KnownClassName);
-}
 
 function getFallbackSkillPageNames(classSkills: readonly SkillData[]): string[] {
 	const pages = Array.from(new Set(classSkills.map((skill) => skill.page))).sort(

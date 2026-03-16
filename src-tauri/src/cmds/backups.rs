@@ -459,7 +459,7 @@ pub fn backup_all_detected_saves(
             continue;
         }
 
-        let (parsed, _, _) = match parse_save_from_path(&file_path, parse_mode_ref) {
+        let (parsed, _) = match parse_save_from_path(&file_path, parse_mode_ref) {
             Ok(value) => value,
             Err(err) => {
                 result.failed += 1;

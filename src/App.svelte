@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { invoke } from "@tauri-apps/api/core";
-	import { message, save } from "@tauri-apps/plugin-dialog";
 	import { Message } from "./lib/utils/Message.svelte";
 	import {
 		initialize as initializeSettings,
@@ -8,15 +7,17 @@
 		get as getSetting,
 		Key as SettingKey,
 	} from "./lib/utils/settings";
-	import { getErrorMessage } from "./lib/utils/errorMessage.js";
-	import { getSaveTargetVersion, isUnknownSaveFormat } from "./lib/utils/GameSupport";
+	import { getErrorMessage } from "./lib/utils/errorMessage";
+	import { isUnknownSaveFormat } from "./lib/utils/GameSupport";
 
 	import AppLayout from "./lib/layout/AppLayout.svelte";
+	import ConfirmDialog from "./lib/components/ConfirmDialog.svelte";
 	import Sidebar from "./lib/layout/Sidebar.svelte";
 	import TopBar from "./lib/layout/TopBar.svelte";
 	import SessionBar from "./lib/layout/SessionBar.svelte";
 
 	import Library from "./lib/library/Library.svelte";
+	import NewCharacter from "./lib/newCharacter/NewCharacter.svelte";
 	import Settings from "./lib/settings/Settings.svelte";
 
 	import Status from "./lib/editor/status/Status.svelte";
@@ -26,39 +27,39 @@
 	import Quests from "./lib/editor/quests/Quests.svelte";
 	import Mercenary from "./lib/editor/mercenary/Mercenary.svelte";
 	import Save from "./lib/editor/save/Save.svelte";
+	import { resolveTargetVersion } from "./lib/editor/save/saveWorkflow";
+	import { projectGameRulesDerivedValues } from "./lib/editor/character/gameRulesProjection";
 	import {
-		applyTargetVersionToSave,
-		buildBlockingCompatibilityMessage,
-		buildSaveCommandPayload,
-		buildSavePathContext,
-		getBlockingCompatibilityIssues,
-		resolveBackupSourcePath,
-		resolveTargetVersion,
-	} from "./lib/editor/save/saveWorkflow";
+		DEFAULT_EDITOR_DOCUMENT_MODE,
+		buildClosedEditorSessionDocument,
+		buildCompatibilityRefreshPlan,
+		buildOpenedEditorSessionDocument,
+		checkCompatibility,
+		hasUnsavedEditorSessionChanges,
+		resolveCompatibilityTargetSelection,
+		saveEditorSession,
+		transitionEditorDocumentMode,
+		type SaveCharacterOptions,
+	} from "./lib/editor/session/editorSession";
 	import type { AppMessage } from "./lib/utils/Message.svelte";
 	import type {
 		CompatibilityIssue,
-		EditionHintId,
 		EditValidation,
+		EditorDocumentMode,
 		EditorOpenPayload,
-		ParseMode as EditorParseMode,
-		SaveCommandResult,
-		ParseIssue,
 		EditorSave,
+		GameEdition,
 		OutputFormatOption,
+		ParseMode as EditorParseMode,
+		ParseIssue,
 	} from "./lib/types/editor";
-
 	const AppMode = {
 		Library: "library",
+		NewCharacter: "newCharacter",
 		Editor: "editor",
 		Settings: "settings",
 	} as const;
 	type AppMode = (typeof AppMode)[keyof typeof AppMode];
-
-	const ParseMode = {
-		Lax: "lax",
-		Strict: "strict",
-	} as const;
 
 	const EditorSection = {
 		Status: "status",
@@ -68,15 +69,8 @@
 		Waypoints: "waypoints",
 		Quests: "quests",
 		Mercenary: "mercenary",
-		Inventory: "inventory",
 	} as const;
 	type EditorSection = (typeof EditorSection)[keyof typeof EditorSection];
-
-	type SaveCharacterOptions = {
-		targetVersion?: number | null;
-		saveAs?: boolean;
-		forceConvert?: boolean;
-	};
 
 	const EDITOR_NAV = [
 		{ id: EditorSection.Character, label: "Character" },
@@ -95,7 +89,7 @@
 	let currentComputedChecksum = $state<number | null>(null);
 	let currentSourceFileSize = $state<number | null>(null);
 	let currentSourcePath = $state<string | null>(null);
-	let currentEditionHint = $state<EditionHintId | null>(null);
+	let currentEditionHint = $state<GameEdition | null>(null);
 	let currentSuggestedTargetVersion = $state<99 | 105 | null>(null);
 	let currentParserLayoutVersion = $state<99 | 105 | null>(null);
 	let suggestedTargetAutoSelected = $state(false);
@@ -113,21 +107,27 @@
 	let lastSaveUsedForceConversion = $state(false);
 	let saveRevision = $state<number>(0);
 	let editValidation = $state<EditValidation>({ errors: [], warnings: [] });
+	let editorDocumentMode = $state<EditorDocumentMode>(DEFAULT_EDITOR_DOCUMENT_MODE);
+	let gameRulesConfirmOpen = $state(false);
+	let gameRulesConfirmDetailItems = $state<string[]>([]);
+	let gameRulesConfirmResolve = $state<((confirmed: boolean) => void) | null>(null);
+	let leaveEditorConfirmOpen = $state(false);
+	let leaveEditorDestination = $state<AppMode | null>(null);
 	let appMode = $state<AppMode>(AppMode.Library);
 	let settingsOriginMode = $state<AppMode>(AppMode.Library);
 	let currentEditorSection = $state<EditorSection>(EditorSection.Status);
-	let parseMode = $state<EditorParseMode>(ParseMode.Lax);
+	let parseMode = $state<EditorParseMode>("lax");
 	const hasEditValidationErrors = $derived(editValidation.errors.length > 0);
 	const hasBlockingCompatibilityIssues = $derived.by(() =>
-		currentCompatibilityIssues.some((issue) => issue.blocking)
+		currentCompatibilityIssues.some((issue) => issue.blocking),
 	);
 	const currentSaveTargetVersion = $derived.by(() =>
 		currentSave == null
 			? null
-			: resolveTargetVersion(currentSave, selectedCompatibilityTargetVersion)
+			: resolveTargetVersion(currentSave, selectedCompatibilityTargetVersion),
 	);
 	const isUnknownFormatSession = $derived.by(() =>
-		currentSave == null ? false : isUnknownSaveFormat(currentSave)
+		currentSave == null ? false : isUnknownSaveFormat(currentSave),
 	);
 	const currentEditVersion = $derived.by(() => {
 		if (currentSave == null) {
@@ -139,227 +139,105 @@
 		return currentSave.version;
 	});
 	const missingRequiredTargetForUnknown = $derived(
-		isUnknownFormatSession && selectedCompatibilityTargetVersion == null
+		isUnknownFormatSession && selectedCompatibilityTargetVersion == null,
 	);
 	const saveBlocked = $derived(
 		hasEditValidationErrors ||
 			compatibilityCheckError.length > 0 ||
 			hasBlockingCompatibilityIssues ||
-			missingRequiredTargetForUnknown
+			missingRequiredTargetForUnknown,
 	);
 	const compatibilityResultIsCurrent = $derived(
 		activeCompatibilityCheckGeneration > 0 &&
 			latestCompatibilityResultGeneration === activeCompatibilityCheckGeneration &&
 			!compatibilityCheckPending &&
-			compatibilityCheckError.length === 0
+			compatibilityCheckError.length === 0,
 	);
 	const canForceConvert = $derived(
 		!missingRequiredTargetForUnknown &&
 			compatibilityResultIsCurrent &&
-			hasBlockingCompatibilityIssues
+			hasBlockingCompatibilityIssues,
 	);
+	const gameRulesDerivedState = $derived.by(() => {
+		if (currentSave == null || editorDocumentMode !== "game-rules") {
+			return { values: null, error: "" };
+		}
+		try {
+			return {
+				values: projectGameRulesDerivedValues(currentSave).values,
+				error: "",
+			};
+		} catch (error) {
+			return {
+				values: null,
+				error: getErrorMessage(error, "Game rules recalculation failed."),
+			};
+		}
+	});
 
-	const topbarMode = $derived.by(() =>
-		appMode === AppMode.Settings ? settingsOriginMode : appMode
-	);
 	const sidebarItems = $derived.by(() => {
 		if (currentSave != null) {
 			return EDITOR_NAV.map((item) =>
-				item.id === EditorSection.Save
-					? { ...item, saveBlocked }
-					: item
+				item.id === EditorSection.Save ? { ...item, saveBlocked } : item,
 			);
 		}
 		return [];
 	});
 	const activeSidebarItem = $derived.by(() =>
-		appMode === AppMode.Settings ? null : currentSave != null ? currentEditorSection : AppMode.Library
+		appMode === AppMode.Settings ? null : currentSave != null ? currentEditorSection : appMode,
 	);
 
 	initializeSettings().then(() => {
 		applySettings();
-		handleParseModeChange(getSetting(SettingKey.ParseMode));
+		parseMode = getSetting(SettingKey.ParseMode);
 	});
 
 	async function refreshOutputFormatOptions() {
 		try {
-			const outputFormats = await invoke<OutputFormatOption[]>("get_supported_output_formats");
-			outputFormatOptions = outputFormats.sort(
-				(left, right) => left.version - right.version
+			const outputFormats = await invoke<OutputFormatOption[]>(
+				"get_supported_output_formats",
 			);
+			outputFormatOptions = outputFormats.sort((left, right) => left.version - right.version);
 		} catch (error) {
 			console.warn("Unable to load supported output formats", error);
 			outputFormatOptions = [];
 		}
 	}
 
-	async function checkCompatibility(
-		saveData: EditorSave,
-		targetVersion: number,
-		sourceLayoutVersion: number | null = null
-	) {
-		return invoke<CompatibilityIssue[]>("check_save_compatibility", {
-			save: buildSaveCommandPayload(saveData, sourceLayoutVersion),
-			targetVersion,
-		});
-	}
-
 	async function saveCharacter(input: SaveCharacterOptions = {}) {
-		if (currentSave == null) {
-			return;
-		}
-		const targetVersion = input.targetVersion ?? null;
-		const forceConvert = input.forceConvert === true;
-		const saveAs = input.saveAs === true || forceConvert;
-		const unknownFormatSession = isUnknownSaveFormat(currentSave);
-		const sourceLayoutVersion = unknownFormatSession ? currentParserLayoutVersion : null;
-		if (unknownFormatSession && selectedCompatibilityTargetVersion == null) {
-			const suggestionMessage =
-				currentSuggestedTargetVersion == null
-					? "Select an output format (v99 or v105) in Conversion before saving."
-					: `Suggested target is v${currentSuggestedTargetVersion}. Confirm or change it in Conversion before saving.`;
-			await message(`This save uses an unknown source format. ${suggestionMessage}`, {
-				title: "Save blocked",
-				kind: "warning",
-			});
-			return;
-		}
-		if (forceConvert) {
-			if (!canForceConvert) {
-				await message(
-					"Force conversion is only available when compatibility results are current and include blocking issues.",
-					{
-						title: "Force save blocked",
-						kind: "warning",
-					}
-				);
-				return;
-			}
-			if (compatibilityCheckPending || compatibilityCheckError.length > 0) {
-				await message(
-					"Force conversion is unavailable while compatibility checks are pending or failed.",
-					{
-						title: "Force save blocked",
-						kind: "warning",
-					}
-				);
-				return;
-			}
-		}
-		const hasExplicitTargetVersion = targetVersion != null;
-		const resolvedTargetVersion = resolveTargetVersion(
+		const saveResult = await saveEditorSession({
+			input,
 			currentSave,
+			currentParserLayoutVersion,
 			selectedCompatibilityTargetVersion,
-			targetVersion
-		);
-		if (resolvedTargetVersion == null) {
-			await message(
-				"No compatible output format was selected for this save. Choose an encodable target format (v99 or v105).",
-				{
-					title: "Save blocked",
-					kind: "warning",
-				}
-			);
+			currentSuggestedTargetVersion,
+			currentSaveTargetVersion,
+			canForceConvert,
+			compatibilityCheckPending,
+			compatibilityCheckError,
+			currentSourcePath,
+		});
+		if (saveResult == null) {
 			return;
 		}
-		let compatibilityIssues: CompatibilityIssue[] = [];
-		try {
-			compatibilityIssues = await checkCompatibility(
-				currentSave,
-				resolvedTargetVersion,
-				sourceLayoutVersion
-			);
-		} catch (error) {
-			const detail = getErrorMessage(error, "Compatibility check failed.");
-			await message(detail, {
-				title: "Save blocked",
-				kind: "error",
-			});
-			throw error;
-		}
-		if (!hasExplicitTargetVersion && resolvedTargetVersion === currentSaveTargetVersion) {
-			currentCompatibilityIssues = compatibilityIssues;
+		if (saveResult.refreshedCompatibilityIssues != null) {
+			currentCompatibilityIssues = saveResult.refreshedCompatibilityIssues;
 			compatibilityCheckError = "";
 		}
-		const blockingIssues = getBlockingCompatibilityIssues(compatibilityIssues);
-		if (blockingIssues.length > 0 && !forceConvert) {
-			await message(
-				buildBlockingCompatibilityMessage(resolvedTargetVersion, blockingIssues),
-				{
-					title: "Save blocked",
-					kind: "warning",
-				}
-			);
-			return;
-		}
-		if (forceConvert && blockingIssues.length < 1) {
-			await message("Blocking issues are no longer present. Use normal Save As.", {
-				title: "Force save not needed",
-				kind: "info",
-			});
-			return;
-		}
-		const savePayload = buildSaveCommandPayload(currentSave, sourceLayoutVersion);
-		const savePathContext = buildSavePathContext(
-			currentSave,
-			currentSourcePath,
-			resolvedTargetVersion
-		);
-		const forcePicker = saveAs || savePathContext.forcePicker;
-		const filePath =
-			!forcePicker && currentSourcePath != null && currentSourcePath.length > 0
-				? currentSourcePath
-				: ((await save({
-						defaultPath: savePathContext.defaultPath,
-						filters: [
-							{
-								name: "D2R Save File",
-								extensions: ["d2s"],
-							},
-						],
-					})) ?? null);
-		if (filePath == null) {
-			return;
-		}
-		const backupsEnabled = getSetting(SettingKey.BackupsEnabled);
-		const backupsPerCharacter = getSetting(SettingKey.BackupsPerCharacter);
-		const backupSourcePath = resolveBackupSourcePath(filePath, currentSourcePath, saveAs);
-
-		try {
-			const result = await invoke<SaveCommandResult>("save_file_as_version", {
-				path: filePath,
-				save: savePayload,
-				targetVersion: resolvedTargetVersion,
-				ignoreCompatibilityChecks: forceConvert,
-				backupSourcePath,
-				backupConfig: {
-					enabled: backupsEnabled,
-					backupsPerCharacter,
-				},
-			});
-
-			currentSourcePath = filePath;
-			applyTargetVersionToSave(currentSave, resolvedTargetVersion);
-			if (result.cleanupWarning != null && result.cleanupWarning.length > 0) {
-				console.warn(`[backup cleanup warning] ${result.cleanupWarning}`);
-			}
-			currentSaveBaseline = structuredClone(currentSave);
-			lastSaveUsedForceConversion = forceConvert;
-			saveRevision += 1;
-			return;
-		} catch (error) {
-			const detail = getErrorMessage(error, "Unknown error");
-			await message(detail, {
-				title: "Save failed",
-				kind: "error",
-			});
-			throw error;
-		}
+		currentSourcePath = saveResult.filePath;
+		currentSaveBaseline = saveResult.baselineSave;
+		lastSaveUsedForceConversion = saveResult.forceConvertUsed;
+		saveRevision += 1;
 	}
 
 	$effect(() => {
-		const saveData = currentSave;
-		if (saveData == null) {
+		const compatibilityRefreshPlan = buildCompatibilityRefreshPlan({
+			currentSave,
+			selectedCompatibilityTargetVersion,
+			currentParserLayoutVersion,
+			compatibilityCheckRunCounter,
+		});
+		if (compatibilityRefreshPlan.kind === "reset-session") {
 			currentCompatibilityIssues = [];
 			compatibilityCheckError = "";
 			compatibilityCheckPending = false;
@@ -368,23 +246,11 @@
 			latestCompatibilityResultGeneration = 0;
 			return;
 		}
-		const checkGeneration = compatibilityCheckRunCounter + 1;
-		compatibilityCheckRunCounter = checkGeneration;
-		activeCompatibilityCheckGeneration = checkGeneration;
-		const unknownFormatSession = isUnknownSaveFormat(saveData);
-		if (unknownFormatSession && selectedCompatibilityTargetVersion == null) {
+		compatibilityCheckRunCounter = compatibilityRefreshPlan.checkGeneration;
+		activeCompatibilityCheckGeneration = compatibilityRefreshPlan.checkGeneration;
+		if (compatibilityRefreshPlan.kind === "skip") {
 			currentCompatibilityIssues = [];
-			compatibilityCheckError = "";
-			compatibilityCheckPending = false;
-			latestCompatibilityResultGeneration = 0;
-			return;
-		}
-
-		const targetVersion = resolveTargetVersion(saveData, selectedCompatibilityTargetVersion);
-		if (targetVersion == null) {
-			currentCompatibilityIssues = [];
-			compatibilityCheckError =
-				"No encodable target format is available for this save. Use v99 or v105.";
+			compatibilityCheckError = compatibilityRefreshPlan.compatibilityCheckError;
 			compatibilityCheckPending = false;
 			latestCompatibilityResultGeneration = 0;
 			return;
@@ -393,14 +259,17 @@
 		const token = ++compatibilityCheckToken;
 		compatibilityCheckPending = true;
 		compatibilityCheckError = "";
-		const sourceLayoutVersion = unknownFormatSession ? currentParserLayoutVersion : null;
-		checkCompatibility(saveData, targetVersion, sourceLayoutVersion)
+		checkCompatibility(
+			compatibilityRefreshPlan.saveData,
+			compatibilityRefreshPlan.targetVersion,
+			compatibilityRefreshPlan.sourceLayoutVersion,
+		)
 			.then((issues) => {
 				if (token !== compatibilityCheckToken) {
 					return;
 				}
 				currentCompatibilityIssues = issues;
-				latestCompatibilityResultGeneration = checkGeneration;
+				latestCompatibilityResultGeneration = compatibilityRefreshPlan.checkGeneration;
 			})
 			.catch((error) => {
 				if (token !== compatibilityCheckToken) {
@@ -418,114 +287,116 @@
 	});
 
 	$effect(() => {
-		const options = outputFormatOptions;
-		if (options.length < 1) {
-			selectedCompatibilityTargetVersion = null;
+		const selectionUpdate = resolveCompatibilityTargetSelection({
+			outputFormatOptions,
+			currentSave,
+			selectedCompatibilityTargetVersion,
+			currentSuggestedTargetVersion,
+		});
+		if (selectionUpdate == null) {
 			return;
 		}
-		const saveData = currentSave;
-		if (saveData == null) {
-			selectedCompatibilityTargetVersion = null;
-			return;
+		selectedCompatibilityTargetVersion = selectionUpdate.selectedCompatibilityTargetVersion;
+		if (selectionUpdate.suggestedTargetAutoSelected !== undefined) {
+			suggestedTargetAutoSelected = selectionUpdate.suggestedTargetAutoSelected;
 		}
-		const saveTargetVersion = getSaveTargetVersion(saveData);
-		const unknownFormatSession = isUnknownSaveFormat(saveData);
-		const selectionIsValid = options.some(
-			(option) => option.version === selectedCompatibilityTargetVersion
-		);
-		if (selectionIsValid) {
-			return;
-		}
-		if (unknownFormatSession) {
-			const suggestionIsValid = options.some(
-				(option) => option.version === currentSuggestedTargetVersion
-			);
-			if (suggestionIsValid && currentSuggestedTargetVersion != null) {
-				selectedCompatibilityTargetVersion = currentSuggestedTargetVersion;
-				suggestedTargetAutoSelected = true;
-			} else {
-				selectedCompatibilityTargetVersion = null;
-				suggestedTargetAutoSelected = false;
-			}
-			return;
-		}
-		selectedCompatibilityTargetVersion = saveTargetVersion ?? options[0].version;
 	});
 
 	function openEditor(payload: EditorOpenPayload) {
-		currentSave = payload.save;
-		currentParseIssueCount = payload.parseIssueCount;
-		currentParseIssues = payload.parseIssues;
-		currentHeaderChecksum = payload.headerChecksum;
-		currentComputedChecksum = payload.computedChecksum;
-		currentSourceFileSize = payload.sourceFileSize;
-		currentSourcePath = payload.sourcePath;
-		currentEditionHint = payload.editionHint;
-		currentSuggestedTargetVersion = payload.suggestedTargetVersion;
-		currentParserLayoutVersion = payload.parserLayoutVersion;
-		currentSaveBaseline = structuredClone(payload.save);
-		const unknownFormatSession = isUnknownSaveFormat(payload.save);
-		if (unknownFormatSession && payload.suggestedTargetVersion != null) {
-			selectedCompatibilityTargetVersion = payload.suggestedTargetVersion;
-			suggestedTargetAutoSelected = true;
-		} else {
-			selectedCompatibilityTargetVersion = getSaveTargetVersion(payload.save);
-			suggestedTargetAutoSelected = false;
-		}
-		currentCompatibilityIssues = [];
-		compatibilityCheckError = "";
-		compatibilityCheckPending = false;
-		compatibilityCheckRunCounter = 0;
-		activeCompatibilityCheckGeneration = 0;
-		latestCompatibilityResultGeneration = 0;
-		lastSaveUsedForceConversion = false;
-		editValidation = { errors: [], warnings: [] };
+		const openedDocument = buildOpenedEditorSessionDocument(payload);
+		({
+			currentSave,
+			currentParseIssueCount,
+			currentParseIssues,
+			currentHeaderChecksum,
+			currentComputedChecksum,
+			currentSourceFileSize,
+			currentSourcePath,
+			currentEditionHint,
+			currentSuggestedTargetVersion,
+			currentParserLayoutVersion,
+			selectedCompatibilityTargetVersion,
+			suggestedTargetAutoSelected,
+			currentSaveBaseline,
+			currentCompatibilityIssues,
+			compatibilityCheckError,
+			compatibilityCheckPending,
+			compatibilityCheckRunCounter,
+			activeCompatibilityCheckGeneration,
+			latestCompatibilityResultGeneration,
+			lastSaveUsedForceConversion,
+			editValidation,
+			editorDocumentMode,
+		} = openedDocument);
 		currentEditorSection =
 			currentParseIssueCount > 0 ? EditorSection.Status : EditorSection.Character;
 		appMode = AppMode.Editor;
 	}
 
-	function closeEditor() {
-		currentSave = null;
-		currentParseIssueCount = 0;
-		currentParseIssues = [];
-		currentHeaderChecksum = null;
-		currentComputedChecksum = null;
-		currentSourceFileSize = null;
-		currentSourcePath = null;
-		currentEditionHint = null;
-		currentSuggestedTargetVersion = null;
-		currentParserLayoutVersion = null;
-		suggestedTargetAutoSelected = false;
-		currentSaveBaseline = null;
-		currentCompatibilityIssues = [];
-		compatibilityCheckError = "";
-		compatibilityCheckPending = false;
-		compatibilityCheckRunCounter = 0;
-		activeCompatibilityCheckGeneration = 0;
-		latestCompatibilityResultGeneration = 0;
-		lastSaveUsedForceConversion = false;
-		saveRevision = 0;
-		editValidation = { errors: [], warnings: [] };
+	function closeEditor(nextMode: AppMode = AppMode.Library) {
+		const closedDocument = buildClosedEditorSessionDocument();
+		({
+			currentSave,
+			currentParseIssueCount,
+			currentParseIssues,
+			currentHeaderChecksum,
+			currentComputedChecksum,
+			currentSourceFileSize,
+			currentSourcePath,
+			currentEditionHint,
+			currentSuggestedTargetVersion,
+			currentParserLayoutVersion,
+			selectedCompatibilityTargetVersion,
+			suggestedTargetAutoSelected,
+			currentSaveBaseline,
+			currentCompatibilityIssues,
+			compatibilityCheckError,
+			compatibilityCheckPending,
+			compatibilityCheckRunCounter,
+			activeCompatibilityCheckGeneration,
+			latestCompatibilityResultGeneration,
+			lastSaveUsedForceConversion,
+			saveRevision,
+			editValidation,
+			editorDocumentMode,
+		} = closedDocument);
 		currentEditorSection = EditorSection.Status;
-		appMode = AppMode.Library;
+		appMode = nextMode;
 	}
 
-	function goToLibrary() {
-		if (currentSave != null) {
-			closeEditor();
+	function requestLeaveEditor(nextMode: AppMode): void {
+		if (currentSave == null) {
+			appMode = nextMode;
 			return;
 		}
-		appMode = AppMode.Library;
+		if (!hasUnsavedEditorSessionChanges(currentSaveBaseline, currentSave)) {
+			closeEditor(nextMode);
+			return;
+		}
+		leaveEditorDestination = nextMode;
+		leaveEditorConfirmOpen = true;
+	}
+
+	function cancelLeaveEditor(): void {
+		leaveEditorConfirmOpen = false;
+		leaveEditorDestination = null;
+	}
+
+	function confirmLeaveEditor(): void {
+		leaveEditorConfirmOpen = false;
+		if (leaveEditorDestination != null) {
+			closeEditor(leaveEditorDestination);
+		}
+		leaveEditorDestination = null;
 	}
 
 	function toggleSettings() {
 		if (appMode === AppMode.Settings) {
-			appMode = currentSave == null ? AppMode.Library : AppMode.Editor;
+			appMode = currentSave == null ? settingsOriginMode : AppMode.Editor;
 			return;
 		}
 		settingsOriginMode =
-			appMode === AppMode.Editor && currentSave != null ? AppMode.Editor : AppMode.Library;
+			appMode === AppMode.Editor && currentSave != null ? AppMode.Editor : appMode;
 		appMode = AppMode.Settings;
 	}
 
@@ -538,8 +409,29 @@
 		appMode = itemId as AppMode;
 	}
 
-	function handleParseModeChange(nextMode: EditorParseMode) {
-		parseMode = nextMode;
+	function openGameRulesConfirm(detailItems: string[]): Promise<boolean> {
+		gameRulesConfirmDetailItems = detailItems;
+		gameRulesConfirmOpen = true;
+		return new Promise((resolve) => {
+			gameRulesConfirmResolve = resolve;
+		});
+	}
+
+	function closeGameRulesConfirm(confirmed: boolean): void {
+		gameRulesConfirmOpen = false;
+		if (gameRulesConfirmResolve != null) {
+			gameRulesConfirmResolve(confirmed);
+			gameRulesConfirmResolve = null;
+		}
+	}
+
+	async function handleEditorDocumentModeChange(nextMode: EditorDocumentMode) {
+		editorDocumentMode = await transitionEditorDocumentMode({
+			currentSave,
+			currentMode: editorDocumentMode,
+			nextMode,
+			confirmGameRulesSwitch: openGameRulesConfirm,
+		});
 	}
 
 	function handleMessages(nextMessage: AppMessage) {
@@ -559,37 +451,57 @@
 	refreshOutputFormatOptions();
 </script>
 
-<AppLayout showSidebar={true} showTopbar={topbarMode !== AppMode.Library}>
+<AppLayout showSidebar={true} showTopbar={true}>
 	{#snippet topbar()}
-		{#if topbarMode === AppMode.Editor && currentSave != null}
-			<SessionBar save={currentSave} />
-		{:else if topbarMode === AppMode.Settings}
+		{#if appMode === AppMode.Editor && currentSave != null}
+			<SessionBar
+				save={currentSave}
+				{editorDocumentMode}
+				onEditorDocumentModeChange={handleEditorDocumentModeChange}
+			/>
+		{:else if appMode === AppMode.Library}
+			<TopBar title="Library" />
+		{:else if appMode === AppMode.NewCharacter}
+			<TopBar title="New Character" />
+		{:else if appMode === AppMode.Settings && settingsOriginMode === AppMode.Editor && currentSave != null}
+			<SessionBar
+				save={currentSave}
+				{editorDocumentMode}
+				onEditorDocumentModeChange={handleEditorDocumentModeChange}
+			/>
+		{:else if appMode === AppMode.Settings}
 			<TopBar title="Halbu Editor" />
 		{/if}
 	{/snippet}
 
 	{#snippet sidebar()}
 		<Sidebar
-			title=""
 			items={sidebarItems}
 			activeId={activeSidebarItem}
-			editorActive={appMode === AppMode.Editor}
 			libraryActive={appMode === AppMode.Library}
+			newCharacterActive={appMode === AppMode.NewCharacter}
 			onSelect={handleSidebarSelection}
-			onLibrary={goToLibrary}
+			onLibrary={() => requestLeaveEditor(AppMode.Library)}
+			onNewCharacter={() => requestLeaveEditor(AppMode.NewCharacter)}
 			settingsActive={appMode === AppMode.Settings}
 			onSettings={toggleSettings}
 		/>
 	{/snippet}
 
 	{#if appMode === AppMode.Settings}
-		<Settings {parseMode} onParseModeChange={handleParseModeChange} />
+		<Settings
+			{parseMode}
+			onParseModeChange={(nextMode: EditorParseMode) => (parseMode = nextMode)}
+		/>
 	{:else if appMode === AppMode.Library}
 		<Library onmessage={handleMessages} {parseMode} />
+	{:else if appMode === AppMode.NewCharacter}
+		<NewCharacter onmessage={handleMessages} {outputFormatOptions} />
 	{:else if currentSave != null}
 		{#if currentEditorSection === EditorSection.Status}
 			<Status
 				save={currentSave}
+				{editorDocumentMode}
 				{parseMode}
 				parseIssueCount={currentParseIssueCount}
 				parseIssues={currentParseIssues}
@@ -598,63 +510,90 @@
 				sourceFileSize={currentSourceFileSize}
 				sourcePath={currentSourcePath}
 				editionHint={currentEditionHint}
+				suggestedTargetVersion={currentSuggestedTargetVersion}
 				parserLayoutVersion={currentParserLayoutVersion}
 				{saveRevision}
 			/>
-			{:else if currentEditorSection === EditorSection.Save}
-				<Save
-					save={currentSave}
-					baselineSave={currentSaveBaseline}
-					{editValidation}
-					compatibilityIssues={currentCompatibilityIssues}
-					compatibilityTargetVersion={currentSaveTargetVersion}
-					compatibilityPending={compatibilityCheckPending}
-					compatibilityError={compatibilityCheckError}
-					outputFormatOptions={outputFormatOptions}
-					unknownFormatSession={isUnknownFormatSession}
-					editionHint={currentEditionHint}
-					suggestedTargetVersion={currentSuggestedTargetVersion}
-					parserLayoutVersion={currentParserLayoutVersion}
-					suggestedTargetAutoSelected={suggestedTargetAutoSelected}
-					requiresTargetSelection={missingRequiredTargetForUnknown}
-					canForceConvert={canForceConvert}
-					lastSaveUsedForceConversion={lastSaveUsedForceConversion}
-					advancedSaveOptionsEnabled={advancedSaveOptionsEnabled}
-					saveDisabled={saveBlocked}
-					onToggleAdvancedSaveOptions={(enabled) =>
-						(advancedSaveOptionsEnabled = enabled === true)}
-					onSelectCompatibilityTargetVersion={(nextValue) => {
-						selectedCompatibilityTargetVersion = nextValue;
-						suggestedTargetAutoSelected = false;
-					}}
-					onSave={saveCharacter}
-					onRestore={() => {
-						if (currentSaveBaseline == null) {
-							return;
-						}
-						currentSave = structuredClone(currentSaveBaseline);
-						editValidation = { errors: [], warnings: [] };
-					}}
-				/>
+		{:else if currentEditorSection === EditorSection.Save}
+			<Save
+				save={currentSave}
+				{editorDocumentMode}
+				baselineSave={currentSaveBaseline}
+				{editValidation}
+				compatibilityIssues={currentCompatibilityIssues}
+				compatibilityTargetVersion={currentSaveTargetVersion}
+				compatibilityPending={compatibilityCheckPending}
+				compatibilityError={compatibilityCheckError}
+				{outputFormatOptions}
+				unknownFormatSession={isUnknownFormatSession}
+				editionHint={currentEditionHint}
+				suggestedTargetVersion={currentSuggestedTargetVersion}
+				parserLayoutVersion={currentParserLayoutVersion}
+				{suggestedTargetAutoSelected}
+				requiresTargetSelection={missingRequiredTargetForUnknown}
+				{canForceConvert}
+				{lastSaveUsedForceConversion}
+				{advancedSaveOptionsEnabled}
+				saveDisabled={saveBlocked}
+				onToggleAdvancedSaveOptions={(enabled) =>
+					(advancedSaveOptionsEnabled = enabled === true)}
+				onSelectCompatibilityTargetVersion={(nextValue) => {
+					selectedCompatibilityTargetVersion = nextValue;
+					suggestedTargetAutoSelected = false;
+				}}
+				onSave={saveCharacter}
+				onRestore={() => {
+					if (currentSaveBaseline == null) {
+						return;
+					}
+					currentSave = structuredClone(currentSaveBaseline);
+					editValidation = { errors: [], warnings: [] };
+				}}
+			/>
 		{:else if currentEditorSection === EditorSection.Character}
 			<Character
 				bind:editValidation
 				bind:save={currentSave}
+				{editorDocumentMode}
+				effectiveDerivedValues={gameRulesDerivedState.values}
+				effectiveDerivedValuesError={gameRulesDerivedState.error}
 				parserLayoutVersion={currentEditVersion}
 			/>
 		{:else if currentEditorSection === EditorSection.Skills}
-			<Skills bind:save={currentSave} parserLayoutVersion={currentEditVersion} />
+			<Skills
+				bind:save={currentSave}
+				{editorDocumentMode}
+				effectiveDerivedValues={gameRulesDerivedState.values}
+				effectiveDerivedValuesError={gameRulesDerivedState.error}
+				parserLayoutVersion={currentEditVersion}
+			/>
 		{:else if currentEditorSection === EditorSection.Waypoints}
-			<Waypoints bind:save={currentSave} />
+			<Waypoints bind:save={currentSave} {editorDocumentMode} />
 		{:else if currentEditorSection === EditorSection.Quests}
-			<Quests bind:save={currentSave} />
+			<Quests bind:save={currentSave} {editorDocumentMode} />
 		{:else if currentEditorSection === EditorSection.Mercenary}
 			<Mercenary bind:save={currentSave} />
-		{:else if currentEditorSection === EditorSection.Inventory}
-			<div class="container m-0">
-				<h3>Inventory</h3>
-				<div class="alert alert-secondary mb-0">Inventory editor placeholder.</div>
-			</div>
 		{/if}
 	{/if}
+
+	<ConfirmDialog
+		open={gameRulesConfirmOpen}
+		title="Switch to Game rules mode?"
+		message="Game rules mode recalculates life, mana, stamina, and remaining stat/skill points."
+		detailItems={gameRulesConfirmDetailItems}
+		confirmLabel="Switch mode"
+		cancelLabel="Cancel"
+		onConfirm={() => closeGameRulesConfirm(true)}
+		onCancel={() => closeGameRulesConfirm(false)}
+	/>
+	<ConfirmDialog
+		open={leaveEditorConfirmOpen}
+		title="Discard unsaved changes?"
+		message="Leaving the editor now will discard current unsaved changes."
+		confirmLabel="Leave without saving"
+		cancelLabel="Cancel"
+		confirmVariant="destructive"
+		onConfirm={confirmLeaveEditor}
+		onCancel={cancelLeaveEditor}
+	/>
 </AppLayout>

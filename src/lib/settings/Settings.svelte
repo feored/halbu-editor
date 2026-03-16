@@ -3,8 +3,8 @@
 	import { invoke } from "@tauri-apps/api/core";
 	import Button from "../components/ui/button/button.svelte";
 	import * as Settings from "../utils/settings";
-	import { getErrorMessage } from "../utils/errorMessage.js";
-	import { toPositiveInteger } from "../utils/numbers.js";
+	import { getErrorMessage } from "../utils/errorMessage";
+	import { toPositiveInteger } from "../utils/numbers";
 	import { onMount } from "svelte";
 	import { getVersion } from "@tauri-apps/api/app";
 

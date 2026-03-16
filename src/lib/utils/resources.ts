@@ -1,6 +1,6 @@
 export const RESOURCE_Q8_SCALE = 256;
 
-export function fixedPointToDisplay(value, scale = RESOURCE_Q8_SCALE) {
+export function fixedPointToDisplay(value: unknown, scale: unknown = RESOURCE_Q8_SCALE): number {
 	const parsedValue = Number(value);
 	const parsedScale = Number(scale);
 	if (!Number.isFinite(parsedValue) || !Number.isFinite(parsedScale) || parsedScale === 0) {
@@ -9,7 +9,7 @@ export function fixedPointToDisplay(value, scale = RESOURCE_Q8_SCALE) {
 	return parsedValue / parsedScale;
 }
 
-export function displayToFixedPoint(value, scale = RESOURCE_Q8_SCALE) {
+export function displayToFixedPoint(value: unknown, scale: unknown = RESOURCE_Q8_SCALE): number {
 	const parsedValue = Number(value);
 	const parsedScale = Number(scale);
 	if (!Number.isFinite(parsedValue) || !Number.isFinite(parsedScale) || parsedScale === 0) {
@@ -18,7 +18,7 @@ export function displayToFixedPoint(value, scale = RESOURCE_Q8_SCALE) {
 	return Math.round(parsedValue * parsedScale);
 }
 
-export function formatDisplayNumber(value, maxFractionDigits = 3) {
+export function formatDisplayNumber(value: unknown, maxFractionDigits = 3): string {
 	const parsedValue = Number(value);
 	if (!Number.isFinite(parsedValue)) {
 		return "0";
