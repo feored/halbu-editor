@@ -1,5 +1,5 @@
 <script>
-	import { cn } from "../../../utils/cn";
+	import { cn } from "$lib/utils/cn";
 
 	const BASE =
 		"inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-sm text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-halbu-primary/45 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-100";

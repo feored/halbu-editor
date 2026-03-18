@@ -1,5 +1,5 @@
 <script module lang="ts">
-	import type { EditorOpenPayload } from "../types/editor";
+	import type { OpenedSessionData } from "$lib/editor/editorSession";
 
 	const CharacterPicked = Symbol("Character Picked");
 	const CharacterUnpicked = Symbol("Character Unpicked");
@@ -14,7 +14,7 @@
 	export type AppMessage =
 		| {
 				id: typeof CharacterPicked;
-				data: EditorOpenPayload;
+				data: OpenedSessionData;
 		  }
 		| {
 				id: typeof CharacterUnpicked;
@@ -27,7 +27,7 @@
 
 	export function buildMessage<T extends AppMessage["id"]>(
 		messageType: T,
-		messageContents: Extract<AppMessage, { id: T }>["data"]
+		messageContents: Extract<AppMessage, { id: T }>["data"],
 	): Extract<AppMessage, { id: T }> {
 		return {
 			id: messageType,

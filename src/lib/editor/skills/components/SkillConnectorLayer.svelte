@@ -1,5 +1,11 @@
-<script>
-	let { connectors, canvasWidth, canvasHeight } = $props();
+<script lang="ts">
+	import type { TreeLayout } from "$lib/editor/skills/skillsLayout";
+
+	let { connectors, canvasWidth, canvasHeight } = $props<{
+		connectors: TreeLayout["connectors"];
+		canvasWidth: number;
+		canvasHeight: number;
+	}>();
 </script>
 
 <svg

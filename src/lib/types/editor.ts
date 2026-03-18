@@ -1,4 +1,32 @@
-export const REQUIRED_EDITOR_ATTRIBUTE_IDS = [
+import type { SkillSlot } from "$lib/types/skills";
+
+//
+// GENERAL
+//
+export type EditorMode = "raw" | "game-rules";
+
+export type SaveFormatId = "V99" | "V105" | `Unknown(${number})`;
+export type EncodableSaveFormatId = "V99" | "V105";
+export type SaveLayoutVersion = 99 | 105;
+
+export const EXPANSION_TYPE_NAMES = ["Classic", "Expansion", "RotW"] as const;
+export type ExpansionType = (typeof EXPANSION_TYPE_NAMES)[number];
+
+export const GAME_EDITIONS = ["D2R Legacy", "RotW"] as const;
+export type GameEdition = (typeof GAME_EDITIONS)[number];
+
+export const DIFFICULTY_NAMES = ["Normal", "Nightmare", "Hell"] as const;
+export type Difficulty = (typeof DIFFICULTY_NAMES)[number];
+
+export const ACT_NAMES = ["Act1", "Act2", "Act3", "Act4", "Act5"] as const;
+export type Act = (typeof ACT_NAMES)[number];
+
+
+//
+// CHARACTER
+//
+
+export const ATTRIBUTES = [
 	"statpts",
 	"newskills",
 	"experience",
@@ -16,31 +44,17 @@ export const REQUIRED_EDITOR_ATTRIBUTE_IDS = [
 	"stamina",
 	"maxstamina",
 ] as const;
+export type Attribute = (typeof ATTRIBUTES)[number];
 
-export type RequiredEditorAttributeId = (typeof REQUIRED_EDITOR_ATTRIBUTE_IDS)[number];
-export type DifficultyId = "normal" | "nightmare" | "hell";
-export type ActId = "act1" | "act2" | "act3" | "act4" | "act5";
-export type ActLabel = "Act1" | "Act2" | "Act3" | "Act4" | "Act5";
-export type DifficultyLabel = "Normal" | "Nightmare" | "Hell";
-export type EditorDocumentMode = "raw" | "game-rules";
-export const EXPANSION_TYPE_LABELS = ["Classic", "Expansion", "RotW"] as const;
-export type ExpansionTypeLabel = (typeof EXPANSION_TYPE_LABELS)[number];
-export const GAME_EDITIONS = ["D2R Legacy", "RotW"] as const;
-export type GameEdition = (typeof GAME_EDITIONS)[number];
-export type ParseIssueSeverity = "Warning" | "Error";
-export type ParseIssueKind =
-	| "TruncatedSection"
-	| "InvalidSignature"
-	| "UnsupportedVersion"
-	| "InvalidValue"
-	| "InconsistentLayout"
-	| "Other";
-export type CompatibilityCode =
-	| "WarlockRequiresRotW"
-	| "WarlockRequiresRotWExpansion"
-	| "RotWExpansionRequiresRotWEdition"
-	| "ExpansionClassRequiresExpansionMode"
-	| "UnknownClassRequiresKnownTarget";
+export type AttributeValue = {
+	id: number;
+	name: string;
+	bitLength: number;
+	value: number;
+};
+
+export type AttributeMap = Record<Attribute, AttributeValue>;
+
 export type KnownClassName =
 	| "Amazon"
 	| "Sorceress"
@@ -50,9 +64,41 @@ export type KnownClassName =
 	| "Druid"
 	| "Assassin"
 	| "Warlock";
+
 export type ClassName = KnownClassName | `Unknown(${number})`;
-export type SaveFormatId = "V99" | "V105" | `Unknown(${number})`;
-export type EncodableSaveFormatId = "V99" | "V105";
+
+export type CharacterStatus = {
+	hardcore: boolean;
+	ladder: boolean;
+	died: boolean;
+	expansion: boolean;
+};
+
+export type Mercenary = {
+	id: number;
+	isDead: boolean;
+	variantId: number;
+	experience: number;
+	nameId: number;
+};
+
+export type Character = {
+	name: string;
+	className: ClassName;
+	level: number;
+	progression: number;
+	act: Act;
+	difficulty: Difficulty;
+	mapSeed: number;
+	lastPlayed: number;
+	status: CharacterStatus;
+	mercenary: Mercenary;
+};
+
+//
+// QUESTS
+//
+
 export type QuestFlag =
 	| "RewardGranted"
 	| "RewardPending"
@@ -70,6 +116,7 @@ export type QuestFlag =
 	| "PrimaryGoalDone"
 	| "CompletedNow"
 	| "CompletedBefore";
+
 export type QuestId =
 	| "prologue"
 	| "q1"
@@ -83,100 +130,52 @@ export type QuestId =
 	| "unused_2"
 	| "unused_3";
 
-export type SkillSlot = {
-	id: number;
-	points: number;
+export type QuestState = {
+	flags: QuestFlag[];
 };
 
-export type BackendSkillPoints = {
-	points: number[];
-};
+export type QuestMap = Record<Difficulty, Record<Act, Record<QuestId, QuestState>>>;
 
-export type EditorAttributeValue = {
-	id: number;
-	name: string;
-	bit_length: number;
-	value: number;
-};
+//
+// WAYPOINTS
+//
 
-export type RequiredEditorAttributes = Record<RequiredEditorAttributeId, EditorAttributeValue>;
-
-export type EditorCharacterStatus = {
-	hardcore: boolean;
-	ladder: boolean;
-	died: boolean;
-	expansion: boolean;
-};
-
-export type EditorMercenary = {
-	id: number;
-	is_dead: boolean;
-	variant_id: number;
-	experience: number;
-	name_id: number;
-};
-
-export type EditorCharacter = {
-	weapon_switch: boolean;
-	assigned_skills: number[];
-	left_mouse_skill: number;
-	right_mouse_skill: number;
-	left_mouse_switch_skill: number;
-	right_mouse_switch_skill: number;
-	menu_appearance: number[];
-	resurrected_menu_appearance: number[];
-	raw_section: number[];
-	name: string;
-	class: ClassName;
-	level: number;
-	progression: number;
-	act: ActLabel;
-	difficulty: DifficultyLabel;
-	map_seed: number;
-	last_played: number;
-	status: EditorCharacterStatus;
-	mercenary: EditorMercenary;
-};
-
-export type EditorMeta = {
-	format: SaveFormatId;
-};
-
-export type EditorAttributes = RequiredEditorAttributes;
-
-export type EditorQuest = {
-	state: QuestFlag[];
-};
-
-export type EditorQuests = Record<DifficultyId, Record<ActId, Record<QuestId, EditorQuest>>>;
-
-export type EditorWaypoint = {
+export type Waypoint = {
 	id: string;
 	acquired: boolean;
 };
 
-export type EditorActWaypoints = {
-	act: ActLabel;
-	waypoints: EditorWaypoint[];
+export type ActWaypoints = {
+	act: Act;
+	waypoints: Waypoint[];
 };
 
-export type EditorWaypoints = Record<DifficultyId, Record<ActId, EditorActWaypoints>>;
+export type WaypointMap = Record<Difficulty, Record<Act, ActWaypoints>>;
+
+
+//
+// SAVE STRUCTURE
+//
+
+export type SaveMetadata = {
+	formatId: SaveFormatId;
+};
+
+export type RawDataSection = {
+	data: number[];
+};
 
 export type EditorSave = {
 	version: number;
-	expansion_type: ExpansionTypeLabel;
-	character: EditorCharacter;
-	quests: EditorQuests;
-	waypoints: EditorWaypoints;
-	npcs: {
-		data: number[];
-	};
-	attributes: EditorAttributes;
+	expansionType: ExpansionType;
+	character: Character;
+	quests: QuestMap;
+	waypoints: WaypointMap;
+	npcs: RawDataSection;
+	attributes: AttributeMap;
 	skills: SkillSlot[];
-	items: {
-		data: number[];
-	};
-	meta: EditorMeta;
+	items: RawDataSection;
+	metadata: SaveMetadata;
 };
 
 export type EditValidation = {
@@ -184,51 +183,7 @@ export type EditValidation = {
 	warnings: string[];
 };
 
-export type CompatibilityIssue = {
-	code: CompatibilityCode;
-	blocking: boolean;
-	message: string;
-};
-
-export type OutputFormatOption = {
-	formatId: EncodableSaveFormatId;
-	version: number;
-	gameEdition: GameEdition;
-};
-
-export type ParseMode = "lax" | "strict";
-
-export type ParseIssue = {
-	severity: ParseIssueSeverity;
-	kind: ParseIssueKind;
-	section: string | null;
-	offset: number | null;
-	expected: number | null;
-	found: number | null;
-	message: string;
-};
-
-export type EditorOpenPayload = {
-	save: EditorSave;
-	parseIssueCount: number;
-	parseIssues: ParseIssue[];
-	headerChecksum: number | null;
-	computedChecksum: number | null;
-	sourceFileSize: number | null;
-	sourcePath: string | null;
-	editionHint: GameEdition | null;
-	suggestedTargetVersion: 99 | 105 | null;
-	parserLayoutVersion: 99 | 105 | null;
-};
-
-export type SaveCommandResult = {
-	message: string;
-	backupPerformed: boolean;
-	backupPath: string | null;
-	cleanupWarning: string | null;
-};
-
-export type SaveSummaryEntry = {
+export type SaveSummary = {
 	path: string;
 	title: string | null;
 	name: string | null;
@@ -236,34 +191,24 @@ export type SaveSummaryEntry = {
 	level: number | null;
 	formatId: SaveFormatId | null;
 	hardcore: boolean | null;
-	expansionType: ExpansionTypeLabel | null;
+	expansionType: ExpansionType | null;
 	gameEdition: GameEdition | null;
-	version: number | null;
-	lastPlayed: number | null;
-	parseIssueCount: number;
 };
 
-export type SkillsContext = {
-	save_version: number;
-	meta_format: SaveFormatId;
-	class_name: KnownClassName;
-	skill_slot_count: number;
-	class_supported_for_version: boolean;
-	supported_classes: KnownClassName[];
-};
+//
+// BACKUPS
+//
 
-export type BackupStatus = {
-	sourcePath: string;
-	totalBackups: number;
-	lastBackupTimestamp: string | null;
-	lastBackupDatetime: string | null;
-};
+export type BackupStatus =
+	| "Created"
+	| "SkippedNoSourcePath"
+	| "SkippedNotFile"
+	| "SkippedByPolicy"
+	| "Failed";
 
 export type BackupAllDetectedSavesResult = {
-	detectedFiles: number;
-	backedUp: number;
-	skippedUnchanged: number;
-	failed: number;
-	cleanupWarnings: string[];
-	errors: string[];
+	attempted: number;
+	created: number;
+	statuses: Record<string, BackupStatus>;
+	errors: Record<string, string>;
 };

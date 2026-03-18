@@ -1,5 +1,7 @@
-<script>
-	let { title = "Halbu Editor" } = $props();
+<script lang="ts">
+	let { title = "Halbu Editor" } = $props<{
+		title?: string;
+	}>();
 </script>
 
 <div class="topbar flex w-full items-center justify-between gap-3">

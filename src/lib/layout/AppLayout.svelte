@@ -1,11 +1,19 @@
-<script>
+<script lang="ts">
+	import type { Snippet } from "svelte";
+
 	let {
 		showSidebar = true,
 		showTopbar = true,
 		topbar,
 		sidebar,
 		children,
-	} = $props();
+	} = $props<{
+		showSidebar?: boolean;
+		showTopbar?: boolean;
+		topbar?: Snippet;
+		sidebar?: Snippet;
+		children?: Snippet;
+	}>();
 </script>
 
 <div class="app-layout flex h-dvh min-h-0 flex-col">

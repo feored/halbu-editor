@@ -1,16 +1,28 @@
-<script>
+<script lang="ts">
+	import { message } from "@tauri-apps/plugin-dialog";
+	import ConfirmDialog from "$lib/components/ConfirmDialog.svelte";
 	import {
 		getSaveEditionLabel,
 		getSaveExpansionType,
 		isUnknownSaveFormat,
-	} from "../utils/GameSupport";
+	} from "$lib/utils/GameSupport";
+	import { getErrorMessage } from "$lib/utils/errorMessage";
+	import {
+		applyProjectedGameRulesValues,
+		projectGameRulesDerivedValues,
+	} from "$lib/editor/character/gameRules";
+	import { editorState } from "$lib/editor/editorState.svelte";
 
-	let {
-		save,
-		editorDocumentMode = "raw",
-		onEditorDocumentModeChange,
-	} = $props();
+	import type { EditorMode } from "$lib/types/editor";
 
+	let gameRulesConfirmOpen = $state(false);
+	let gameRulesConfirmDetailItems = $state<string[]>([]);
+	let gameRulesConfirmResolve = $state<((confirmed: boolean) => void) | null>(null);
+
+	const session = $derived(editorState.session!);
+	const save = $derived(session.save);
+
+	const mode = $derived(session.mode);
 	const fileName = $derived(save.character.name);
 	const levelLabel = $derived(`Level ${save.attributes.level.value}`);
 	const versionLabel = $derived.by(() => {
@@ -21,11 +33,63 @@
 	});
 	const expansionLabel = $derived(getSaveExpansionType(save));
 	const coreLabel = $derived(save.character.status.hardcore ? "Hardcore" : "Softcore");
-	const currentModeExplanation = $derived(
-		editorDocumentMode === "raw"
-			? "Raw mode: edit values directly."
-			: "Game rules mode: recalculated values follow class rules, level, attributes, skills, and completed quests.",
-	);
+	const rawModeTooltipText = "Edit values directly.";
+	const gameRulesModeTooltipText =
+		"Values like life, mana or available skill points are calculated from class, level, attributes, skills, and completed quests and not directly editable.";
+
+	function openGameRulesConfirm(detailItems: string[]): Promise<boolean> {
+		gameRulesConfirmDetailItems = detailItems;
+		gameRulesConfirmOpen = true;
+
+		return new Promise((resolve) => {
+			gameRulesConfirmResolve = resolve;
+		});
+	}
+
+	function closeGameRulesConfirm(confirmed: boolean): void {
+		gameRulesConfirmOpen = false;
+
+		if (gameRulesConfirmResolve != null) {
+			gameRulesConfirmResolve(confirmed);
+			gameRulesConfirmResolve = null;
+		}
+	}
+
+	async function handleEditorModeChange(nextMode: EditorMode): Promise<void> {
+		if (nextMode === mode) {
+			return;
+		}
+
+		if (nextMode === "raw") {
+			editorState.setMode("raw");
+			return;
+		}
+
+		let projection: ReturnType<typeof projectGameRulesDerivedValues>;
+		try {
+			projection = projectGameRulesDerivedValues(save);
+		} catch (error) {
+			await message(getErrorMessage(error, "Unable to recalculate game rules values."), {
+				title: "Mode switch blocked",
+				kind: "warning",
+			});
+			return;
+		}
+
+		const detailItems = projection.changes.map(
+			(change) => `${change.label}: ${change.fromDisplay} -> ${change.toDisplay}`,
+		);
+
+		if (detailItems.length > 0) {
+			const confirmed = await openGameRulesConfirm(detailItems);
+			if (!confirmed) {
+				return;
+			}
+		}
+
+		applyProjectedGameRulesValues(save, projection.values);
+		editorState.setMode("game-rules");
+	}
 </script>
 
 <div class="session-bar flex w-full min-w-0 items-center gap-3">
@@ -34,7 +98,7 @@
 	</div>
 
 	<p class="session-bar__meta-line m-0 min-w-0 flex-1 truncate text-base text-halbu-textMuted">
-		<span>{save.character.class}</span>
+		<span>{save.character.className}</span>
 		<span aria-hidden="true">·</span>
 		<span>{levelLabel}</span>
 		<span aria-hidden="true">·</span>
@@ -44,42 +108,48 @@
 	</p>
 
 	<div class="session-bar__mode-control flex items-center gap-2">
-		<p class="m-0 text-xs leading-tight text-halbu-textMuted">{currentModeExplanation}</p>
-			<div
-				class="inline-flex items-center rounded-xs border border-halbu-border bg-halbu-panel p-0.5"
-				role="group"
-				aria-label="Document mode"
-			>
+		<div
+			class="inline-flex items-center rounded-xs border border-halbu-border bg-halbu-panel p-0.5"
+			role="group"
+			aria-label="Document mode"
+		>
 			<button
 				type="button"
 				class={`rounded-xs px-2 py-1 text-sm font-medium leading-none transition ${
-					editorDocumentMode === "raw"
+					mode === "raw"
 						? "border border-halbu-primary bg-halbu-primarySoft text-halbu-primary"
 						: "border border-transparent text-halbu-text hover:border-halbu-border hover:bg-halbu-panel2"
 				}`}
-					title="Raw mode: edit values directly."
-				aria-pressed={editorDocumentMode === "raw"}
-				onclick={() =>
-					editorDocumentMode !== "raw" && onEditorDocumentModeChange?.("raw")}
+				title={rawModeTooltipText}
+				aria-pressed={mode === "raw"}
+				onclick={() => mode !== "raw" && handleEditorModeChange("raw")}
 			>
 				Raw
 			</button>
 			<button
 				type="button"
 				class={`rounded-xs px-2 py-1 text-sm font-medium leading-none transition ${
-					editorDocumentMode === "game-rules"
+					mode === "game-rules"
 						? "border border-halbu-primary bg-halbu-primarySoft text-halbu-primary"
 						: "border border-transparent text-halbu-text hover:border-halbu-border hover:bg-halbu-panel2"
 				}`}
-					title="Game rules mode: recalculated values follow class rules, level, attributes, skills, and completed quests."
-				aria-pressed={editorDocumentMode === "game-rules"}
-				onclick={() =>
-					editorDocumentMode !== "game-rules" &&
-					onEditorDocumentModeChange?.("game-rules")}
+				title={gameRulesModeTooltipText}
+				aria-pressed={mode === "game-rules"}
+				onclick={() => mode !== "game-rules" && handleEditorModeChange("game-rules")}
 			>
 				Game rules
 			</button>
 		</div>
 	</div>
-
 </div>
+
+<ConfirmDialog
+	open={gameRulesConfirmOpen}
+	title="Switch to Game rules mode?"
+	message="Game rules mode recalculates life, mana, stamina, and remaining stat/skill points."
+	detailItems={gameRulesConfirmDetailItems}
+	confirmLabel="Switch mode"
+	cancelLabel="Cancel"
+	onConfirm={() => closeGameRulesConfirm(true)}
+	onCancel={() => closeGameRulesConfirm(false)}
+/>

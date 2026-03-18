@@ -1,7 +1,7 @@
 <script lang="ts">
-	import ConfirmDialog from "../../components/ConfirmDialog.svelte";
-	import Button from "../../components/ui/button/button.svelte";
-	import type { ChangeReviewGroup } from "../status/reviewChanges";
+	import ConfirmDialog from "$lib/components/ConfirmDialog.svelte";
+	import Button from "$lib/components/ui/button/button.svelte";
+	import type { ChangeReviewGroup } from "$lib/editor/status/reviewChanges";
 
 	type SaveChangeReviewDialogProps = {
 		open?: boolean;

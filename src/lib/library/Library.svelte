@@ -1,13 +1,14 @@
-<script>
+<script lang="ts">
 	import { onMount } from "svelte";
 	import { open } from "@tauri-apps/plugin-dialog";
-	import Button from "../components/ui/button/button.svelte";
-	import { Message, buildMessage } from "../utils/Message.svelte";
+	import Button from "$lib/components/ui/button/button.svelte";
+	import { Message, buildMessage } from "$lib/utils/Message.svelte";
 	import { invoke } from "@tauri-apps/api/core";
-	import * as settings from "../utils/settings";
-	import { getErrorMessage } from "../utils/errorMessage";
+	import * as settings from "$lib/utils/settings";
+	import { getErrorMessage } from "$lib/utils/errorMessage";
 	import { AlertCircleIcon } from "lucide-svelte";
-	import { toEditorOpenPayload } from "../types/editorPayload";
+	import { toOpenedSessionData } from "$lib/types/converters";
+	import type { BackendOpenSaveResult } from "$lib/types/backend";
 
 	let { onmessage, parseMode = "lax" } = $props();
 
@@ -43,7 +44,7 @@
 						extensions: ["d2s"],
 					},
 				],
-					title: "Open .d2s file",
+				title: "Open .d2s file",
 			});
 			if (selectedPath == null || Array.isArray(selectedPath)) {
 				return;
@@ -61,12 +62,14 @@
 
 		libraryError = "";
 		try {
-			/** @type {import("../types/editorPayload").BackendOpenPayloadDto} */
-			const response = await invoke("get_character_from_path_with_meta", {
-				path: path,
-				parseMode,
-			});
-			dispatchMessage(Message.CharacterPicked, toEditorOpenPayload(response, path));
+			const response = await invoke<BackendOpenSaveResult>(
+				"get_character_from_path_with_meta",
+				{
+					path: path,
+					parseMode,
+				},
+			);
+			dispatchMessage(Message.CharacterPicked, toOpenedSessionData(response, path));
 		} catch (err) {
 			libraryError = `Failed to load save file: ${getErrorMessage(err, "unknown error")}`;
 		}
@@ -91,7 +94,7 @@
 			return;
 		}
 		try {
-			/** @type {import("../types/editor").SaveSummaryEntry[]} */
+			/** @type {import("$lib/types/editor").SaveSummary[]} */
 			const response = await invoke("summary_folder", {
 				path: saveFolder,
 				parseMode,
@@ -116,7 +119,6 @@
 			return name.includes(query) || className.includes(query) || edition.includes(query);
 		});
 	});
-
 </script>
 
 <div class="container m-0">
@@ -150,7 +152,9 @@
 		</div>
 
 		{#if libraryError.length > 0}
-			<div class="rounded border border-halbu-warning bg-halbu-warningSoft p-2 text-sm text-halbu-warning">
+			<div
+				class="rounded border border-halbu-warning bg-halbu-warningSoft p-2 text-sm text-halbu-warning"
+			>
 				{libraryError}
 			</div>
 		{/if}
@@ -222,13 +226,17 @@
 								{/if}
 							</td>
 							<td class="py-3">
-								<small class="text-halbu-text">{saveFile.expansionType ?? "-"}</small>
+								<small class="text-halbu-text"
+									>{saveFile.expansionType ?? "-"}</small
+								>
 							</td>
 							<td class="py-3">
 								<small class="text-halbu-text">{saveFile.gameEdition ?? "-"}</small>
 							</td>
 							<td class="py-3">
-								<small class="font-monospace text-halbu-text">{saveFile.version ?? "-"}</small>
+								<small class="font-monospace text-halbu-text"
+									>{saveFile.formatId ?? "-"}</small
+								>
 							</td>
 						</tr>
 					{/each}
@@ -240,7 +248,6 @@
 				</div>
 			{/if}
 		{/if}
-
 	</div>
 </div>
 

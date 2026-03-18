@@ -1,39 +1,33 @@
 <script lang="ts">
 	import { invoke } from "@tauri-apps/api/core";
 	import { save as pickSavePath } from "@tauri-apps/plugin-dialog";
-	import Button from "../components/ui/button/button.svelte";
-	import { Message, buildMessage } from "../utils/Message.svelte";
-	import * as settings from "../utils/settings";
-	import { getErrorMessage } from "../utils/errorMessage";
-	import { toEditorSave } from "../types/editorPayload";
-	import experienceTable from "../editor/character/experience.json";
-	import { experienceForLevel, validateCharacterName } from "../editor/character/characterLogic";
+	import Button from "$lib/components/ui/button/button.svelte";
+	import { Message, buildMessage } from "$lib/utils/Message.svelte";
+	import * as settings from "$lib/utils/settings";
+	import { getErrorMessage } from "$lib/utils/errorMessage";
+	import { toEditorSave } from "$lib/types/converters";
+	import experienceTable from "$lib/editor/character/experience.json";
+	import { experienceForLevel, validateCharacterName } from "$lib/editor/character/characterLogic";
 	import {
 		applyProjectedGameRulesValues,
 		getGameRulesClassPrimaryAttributes,
 		projectGameRulesDerivedValues,
-	} from "../editor/character/gameRulesProjection";
+	} from "$lib/editor/character/gameRules";
 	import {
 		NEW_CHARACTER_TEMPLATE_OPTIONS,
 		applyAllWaypointsTemplate,
 		applyCampaignCompletedTemplate,
 		type NewCharacterTemplateId,
-	} from "./newCharacterTemplates";
+	} from "$lib/newCharacter/newCharacterTemplates";
 	import {
 		getSupportedExpansionTypes,
 		getSupportedClassesForExpansionType,
-	} from "../utils/GameSupport";
-	import { GAME_EDITIONS } from "../types/editor";
-	import type {
-		EditorOpenPayload,
-		EditorSave,
-		ExpansionTypeLabel,
-		GameEdition,
-		KnownClassName,
-		OutputFormatOption,
-	} from "../types/editor";
-	import type { BackendEditorSaveDto } from "../types/editorPayload";
-	import type { AppMessage } from "../utils/Message.svelte";
+	} from "$lib/utils/GameSupport";
+	import { GAME_EDITIONS } from "$lib/types/editor";
+	import type { EditorSave, ExpansionType, GameEdition, KnownClassName } from "$lib/types/editor";
+	import type { BackendEditorSave, OutputFormatOption } from "$lib/types/backend";
+	import type { OpenedSessionData } from "$lib/editor/editorSession";
+	import type { AppMessage } from "$lib/utils/Message.svelte";
 
 	const DEFAULT_CHARACTER_NAME = "NewCharacter";
 
@@ -48,7 +42,7 @@
 	let selectedTemplate = $state<NewCharacterTemplateId>("blank");
 	let characterName = $state(DEFAULT_CHARACTER_NAME);
 	let selectedEdition = $state<GameEdition>(GAME_EDITIONS[0]);
-	let selectedExpansionMode = $state<ExpansionTypeLabel>("Expansion");
+	let selectedExpansionMode = $state<ExpansionType>("Expansion");
 	let selectedClass = $state<KnownClassName | null>(null);
 	let hardcoreEnabled = $state(false);
 	let ladderEnabled = $state(false);
@@ -68,7 +62,7 @@
 		);
 	});
 	const nameValidation = $derived(validateCharacterName(characterName));
-	const availableExpansionModes = $derived.by((): readonly ExpansionTypeLabel[] => {
+	const availableExpansionModes = $derived.by((): readonly ExpansionType[] => {
 		if (selectedVersion == null) {
 			return [];
 		}
@@ -230,14 +224,14 @@
 		createPending = true;
 		createError = "";
 		try {
-			const backendSave = await invoke<BackendEditorSaveDto>("new_save", {
+			const backendSave = await invoke<BackendEditorSave>("new_save", {
 				version: selectedVersion,
 				class: selectedClass,
 			});
 			const saveData = toEditorSave(backendSave);
 
 			saveData.character.name = characterName;
-			saveData.expansion_type = selectedExpansionMode;
+			saveData.expansionType = selectedExpansionMode;
 			saveData.character.status.hardcore = hardcoreEnabled;
 			saveData.character.status.ladder = ladderEnabled;
 			saveData.character.status.died = false;
@@ -256,8 +250,9 @@
 			const resolvedPath =
 				effectiveSavePath.trim().length > 0 ? effectiveSavePath.trim() : null;
 
-			const openPayload: EditorOpenPayload = {
+			const openPayload: OpenedSessionData = {
 				save: saveData,
+				sourceBackendSave: structuredClone(backendSave),
 				parseIssueCount: 0,
 				parseIssues: [],
 				sourceFileSize: null,

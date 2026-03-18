@@ -1,5 +1,5 @@
-import { clampByte } from "../../utils/numbers";
-import type { SkillSlot } from "../../types/editor";
+import { clampByte } from "$lib/utils/numbers";
+import type { SkillSlot } from "$lib/types/skills";
 
 export const DEFAULT_SKILL_SLOT_COUNT = 30;
 

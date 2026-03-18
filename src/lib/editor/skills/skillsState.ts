@@ -1,5 +1,5 @@
-import type { SkillSlot } from "../../types/editor";
-import type { SkillData } from "./skillTypes";
+import type { SkillSlot } from "$lib/types/skills";
+import type { SkillData } from "$lib/editor/skills/skillsTypes";
 
 export type PageNotice = {
 	level: "warning" | "info";
@@ -141,6 +141,12 @@ export type SkillState = {
 	canDecrement: boolean;
 };
 
+export type SkillPrerequisite = {
+	id: number;
+	name: string;
+	met: boolean;
+};
+
 export type BuildSkillStateOptions = {
 	saveSkills: readonly SkillSlot[];
 	characterLevel: number;
@@ -187,6 +193,17 @@ export function buildSkillState(
 		canIncrement,
 		canDecrement,
 	};
+}
+
+export function getSkillLockReasons(
+	levelRequirementMet: boolean,
+	reqLevel: number,
+): string[] {
+	const reasons: string[] = [];
+	if (!levelRequirementMet) {
+		reasons.push(`Requires Level ${reqLevel}`);
+	}
+	return reasons;
 }
 
 export function buildSkillStatesById(

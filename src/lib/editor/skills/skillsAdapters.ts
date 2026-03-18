@@ -1,11 +1,9 @@
-import {
-	DEFAULT_SKILL_SLOT_COUNT,
-	resizeSkillSlots,
-} from "./skillSlots";
-import type { BackendSkillPoints, SkillSlot } from "../../types/editor";
+import { DEFAULT_SKILL_SLOT_COUNT, resizeSkillSlots } from "$lib/editor/skills/skillsSlots";
+import type { BackendSkillPointList } from "$lib/types/backend";
+import type { SkillSlot } from "$lib/types/skills";
 
 export function toEditorSkills(
-	backendSkills: BackendSkillPoints,
+	backendSkills: BackendSkillPointList,
 	slotCount = DEFAULT_SKILL_SLOT_COUNT,
 ): SkillSlot[] {
 	if (backendSkills.points.length !== slotCount) {
@@ -13,6 +11,7 @@ export function toEditorSkills(
 			`Invalid save.skills.points length: expected ${slotCount}, found ${backendSkills.points.length}.`,
 		);
 	}
+
 	return backendSkills.points.map((points, index) => ({
 		id: index,
 		points,
@@ -22,8 +21,9 @@ export function toEditorSkills(
 export function toBackendSkills(
 	editorSkills: readonly SkillSlot[],
 	slotCount = DEFAULT_SKILL_SLOT_COUNT,
-): BackendSkillPoints {
+): BackendSkillPointList {
 	const normalizedSkills = resizeSkillSlots(editorSkills, slotCount);
-	const points = normalizedSkills.map((skill) => skill.points);
-	return { points };
+	return {
+		points: normalizedSkills.map((skill) => skill.points),
+	};
 }

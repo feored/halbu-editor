@@ -33,6 +33,7 @@ pub struct SaveSummaryFile {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct SkillsContext {
     save_version: u32,
     meta_format: String,

@@ -1,11 +1,12 @@
-import actQuests from "../editor/quests/actquests.json";
+import actQuests from "$lib/editor/quests/actquests.json";
+import { ACT_NAMES, DIFFICULTY_NAMES } from "$lib/types/editor";
+import { setActWaypoints } from "$lib/editor/waypoints/waypointsLogic";
 import type {
-	ActId,
-	DifficultyId,
+	Difficulty,
 	EditorSave,
-	ExpansionTypeLabel,
+	ExpansionType,
 	QuestId,
-} from "../types/editor";
+} from "$lib/types/editor";
 
 export type NewCharacterTemplateId = "blank" | "level99AllProgress";
 export type NewCharacterTemplateOption = {
@@ -14,12 +15,10 @@ export type NewCharacterTemplateOption = {
 	description: string;
 };
 
-type ActQuestDefinition = {
+type ActQuestDisplay = {
 	id: string;
 	quests: Array<{ id: string }>;
 };
-
-const DIFFICULTY_IDS: readonly DifficultyId[] = ["normal", "nightmare", "hell"];
 
 export const NEW_CHARACTER_TEMPLATE_OPTIONS: readonly NewCharacterTemplateOption[] = [
 	{
@@ -37,14 +36,14 @@ export const NEW_CHARACTER_TEMPLATE_OPTIONS: readonly NewCharacterTemplateOption
 
 export function applyCampaignCompletedTemplate(
 	saveData: EditorSave,
-	expansionMode: ExpansionTypeLabel,
+	expansionMode: ExpansionType,
 ): void {
-	for (const difficultyId of DIFFICULTY_IDS) {
-		for (const act of actQuests as ActQuestDefinition[]) {
-			const actId = act.id as ActId;
+	for (const difficultyId of DIFFICULTY_NAMES as readonly Difficulty[]) {
+		for (const act of actQuests as ActQuestDisplay[]) {
+			const actId = ACT_NAMES.find((candidate) => candidate.toLowerCase() === act.id);
 			for (const quest of act.quests) {
 				const questId = quest.id as QuestId;
-				saveData.quests[difficultyId][actId][questId].state = ["RewardGranted"];
+				saveData.quests[difficultyId][actId][questId].flags = ["RewardGranted"];
 			}
 		}
 	}
@@ -54,12 +53,9 @@ export function applyCampaignCompletedTemplate(
 }
 
 export function applyAllWaypointsTemplate(saveData: EditorSave): void {
-	for (const difficultyId of DIFFICULTY_IDS) {
-		const waypointsByAct = saveData.waypoints[difficultyId];
-		for (const actId of Object.keys(waypointsByAct) as ActId[]) {
-			for (const waypoint of waypointsByAct[actId].waypoints) {
-				waypoint.acquired = true;
-			}
+	for (const difficultyId of DIFFICULTY_NAMES as readonly Difficulty[]) {
+		for (const actId of ACT_NAMES) {
+			setActWaypoints(saveData.waypoints, difficultyId, actId, true);
 		}
 	}
 }

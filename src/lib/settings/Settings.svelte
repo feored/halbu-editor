@@ -1,10 +1,10 @@
 <script>
 	import { message, open } from "@tauri-apps/plugin-dialog";
 	import { invoke } from "@tauri-apps/api/core";
-	import Button from "../components/ui/button/button.svelte";
-	import * as Settings from "../utils/settings";
-	import { getErrorMessage } from "../utils/errorMessage";
-	import { toPositiveInteger } from "../utils/numbers";
+	import Button from "$lib/components/ui/button/button.svelte";
+	import * as Settings from "$lib/utils/settings";
+	import { getErrorMessage } from "$lib/utils/errorMessage";
+	import { toPositiveInteger } from "$lib/utils/numbers";
 	import { onMount } from "svelte";
 	import { getVersion } from "@tauri-apps/api/app";
 
@@ -97,7 +97,7 @@
 
 		backupAllInProgress = true;
 		try {
-			/** @type {import("../types/editor").BackupAllDetectedSavesResult} */
+			/** @type {import("$lib/types/editor").BackupAllDetectedSavesResult} */
 			const result = await invoke("backup_all_detected_saves", {
 				folderPath: saveFolder,
 				parseMode,

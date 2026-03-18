@@ -1,4 +1,7 @@
-<script>
+<script lang="ts">
+	import type { SkillState } from "$lib/editor/skills/skillsState";
+	import type { SkillData } from "$lib/editor/skills/skillsTypes";
+
 	let {
 		skillData,
 		points,
@@ -9,7 +12,17 @@
 		onSelect,
 		onIncrement,
 		onDecrement,
-	} = $props();
+	} = $props<{
+		skillData: SkillData;
+		points: number;
+		nodeState: SkillState["state"];
+		isSelected: boolean;
+		canIncrement: boolean;
+		canDecrement: boolean;
+		onSelect: (skillId: number) => void;
+		onIncrement: (skillId: number) => void;
+		onDecrement: (skillId: number) => void;
+	}>();
 
 	const stateClasses = $derived.by(() => {
 		const classes = [`skill-node--${nodeState}`];
@@ -23,19 +36,19 @@
 		onSelect(skillData.id);
 	}
 
-	function handleKeydown(event) {
+	function handleKeydown(event: KeyboardEvent) {
 		if (event.key === "Enter" || event.key === " ") {
 			event.preventDefault();
 			selectSkill();
 		}
 	}
 
-	function increment(event) {
+	function increment(event: MouseEvent) {
 		event.stopPropagation();
 		onIncrement(skillData.id);
 	}
 
-	function decrement(event) {
+	function decrement(event: MouseEvent) {
 		event.stopPropagation();
 		onDecrement(skillData.id);
 	}
@@ -55,7 +68,9 @@
 	</div>
 
 	<div class="skill-node__bottom">
-		<div class={`skill-node__quick-edit ${isSelected ? "skill-node__quick-edit--visible" : ""}`}>
+		<div
+			class={`skill-node__quick-edit ${isSelected ? "skill-node__quick-edit--visible" : ""}`}
+		>
 			<button
 				type="button"
 				class="skill-node__control"
@@ -151,15 +166,15 @@
 		transition: opacity 0.15s ease;
 	}
 
-		.skill-node__control {
-			display: inline-flex;
-			align-items: center;
-			justify-content: center;
-			width: 1.25rem;
-			height: 1.25rem;
-			padding: 0;
-			line-height: 1.1;
-			font-size: 0.75rem;
+	.skill-node__control {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 1.25rem;
+		height: 1.25rem;
+		padding: 0;
+		line-height: 1.1;
+		font-size: 0.75rem;
 		font-weight: 700;
 		border-radius: var(--app-radius-sm);
 		border: 1px solid var(--halbu-border-strong);

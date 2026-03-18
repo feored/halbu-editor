@@ -1,14 +1,17 @@
-<script>
-	import SkillNode from "./SkillNode.svelte";
+<script lang="ts">
+	import SkillNode from "$lib/editor/skills/components/SkillNode.svelte";
+	import type { SkillState } from "$lib/editor/skills/skillsState";
+	import type { TreeLayout } from "$lib/editor/skills/skillsLayout";
 
-	let {
-		nodeRects,
-		skillStatesById,
-		selectedSkillId,
-		onSelect,
-		onIncrement,
-		onDecrement,
-	} = $props();
+	let { nodeRects, skillStatesById, selectedSkillId, onSelect, onIncrement, onDecrement } =
+		$props<{
+			nodeRects: TreeLayout["nodeRects"];
+			skillStatesById: Record<number, SkillState>;
+			selectedSkillId: number | null;
+			onSelect: (skillId: number) => void;
+			onIncrement: (skillId: number) => void;
+			onDecrement: (skillId: number) => void;
+		}>();
 </script>
 
 <div class="skill-node-layer">
@@ -25,9 +28,9 @@
 				isSelected={selectedSkillId === nodeRect.id}
 				canIncrement={skillState.canIncrement}
 				canDecrement={skillState.canDecrement}
-				onSelect={onSelect}
-				onIncrement={onIncrement}
-				onDecrement={onDecrement}
+				{onSelect}
+				{onIncrement}
+				{onDecrement}
 			/>
 		</div>
 	{/each}

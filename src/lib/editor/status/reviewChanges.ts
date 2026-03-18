@@ -1,19 +1,18 @@
-import actQuestDefinitions from "../quests/actquests.json";
+import actQuestDisplays from "$lib/editor/quests/actquests.json";
 import {
 	RESOURCE_Q8_SCALE,
 	fixedPointToDisplay,
 	formatDisplayNumber,
-} from "../../utils/resources";
+} from "$lib/utils/resources";
 import {
-	REQUIRED_EDITOR_ATTRIBUTE_IDS,
-	type ActId,
-	type DifficultyId,
-	type EditorActWaypoints,
-	type EditorQuest,
+	ACT_NAMES,
+	ATTRIBUTES,
+	DIFFICULTY_NAMES,
+	type Act,
+	type Difficulty,
 	type EditorSave,
-	type EditorWaypoint,
-	type QuestId,
-} from "../../types/editor";
+} from "$lib/types/editor";
+import { getAttributeLabel } from "$lib/editor/editorMetadata";
 
 export type ChangeReviewEntry = {
 	label: string;
@@ -31,96 +30,20 @@ export type ChangeReview = {
 	groups: ChangeReviewGroup[];
 };
 
-type QuestDefinition = {
+type QuestDisplay = {
 	id: string;
 	display: string;
 };
 
-type ActDefinition = {
+type ActDisplay = {
 	id: string;
 	display: string;
-	quests: QuestDefinition[];
+	quests: QuestDisplay[];
 };
 
-type SectionBuilder = (originalSave: EditorSave, currentSave: EditorSave) => ChangeReviewEntry[];
-type CharacterFieldKey = keyof EditorSave["character"];
-type CharacterStatusKey = keyof EditorSave["character"]["status"];
-type CharacterNumberListFieldKey =
-	| "assigned_skills"
-	| "menu_appearance"
-	| "resurrected_menu_appearance";
+type SectionBuilder = (beforeSave: EditorSave, afterSave: EditorSave) => ChangeReviewEntry[];
 
-type CharacterFieldConfig = {
-	label: string;
-	key: CharacterFieldKey;
-};
-
-type CharacterStatusFieldConfig = {
-	label: string;
-	key: CharacterStatusKey;
-};
-
-type CharacterListFieldConfig = {
-	label: string;
-	key: CharacterNumberListFieldKey;
-};
-
-const DIFFICULTY_ORDER: DifficultyId[] = ["normal", "nightmare", "hell"];
-const ACT_ORDER: ActId[] = ["act1", "act2", "act3", "act4", "act5"];
-const QUEST_ORDER: QuestId[] = [
-	"prologue",
-	"q1",
-	"q2",
-	"q3",
-	"q4",
-	"q5",
-	"q6",
-	"completion",
-	"unused_1",
-	"unused_2",
-	"unused_3",
-];
-
-const DIFFICULTY_LABELS: Record<DifficultyId, string> = {
-	normal: "Normal",
-	nightmare: "Nightmare",
-	hell: "Hell",
-};
-
-const ATTRIBUTE_LABELS: Record<string, string> = {
-	statpts: "Stat Points",
-	newskills: "Skill Points",
-	experience: "Experience",
-	level: "Level",
-	gold: "Gold (Inventory)",
-	goldbank: "Gold (Stash)",
-	strength: "Strength",
-	dexterity: "Dexterity",
-	vitality: "Vitality",
-	energy: "Energy",
-	hitpoints: "Life (Current)",
-	maxhp: "Life (Base)",
-	mana: "Mana (Current)",
-	maxmana: "Mana (Base)",
-	stamina: "Stamina (Current)",
-	maxstamina: "Stamina (Base)",
-};
-
-const QUEST_FALLBACK_LABELS: Record<string, string> = {
-	prologue: "Prologue",
-	q1: "Quest 1",
-	q2: "Quest 2",
-	q3: "Quest 3",
-	q4: "Quest 4",
-	q5: "Quest 5",
-	q6: "Quest 6",
-	completion: "Act Completion",
-	unused_1: "Unused Quest 1",
-	unused_2: "Unused Quest 2",
-	unused_3: "Unused Quest 3",
-};
-
-const Q8_ATTRIBUTE_IDS = new Set([
+const Q8_ATTRIBUTE_NAMES = new Set([
 	"hitpoints",
 	"maxhp",
 	"mana",
@@ -129,71 +52,53 @@ const Q8_ATTRIBUTE_IDS = new Set([
 	"maxstamina",
 ]);
 
-const QUEST_ORDER_INDEX = new Map<string, number>(
-	QUEST_ORDER.map((questId, index) => [questId, index]),
-);
-
-const CHARACTER_FIELDS: CharacterFieldConfig[] = [
-	{ label: "Name", key: "name" },
-	{ label: "Class", key: "class" },
-	{ label: "Level", key: "level" },
-	{ label: "Difficulty", key: "difficulty" },
-	{ label: "Act", key: "act" },
-	{ label: "Map Seed", key: "map_seed" },
-	{ label: "Last Played", key: "last_played" },
-	{ label: "Progression", key: "progression" },
-	{ label: "Weapon Switch", key: "weapon_switch" },
-	{ label: "Left Mouse Skill", key: "left_mouse_skill" },
-	{ label: "Right Mouse Skill", key: "right_mouse_skill" },
-	{ label: "Left Mouse Skill (Swap)", key: "left_mouse_switch_skill" },
-	{ label: "Right Mouse Skill (Swap)", key: "right_mouse_switch_skill" },
-];
-
-const CHARACTER_STATUS_FIELDS: CharacterStatusFieldConfig[] = [
-	{ label: "Hardcore", key: "hardcore" },
-	{ label: "Ladder", key: "ladder" },
-	{ label: "Died", key: "died" },
-	{ label: "Expansion Flag", key: "expansion" },
-];
-
-const CHARACTER_LIST_FIELDS: CharacterListFieldConfig[] = [
-	{ label: "Assigned Skills", key: "assigned_skills" },
-	{ label: "Menu Appearance", key: "menu_appearance" },
-	{ label: "Resurrected Menu Appearance", key: "resurrected_menu_appearance" },
-];
-
-const WAYPOINT_ACQUIRED_LABEL = "Acquired";
-const WAYPOINT_NOT_ACQUIRED_LABEL = "Not acquired";
-
-const { actLabelsById: ACT_LABELS_BY_ID, questLabelsByActId: QUEST_LABELS_BY_ACT_ID } =
-	buildQuestLabelMaps(actQuestDefinitions as ActDefinition[]);
-
 const REVIEW_SECTIONS: Array<{ section: string; build: SectionBuilder }> = [
-	{ section: "Save", build: buildSaveSectionChanges },
-	{ section: "Character", build: buildCharacterSectionChanges },
-	{ section: "Mercenary", build: buildMercenarySectionChanges },
-	{ section: "Attributes", build: buildAttributeSectionChanges },
-	{ section: "Skills", build: buildSkillSectionChanges },
-	{ section: "Quests", build: buildQuestSectionChanges },
-	{ section: "Waypoints", build: buildWaypointSectionChanges },
-	{ section: "Raw Data", build: buildRawDataSectionChanges },
+	{ section: "Save", build: buildSaveChanges },
+	{ section: "Character", build: buildCharacterChanges },
+	{ section: "Mercenary", build: buildMercenaryChanges },
+	{ section: "Attributes", build: buildAttributeChanges },
+	{ section: "Skills", build: buildSkillChanges },
+	{ section: "Quests", build: buildQuestChanges },
+	{ section: "Waypoints", build: buildWaypointChanges },
+	{ section: "Raw Data", build: buildRawDataChanges },
 ];
 
-function buildQuestLabelMaps(actDefinitions: readonly ActDefinition[]): {
+const {
+	actLabelsById,
+	questLabelsByActId,
+	questOrderIndexByActId,
+} = buildQuestMaps(actQuestDisplays as ActDisplay[]);
+
+function buildQuestMaps(actDefinitions: readonly ActDisplay[]): {
 	actLabelsById: Record<string, string>;
 	questLabelsByActId: Record<string, Record<string, string>>;
+	questOrderIndexByActId: Record<string, Record<string, number>>;
 } {
-	const actLabelsById: Record<string, string> = {};
-	const questLabelsByActId: Record<string, Record<string, string>> = {};
+	const nextActLabelsById: Record<string, string> = {};
+	const nextQuestLabelsByActId: Record<string, Record<string, string>> = {};
+	const nextQuestOrderIndexByActId: Record<string, Record<string, number>> = {};
+
 	for (const actDefinition of actDefinitions) {
-		actLabelsById[actDefinition.id] = actDefinition.display;
+		nextActLabelsById[actDefinition.id] = actDefinition.display;
+
 		const questLabels: Record<string, string> = {};
-		for (const questDefinition of actDefinition.quests) {
-			questLabels[questDefinition.id] = questDefinition.display;
+		const questOrderIndex: Record<string, number> = {};
+
+		for (let index = 0; index < actDefinition.quests.length; index += 1) {
+			const QuestDisplay = actDefinition.quests[index];
+			questLabels[QuestDisplay.id] = QuestDisplay.display;
+			questOrderIndex[QuestDisplay.id] = index;
 		}
-		questLabelsByActId[actDefinition.id] = questLabels;
+
+		nextQuestLabelsByActId[actDefinition.id] = questLabels;
+		nextQuestOrderIndexByActId[actDefinition.id] = questOrderIndex;
 	}
-	return { actLabelsById, questLabelsByActId };
+
+	return {
+		actLabelsById: nextActLabelsById,
+		questLabelsByActId: nextQuestLabelsByActId,
+		questOrderIndexByActId: nextQuestOrderIndexByActId,
+	};
 }
 
 function formatValue(value: unknown): string {
@@ -204,7 +109,7 @@ function formatValue(value: unknown): string {
 		return "∅";
 	}
 	if (typeof value === "boolean") {
-		return value ? "Yes" : "No";
+		return value ? "True" : "False";
 	}
 	if (typeof value === "string") {
 		return value.length > 0 ? value : '""';
@@ -216,78 +121,113 @@ function formatList(values: readonly string[] | readonly number[]): string {
 	return values.length > 0 ? values.join(", ") : "None";
 }
 
-function formatWaypointAcquiredState(acquired: boolean): string {
-	return acquired ? WAYPOINT_ACQUIRED_LABEL : WAYPOINT_NOT_ACQUIRED_LABEL;
+function formatWaypointState(acquired: boolean): string {
+	return acquired ? "Acquired" : "Not acquired";
 }
 
 function formatSkillSlot(slot: { id: number; points: number }): string {
 	return `Skill ${slot.id}, ${slot.points} point(s)`;
 }
 
-function listValuesEqual<T>(before: readonly T[], after: readonly T[]): boolean {
-	if (before.length !== after.length) {
+function formatAttributeValue(attributeName: string, rawValue: number): string {
+	if (!Q8_ATTRIBUTE_NAMES.has(attributeName)) {
+		return String(rawValue);
+	}
+	return formatDisplayNumber(fixedPointToDisplay(rawValue, RESOURCE_Q8_SCALE));
+}
+
+function formatWaypointId(waypointId: string): string {
+	return waypointId.replace(/([a-z0-9])([A-Z])/g, "$1 $2");
+}
+
+function getActLabel(act: Act): string {
+	return actLabelsById[act] ?? act;
+}
+
+function formatProgressLabel(
+	difficulty: Difficulty,
+	act: Act,
+	entryLabel: string,
+): string {
+	return `${difficulty} / ${getActLabel(act)} / ${entryLabel}`;
+}
+
+function listValuesEqual<T>(beforeValues: readonly T[], afterValues: readonly T[]): boolean {
+	if (beforeValues.length !== afterValues.length) {
 		return false;
 	}
-	return before.every((value, index) => value === after[index]);
-}
 
-function countChangedEntries<T>(before: readonly T[], after: readonly T[]): number {
-	const maxLength = Math.max(before.length, after.length);
-	let changedEntries = 0;
-	for (let index = 0; index < maxLength; index += 1) {
-		if (before[index] !== after[index]) {
-			changedEntries += 1;
+	for (let index = 0; index < beforeValues.length; index += 1) {
+		if (beforeValues[index] !== afterValues[index]) {
+			return false;
 		}
 	}
-	return changedEntries;
+
+	return true;
 }
 
-function pushChange(
+function countChangedEntries<T>(beforeValues: readonly T[], afterValues: readonly T[]): number {
+	const maxLength = Math.max(beforeValues.length, afterValues.length);
+	let changedEntryCount = 0;
+
+	for (let index = 0; index < maxLength; index += 1) {
+		if (beforeValues[index] !== afterValues[index]) {
+			changedEntryCount += 1;
+		}
+	}
+
+	return changedEntryCount;
+}
+
+function pushValueChange(
 	changes: ChangeReviewEntry[],
 	label: string,
-	before: unknown,
-	after: unknown,
+	beforeValue: unknown,
+	afterValue: unknown,
 ): void {
-	if (Object.is(before, after)) {
+	if (Object.is(beforeValue, afterValue)) {
 		return;
 	}
+
 	changes.push({
 		label,
-		before: formatValue(before),
-		after: formatValue(after),
+		before: formatValue(beforeValue),
+		after: formatValue(afterValue),
 	});
 }
 
-function pushListChange(
+function pushFormattedChange(
 	changes: ChangeReviewEntry[],
 	label: string,
-	before: readonly number[],
-	after: readonly number[],
+	beforeText: string,
+	afterText: string,
 ): void {
-	if (listValuesEqual(before, after)) {
+	if (beforeText === afterText) {
 		return;
 	}
+
 	changes.push({
 		label,
-		before: formatList(before),
-		after: formatList(after),
+		before: beforeText,
+		after: afterText,
 	});
 }
 
 function pushByteDataChange(
 	changes: ChangeReviewEntry[],
 	label: string,
-	before: readonly number[],
-	after: readonly number[],
+	beforeBytes: readonly number[],
+	afterBytes: readonly number[],
 ): void {
-	const changedEntries = countChangedEntries(before, after);
-	if (changedEntries === 0) {
+	const changedEntryCount = countChangedEntries(beforeBytes, afterBytes);
+	if (changedEntryCount < 1) {
 		return;
 	}
+
 	changes.push({
 		label,
-		before: `${before.length} byte(s)`,
-		after: `${after.length} byte(s), ${changedEntries} changed`,
+		before: `${beforeBytes.length} byte(s)`,
+		after: `${afterBytes.length} byte(s), ${changedEntryCount} changed`,
 	});
 }
 
@@ -295,231 +235,228 @@ function buildGroup(section: string, changes: ChangeReviewEntry[]): ChangeReview
 	if (changes.length < 1) {
 		return null;
 	}
-	return { section, changes };
-}
 
-function buildProgressLabel(difficultyId: DifficultyId, actId: ActId, entryLabel: string): string {
-	return `${DIFFICULTY_LABELS[difficultyId]} / ${ACT_LABELS_BY_ID[actId] ?? actId} / ${entryLabel}`;
+	return {
+		section,
+		changes,
+	};
 }
 
 function orderedQuestIds(
-	originalActQuests: Record<string, EditorQuest>,
-	currentActQuests: Record<string, EditorQuest>,
+	act: Act,
+	beforeActQuests: Record<string, { flags: string[] }>,
+	afterActQuests: Record<string, { flags: string[] }>,
 ): string[] {
 	const questIds = new Set<string>([
-		...Object.keys(originalActQuests),
-		...Object.keys(currentActQuests),
+		...Object.keys(beforeActQuests),
+		...Object.keys(afterActQuests),
 	]);
+
+	const questOrderIndex = questOrderIndexByActId[act] ?? {};
+
 	return Array.from(questIds).sort((left, right) => {
-		const leftIndex = QUEST_ORDER_INDEX.get(left) ?? Number.MAX_SAFE_INTEGER;
-		const rightIndex = QUEST_ORDER_INDEX.get(right) ?? Number.MAX_SAFE_INTEGER;
+		const leftIndex = questOrderIndex[left] ?? Number.MAX_SAFE_INTEGER;
+		const rightIndex = questOrderIndex[right] ?? Number.MAX_SAFE_INTEGER;
+
 		if (leftIndex !== rightIndex) {
 			return leftIndex - rightIndex;
 		}
+
 		return left.localeCompare(right);
 	});
 }
 
-function questLabel(actId: ActId, questId: string): string {
-	const actQuestLabels = QUEST_LABELS_BY_ACT_ID[actId] ?? {};
-	return actQuestLabels[questId] ?? QUEST_FALLBACK_LABELS[questId] ?? questId;
+function getQuestLabel(act: Act, questId: string): string {
+	const labelsForAct = questLabelsByActId[act] ?? {};
+	return labelsForAct[questId] ?? questId;
 }
 
-function formatWaypointIdForReview(waypointId: string): string {
-	return waypointId.replace(/([a-z0-9])([A-Z])/g, "$1 $2");
-}
-
-function toWaypointMap(
-	actWaypoints: EditorActWaypoints | null | undefined,
-): Map<string, EditorWaypoint> {
-	const result = new Map<string, EditorWaypoint>();
-	if (actWaypoints == null) {
-		return result;
-	}
-	for (const waypoint of actWaypoints.waypoints) {
-		result.set(waypoint.id, waypoint);
-	}
-	return result;
-}
-
-function formatAttributeValueForReview(attributeId: string, rawValue: number): string | number {
-	if (!Q8_ATTRIBUTE_IDS.has(attributeId)) {
-		return rawValue;
-	}
-	return formatDisplayNumber(fixedPointToDisplay(rawValue, RESOURCE_Q8_SCALE));
-}
-
-function buildSaveSectionChanges(
-	originalSave: EditorSave,
-	currentSave: EditorSave,
-): ChangeReviewEntry[] {
+function buildSaveChanges(beforeSave: EditorSave, afterSave: EditorSave): ChangeReviewEntry[] {
 	const changes: ChangeReviewEntry[] = [];
-	pushChange(changes, "Version", originalSave.version, currentSave.version);
-	pushChange(changes, "Expansion Mode", originalSave.expansion_type, currentSave.expansion_type);
-	pushChange(changes, "Format ID", originalSave.meta.format, currentSave.meta.format);
-	return changes;
-}
 
-function buildCharacterSectionChanges(
-	originalSave: EditorSave,
-	currentSave: EditorSave,
-): ChangeReviewEntry[] {
-	const changes: ChangeReviewEntry[] = [];
-	const originalCharacter = originalSave.character;
-	const currentCharacter = currentSave.character;
-
-	for (const field of CHARACTER_FIELDS) {
-		pushChange(changes, field.label, originalCharacter[field.key], currentCharacter[field.key]);
-	}
-
-	for (const field of CHARACTER_STATUS_FIELDS) {
-		pushChange(
-			changes,
-			field.label,
-			originalCharacter.status[field.key],
-			currentCharacter.status[field.key],
-		);
-	}
-
-	for (const field of CHARACTER_LIST_FIELDS) {
-		pushListChange(
-			changes,
-			field.label,
-			originalCharacter[field.key],
-			currentCharacter[field.key],
-		);
-	}
-
-	pushByteDataChange(
+	pushValueChange(changes, "Version", beforeSave.version, afterSave.version);
+	pushValueChange(
 		changes,
-		"Raw Character Section",
-		originalCharacter.raw_section,
-		currentCharacter.raw_section,
+		"Expansion Mode",
+		beforeSave.expansionType,
+		afterSave.expansionType,
+	);
+	pushValueChange(
+		changes,
+		"Format ID",
+		beforeSave.metadata.formatId,
+		afterSave.metadata.formatId,
 	);
 
 	return changes;
 }
 
-function buildMercenarySectionChanges(
-	originalSave: EditorSave,
-	currentSave: EditorSave,
+function buildCharacterChanges(
+	beforeSave: EditorSave,
+	afterSave: EditorSave,
 ): ChangeReviewEntry[] {
 	const changes: ChangeReviewEntry[] = [];
-	const originalMercenary = originalSave.character.mercenary;
-	const currentMercenary = currentSave.character.mercenary;
 
-	pushChange(changes, "ID", originalMercenary.id, currentMercenary.id);
-	pushChange(changes, "Dead", originalMercenary.is_dead, currentMercenary.is_dead);
-	pushChange(changes, "Variant", originalMercenary.variant_id, currentMercenary.variant_id);
-	pushChange(changes, "Experience", originalMercenary.experience, currentMercenary.experience);
-	pushChange(changes, "Name Index", originalMercenary.name_id, currentMercenary.name_id);
+	const beforeCharacter = beforeSave.character;
+	const afterCharacter = afterSave.character;
+
+	pushValueChange(changes, "Name", beforeCharacter.name, afterCharacter.name);
+	pushValueChange(changes, "Class", beforeCharacter.className, afterCharacter.className);
+	pushValueChange(changes, "Level", beforeCharacter.level, afterCharacter.level);
+	pushValueChange(changes, "Difficulty", beforeCharacter.difficulty, afterCharacter.difficulty);
+	pushValueChange(changes, "Act", beforeCharacter.act, afterCharacter.act);
+	pushValueChange(changes, "Map Seed", beforeCharacter.mapSeed, afterCharacter.mapSeed);
+	pushValueChange(changes, "Last Played", beforeCharacter.lastPlayed, afterCharacter.lastPlayed);
+	pushValueChange(changes, "Progression", beforeCharacter.progression, afterCharacter.progression);
+
+	pushValueChange(
+		changes,
+		"Hardcore",
+		beforeCharacter.status.hardcore,
+		afterCharacter.status.hardcore,
+	);
+	pushValueChange(
+		changes,
+		"Ladder",
+		beforeCharacter.status.ladder,
+		afterCharacter.status.ladder,
+	);
+	pushValueChange(
+		changes,
+		"Died",
+		beforeCharacter.status.died,
+		afterCharacter.status.died,
+	);
+	pushValueChange(
+		changes,
+		"Expansion Flag",
+		beforeCharacter.status.expansion,
+		afterCharacter.status.expansion,
+	);
 
 	return changes;
 }
 
-function buildAttributeSectionChanges(
-	originalSave: EditorSave,
-	currentSave: EditorSave,
+function buildMercenaryChanges(
+	beforeSave: EditorSave,
+	afterSave: EditorSave,
 ): ChangeReviewEntry[] {
 	const changes: ChangeReviewEntry[] = [];
-	for (const attributeId of REQUIRED_EDITOR_ATTRIBUTE_IDS) {
-		const label = ATTRIBUTE_LABELS[attributeId] ?? attributeId;
-		const originalValue = originalSave.attributes[attributeId].value;
-		const currentValue = currentSave.attributes[attributeId].value;
-		pushChange(
+
+	const beforeMercenary = beforeSave.character.mercenary;
+	const afterMercenary = afterSave.character.mercenary;
+
+	pushValueChange(changes, "ID", beforeMercenary.id, afterMercenary.id);
+	pushValueChange(changes, "Dead", beforeMercenary.isDead, afterMercenary.isDead);
+	pushValueChange(changes, "Variant", beforeMercenary.variantId, afterMercenary.variantId);
+	pushValueChange(
+		changes,
+		"Experience",
+		beforeMercenary.experience,
+		afterMercenary.experience,
+	);
+	pushValueChange(changes, "Name Index", beforeMercenary.nameId, afterMercenary.nameId);
+
+	return changes;
+}
+
+function buildAttributeChanges(
+	beforeSave: EditorSave,
+	afterSave: EditorSave,
+): ChangeReviewEntry[] {
+	const changes: ChangeReviewEntry[] = [];
+
+	for (const attributeName of ATTRIBUTES) {
+		const label = getAttributeLabel(attributeName);
+		const beforeValue = beforeSave.attributes[attributeName].value;
+		const afterValue = afterSave.attributes[attributeName].value;
+
+		pushFormattedChange(
 			changes,
 			label,
-			formatAttributeValueForReview(attributeId, originalValue),
-			formatAttributeValueForReview(attributeId, currentValue),
+			formatAttributeValue(attributeName, beforeValue),
+			formatAttributeValue(attributeName, afterValue),
 		);
 	}
+
 	return changes;
 }
 
-function buildSkillSectionChanges(
-	originalSave: EditorSave,
-	currentSave: EditorSave,
-): ChangeReviewEntry[] {
+function buildSkillChanges(beforeSave: EditorSave, afterSave: EditorSave): ChangeReviewEntry[] {
 	const changes: ChangeReviewEntry[] = [];
-	const originalSkills = originalSave.skills;
-	const currentSkills = currentSave.skills;
 
-	if (originalSkills.length !== currentSkills.length) {
+	const beforeSkills = beforeSave.skills;
+	const afterSkills = afterSave.skills;
+
+	if (beforeSkills.length !== afterSkills.length) {
 		changes.push({
 			label: "Skill Slot Count",
-			before: String(originalSkills.length),
-			after: String(currentSkills.length),
+			before: String(beforeSkills.length),
+			after: String(afterSkills.length),
 		});
 	}
 
-	const maxLength = Math.max(originalSkills.length, currentSkills.length);
+	const maxLength = Math.max(beforeSkills.length, afterSkills.length);
+
 	for (let index = 0; index < maxLength; index += 1) {
-		const originalSlot = originalSkills[index] ?? null;
-		const currentSlot = currentSkills[index] ?? null;
+		const beforeSlot = beforeSkills[index] ?? null;
+		const afterSlot = afterSkills[index] ?? null;
 		const slotLabel = `Slot #${index + 1}`;
 
-		if (originalSlot == null && currentSlot != null) {
+		if (beforeSlot == null && afterSlot != null) {
 			changes.push({
 				label: `${slotLabel} Added`,
 				before: "None",
-				after: formatSkillSlot(currentSlot),
+				after: formatSkillSlot(afterSlot),
 			});
 			continue;
 		}
 
-		if (originalSlot != null && currentSlot == null) {
+		if (beforeSlot != null && afterSlot == null) {
 			changes.push({
 				label: `${slotLabel} Removed`,
-				before: formatSkillSlot(originalSlot),
+				before: formatSkillSlot(beforeSlot),
 				after: "None",
 			});
 			continue;
 		}
 
-		if (originalSlot == null || currentSlot == null) {
+		if (beforeSlot == null || afterSlot == null) {
 			continue;
 		}
 
-		if (originalSlot.id !== currentSlot.id) {
-			changes.push({
-				label: `${slotLabel} Skill ID`,
-				before: String(originalSlot.id),
-				after: String(currentSlot.id),
-			});
-		}
-
-		if (originalSlot.points !== currentSlot.points) {
-			changes.push({
-				label: `${slotLabel} Points (Skill ${currentSlot.id})`,
-				before: String(originalSlot.points),
-				after: String(currentSlot.points),
-			});
-		}
+		pushValueChange(changes, `${slotLabel} Skill ID`, beforeSlot.id, afterSlot.id);
+		pushValueChange(
+			changes,
+			`${slotLabel} Points (Skill ${afterSlot.id})`,
+			beforeSlot.points,
+			afterSlot.points,
+		);
 	}
 
 	return changes;
 }
 
-function buildQuestSectionChanges(
-	originalSave: EditorSave,
-	currentSave: EditorSave,
-): ChangeReviewEntry[] {
+function buildQuestChanges(beforeSave: EditorSave, afterSave: EditorSave): ChangeReviewEntry[] {
 	const changes: ChangeReviewEntry[] = [];
 
-	for (const difficultyId of DIFFICULTY_ORDER) {
-		for (const actId of ACT_ORDER) {
-			const originalActQuests = originalSave.quests[difficultyId][actId];
-			const currentActQuests = currentSave.quests[difficultyId][actId];
-			for (const questId of orderedQuestIds(originalActQuests, currentActQuests)) {
-				const originalState = originalActQuests[questId]?.state ?? [];
-				const currentState = currentActQuests[questId]?.state ?? [];
-				if (listValuesEqual(originalState, currentState)) {
+	for (const difficulty of DIFFICULTY_NAMES) {
+		for (const act of ACT_NAMES) {
+			const beforeActQuests = beforeSave.quests[difficulty][act];
+			const afterActQuests = afterSave.quests[difficulty][act];
+
+			for (const questId of orderedQuestIds(act, beforeActQuests, afterActQuests)) {
+				const beforeFlags = beforeActQuests[questId]?.flags ?? [];
+				const afterFlags = afterActQuests[questId]?.flags ?? [];
+
+				if (listValuesEqual(beforeFlags, afterFlags)) {
 					continue;
 				}
+
 				changes.push({
-					label: buildProgressLabel(difficultyId, actId, questLabel(actId, questId)),
-					before: formatList(originalState),
-					after: formatList(currentState),
+					label: formatProgressLabel(difficulty, act, getQuestLabel(act, questId)),
+					before: formatList(beforeFlags),
+					after: formatList(afterFlags),
 				});
 			}
 		}
@@ -528,53 +465,68 @@ function buildQuestSectionChanges(
 	return changes;
 }
 
-function buildWaypointSectionChanges(
-	originalSave: EditorSave,
-	currentSave: EditorSave,
+function buildWaypointChanges(
+	beforeSave: EditorSave,
+	afterSave: EditorSave,
 ): ChangeReviewEntry[] {
 	const changes: ChangeReviewEntry[] = [];
 
-	for (const difficultyId of DIFFICULTY_ORDER) {
-		for (const actId of ACT_ORDER) {
-			const originalWaypoints = originalSave.waypoints[difficultyId][actId];
-			const currentWaypoints = currentSave.waypoints[difficultyId][actId];
-			const originalById = toWaypointMap(originalWaypoints);
-			const currentById = toWaypointMap(currentWaypoints);
-			const waypointIds = new Set<string>([...originalById.keys(), ...currentById.keys()]);
+	for (const difficulty of DIFFICULTY_NAMES) {
+		for (const act of ACT_NAMES) {
+			const beforeWaypoints = new Map(
+				beforeSave.waypoints[difficulty][act].waypoints.map((waypoint) => [
+					waypoint.id,
+					waypoint,
+				]),
+			);
+			const afterWaypoints = new Map(
+				afterSave.waypoints[difficulty][act].waypoints.map((waypoint) => [
+					waypoint.id,
+					waypoint,
+				]),
+			);
+
+			const waypointIds = new Set<string>([
+				...beforeWaypoints.keys(),
+				...afterWaypoints.keys(),
+			]);
 
 			for (const waypointId of waypointIds) {
-				const originalWaypoint = originalById.get(waypointId) ?? null;
-				const currentWaypoint = currentById.get(waypointId) ?? null;
-				const waypointName = formatWaypointIdForReview(waypointId);
-				const label = buildProgressLabel(difficultyId, actId, waypointName);
+				const beforeWaypoint = beforeWaypoints.get(waypointId) ?? null;
+				const afterWaypoint = afterWaypoints.get(waypointId) ?? null;
+				const label = formatProgressLabel(
+					difficulty,
+					act,
+					formatWaypointId(waypointId),
+				);
 
-				if (originalWaypoint == null && currentWaypoint != null) {
+				if (beforeWaypoint == null && afterWaypoint != null) {
 					changes.push({
 						label,
 						before: "Missing",
-						after: formatWaypointAcquiredState(currentWaypoint.acquired),
+						after: formatWaypointState(afterWaypoint.acquired),
 					});
 					continue;
 				}
 
-				if (originalWaypoint != null && currentWaypoint == null) {
+				if (beforeWaypoint != null && afterWaypoint == null) {
 					changes.push({
 						label,
-						before: formatWaypointAcquiredState(originalWaypoint.acquired),
+						before: formatWaypointState(beforeWaypoint.acquired),
 						after: "Missing",
 					});
 					continue;
 				}
 
-				if (originalWaypoint == null || currentWaypoint == null) {
+				if (beforeWaypoint == null || afterWaypoint == null) {
 					continue;
 				}
 
-				if (originalWaypoint.acquired !== currentWaypoint.acquired) {
+				if (beforeWaypoint.acquired !== afterWaypoint.acquired) {
 					changes.push({
 						label,
-						before: formatWaypointAcquiredState(originalWaypoint.acquired),
-						after: formatWaypointAcquiredState(currentWaypoint.acquired),
+						before: formatWaypointState(beforeWaypoint.acquired),
+						after: formatWaypointState(afterWaypoint.acquired),
 					});
 				}
 			}
@@ -584,32 +536,34 @@ function buildWaypointSectionChanges(
 	return changes;
 }
 
-function buildRawDataSectionChanges(
-	originalSave: EditorSave,
-	currentSave: EditorSave,
-): ChangeReviewEntry[] {
+function buildRawDataChanges(beforeSave: EditorSave, afterSave: EditorSave): ChangeReviewEntry[] {
 	const changes: ChangeReviewEntry[] = [];
-	pushByteDataChange(changes, "Item Data", originalSave.items.data, currentSave.items.data);
-	pushByteDataChange(changes, "NPC Data", originalSave.npcs.data, currentSave.npcs.data);
+
+	pushByteDataChange(changes, "Item Data", beforeSave.items.data, afterSave.items.data);
+	pushByteDataChange(changes, "NPC Data", beforeSave.npcs.data, afterSave.npcs.data);
+
 	return changes;
 }
 
 export function buildChangeReview(
-	originalSave: EditorSave | null,
-	currentSave: EditorSave | null,
+	beforeSave: EditorSave,
+	afterSave: EditorSave,
 ): ChangeReview {
-	if (originalSave == null || currentSave == null) {
-		return { totalChanges: 0, groups: [] };
-	}
-
 	const groups: ChangeReviewGroup[] = [];
-	for (const { section, build } of REVIEW_SECTIONS) {
-		const group = buildGroup(section, build(originalSave, currentSave));
+
+	for (const section of REVIEW_SECTIONS) {
+		const changes = section.build(beforeSave, afterSave);
+		const group = buildGroup(section.section, changes);
+
 		if (group != null) {
 			groups.push(group);
 		}
 	}
 
 	const totalChanges = groups.reduce((sum, group) => sum + group.changes.length, 0);
-	return { totalChanges, groups };
+
+	return {
+		totalChanges,
+		groups,
+	};
 }

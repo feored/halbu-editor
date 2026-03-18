@@ -1,4 +1,4 @@
-import type { SkillData } from "./skillTypes";
+import type { SkillData } from "$lib/editor/skills/skillsTypes";
 
 const ROW_LEVEL_REQUIREMENTS: Record<number, number> = {
 	1: 1,

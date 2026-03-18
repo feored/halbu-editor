@@ -44,3 +44,7 @@ export function toUInt32OrNull(value: unknown): number | null {
 	}
 	return normalized >>> 0;
 }
+
+export function getMaxValueForBitLength(bitLength: number): number {
+	return 2 ** bitLength - 1;
+}

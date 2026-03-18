@@ -1,10 +1,10 @@
 <script module>
-	import titles from "../editor/character/titles.json";
-	import { isFemaleClass } from "./GameSupport";
+	import titles from "$lib/editor/character/titles.json";
+	import { isFemaleClass } from "$lib/utils/GameSupport";
 
 	export function calcTitle(character, expansionType) {
 		const difficultyBeaten = calcDifficultyBeaten(character, expansionType);
-		const gender = isFemaleClass(character.class) ? "Female" : "Male";
+		const gender = isFemaleClass(character.className) ? "Female" : "Male";
 		const core = character.status.hardcore ? "Hardcore" : "Softcore";
 		const expansion = expansionType === "Classic" ? "Classic" : "Expansion";
 

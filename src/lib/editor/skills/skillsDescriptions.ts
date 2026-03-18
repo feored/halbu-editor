@@ -1,16 +1,15 @@
-import { skillIdToSaveId } from "../../utils/GameSupport";
-import type { EditorCharacter, SkillSlot } from "../../types/editor";
-import type { SkillData, SkillDescriptionLine } from "./skillTypes";
+import { skillIdToSaveId } from "$lib/utils/GameSupport";
+import {
+	type SkillPrerequisite,
+	getSkillLockReasons,
+} from "$lib/editor/skills/skillsState";
+import type { Character } from "$lib/types/editor";
+import type { SkillSlot } from "$lib/types/skills";
+import type { SkillData, SkillDescriptionLine } from "$lib/editor/skills/skillsTypes";
 
 export type SkillSynergyEntry = {
 	line: string;
 	acquired: boolean | null;
-};
-
-export type SkillPrerequisite = {
-	id: number;
-	name: string;
-	met: boolean;
 };
 
 export type SkillDetails = {
@@ -36,16 +35,38 @@ type BuildSkillDetailsOptions = {
 	skillData: SkillData;
 	skillsData: readonly SkillData[];
 	skills: readonly SkillSlot[];
-	character: Pick<EditorCharacter, "class" | "level">;
+	character: Pick<Character, "className" | "level">;
 	version: number;
 };
 
-type ExpressionFunction = (...args: unknown[]) => unknown;
+type ExpressionFunction = (...args: any[]) => unknown;
 
 type BuildLinesOptions = {
 	next?: boolean;
 	reverse?: boolean;
 };
+
+
+function buildSkillPrerequisites(
+	requiredSkillIds: readonly number[],
+	skillsData: readonly SkillData[],
+	skills: readonly SkillSlot[],
+	version: number,
+	className: string,
+): SkillPrerequisite[] {
+	return requiredSkillIds.map((requiredSkillId) => {
+		const prerequisite = skillsData.find((entry) => entry.id === requiredSkillId);
+		const saveId =
+			prerequisite == null
+				? skillIdToSaveId(version, className, requiredSkillId)
+				: prerequisite.saveId;
+		return {
+			id: requiredSkillId,
+			name: prerequisite?.name ?? `Skill ${requiredSkillId}`,
+			met: skills[saveId].points > 0,
+		};
+	});
+}
 
 function normalizeEvaluatedNumber(value: unknown): number {
 	if (typeof value === "number" && Number.isFinite(value)) {
@@ -96,11 +117,6 @@ function scopedEval(
 	return Function(...argNames, `"use strict"; return (${script})`)(...argValues);
 }
 
-function replaceCallableName(script: string, name: string, replacement: string): string {
-	const pattern = new RegExp(`(^|[^\\w.])${name}\\s*\\(`, "g");
-	return script.replace(pattern, `$1${replacement}(`);
-}
-
 function createCalculator({
 	version,
 	character,
@@ -114,7 +130,7 @@ function createCalculator({
 	}
 
 	function slvl(skillId: number): number {
-		const saveSkillId = skillIdToSaveId(version, character.class, skillId);
+		const saveSkillId = skillIdToSaveId(version, character.className, skillId);
 		return saveSkillId >= 0 ? points(saveSkillId) : 0;
 	}
 
@@ -123,7 +139,7 @@ function createCalculator({
 	}
 
 	function evalMastery(mastery: "ltng" | "fire"): number {
-		if (character.class !== "Sorceress") {
+		if (character.className !== "Sorceress") {
 			return 0;
 		}
 		if (mastery === "ltng") {
@@ -152,9 +168,12 @@ function createCalculator({
 		let normalized = expression;
 		normalized = normalized.replaceAll("lightningmastery", "evalMastery('ltng')");
 		normalized = normalized.replaceAll("firemastery", "evalMastery('fire')");
-		normalized = replaceCallableName(normalized, "floor", "Math.floor");
-		normalized = replaceCallableName(normalized, "min", "Math.min");
-		normalized = replaceCallableName(normalized, "max", "Math.max");
+		normalized = normalized.replace(/(?<![.\w])max\s*\(/g, "Math.max(");
+		normalized = normalized.replace(/(?<![.\w])min\s*\(/g, "Math.min(");
+		normalized = normalized.replace(/(?<![.\w])floor\s*\(/g, "Math.floor(");
+		normalized = normalized.replace(/(?<![.\w])ceil\s*\(/g, "Math.ceil(");
+		normalized = normalized.replace(/(?<![.\w])round\s*\(/g, "Math.round(");
+		normalized = normalized.replace(/(?<![.\w])abs\s*\(/g, "Math.abs(");
 
 		try {
 			return normalizeEvaluatedNumber(scopedEval(normalized, evalScope, fns));
@@ -312,18 +331,13 @@ export function buildSkillDetails({
 	const calculator = createCalculator({ version, character, skills, skillData, skillsData });
 	const reqLevel = skillData.reqlevel;
 	const characterLevel = character.level;
-	const prerequisites = skillData.reqskills.map((requiredSkillId) => {
-		const prerequisite = skillsData.find((entry) => entry.id === requiredSkillId);
-		const saveId =
-			prerequisite == null
-				? skillIdToSaveId(version, character.class, requiredSkillId)
-				: prerequisite.saveId;
-		return {
-			id: requiredSkillId,
-			name: prerequisite?.name ?? `Skill ${requiredSkillId}`,
-			met: skills[saveId].points > 0,
-		};
-	});
+	const prerequisites = buildSkillPrerequisites(
+		skillData.reqskills,
+		skillsData,
+		skills,
+		version,
+		character.className,
+	);
 
 	const currentLines = buildLines(skillData.desclines, calculator, { reverse: true });
 	const synergyLines = buildLines(skillData.dsc3lines, calculator);
@@ -336,10 +350,7 @@ export function buildSkillDetails({
 
 	const levelRequirementMet = characterLevel >= reqLevel;
 	const prerequisitesMet = prerequisites.every((required) => required.met);
-	const lockReasons: string[] = [];
-	if (!levelRequirementMet) {
-		lockReasons.push(`Requires Level ${reqLevel}`);
-	}
+	const lockReasons = getSkillLockReasons(levelRequirementMet, reqLevel);
 
 	return {
 		id: skillData.id,

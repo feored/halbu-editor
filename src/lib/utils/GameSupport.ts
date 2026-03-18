@@ -1,24 +1,25 @@
-import skillpages from "../editor/skills/skillpages.json";
+import skillpages from "$lib/editor/skills/skillsPages.json";
 import skillsDataV99 from "../../../static/data/generated/skills/v99/skills_complete.json";
 import skillsDataV105 from "../../../static/data/generated/skills/v105/skills_complete.json";
 import type {
 	EditorSave,
-	ExpansionTypeLabel,
+	ExpansionType,
 	KnownClassName,
+	SaveLayoutVersion,
 	SaveFormatId,
-} from "../types/editor";
-import type { SkillData } from "../editor/skills/skillTypes";
+} from "$lib/types/editor";
+import type { SkillData } from "$lib/editor/skills/skillsTypes";
 
-export type KnownSaveVersion = 99 | 105;
+export type KnownSaveVersion = SaveLayoutVersion;
 
 type SkillPagesByClass = Readonly<Record<string, readonly string[]>>;
 
 type VersionCapabilities = {
 	label: `v${KnownSaveVersion}`;
-	classes: readonly { name: KnownClassName; requiredExpansion: ExpansionTypeLabel }[];
+	classes: readonly { name: KnownClassName; requiredExpansion: ExpansionType }[];
 	skillsData: readonly SkillData[];
 	skillPages: SkillPagesByClass;
-	expansionTypes: readonly ExpansionTypeLabel[];
+	expansionTypes: readonly ExpansionType[];
 };
 
 const V99_CLASSES = [
@@ -29,12 +30,12 @@ const V99_CLASSES = [
 	{ name: "Necromancer", requiredExpansion: "Classic" },
 	{ name: "Paladin", requiredExpansion: "Classic" },
 	{ name: "Sorceress", requiredExpansion: "Classic" },
-] satisfies ReadonlyArray<{ name: KnownClassName; requiredExpansion: ExpansionTypeLabel }>;
+] satisfies ReadonlyArray<{ name: KnownClassName; requiredExpansion: ExpansionType }>;
 
 const V105_CLASSES = [
 	...V99_CLASSES,
 	{ name: "Warlock", requiredExpansion: "RotW" },
-] satisfies ReadonlyArray<{ name: KnownClassName; requiredExpansion: ExpansionTypeLabel }>;
+] satisfies ReadonlyArray<{ name: KnownClassName; requiredExpansion: ExpansionType }>;
 
 
 const FEMALE_CLASSES = new Set<KnownClassName>(["Amazon", "Assassin", "Sorceress"]);
@@ -64,7 +65,7 @@ const VERSION_CAPABILITIES: Record<KnownSaveVersion, VersionCapabilities> = {
 };
 
 const SKILL_INDEX_CACHE = new Map<string, Map<number, number>>();
-const SAVE_EXPANSION_TYPES = new Set<ExpansionTypeLabel>(["Classic", "Expansion", "RotW"]);
+const SAVE_EXPANSION_TYPES = new Set<ExpansionType>(["Classic", "Expansion", "RotW"]);
 
 export const KNOWN_SAVE_VERSIONS: readonly KnownSaveVersion[] = [99, 105];
 
@@ -98,23 +99,23 @@ function getUnknownVariantPayload(value: unknown): number | null {
 	return match == null ? null : Number(match[1]);
 }
 
-export function toExpansionType(value: unknown): ExpansionTypeLabel {
-	if (typeof value !== "string" || !SAVE_EXPANSION_TYPES.has(value as ExpansionTypeLabel)) {
+export function toExpansionType(value: unknown): ExpansionType {
+	if (typeof value !== "string" || !SAVE_EXPANSION_TYPES.has(value as ExpansionType)) {
 		throw new Error(`Invalid expansion type label: ${String(value)}.`);
 	}
-	return value as ExpansionTypeLabel;
+	return value as ExpansionType;
 }
 
-export function getSaveExpansionType(save: EditorSave): ExpansionTypeLabel {
-	return save.expansion_type;
+export function getSaveExpansionType(save: EditorSave): ExpansionType {
+	return save.expansionType;
 }
 
-export function isExpandedMode(expansionType: ExpansionTypeLabel): boolean {
+export function isExpandedMode(expansionType: ExpansionType): boolean {
 	return expansionType !== "Classic";
 }
 
 export function getSaveFormatIdLabel(save: EditorSave): SaveFormatId {
-	const format = save.meta.format;
+	const format = save.metadata.formatId;
 	const unknownPayload = getUnknownVariantPayload(format);
 	if (unknownPayload != null) {
 		return `Unknown(${unknownPayload})`;
@@ -123,7 +124,7 @@ export function getSaveFormatIdLabel(save: EditorSave): SaveFormatId {
 }
 
 export function getSaveTargetVersion(save: EditorSave): KnownSaveVersion | null {
-	const format = save.meta.format;
+	const format = save.metadata.formatId;
 	if (format === "V99") {
 		return 99;
 	}
@@ -135,16 +136,16 @@ export function getSaveTargetVersion(save: EditorSave): KnownSaveVersion | null 
 }
 
 export function isUnknownSaveFormat(save: EditorSave): boolean {
-	return getUnknownVariantPayload(save.meta.format) != null;
+	return getUnknownVariantPayload(save.metadata.formatId) != null;
 }
 
 export function getSaveEditionLabel(save: EditorSave): string {
-	const format = save.meta.format;
+	const format = save.metadata.formatId;
 	if (format === "V99") {
 		return "D2R Legacy";
 	}
 	if (format === "V105") {
-		return "D2R RotW";
+		return "RotW";
 	}
 	const unknownPayload = getUnknownVariantPayload(format);
 	if (unknownPayload != null) {
@@ -157,20 +158,20 @@ export function isKnownSaveVersion(version: number): version is KnownSaveVersion
 	return getCapabilities(version) != null;
 }
 
-export function getSupportedClasses(version: number): readonly { name: KnownClassName; requiredExpansion: ExpansionTypeLabel }[] {
+export function getSupportedClasses(version: number): readonly { name: KnownClassName; requiredExpansion: ExpansionType }[] {
 	const capabilities = getCapabilities(version);
 	return capabilities == null ? [] : capabilities.classes;
 }
 
 export function getSupportedClassesForExpansionType(
 	version: number,
-	expansionType: ExpansionTypeLabel,
-): readonly { name: KnownClassName; requiredExpansion: ExpansionTypeLabel }[] {
+	expansionType: ExpansionType,
+): readonly { name: KnownClassName; requiredExpansion: ExpansionType }[] {
 	const capabilities = getCapabilities(version);
 	if (capabilities == null) {
 		return [];
 	}
-	let validExpansions: ExpansionTypeLabel[] = [];
+	let validExpansions: ExpansionType[] = [];
 	switch (expansionType) {
 		case "Classic":
 			validExpansions = ["Classic"];
@@ -194,7 +195,7 @@ export function isClassSupportedForVersion(version: number, className: string): 
 	return getSupportedClassNames(version).includes(className as KnownClassName);
 }
 
-export function getSupportedExpansionTypes(version: number): readonly ExpansionTypeLabel[] {
+export function getSupportedExpansionTypes(version: number): readonly ExpansionType[] {
 	const capabilities = getCapabilities(version);
 	return capabilities == null ? [] : capabilities.expansionTypes;
 }

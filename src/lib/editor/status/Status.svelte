@@ -1,145 +1,113 @@
-<script>
+<script lang="ts">
 	import { invoke } from "@tauri-apps/api/core";
-	import Button from "../../components/ui/button/button.svelte";
+	import Button from "$lib/components/ui/button/button.svelte";
 	import {
 		getSaveExpansionType,
 		getSaveEditionLabel,
 		getSaveFormatIdLabel,
 		isUnknownSaveFormat,
-	} from "../../utils/GameSupport";
-	import { getErrorMessage } from "../../utils/errorMessage";
+	} from "$lib/utils/GameSupport";
+	import { getErrorMessage } from "$lib/utils/errorMessage";
+	import { editorState } from "$lib/editor/editorState.svelte";
 
-	let {
-		save,
-		editorDocumentMode = "raw",
-		parseMode = "lax",
-		parseIssueCount = 0,
-		parseIssues = [],
-		headerChecksum = null,
-		computedChecksum = null,
-		sourceFileSize = null,
-		sourcePath = null,
-		editionHint = null,
-		suggestedTargetVersion = null,
-		parserLayoutVersion = null,
-		saveRevision = 0,
-	} = $props();
+	import type { ParseIssue } from "$lib/types/backend";
 
-	let backupStatus = $state({
+	type BackupStatus = {
+		sourcePath: string;
+		totalBackups: number;
+		lastBackupTimestamp: string | null;
+		lastBackupDatetime: string | null;
+	};
+
+	const session = $derived(editorState.session!);
+	const save = $derived(session.save);
+
+	let backupStatus = $state<BackupStatus>({
 		sourcePath: "",
 		totalBackups: 0,
 		lastBackupTimestamp: null,
 		lastBackupDatetime: null,
 	});
 	let backupStatusError = $state("");
-	let backupFolderOpenError = $state("");
+	let backupFolderError = $state("");
 	let openingBackupFolder = $state(false);
 
-	const parseModeLabel = $derived(parseMode === "strict" ? "Strict" : "Lax");
-	const unknownFormatSession = $derived(isUnknownSaveFormat(save));
+	const parseModeLabel = $derived(editorState.parseMode === "strict" ? "Strict" : "Lax");
+	const isUnknownFormat = $derived(isUnknownSaveFormat(save));
 	const editionHintLabel = $derived.by(() => {
-		if (editionHint === "D2RLegacy") {
-			return "D2R Legacy";
-		}
-		if (editionHint === "RotW") {
-			return "RotW";
-		}
+		if (session.editionHint === "D2R Legacy") return "D2R Legacy";
+		if (session.editionHint === "RotW") return "RotW";
 		return "Unknown";
 	});
-	const parserLayoutLabel = $derived.by(() => {
-		if (parserLayoutVersion == null) {
-			return "Not available";
-		}
-		return `V${parserLayoutVersion}`;
-	});
-	const suggestedTargetLabel = $derived.by(() => {
-		if (suggestedTargetVersion == null) {
-			return "Select manually";
-		}
-		return `v${suggestedTargetVersion}`;
-	});
-	const parseIssuesList = $derived(parseIssues);
-	const parsedIssueCount = $derived(parseIssueCount);
-	const parseIssuesFound = $derived(parsedIssueCount > 0);
-	const checksumHeaderLabel = $derived.by(() => formatChecksum(headerChecksum));
-	const checksumComputedLabel = $derived.by(() => formatChecksum(computedChecksum));
+	const parserLayoutLabel = $derived.by(() =>
+		session.parserLayoutVersion == null ? "Not available" : `V${session.parserLayoutVersion}`,
+	);
+	const suggestedTargetLabel = $derived.by(() =>
+		session.suggestedTargetVersion == null
+			? "Select manually"
+			: `v${session.suggestedTargetVersion}`,
+	);
+	const parseIssues = $derived(session.parseIssues);
+	const parseIssueCount = $derived(session.parseIssueCount);
+	const hasParseIssues = $derived(parseIssueCount > 0);
+	const headerChecksumLabel = $derived.by(() => formatChecksum(session.headerChecksum));
+	const computedChecksumLabel = $derived.by(() => formatChecksum(session.computedChecksum));
 	const checksumStatusLabel = $derived.by(() => {
-		if (headerChecksum == null || computedChecksum == null) {
+		if (session.headerChecksum == null || session.computedChecksum == null)
 			return "Not available";
-		}
-		return headerChecksum === computedChecksum ? "Match" : "Mismatch";
+		return session.headerChecksum === session.computedChecksum ? "Match" : "Mismatch";
 	});
 	const checksumStatusClass = $derived.by(() => {
-		if (headerChecksum == null || computedChecksum == null) {
+		if (session.headerChecksum == null || session.computedChecksum == null)
 			return "text-halbu-textMuted";
-		}
-		return headerChecksum === computedChecksum
+		return session.headerChecksum === session.computedChecksum
 			? "text-halbu-text"
 			: "text-halbu-warning";
 	});
-	const lastPlayedUnix = $derived(save.character.last_played);
-	const sourceFileSizeLabel = $derived.by(() => {
-		if (sourceFileSize == null) {
-			return "Not available";
-		}
-		return formatBytes(sourceFileSize);
-	});
-	const backupTotalLabel = $derived(backupStatus.totalBackups);
-	const canOpenBackupFolder = $derived.by(() => {
-		return sourcePath != null && sourcePath.length > 0;
-	});
+	const lastPlayedLabel = $derived.by(() => formatUnixTimestamp(save.character.lastPlayed));
+	const sourceFileSizeLabel = $derived.by(() =>
+		session.sourceFileSize == null ? "Not available" : formatBytes(session.sourceFileSize),
+	);
+	const canOpenBackupFolder = $derived.by(
+		() => session.sourcePath != null && session.sourcePath.length > 0,
+	);
+	const backupCountLabel = $derived(backupStatus.totalBackups);
 	const lastBackupLabel = $derived.by(() => {
-		if (backupStatus.lastBackupTimestamp != null && backupStatus.lastBackupTimestamp.length > 0) {
-			const formattedTimestamp = formatBackupTimestamp(
-				backupStatus.lastBackupTimestamp,
-			);
-			if (formattedTimestamp != null) {
-				return formattedTimestamp;
-			}
+		if (
+			backupStatus.lastBackupTimestamp != null &&
+			backupStatus.lastBackupTimestamp.length > 0
+		) {
+			const formatted = formatBackupTimestamp(backupStatus.lastBackupTimestamp);
+			if (formatted != null) return formatted;
 		}
 		if (backupStatus.lastBackupDatetime != null && backupStatus.lastBackupDatetime.length > 0) {
-			const parsedFromDatetime = new Date(
-				backupStatus.lastBackupDatetime.replace(" ", "T"),
+			const formatted = formatDateTime(
+				new Date(backupStatus.lastBackupDatetime.replace(" ", "T")),
 			);
-			const formattedDatetime = formatDateTimeForDisplay(parsedFromDatetime);
-			if (formattedDatetime != null) {
-				return formattedDatetime;
-			}
+			if (formatted != null) return formatted;
 			return backupStatus.lastBackupDatetime;
 		}
 		return "Never";
 	});
 
-	function formatBytes(bytes) {
-		if (bytes < 0) {
-			return "-";
-		}
-		if (bytes < 1000) {
-			return `${bytes.toLocaleString()} B`;
-		}
-		const kilobytes = bytes / 1000;
-		return `${bytes.toLocaleString()} B (${kilobytes.toFixed(1)} kB)`;
+	function formatBytes(bytes: number): string {
+		if (bytes < 0) return "-";
+		if (bytes < 1000) return `${bytes.toLocaleString()} B`;
+		return `${bytes.toLocaleString()} B (${(bytes / 1000).toFixed(1)} kB)`;
 	}
 
-	function formatChecksum(value) {
-		if (value == null) {
-			return "-";
-		}
+	function formatChecksum(value: number | null): string {
+		if (value == null) return "-";
 		return `0x${value.toString(16).toUpperCase().padStart(8, "0")}`;
 	}
 
-	function formatUnixTimestamp(unixSeconds) {
-		if (unixSeconds <= 0) {
-			return "-";
-		}
-		const date = new Date(unixSeconds * 1000);
-		return formatDateTimeForDisplay(date) ?? "-";
+	function formatUnixTimestamp(unixSeconds: number): string {
+		if (unixSeconds <= 0) return "-";
+		return formatDateTime(new Date(unixSeconds * 1000)) ?? "-";
 	}
 
-	function formatDateTimeForDisplay(date) {
-		if (Number.isNaN(date.getTime())) {
-			return null;
-		}
+	function formatDateTime(date: Date): string | null {
+		if (Number.isNaN(date.getTime())) return null;
 		const year = String(date.getFullYear());
 		const month = String(date.getMonth() + 1).padStart(2, "0");
 		const day = String(date.getDate()).padStart(2, "0");
@@ -149,10 +117,8 @@
 		return `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
 	}
 
-	function formatBackupTimestamp(timestamp) {
-		if (timestamp.length < 19) {
-			return null;
-		}
+	function formatBackupTimestamp(timestamp: string): string | null {
+		if (timestamp.length < 19) return null;
 		const year = Number(timestamp.slice(0, 4));
 		const month = Number(timestamp.slice(4, 6));
 		const day = Number(timestamp.slice(6, 8));
@@ -161,34 +127,24 @@
 		const second = Number(timestamp.slice(13, 15));
 		const millisecond = Number(timestamp.slice(16, 19));
 		if (
-			!Number.isInteger(year) ||
-			!Number.isInteger(month) ||
-			!Number.isInteger(day) ||
-			!Number.isInteger(hour) ||
-			!Number.isInteger(minute) ||
-			!Number.isInteger(second) ||
-			!Number.isInteger(millisecond)
+			[year, month, day, hour, minute, second, millisecond].some(
+				(value) => !Number.isInteger(value),
+			)
 		) {
 			return null;
 		}
-		const date = new Date(year, month - 1, day, hour, minute, second, millisecond);
-		return formatDateTimeForDisplay(date);
+		return formatDateTime(new Date(year, month - 1, day, hour, minute, second, millisecond));
 	}
 
-	function severityClass(severity) {
-		const label = severity.toLowerCase();
-		if (label === "error") {
-			return "text-halbu-danger";
-		}
-		if (label === "warning") {
-			return "text-halbu-warning";
-		}
+	function severityClass(severity: ParseIssue["severity"]): string {
+		if (severity === "Error") return "text-halbu-danger";
+		if (severity === "Warning") return "text-halbu-warning";
 		return "text-halbu-text";
 	}
 
-	async function refreshBackupStatus() {
+	async function refreshBackupStatus(): Promise<void> {
 		backupStatusError = "";
-		if (sourcePath == null || sourcePath.length < 1) {
+		if (session.sourcePath == null || session.sourcePath.length < 1) {
 			backupStatus = {
 				sourcePath: "",
 				totalBackups: 0,
@@ -197,39 +153,32 @@
 			};
 			return;
 		}
-
 		try {
-			/** @type {import("../../types/editor").BackupStatus} */
-			const response = await invoke("get_backup_status", {
-				sourcePath,
+			backupStatus = await invoke<BackupStatus>("get_backup_status", {
+				sourcePath: session.sourcePath,
 			});
-			backupStatus = response;
 		} catch (error) {
 			backupStatusError = getErrorMessage(error, "Failed to load backup status.");
 		}
 	}
 
-	async function openBackupFolderForSource() {
-		if (sourcePath == null || sourcePath.length < 1) {
-			return;
-		}
-		backupFolderOpenError = "";
+	async function openBackupFolder(): Promise<void> {
+		if (session.sourcePath == null || session.sourcePath.length < 1) return;
+		backupFolderError = "";
 		openingBackupFolder = true;
 		try {
-			await invoke("open_backup_folder_for_source", {
-				sourcePath,
-			});
+			await invoke("open_backup_folder_for_source", { sourcePath: session.sourcePath });
 		} catch (error) {
-			backupFolderOpenError = getErrorMessage(error, "Failed to open backup folder.");
+			backupFolderError = getErrorMessage(error, "Failed to open backup folder.");
 		} finally {
 			openingBackupFolder = false;
 		}
 	}
 
 	$effect(() => {
-		sourcePath;
-		saveRevision;
-		refreshBackupStatus();
+		void session.sourcePath;
+		void session.saveRevision;
+		void refreshBackupStatus();
 	});
 </script>
 
@@ -237,52 +186,39 @@
 	<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
 		<h3 class="editor-card-title mb-1.5">File Information</h3>
 		<dl class="m-0 grid grid-cols-form-48 items-baseline gap-x-2.5 gap-y-1">
-			{#if unknownFormatSession}
+			{#if isUnknownFormat}
 				<dt class="form-label mb-0">Detected version</dt>
 				<dd class="m-0 text-sm text-halbu-text">v{save.version} (unknown format)</dd>
-
 				<dt class="form-label mb-0">Edition hint</dt>
 				<dd class="m-0 text-sm text-halbu-text">
-					{#if editionHint == null}
-						Not detected
-					{:else}
-						{editionHintLabel} (heuristic)
-					{/if}
+					{#if session.editionHint == null}Not detected{:else}{editionHintLabel} (heuristic){/if}
 				</dd>
-
 				<dt class="form-label mb-0">Parser layout</dt>
 				<dd class="m-0 text-sm text-halbu-text">{parserLayoutLabel}</dd>
-
 				<dt class="form-label mb-0">Suggested target</dt>
 				<dd class="m-0 text-sm text-halbu-text">{suggestedTargetLabel}</dd>
 			{:else}
 				<dt class="form-label mb-0">Format ID</dt>
 				<dd class="m-0 text-sm text-halbu-text">{getSaveFormatIdLabel(save)}</dd>
-
 				<dt class="form-label mb-0">Game edition</dt>
 				<dd class="m-0 text-sm text-halbu-text">{getSaveEditionLabel(save)}</dd>
-
 				<dt class="form-label mb-0">Save version</dt>
 				<dd class="m-0 text-sm text-halbu-text">{save.version}</dd>
 			{/if}
-
 			<dt class="form-label mb-0">Gameplay mode</dt>
 			<dd class="m-0 text-sm text-halbu-text">{getSaveExpansionType(save)}</dd>
-
-			<dt class="form-label mb-0">Last played</dt>
+			<dt class="form-label mb-0">Editor mode</dt>
 			<dd class="m-0 text-sm text-halbu-text">
-				{formatUnixTimestamp(lastPlayedUnix)}
+				{session.mode === "game-rules" ? "Game rules" : "Raw"}
 			</dd>
-
+			<dt class="form-label mb-0">Last played</dt>
+			<dd class="m-0 text-sm text-halbu-text">{lastPlayedLabel}</dd>
 			<dt class="form-label mb-0">Source file size</dt>
 			<dd class="m-0 text-sm text-halbu-text">{sourceFileSizeLabel}</dd>
-
 			<dt class="form-label mb-0">Header checksum</dt>
-			<dd class="m-0 font-mono text-sm text-halbu-text">{checksumHeaderLabel}</dd>
-
+			<dd class="m-0 font-mono text-sm text-halbu-text">{headerChecksumLabel}</dd>
 			<dt class="form-label mb-0">Computed checksum</dt>
-			<dd class="m-0 font-mono text-sm text-halbu-text">{checksumComputedLabel}</dd>
-
+			<dd class="m-0 font-mono text-sm text-halbu-text">{computedChecksumLabel}</dd>
 			<dt class="form-label mb-0">Checksum status</dt>
 			<dd class={`m-0 text-sm ${checksumStatusClass}`}>{checksumStatusLabel}</dd>
 		</dl>
@@ -293,12 +229,9 @@
 		<dl class="m-0 grid grid-cols-form-48 items-baseline gap-x-2.5 gap-y-1">
 			<dt class="form-label mb-0">Parse mode</dt>
 			<dd class="m-0 text-sm text-halbu-text">{parseModeLabel}</dd>
-
 			<dt class="form-label mb-0">Parse diagnostics found</dt>
-			<dd
-				class={`m-0 text-sm ${parseIssuesFound ? "text-halbu-warning" : "text-halbu-text"}`}
-			>
-				{parseIssuesFound ? `${parsedIssueCount} issue(s)` : "No"}
+			<dd class={`m-0 text-sm ${hasParseIssues ? "text-halbu-warning" : "text-halbu-text"}`}>
+				{hasParseIssues ? `${parseIssueCount} issue(s)` : "No"}
 			</dd>
 		</dl>
 	</section>
@@ -307,33 +240,29 @@
 		<h3 class="editor-card-title mb-1.5">Backups</h3>
 		<dl class="m-0 grid grid-cols-form-48 items-baseline gap-x-2.5 gap-y-1">
 			<dt class="form-label mb-0">Backups stored</dt>
-			<dd class="m-0 text-sm text-halbu-text">{backupTotalLabel}</dd>
-
+			<dd class="m-0 text-sm text-halbu-text">{backupCountLabel}</dd>
 			<dt class="form-label mb-0">Last backup</dt>
 			<dd class="m-0 text-sm text-halbu-text">{lastBackupLabel}</dd>
 		</dl>
 		<div class="mt-1">
 			<Button
 				variant="secondary"
-				onclick={openBackupFolderForSource}
+				onclick={openBackupFolder}
 				disabled={!canOpenBackupFolder || openingBackupFolder}
+				>{openingBackupFolder ? "Opening..." : "Open Backup Folder"}</Button
 			>
-				{openingBackupFolder ? "Opening..." : "Open Backup Folder"}
-			</Button>
 		</div>
-		{#if backupStatusError.length > 0}
-			<div class="form-text text-halbu-warning mt-1">
+		{#if backupStatusError.length > 0}<div class="form-text text-halbu-warning mt-1">
 				Backup status unavailable: {backupStatusError}
-			</div>
-		{/if}
-		{#if backupFolderOpenError.length > 0}
-			<div class="form-text text-halbu-warning mt-1">{backupFolderOpenError}</div>
-		{/if}
+			</div>{/if}
+		{#if backupFolderError.length > 0}<div class="form-text text-halbu-warning mt-1">
+				{backupFolderError}
+			</div>{/if}
 	</section>
 
 	<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
 		<h3 class="editor-card-title mb-1.5">Diagnostics</h3>
-		{#if parseIssuesList.length > 0}
+		{#if parseIssues.length > 0}
 			<div class="overflow-auto rounded-xs border border-halbu-border bg-halbu-panel2">
 				<table class="w-full border-collapse text-sm">
 					<thead>
@@ -348,29 +277,28 @@
 						</tr>
 					</thead>
 					<tbody>
-						{#each parseIssuesList as issue}
+						{#each parseIssues as issue}
 							<tr class="border-b border-halbu-border align-top last:border-b-0">
-								<td class={`whitespace-nowrap px-1.5 py-1 ${severityClass(issue.severity)}`}>
-									{issue.severity}
-								</td>
-								<td class="whitespace-nowrap px-1.5 py-1 text-halbu-text">
-									{issue.kind}
-								</td>
-								<td class="whitespace-nowrap px-1.5 py-1 text-halbu-text">
-									{issue.section ?? "-"}
-								</td>
-								<td class="whitespace-nowrap px-1.5 py-1 text-halbu-text">
-									{issue.offset ?? "-"}
-								</td>
-								<td class="whitespace-nowrap px-1.5 py-1 text-halbu-text">
-									{issue.expected ?? "-"}
-								</td>
-								<td class="whitespace-nowrap px-1.5 py-1 text-halbu-text">
-									{issue.found ?? "-"}
-								</td>
-								<td class="min-w-64 px-1.5 py-1 text-halbu-text">
-									{issue.message}
-								</td>
+								<td
+									class={`whitespace-nowrap px-1.5 py-1 ${severityClass(issue.severity)}`}
+									>{issue.severity}</td
+								>
+								<td class="whitespace-nowrap px-1.5 py-1 text-halbu-text"
+									>{issue.kind}</td
+								>
+								<td class="whitespace-nowrap px-1.5 py-1 text-halbu-text"
+									>{issue.section ?? "-"}</td
+								>
+								<td class="whitespace-nowrap px-1.5 py-1 text-halbu-text"
+									>{issue.offset ?? "-"}</td
+								>
+								<td class="whitespace-nowrap px-1.5 py-1 text-halbu-text"
+									>{issue.expected ?? "-"}</td
+								>
+								<td class="whitespace-nowrap px-1.5 py-1 text-halbu-text"
+									>{issue.found ?? "-"}</td
+								>
+								<td class="min-w-64 px-1.5 py-1 text-halbu-text">{issue.message}</td>
 							</tr>
 						{/each}
 					</tbody>
