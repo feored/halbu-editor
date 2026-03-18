@@ -11,6 +11,20 @@ import type {
 	SaveCommandResult,
 } from "$lib/types/backend";
 
+type SaveCharacterParams = {
+	save: EditorSave;
+	sourceBackendSave: BackendEditorSave;
+	parserLayoutVersion: SaveLayoutVersion | null;
+	selectedTargetVersion: SaveLayoutVersion | null;
+	suggestedTargetVersion: SaveLayoutVersion | null;
+	currentTargetVersion: SaveLayoutVersion | null;
+	canForceConvert: boolean;
+	compatibilityPending: boolean;
+	compatibilityError: string | null;
+	sourcePath: string | null;
+	input?: SaveCharacterOptions;
+};
+
 export type SaveCharacterOptions = {
 	targetVersion?: SaveLayoutVersion | null;
 	saveAs?: boolean;
@@ -24,40 +38,6 @@ export type SaveCharacterResult = {
 	updatedBackendSave: BackendEditorSave;
 };
 
-export function applyTargetVersion(save: EditorSave, targetVersion: SaveLayoutVersion): void {
-	save.version = targetVersion;
-	save.metadata.formatId = targetVersion === 99 ? "V99" : "V105";
-}
-
-export function getBlockingCompatibilityIssues(
-	issues: readonly CompatibilityIssue[],
-): CompatibilityIssue[] {
-	return issues.filter((issue) => issue.blocking);
-}
-
-export function buildBlockingCompatibilityMessage(
-	targetVersion: SaveLayoutVersion,
-	blockingIssues: readonly CompatibilityIssue[],
-): string {
-	const details = blockingIssues.map((issue) => `- ${issue.message}`).join("\n");
-	return `Cannot save to v${targetVersion} because of blocking compatibility issues:\n${details}`;
-}
-
-function buildSavePath(
-	save: EditorSave,
-	sourcePath: string | null,
-	targetVersion: SaveLayoutVersion,
-): { defaultPath: string; forcePicker: boolean } {
-	const isCrossVersionSave = targetVersion !== save.version;
-	const suffix = isCrossVersionSave ? `_v${targetVersion}` : "";
-	const defaultPath = sourcePath ?? `${save.character.name}${suffix}`;
-	const hasSourcePath = sourcePath != null && sourcePath.length > 0;
-	return {
-		defaultPath,
-		forcePicker: !hasSourcePath || isCrossVersionSave,
-	};
-}
-
 export async function checkSaveCompatibility(
 	save: EditorSave,
 	targetVersion: SaveLayoutVersion,
@@ -70,33 +50,19 @@ export async function checkSaveCompatibility(
 	});
 }
 
-export async function saveCharacterFile(params: {
-	save: EditorSave;
-	sourceBackendSave: BackendEditorSave;
-	parserLayoutVersion: SaveLayoutVersion | null;
-	selectedTargetVersion: SaveLayoutVersion | null;
-	suggestedTargetVersion: SaveLayoutVersion | null;
-	currentTargetVersion: SaveLayoutVersion | null;
-	canForceConvert: boolean;
-	compatibilityPending: boolean;
-	compatibilityError: string | null;
-	sourcePath: string | null;
-	input?: SaveCharacterOptions;
-}): Promise<SaveCharacterResult | null> {
+export async function saveCharacterFile(params: SaveCharacterParams): Promise<SaveCharacterResult | null> {
 	const input = params.input ?? {};
-	const explicitTargetVersion = input.targetVersion ?? null;
 	const saveAs = input.saveAs === true || input.forceConvert === true;
 	const forceConvert = input.forceConvert === true;
 	const isUnknownFormat = params.save.metadata.formatId.startsWith("Unknown(");
 	const sourceLayoutVersion = isUnknownFormat ? params.parserLayoutVersion : null;
+
 	const targetVersion =
-		explicitTargetVersion === 99 || explicitTargetVersion === 105
-			? explicitTargetVersion
-			: params.selectedTargetVersion === 99 || params.selectedTargetVersion === 105
-				? params.selectedTargetVersion
-				: params.save.version === 99 || params.save.version === 105
-					? params.save.version
-					: null;
+		[input.targetVersion, params.selectedTargetVersion, params.save.version].find(
+			(v) => v === 99 || v === 105,
+		) ?? null;
+
+	// validation
 
 	if (isUnknownFormat && targetVersion == null) {
 		const suggestion =
@@ -118,7 +84,6 @@ export async function saveCharacterFile(params: {
 			);
 			return null;
 		}
-
 		if (params.compatibilityPending || (params.compatibilityError ?? "").length > 0) {
 			await message(
 				"Force conversion is unavailable while compatibility checks are pending or failed.",
@@ -136,7 +101,9 @@ export async function saveCharacterFile(params: {
 		return null;
 	}
 
-	let compatibilityIssues: CompatibilityIssue[] = [];
+	// compatibility check
+
+	let compatibilityIssues: CompatibilityIssue[];
 	try {
 		compatibilityIssues = await checkSaveCompatibility(
 			params.save,
@@ -150,16 +117,18 @@ export async function saveCharacterFile(params: {
 		throw error;
 	}
 
-	const blockingIssues = getBlockingCompatibilityIssues(compatibilityIssues);
+	const blockingIssues = compatibilityIssues.filter((issue) => issue.blocking);
+
 	if (blockingIssues.length > 0 && !forceConvert) {
-		await message(buildBlockingCompatibilityMessage(targetVersion, blockingIssues), {
-			title: "Save blocked",
-			kind: "warning",
-		});
+		const details = blockingIssues.map((issue) => `- ${issue.message}`).join("\n");
+		await message(
+			`Cannot save to v${targetVersion} because of blocking compatibility issues:\n${details}`,
+			{ title: "Save blocked", kind: "warning" },
+		);
 		return null;
 	}
 
-	if (forceConvert && blockingIssues.length < 1) {
+	if (forceConvert && blockingIssues.length === 0) {
 		await message("Blocking issues are no longer present. Use normal Save As.", {
 			title: "Force save not needed",
 			kind: "info",
@@ -167,26 +136,34 @@ export async function saveCharacterFile(params: {
 		return null;
 	}
 
-	const savePath = buildSavePath(params.save, params.sourcePath, targetVersion);
-	const forcePicker = saveAs || savePath.forcePicker;
-	const filePath =
-		!forcePicker && params.sourcePath != null && params.sourcePath.length > 0
-			? params.sourcePath
-			: ((await pickSavePath({
-				defaultPath: savePath.defaultPath,
+	// resolve file path 
+
+	const isCrossVersionSave = targetVersion !== params.save.version;
+	const hasSourcePath = params.sourcePath != null && params.sourcePath.length > 0;
+	const needsPicker = saveAs || !hasSourcePath || isCrossVersionSave;
+
+	let filePath: string | null;
+	if (!needsPicker && params.sourcePath != null) {
+		filePath = params.sourcePath;
+	} else {
+		const suffix = isCrossVersionSave ? `_v${targetVersion}` : "";
+		const defaultPath = params.sourcePath ?? `${params.save.character.name}${suffix}`;
+		filePath =
+			(await pickSavePath({
+				defaultPath,
 				filters: [{ name: "D2R Save File", extensions: ["d2s"] }],
-			})) ?? null);
+			})) ?? null;
+	}
+
 	if (filePath == null) {
 		return null;
 	}
 
-	const backupSourcePath = saveAs ? filePath : (params.sourcePath ?? filePath);
+	// save
+
 	const backendSave = toBackendSave(params.sourceBackendSave, params.save, sourceLayoutVersion);
 	backendSave.version = targetVersion;
 	backendSave.meta.format = targetVersion === 99 ? "V99" : "V105";
-
-	const backupsEnabled = getSetting(SettingKey.BackupsEnabled);
-	const backupsPerCharacter = getSetting(SettingKey.BackupsPerCharacter);
 
 	try {
 		const result = await invoke<SaveCommandResult>("save_file_as_version", {
@@ -194,14 +171,16 @@ export async function saveCharacterFile(params: {
 			save: backendSave,
 			targetVersion,
 			ignoreCompatibilityChecks: forceConvert,
-			backupSourcePath,
+			backupSourcePath: saveAs ? filePath : (params.sourcePath ?? filePath),
 			backupConfig: {
-				enabled: backupsEnabled,
-				backupsPerCharacter,
+				enabled: getSetting(SettingKey.BackupsEnabled),
+				backupsPerCharacter: getSetting(SettingKey.BackupsPerCharacter),
 			},
 		});
 
-		applyTargetVersion(params.save, targetVersion);
+		params.save.version = targetVersion;
+		params.save.metadata.formatId = targetVersion === 99 ? "V99" : "V105";
+
 		if ((result.cleanupWarning ?? "").length > 0) {
 			console.warn(`[backup cleanup warning] ${result.cleanupWarning}`);
 		}
@@ -211,7 +190,7 @@ export async function saveCharacterFile(params: {
 			forceConvertUsed: forceConvert,
 			refreshedCompatibilityIssues:
 				targetVersion === params.currentTargetVersion ? compatibilityIssues : null,
-			updatedBackendSave: structuredClone(backendSave),
+			updatedBackendSave: backendSave,
 		};
 	} catch (error) {
 		const detail = getErrorMessage(error, "Unknown error");

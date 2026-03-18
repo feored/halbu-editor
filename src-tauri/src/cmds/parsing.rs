@@ -57,7 +57,9 @@ fn detect_hardcore_and_last_played(
         FormatId::Unknown(_) => return (None, None),
     };
 
-    let hardcore = bytes.get(status_offset).map(|status| (status & (1 << 2)) != 0);
+    let hardcore = bytes
+        .get(status_offset)
+        .map(|status| (status & (1 << 2)) != 0);
     let last_played = read_u32_le_at(bytes, last_played_offset);
     (hardcore, last_played)
 }
@@ -71,7 +73,7 @@ pub fn get_character_from_path_with_meta(
     let (parsed, source_file_size) = parse_save_from_path(path, parse_mode.as_deref())?;
     let ParsedSave {
         save,
-        detected_format: _detected_format,
+        detected_format,
         decoded_layout,
         edition_hint,
         issues: parse_issues,
@@ -84,10 +86,15 @@ pub fn get_character_from_path_with_meta(
         FormatId::V105 => Some(105),
         FormatId::Unknown(_) => None,
     };
-    let suggested_target_version = match edition_hint {
-        Some(GameEdition::D2RLegacy) => Some(99),
-        Some(GameEdition::RotW) => Some(105),
-        None => None,
+    let suggested_target_version = match detected_format {
+        FormatId::Unknown(version) => {
+            Some(FormatId::fallback_for_unknown_version(version, edition_hint).version())
+        }
+        FormatId::V99 | FormatId::V105 => match edition_hint {
+            Some(GameEdition::D2RLegacy) => Some(99),
+            Some(GameEdition::RotW) => Some(105),
+            None => None,
+        },
     };
     Ok(ParsedCharacter {
         save,
@@ -103,7 +110,10 @@ pub fn get_character_from_path_with_meta(
 }
 
 #[tauri::command]
-pub fn summary_folder(path: String, parse_mode: Option<String>) -> Result<Vec<SaveSummaryFile>, String> {
+pub fn summary_folder(
+    path: String,
+    parse_mode: Option<String>,
+) -> Result<Vec<SaveSummaryFile>, String> {
     let path: &Path = Path::new(&path);
     let strictness = strictness_from_parse_mode(parse_mode.as_deref());
 
