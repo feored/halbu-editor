@@ -1,16 +1,7 @@
 <script lang="ts">
-	import { invoke } from "@tauri-apps/api/core";
-
 	import { enforceMinMax } from "$lib/utils/actions";
-	import { RESOURCE_Q8_SCALE } from "$lib/utils/resources";
 	import { clampInteger, getMaxValueForBitLength } from "$lib/utils/numbers";
-	import {
-		getSupportedClass,
-		getSaveExpansionType,
-		getSupportedClassNames,
-		isClassSupportedForVersion,
-	} from "$lib/utils/GameSupport";
-	import { getErrorMessage } from "$lib/utils/errorMessage";
+	import { isClassSupportedForVersion } from "$lib/utils/gameData";
 	import {
 		ACT_LABELS,
 		DIFFICULTY_LABELS,
@@ -23,23 +14,19 @@
 		buildCharacterEditValidation,
 		formatMapSeedValue,
 		parseMapSeedInput,
-		resolveResourceDisplayValue,
 		validateCharacterName,
 	} from "$lib/editor/character/characterLogic";
 	import {
 		getCharacterDerivedState,
-		setCharacterClass,
 		setCharacterExperience,
 		setCharacterLevel,
 		setClampedAttributeValue,
 		setDifficultyBeaten,
 		setExpansionType,
 		setMapSeed,
-		setPrimaryAttributeValueInGameRulesMode,
 		syncInventoryGoldToLevel,
 		type DifficultyBeaten,
 	} from "$lib/editor/character/characterActions";
-	import { getGameRulesClassPrimaryAttributes } from "$lib/editor/character/gameRules";
 	import {
 		cancelFieldEdit,
 		finishFieldEdit,
@@ -48,14 +35,13 @@
 		setFieldInput,
 		startFieldEdit,
 		syncFieldFromValue,
-		type FieldEditState,
 	} from "$lib/utils/fieldEdit";
 
-	import { toEditorSave } from "$lib/types/converters";
-	import type { BackendEditorSave } from "$lib/types/backend";
-	import type { EditorSave } from "$lib/types/editor";
-	import { DEFAULT_SKILL_SLOT_COUNT, resizeSkillSlots } from "$lib/editor/skills/skillsSlots";
 	import { editorState } from "$lib/editor/editorState.svelte";
+
+	import AttributesSection from "$lib/editor/character/AttributesSection.svelte";
+	import ClassSelector from "$lib/editor/character/ClassSelector.svelte";
+	import ResourcesSection from "$lib/editor/character/ResourcesSection.svelte";
 
 	const session = $derived(editorState.session!);
 	const save = $derived(session.save);
@@ -68,35 +54,10 @@
 	const MAX_XP = 3520485254;
 	const MAP_SEED_MAX = 0xffffffff;
 	const QUICK_ADJUST_STEP = 10;
-	const RESOURCE_DISPLAY_MIN = 1;
-	const RESOURCE_DISPLAY_MAX = 8181;
 
-	type PrimaryAttributeId = "strength" | "dexterity" | "vitality" | "energy";
 	type PointsAttributeId = "statpts" | "newskills";
-	type ResourceAttributeId =
-		| "hitpoints"
-		| "maxhp"
-		| "mana"
-		| "maxmana"
-		| "stamina"
-		| "maxstamina";
-
-	type ResourceFieldDescriptor = {
-		label: string;
-		currentId: string;
-		currentAttr: ResourceAttributeId;
-		baseId: string;
-		baseAttr: ResourceAttributeId;
-	};
 
 	type DifficultyOption = DifficultyBeaten | "None";
-
-	const primaryAttributes: ReadonlyArray<PrimaryAttributeId> = [
-		"strength",
-		"dexterity",
-		"vitality",
-		"energy",
-	];
 
 	const pointFields: ReadonlyArray<{
 		id: PointsAttributeId;
@@ -119,60 +80,20 @@
 		"Hell",
 	];
 
-	const resourceFields: ReadonlyArray<ResourceFieldDescriptor> = [
-		{
-			label: "Life",
-			currentId: "lifeCurrent",
-			currentAttr: "hitpoints",
-			baseId: "lifeBase",
-			baseAttr: "maxhp",
-		},
-		{
-			label: "Mana",
-			currentId: "manaCurrent",
-			currentAttr: "mana",
-			baseId: "manaBase",
-			baseAttr: "maxmana",
-		},
-		{
-			label: "Stamina",
-			currentId: "staminaCurrent",
-			currentAttr: "stamina",
-			baseId: "staminaBase",
-			baseAttr: "maxstamina",
-		},
-	];
-
-	const derivedAttributeIds = new Set<keyof EditorSave["attributes"]>([
-		"hitpoints",
-		"maxhp",
-		"mana",
-		"maxmana",
-		"stamina",
-		"maxstamina",
-		"statpts",
-		"newskills",
-	]);
-
 	let nameInput: HTMLInputElement | null = null;
 	let mapSeedInput: HTMLInputElement | null = null;
 
-	let classChangeError = $state("");
 	let validName = $state(true);
 	let nameValidationMessage = $state("");
-	let selectedClass = $state<string | null>(null);
 	let mapSeedDisplayMode = $state<"decimal" | "hex">("decimal");
 
 	let levelEdit = $state(initFieldEdit(""));
 	let experienceEdit = $state(initFieldEdit(""));
 	let nameEdit = $state(initFieldEdit(""));
 	let mapSeedEdit = $state(initFieldEdit(""));
-	let resourceEditByField = $state<Record<string, FieldEditState>>({});
 
 	const isGameRulesMode = $derived(mode === "game-rules");
-	const isRawMode = $derived(!isGameRulesMode);
 	const effectiveVersion = $derived(layoutVersion == null ? save.version : layoutVersion);
-	const supportedClasses = $derived(getSupportedClassNames(effectiveVersion));
 	const mapSeedDisplayValue = $derived(
 		formatMapSeedValue(save.character.mapSeed, mapSeedDisplayMode),
 	);
@@ -189,7 +110,7 @@
 	});
 
 	const progressionValidationWarning = $derived.by(() => {
-		const expansionType = getSaveExpansionType(save);
+		const expansionType = save.expansionType;
 		const difficultyIndex = ["None", "Normal", "Nightmare", "Hell"].indexOf(difficultyBeaten);
 
 		if (difficultyIndex < 0) {
@@ -204,102 +125,6 @@
 
 		return `Progression value ${save.character.progression} is non-canonical for ${difficultyBeaten} ${expansionType}. Re-select Difficulty beaten to normalize it.`;
 	});
-
-	const gameRulesClassPrimaryAttributes = $derived.by(() =>
-		getGameRulesClassPrimaryAttributes(save.character.className),
-	);
-
-	function getAttributeValue(attributeId: keyof EditorSave["attributes"]): number {
-		if (
-			isGameRulesMode &&
-			effectiveDerivedValues != null &&
-			derivedAttributeIds.has(attributeId) &&
-			attributeId in effectiveDerivedValues
-		) {
-			return effectiveDerivedValues[attributeId];
-		}
-
-		return save.attributes[attributeId].value;
-	}
-
-	function getPrimaryAttributeMinimum(attributeId: PrimaryAttributeId): number {
-		if (!isGameRulesMode || gameRulesClassPrimaryAttributes == null) {
-			return 0;
-		}
-
-		return gameRulesClassPrimaryAttributes[attributeId] ?? 0;
-	}
-
-	function getAvailableStatPoints(): number {
-		if (!isGameRulesMode) {
-			return save.attributes.statpts.value;
-		}
-
-		if (effectiveDerivedValues == null || !("statpts" in effectiveDerivedValues)) {
-			return 0;
-		}
-
-		return Math.max(0, effectiveDerivedValues.statpts);
-	}
-
-	function canDecreasePrimaryAttribute(attributeId: PrimaryAttributeId): boolean {
-		return save.attributes[attributeId].value > getPrimaryAttributeMinimum(attributeId);
-	}
-
-	function canIncreasePrimaryAttribute(attributeId: PrimaryAttributeId): boolean {
-		const attribute = save.attributes[attributeId];
-		const maxValue = getMaxValueForBitLength(attribute.bitLength);
-
-		if (attribute.value >= maxValue) {
-			return false;
-		}
-
-		if (isGameRulesMode && getAvailableStatPoints() < 1) {
-			return false;
-		}
-
-		return true;
-	}
-
-	function adjustPrimaryAttribute(attributeId: PrimaryAttributeId, delta: number): void {
-		const nextValue = save.attributes[attributeId].value + delta;
-
-		if (isGameRulesMode) {
-			setPrimaryAttributeValueInGameRulesMode(
-				save,
-				attributeId,
-				nextValue,
-				getAvailableStatPoints(),
-				getPrimaryAttributeMinimum(attributeId),
-			);
-			return;
-		}
-
-		setClampedAttributeValue(save, attributeId, nextValue);
-	}
-
-	function setPrimaryAttributeFromInput(
-		attributeId: PrimaryAttributeId,
-		inputValue: string,
-	): void {
-		const parsedValue = Number(inputValue);
-		if (!Number.isFinite(parsedValue)) {
-			return;
-		}
-
-		if (isGameRulesMode) {
-			setPrimaryAttributeValueInGameRulesMode(
-				save,
-				attributeId,
-				parsedValue,
-				getAvailableStatPoints(),
-				getPrimaryAttributeMinimum(attributeId),
-			);
-			return;
-		}
-
-		setClampedAttributeValue(save, attributeId, parsedValue);
-	}
 
 	function finishLevelEdit(): void {
 		const parsedValue = Number(levelEdit.input);
@@ -377,59 +202,6 @@
 		}
 
 		setClampedAttributeValue(save, attributeId, save.attributes[attributeId].value + delta);
-	}
-
-	function getResourceDisplayValue(attributeId: ResourceAttributeId): number {
-		const attribute = save.attributes[attributeId];
-
-		return resolveResourceDisplayValue(
-			getAttributeValue(attributeId),
-			attribute.bitLength,
-			RESOURCE_Q8_SCALE,
-		);
-	}
-
-	function getResourceCanonicalDisplayString(attributeId: ResourceAttributeId): string {
-		return String(
-			clampInteger(
-				getResourceDisplayValue(attributeId),
-				RESOURCE_DISPLAY_MIN,
-				RESOURCE_DISPLAY_MAX,
-			),
-		);
-	}
-
-	function getOrCreateResourceEdit(fieldId: string, attributeId: ResourceAttributeId) {
-		const existingEdit = resourceEditByField[fieldId];
-		if (existingEdit != null) {
-			return existingEdit;
-		}
-
-		const nextEdit = initFieldEdit(getResourceCanonicalDisplayString(attributeId));
-		resourceEditByField = {
-			...resourceEditByField,
-			[fieldId]: nextEdit,
-		};
-		return nextEdit;
-	}
-
-	function dropResourceEdit(fieldId: string): void {
-		if (!(fieldId in resourceEditByField)) {
-			return;
-		}
-
-		const nextEdits = { ...resourceEditByField };
-		delete nextEdits[fieldId];
-		resourceEditByField = nextEdits;
-	}
-
-	function getResourceInputValue(fieldId: string, attributeId: ResourceAttributeId): string {
-		const resourceEdit = resourceEditByField[fieldId];
-		if (resourceEdit != null) {
-			return resourceEdit.input;
-		}
-
-		return getResourceCanonicalDisplayString(attributeId);
 	}
 
 	function syncNameValidationState(): void {
@@ -516,94 +288,6 @@
 		}
 	}
 
-	function finishResourceEdit(fieldId: string, attributeId: ResourceAttributeId): void {
-		if (isGameRulesMode) {
-			return;
-		}
-
-		const resourceEdit = resourceEditByField[fieldId];
-		if (resourceEdit == null) {
-			return;
-		}
-
-		const parsedValue = Number.parseFloat(resourceEdit.input.trim());
-		if (!Number.isFinite(parsedValue)) {
-			setFieldError(resourceEdit, "Enter a number.");
-			cancelFieldEdit(resourceEdit, getResourceCanonicalDisplayString(attributeId));
-			dropResourceEdit(fieldId);
-			return;
-		}
-
-		const clampedDisplayValue = clampInteger(
-			parsedValue,
-			RESOURCE_DISPLAY_MIN,
-			RESOURCE_DISPLAY_MAX,
-		);
-
-		const attribute = save.attributes[attributeId];
-		const storedValue = clampInteger(
-			Math.round(clampedDisplayValue * RESOURCE_Q8_SCALE),
-			0,
-			getMaxValueForBitLength(attribute.bitLength),
-		);
-
-		save.attributes[attributeId].value = storedValue;
-		finishFieldEdit(resourceEdit);
-		syncFieldFromValue(
-			resourceEdit,
-			String(
-				resolveResourceDisplayValue(
-					storedValue,
-					save.attributes[attributeId].bitLength,
-					RESOURCE_Q8_SCALE,
-				),
-			),
-		);
-
-		dropResourceEdit(fieldId);
-	}
-
-	function cancelResourceEdit(fieldId: string, attributeId: ResourceAttributeId): void {
-		const resourceEdit = resourceEditByField[fieldId];
-		if (resourceEdit != null) {
-			cancelFieldEdit(resourceEdit, getResourceCanonicalDisplayString(attributeId));
-		}
-		dropResourceEdit(fieldId);
-	}
-
-	async function applyClassTemplate(nextClassName: string | null): Promise<void> {
-		if (nextClassName == null) {
-			return;
-		}
-
-		classChangeError = "";
-
-		try {
-			const response = await invoke<BackendEditorSave>("new_save", {
-				version: effectiveVersion,
-				class: nextClassName,
-			});
-
-			const templateSave = toEditorSave(response);
-			setCharacterClass(save, nextClassName);
-
-			const slotCount =
-				save.skills.length > 0 ? save.skills.length : DEFAULT_SKILL_SLOT_COUNT;
-			save.skills = resizeSkillSlots(templateSave.skills, slotCount);
-		} catch (error) {
-			classChangeError = getErrorMessage(error, "Failed to apply class template.");
-			selectedClass = getSupportedClass(effectiveVersion, save.character.className);
-		}
-	}
-
-	function handleExpansionTypeChange(nextExpansionType: string): void {
-		setExpansionType(save, nextExpansionType);
-	}
-
-	function handleDifficultyBeatenChange(nextDifficultyBeaten: string): void {
-		setDifficultyBeaten(save, nextDifficultyBeaten as DifficultyBeaten);
-	}
-
 	$effect(() => {
 		syncFieldFromValue(nameEdit, save.character.name);
 	});
@@ -626,37 +310,6 @@
 
 	$effect(() => {
 		syncNameValidationState();
-	});
-
-	$effect(() => {
-		selectedClass = getSupportedClass(effectiveVersion, save.character.className);
-	});
-
-	$effect(() => {
-		if (!isGameRulesMode) {
-			return;
-		}
-
-		if (Object.keys(resourceEditByField).length > 0) {
-			resourceEditByField = {};
-		}
-	});
-
-	$effect(() => {
-		for (const resource of resourceFields) {
-			const currentEdit = resourceEditByField[resource.currentId];
-			if (currentEdit != null) {
-				syncFieldFromValue(
-					currentEdit,
-					getResourceCanonicalDisplayString(resource.currentAttr),
-				);
-			}
-
-			const baseEdit = resourceEditByField[resource.baseId];
-			if (baseEdit != null) {
-				syncFieldFromValue(baseEdit, getResourceCanonicalDisplayString(resource.baseAttr));
-			}
-		}
 	});
 
 	$effect(() => {
@@ -709,42 +362,7 @@
 				</div>
 			</div>
 
-			<div class="mt-1 grid grid-cols-form-32 items-center gap-x-2.5">
-				<label class="form-label mb-0" for="class">Class</label>
-
-				{#if selectedClass != null}
-					<select
-						class="form-select"
-						bind:value={selectedClass}
-						name="class"
-						id="class"
-						onchange={() => applyClassTemplate(selectedClass)}
-					>
-						{#each supportedClasses as className}
-							<option value={className}>{className}</option>
-						{/each}
-					</select>
-				{:else}
-					<input
-						class="form-control"
-						type="text"
-						name="class"
-						id="class"
-						value={save.character.className}
-						readonly
-					/>
-				{/if}
-			</div>
-
-			{#if classSupportWarning.length > 0}
-				<div class="form-text mt-1 text-halbu-warning sm:pl-32">
-					{classSupportWarning}
-				</div>
-			{/if}
-
-			{#if classChangeError.length > 0}
-				<div class="form-text mt-1 text-halbu-warning sm:pl-32">{classChangeError}</div>
-			{/if}
+			<ClassSelector {classSupportWarning} />
 
 			<div class="mt-1 grid grid-cols-form-32 items-start gap-x-2.5 gap-y-0.5">
 				<label class="form-label mb-0" for="expansionType">Expansion</label>
@@ -752,8 +370,8 @@
 					class="form-select h-7 w-full py-0"
 					id="expansionType"
 					name="expansionType"
-					value={getSaveExpansionType(save)}
-					onchange={(event) => handleExpansionTypeChange(event.currentTarget.value)}
+					value={save.expansionType}
+					onchange={(event) => setExpansionType(save, event.currentTarget.value)}
 				>
 					<option value="Classic">{EXPANSION_TYPE_LABELS.Classic}</option>
 					<option value="Expansion">{EXPANSION_TYPE_LABELS.Expansion}</option>
@@ -803,109 +421,120 @@
 		<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
 			<h3 class="editor-card-title mb-1.5">Progression</h3>
 
-			<div class="grid grid-cols-1 gap-1 sm:grid-cols-2 sm:gap-x-3">
-				<div class="grid grid-cols-form-24 items-center gap-x-2">
-					<label class="form-label mb-0" for="level">Level</label>
-					<input
-						class="form-control"
-						type="number"
-						name="level"
-						id="level"
-						min="1"
-						max="99"
-						step="1"
-						use:enforceMinMax
-						value={levelEdit.input}
-						onfocus={() =>
-							startFieldEdit(levelEdit, String(save.attributes.level.value))}
-						oninput={(event) => setFieldInput(levelEdit, event.currentTarget.value)}
-						onblur={finishLevelEdit}
-						onkeydown={handleLevelKeydown}
-					/>
+			<div
+				class="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:divide-x sm:divide-halbu-borderStrong"
+			>
+				<div class="grid gap-1 sm:pr-3">
+					<div class="grid grid-cols-form-24 items-center gap-x-2">
+						<label class="form-label mb-0" for="level">Level</label>
+						<input
+							class="form-control"
+							type="number"
+							name="level"
+							id="level"
+							min="1"
+							max="99"
+							step="1"
+							use:enforceMinMax
+							value={levelEdit.input}
+							onfocus={() =>
+								startFieldEdit(levelEdit, String(save.attributes.level.value))}
+							oninput={(event) => setFieldInput(levelEdit, event.currentTarget.value)}
+							onblur={finishLevelEdit}
+							onkeydown={handleLevelKeydown}
+						/>
+					</div>
+
+					<div class="grid grid-cols-form-24 items-center gap-x-2">
+						<label class="form-label mb-0" for="currentAct">Act</label>
+						<select
+							class="form-select"
+							bind:value={save.character.act}
+							name="currentAct"
+							id="currentAct"
+						>
+							<option value="Act1">{ACT_LABELS.Act1}</option>
+							<option value="Act2">{ACT_LABELS.Act2}</option>
+							<option value="Act3">{ACT_LABELS.Act3}</option>
+							<option value="Act4">{ACT_LABELS.Act4}</option>
+							<option value="Act5">{ACT_LABELS.Act5}</option>
+						</select>
+					</div>
+
+					<div class="grid grid-cols-form-24 items-center gap-x-2">
+						<label class="form-label mb-0" for="difficultyBeaten"
+							>Difficulty beaten</label
+						>
+						<select
+							class="form-select"
+							value={difficultyBeaten}
+							name="difficultyBeaten"
+							id="difficultyBeaten"
+							onchange={(event) =>
+								setDifficultyBeaten(
+									save,
+									event.currentTarget.value as DifficultyBeaten,
+								)}
+						>
+							{#each difficultyBeatenOptions as option}
+								<option value={option}>
+									{option === "None" ? "None" : DIFFICULTY_LABELS[option]}
+								</option>
+							{/each}
+						</select>
+					</div>
 				</div>
 
-				<div class="grid grid-cols-form-24 items-center gap-x-2">
-					<label class="form-label mb-0" for="experience">Experience</label>
-					<input
-						class="form-control"
-						type="number"
-						name="experience"
-						id="experience"
-						min="0"
-						max={MAX_XP}
-						step="1"
-						use:enforceMinMax
-						value={experienceEdit.input}
-						onfocus={() =>
-							startFieldEdit(
-								experienceEdit,
-								String(save.attributes.experience.value),
-							)}
-						oninput={(event) =>
-							setFieldInput(experienceEdit, event.currentTarget.value)}
-						onblur={finishExperienceEdit}
-						onkeydown={handleExperienceKeydown}
-					/>
-				</div>
+				<div class="grid gap-1 sm:pl-3">
+					<div class="grid grid-cols-form-24 items-center gap-x-2">
+						<label class="form-label mb-0" for="experience">Experience</label>
+						<input
+							class="form-control"
+							type="number"
+							name="experience"
+							id="experience"
+							min="0"
+							max={MAX_XP}
+							step="1"
+							use:enforceMinMax
+							value={experienceEdit.input}
+							onfocus={() =>
+								startFieldEdit(
+									experienceEdit,
+									String(save.attributes.experience.value),
+								)}
+							oninput={(event) =>
+								setFieldInput(experienceEdit, event.currentTarget.value)}
+							onblur={finishExperienceEdit}
+							onkeydown={handleExperienceKeydown}
+						/>
+					</div>
 
-				<div class="grid grid-cols-form-24 items-center gap-x-2">
-					<label class="form-label mb-0" for="currentAct">Act</label>
-					<select
-						class="form-select"
-						bind:value={save.character.act}
-						name="currentAct"
-						id="currentAct"
-					>
-						<option value="Act1">{ACT_LABELS.Act1}</option>
-						<option value="Act2">{ACT_LABELS.Act2}</option>
-						<option value="Act3">{ACT_LABELS.Act3}</option>
-						<option value="Act4">{ACT_LABELS.Act4}</option>
-						<option value="Act5">{ACT_LABELS.Act5}</option>
-					</select>
-				</div>
+					<div class="grid grid-cols-form-24 items-center gap-x-2">
+						<label class="form-label mb-0" for="currentDifficulty">Difficulty</label>
+						<select
+							class="form-select"
+							bind:value={save.character.difficulty}
+							name="currentDifficulty"
+							id="currentDifficulty"
+						>
+							<option value="Normal">{DIFFICULTY_LABELS.Normal}</option>
+							<option value="Nightmare">{DIFFICULTY_LABELS.Nightmare}</option>
+							<option value="Hell">{DIFFICULTY_LABELS.Hell}</option>
+						</select>
+					</div>
 
-				<div class="grid grid-cols-form-24 items-center gap-x-2">
-					<label class="form-label mb-0" for="currentDifficulty">Difficulty</label>
-					<select
-						class="form-select"
-						bind:value={save.character.difficulty}
-						name="currentDifficulty"
-						id="currentDifficulty"
-					>
-						<option value="Normal">{DIFFICULTY_LABELS.Normal}</option>
-						<option value="Nightmare">{DIFFICULTY_LABELS.Nightmare}</option>
-						<option value="Hell">{DIFFICULTY_LABELS.Hell}</option>
-					</select>
-				</div>
-
-				<div class="grid grid-cols-form-24 items-center gap-x-2">
-					<label class="form-label mb-0" for="difficultyBeaten">Difficulty beaten</label>
-					<select
-						class="form-select"
-						value={difficultyBeaten}
-						name="difficultyBeaten"
-						id="difficultyBeaten"
-						onchange={(event) =>
-							handleDifficultyBeatenChange(event.currentTarget.value)}
-					>
-						{#each difficultyBeatenOptions as option}
-							<option value={option}>
-								{option === "None" ? "None" : DIFFICULTY_LABELS[option]}
-							</option>
-						{/each}
-					</select>
-				</div>
-
-				<div class="grid grid-cols-form-24 items-center gap-x-2">
-					<label class="form-label mb-0" for="title">Title</label>
-					<input
-						class="form-control form-control-readonly"
-						type="text"
-						name="title"
-						id="title"
-						value={title}
-						readonly
-					/>
+					<div class="grid grid-cols-form-24 items-center gap-x-2">
+						<label class="form-label mb-0" for="title">Title</label>
+						<input
+							class="form-control form-control-readonly"
+							type="text"
+							name="title"
+							id="title"
+							value={title}
+							readonly
+						/>
+					</div>
 				</div>
 			</div>
 		</section>
@@ -1004,61 +633,7 @@
 	</div>
 
 	<div class="grid content-start gap-2.5">
-		<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
-			<h3 class="editor-card-title mb-1.5">Attributes</h3>
-
-			{#if isGameRulesMode}
-				<div class="form-text mb-1">
-					Game rules mode: increasing attributes spends recalculated stat points;
-					decreasing attributes refunds points. Class base attributes are the minimum.
-				</div>
-			{/if}
-
-			<div class="grid gap-y-1">
-				{#each primaryAttributes as field}
-					<div class="grid grid-cols-form-28 items-center gap-x-2.5">
-						<label class="form-label mb-0" for={field}>{getAttributeLabel(field)}</label
-						>
-
-						<div class="flex items-center gap-1">
-							<button
-								type="button"
-								class="h-8 min-w-9 rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-1 text-xs font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
-								onclick={() => adjustPrimaryAttribute(field, -QUICK_ADJUST_STEP)}
-								disabled={!canDecreasePrimaryAttribute(field)}
-								aria-label={`Decrease ${getAttributeLabel(field).toLowerCase()} by ${QUICK_ADJUST_STEP}`}
-							>
-								-{QUICK_ADJUST_STEP}
-							</button>
-
-							<input
-								class="form-control max-w-20 text-center"
-								type="number"
-								name={field}
-								id={field}
-								min={getPrimaryAttributeMinimum(field)}
-								max={getMaxValueForBitLength(save.attributes[field].bitLength)}
-								step="1"
-								use:enforceMinMax
-								value={save.attributes[field].value}
-								onchange={(event) =>
-									setPrimaryAttributeFromInput(field, event.currentTarget.value)}
-							/>
-
-							<button
-								type="button"
-								class="h-8 min-w-9 rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-1 text-xs font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
-								onclick={() => adjustPrimaryAttribute(field, QUICK_ADJUST_STEP)}
-								disabled={!canIncreasePrimaryAttribute(field)}
-								aria-label={`Increase ${getAttributeLabel(field).toLowerCase()} by ${QUICK_ADJUST_STEP}`}
-							>
-								+{QUICK_ADJUST_STEP}
-							</button>
-						</div>
-					</div>
-				{/each}
-			</div>
-		</section>
+		<AttributesSection />
 
 		<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
 			<h3 class="editor-card-title mb-1.5">Points</h3>
@@ -1098,7 +673,9 @@
 									type="number"
 									name={field.inputId}
 									id={field.inputId}
-									value={getAttributeValue(field.id)}
+									value={isGameRulesMode && effectiveDerivedValues != null
+										? effectiveDerivedValues[field.id]
+										: save.attributes[field.id].value}
 									readonly
 								/>
 							{:else}
@@ -1138,71 +715,6 @@
 			</div>
 		</section>
 
-		<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
-			<h3 class="editor-card-title mb-1.5">Resources</h3>
-
-			{#if isGameRulesMode}
-				<div class="form-text mb-1">
-					Game rules mode: resources are recalculated. Edit level or attributes to change
-					them.
-				</div>
-			{/if}
-
-			<div class="grid grid-cols-form-28-2 items-center gap-x-2.5 gap-y-1">
-				<div></div>
-				<div class="text-sm text-halbu-textMuted">Current</div>
-				<div class="text-sm text-halbu-textMuted">Base</div>
-
-				{#each resourceFields as resource}
-					<div class="text-sm text-halbu-text">{resource.label}</div>
-
-					{#each [{ id: resource.currentId, attributeId: resource.currentAttr }, { id: resource.baseId, attributeId: resource.baseAttr }] as field}
-						<input
-							class={`form-control${isGameRulesMode ? " form-control-readonly" : ""}`}
-							type="number"
-							name={field.id}
-							id={field.id}
-							min={RESOURCE_DISPLAY_MIN}
-							max={RESOURCE_DISPLAY_MAX}
-							step="1"
-							value={getResourceInputValue(field.id, field.attributeId)}
-							disabled={!isRawMode}
-							onfocus={() => {
-								const resourceEdit = getOrCreateResourceEdit(
-									field.id,
-									field.attributeId,
-								);
-								startFieldEdit(
-									resourceEdit,
-									getResourceCanonicalDisplayString(field.attributeId),
-								);
-							}}
-							oninput={(event) => {
-								const resourceEdit = getOrCreateResourceEdit(
-									field.id,
-									field.attributeId,
-								);
-								setFieldInput(resourceEdit, event.currentTarget.value);
-							}}
-							onblur={() => finishResourceEdit(field.id, field.attributeId)}
-							onkeydown={(event) => {
-								if (event.key === "Enter") {
-									event.preventDefault();
-									finishResourceEdit(field.id, field.attributeId);
-									event.currentTarget.blur();
-									return;
-								}
-
-								if (event.key === "Escape") {
-									event.preventDefault();
-									cancelResourceEdit(field.id, field.attributeId);
-									event.currentTarget.blur();
-								}
-							}}
-						/>
-					{/each}
-				{/each}
-			</div>
-		</section>
+		<ResourcesSection />
 	</div>
 </div>

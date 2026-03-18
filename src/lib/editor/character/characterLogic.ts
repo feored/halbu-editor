@@ -1,7 +1,11 @@
 import type { EditValidation } from "$lib/types/editor";
 
-import { clampInteger, toUInt32OrNull, getMaxValueForBitLength } from "$lib/utils/numbers";
-import { fixedPointToDisplay } from "$lib/utils/resources";
+import {
+	clampInteger,
+	fixedPointToDisplay,
+	getMaxValueForBitLength,
+	toUInt32OrNull,
+} from "$lib/utils/numbers";
 
 const NAME_PATTERN = /^\p{L}[\p{L}_-]*$/u;
 

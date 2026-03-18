@@ -11,8 +11,7 @@ pub use backups::{
 };
 pub use parsing::{get_character_from_path_with_meta, summary_folder};
 pub use saving::{
-    check_save_compatibility, get_skills_context, get_supported_output_formats, new_save,
-    save_file_as_version,
+    check_save_compatibility, get_supported_output_formats, new_save, save_file_as_version,
 };
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -30,17 +29,6 @@ pub struct SaveSummaryFile {
     hardcore: Option<bool>,
     last_played: Option<u32>,
     parse_issue_count: usize,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct SkillsContext {
-    save_version: u32,
-    meta_format: String,
-    class_name: String,
-    class_supported_for_version: bool,
-    supported_classes: Vec<String>,
-    skill_slot_count: usize,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

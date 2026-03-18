@@ -1,11 +1,7 @@
 <script lang="ts">
 	import { message } from "@tauri-apps/plugin-dialog";
 	import ConfirmDialog from "$lib/components/ConfirmDialog.svelte";
-	import {
-		getSaveEditionLabel,
-		getSaveExpansionType,
-		isUnknownSaveFormat,
-	} from "$lib/utils/GameSupport";
+	import { getSaveEditionLabel, isUnknownSaveFormat } from "$lib/utils/gameData";
 	import { getErrorMessage } from "$lib/utils/errorMessage";
 	import {
 		applyProjectedGameRulesValues,
@@ -31,7 +27,7 @@
 		}
 		return `${getSaveEditionLabel(save)} (v${save.version})`;
 	});
-	const expansionLabel = $derived(getSaveExpansionType(save));
+	const expansionLabel = $derived(save.expansionType);
 	const coreLabel = $derived(save.character.status.hardcore ? "Hardcore" : "Softcore");
 	const rawModeTooltipText = "Edit values directly.";
 	const gameRulesModeTooltipText =

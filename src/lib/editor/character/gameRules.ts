@@ -8,11 +8,18 @@ import type {
 	QuestId,
 } from "$lib/types/editor";
 import { getAttributeLabel } from "$lib/editor/editorMetadata";
-import { clampInteger, getMaxValueForBitLength } from "$lib/utils/numbers";
-import { formatDisplayNumber, RESOURCE_Q8_SCALE } from "$lib/utils/resources";
-import { applyQuestRewards, isQuestCompleted } from "$lib/editor/quests/questsLogic";
+import {
+	clampInteger,
+	formatDisplayNumber,
+	getMaxValueForBitLength,
+	RESOURCE_Q8_SCALE,
+} from "$lib/utils/numbers";
+import {
+	applyQuestRewards as applyQuestRewardBonuses,
+	isQuestCompleted,
+} from "$lib/editor/quests/questsLogic";
 
-const DERIVED_ATTRIBUTES = [
+const DERIVED_RESOURCES = [
 	"hitpoints",
 	"maxhp",
 	"mana",
@@ -23,9 +30,9 @@ const DERIVED_ATTRIBUTES = [
 	"newskills",
 ] as const;
 
-type DerivedAttribute = (typeof DERIVED_ATTRIBUTES)[number];
+type DerivedResource = (typeof DERIVED_RESOURCES)[number];
 
-type CharstatsRow = {
+type Charstats = {
 	class: KnownClassName;
 	str: number;
 	dex: number;
@@ -43,17 +50,17 @@ type CharstatsRow = {
 	SkillsPerLevel: number;
 };
 
-export type GameRulesClassPrimaryAttributes = {
+export type PrimaryAttributes = {
 	strength: number;
 	dexterity: number;
 	energy: number;
 	vitality: number;
 };
 
-export type GameRulesDerivedValues = Record<DerivedAttribute, number>;
+export type GameRulesValues = Record<DerivedResource, number>;
 
-export type GameRulesDerivedChange = {
-	attributeId: DerivedAttribute;
+export type GameRulesChange = {
+	attributeId: DerivedResource;
 	label: string;
 	from: number;
 	to: number;
@@ -62,33 +69,33 @@ export type GameRulesDerivedChange = {
 };
 
 export type GameRules = {
-	values: GameRulesDerivedValues;
-	changes: GameRulesDerivedChange[];
+	values: GameRulesValues;
+	changes: GameRulesChange[];
 };
 
-const CHARSTATS_BY_CLASS: Partial<Record<KnownClassName, CharstatsRow>> = {};
-for (const row of charstats as CharstatsRow[]) {
-	CHARSTATS_BY_CLASS[row.class] = row;
+const charstatsByClass: Partial<Record<KnownClassName, Charstats>> = Object.create(null);
+for (const row of charstats as Charstats[]) {
+	charstatsByClass[row.class] = row;
 }
 
-function getCharstatsRow(className: ClassName): CharstatsRow | null {
+function getCharstats(className: ClassName): Charstats | null {
 	if (className.startsWith("Unknown(")) {
 		return null;
 	}
 
-	return CHARSTATS_BY_CLASS[className] ?? null;
+	return charstatsByClass[className] ?? null;
 }
 
-function requireCharstatsRow(className: ClassName): CharstatsRow {
-	const row = getCharstatsRow(className);
-	if (row == null) {
-		throw new Error(`Game rules projection requires known charstats for class ${className}.`);
+function requireCharstats(className: ClassName): Charstats {
+	const stats = getCharstats(className);
+	if (stats == null) {
+		throw new Error(`Missing charstats for class ${className}.`);
 	}
 
-	return row;
+	return stats;
 }
 
-function cloneAttributeMap(attributes: AttributeMap): AttributeMap {
+function copyAttributes(attributes: AttributeMap): AttributeMap {
 	return {
 		statpts: { ...attributes.statpts },
 		newskills: { ...attributes.newskills },
@@ -109,11 +116,15 @@ function cloneAttributeMap(attributes: AttributeMap): AttributeMap {
 	};
 }
 
-function clampToStoredAttributeRange(attribute: AttributeMap[Attribute], value: number): number {
+function clampAttrValue(attribute: AttributeMap[Attribute], value: number): number {
 	return clampInteger(value, 0, getMaxValueForBitLength(attribute.bitLength));
 }
 
-function formatDerivedDisplayValue(attributeId: DerivedAttribute, storedValue: number): string {
+function setAttrValue(attributes: AttributeMap, attributeId: Attribute, value: number): void {
+	attributes[attributeId].value = clampAttrValue(attributes[attributeId], value);
+}
+
+function formatValue(attributeId: DerivedResource, value: number): string {
 	switch (attributeId) {
 		case "hitpoints":
 		case "maxhp":
@@ -121,13 +132,13 @@ function formatDerivedDisplayValue(attributeId: DerivedAttribute, storedValue: n
 		case "maxmana":
 		case "stamina":
 		case "maxstamina":
-			return formatDisplayNumber(storedValue / RESOURCE_Q8_SCALE);
+			return formatDisplayNumber(value / RESOURCE_Q8_SCALE);
 		default:
-			return String(storedValue);
+			return String(value);
 	}
 }
 
-function applyCompletedQuestRewards(save: EditorSave, projectedAttributes: AttributeMap): void {
+function addQuestRewards(save: EditorSave, attributes: AttributeMap): void {
 	for (const difficultyQuests of Object.values(save.quests)) {
 		for (const [actId, actQuests] of Object.entries(difficultyQuests)) {
 			for (const [questId, quest] of Object.entries(actQuests)) {
@@ -135,8 +146,8 @@ function applyCompletedQuestRewards(save: EditorSave, projectedAttributes: Attri
 					continue;
 				}
 
-				applyQuestRewards(
-					projectedAttributes,
+				applyQuestRewardBonuses(
+					attributes,
 					actId as keyof typeof difficultyQuests,
 					questId as QuestId,
 					true,
@@ -146,140 +157,147 @@ function applyCompletedQuestRewards(save: EditorSave, projectedAttributes: Attri
 	}
 }
 
-export function getGameRulesClassPrimaryAttributes(
-	className: ClassName,
-): GameRulesClassPrimaryAttributes | null {
-	const row = getCharstatsRow(className);
-	if (row == null) {
-		return null;
+function countSpentSkillPoints(save: EditorSave): number {
+	let spent = 0;
+
+	for (const skill of save.skills) {
+		if (skill.points > 0) {
+			spent += skill.points;
+		}
 	}
 
+	return spent;
+}
+
+function countSpentStatPoints(save: EditorSave, stats: Charstats): number {
+	return (
+		(save.attributes.strength.value - stats.str) +
+		(save.attributes.dexterity.value - stats.dex) +
+		(save.attributes.vitality.value - stats.vit) +
+		(save.attributes.energy.value - stats.int)
+	);
+}
+
+function buildValues(attributes: AttributeMap): GameRulesValues {
 	return {
-		strength: row.str,
-		dexterity: row.dex,
-		energy: row.int,
-		vitality: row.vit,
+		hitpoints: attributes.hitpoints.value,
+		maxhp: attributes.maxhp.value,
+		mana: attributes.mana.value,
+		maxmana: attributes.maxmana.value,
+		stamina: attributes.stamina.value,
+		maxstamina: attributes.maxstamina.value,
+		statpts: attributes.statpts.value,
+		newskills: attributes.newskills.value,
 	};
 }
 
-export function projectGameRulesDerivedValues(save: EditorSave): GameRules {
-	const classStats = requireCharstatsRow(save.character.className);
+function buildChanges(save: EditorSave, values: GameRulesValues): GameRulesChange[] {
+	const changes: GameRulesChange[] = [];
 
-	const level = clampInteger(save.attributes.level.value, 1, 99);
-	const levelDelta = level - 1;
+	for (const attributeId of DERIVED_RESOURCES) {
+		const from = save.attributes[attributeId].value;
+		const to = values[attributeId];
 
-	const strength = save.attributes.strength.value;
-	const dexterity = save.attributes.dexterity.value;
-	const vitality = save.attributes.vitality.value;
-	const energy = save.attributes.energy.value;
-
-	const spentSkillPoints = save.skills.reduce((total, skill) => {
-		return total + Math.max(0, skill.points);
-	}, 0);
-
-	const spentStatPoints =
-		(strength - classStats.str) +
-		(dexterity - classStats.dex) +
-		(vitality - classStats.vit) +
-		(energy - classStats.int);
-
-	const lifePerLevel = classStats.LifePerLevel / 4;
-	const staminaPerLevel = classStats.StaminaPerLevel / 4;
-	const manaPerLevel = classStats.ManaPerLevel / 4;
-	const lifePerVitality = classStats.LifePerVitality / 4;
-	const staminaPerVitality = classStats.StaminaPerVitality / 4;
-	const manaPerEnergy = classStats.ManaPerMagic / 4;
-
-	const maxLife =
-		classStats.hpadd +
-		classStats.vit +
-		levelDelta * lifePerLevel +
-		(vitality - classStats.vit) * lifePerVitality;
-
-	const maxMana =
-		classStats.int +
-		levelDelta * manaPerLevel +
-		(energy - classStats.int) * manaPerEnergy;
-
-	const maxStamina =
-		classStats.stamina +
-		levelDelta * staminaPerLevel +
-		(vitality - classStats.vit) * staminaPerVitality;
-
-	const projectedAttributes = cloneAttributeMap(save.attributes);
-
-	projectedAttributes.maxhp.value = clampToStoredAttributeRange(
-		projectedAttributes.maxhp,
-		Math.round(maxLife * RESOURCE_Q8_SCALE),
-	);
-	projectedAttributes.hitpoints.value = projectedAttributes.maxhp.value;
-
-	projectedAttributes.maxmana.value = clampToStoredAttributeRange(
-		projectedAttributes.maxmana,
-		Math.round(maxMana * RESOURCE_Q8_SCALE),
-	);
-	projectedAttributes.mana.value = projectedAttributes.maxmana.value;
-
-	projectedAttributes.maxstamina.value = clampToStoredAttributeRange(
-		projectedAttributes.maxstamina,
-		Math.round(maxStamina * RESOURCE_Q8_SCALE),
-	);
-	projectedAttributes.stamina.value = projectedAttributes.maxstamina.value;
-
-	projectedAttributes.statpts.value = clampToStoredAttributeRange(
-		projectedAttributes.statpts,
-		levelDelta * classStats.StatPerLevel - spentStatPoints,
-	);
-
-	projectedAttributes.newskills.value = clampToStoredAttributeRange(
-		projectedAttributes.newskills,
-		levelDelta * classStats.SkillsPerLevel - spentSkillPoints,
-	);
-
-	applyCompletedQuestRewards(save, projectedAttributes);
-
-	const values: GameRulesDerivedValues = {
-		hitpoints: projectedAttributes.hitpoints.value,
-		maxhp: projectedAttributes.maxhp.value,
-		mana: projectedAttributes.mana.value,
-		maxmana: projectedAttributes.maxmana.value,
-		stamina: projectedAttributes.stamina.value,
-		maxstamina: projectedAttributes.maxstamina.value,
-		statpts: projectedAttributes.statpts.value,
-		newskills: projectedAttributes.newskills.value,
-	};
-
-	const changes: GameRulesDerivedChange[] = [];
-
-	for (const attributeId of DERIVED_ATTRIBUTES) {
-		const fromValue = save.attributes[attributeId].value;
-		const toValue = values[attributeId];
-
-		if (fromValue === toValue) {
+		if (from === to) {
 			continue;
 		}
 
 		changes.push({
 			attributeId,
 			label: getAttributeLabel(attributeId),
-			from: fromValue,
-			to: toValue,
-			fromDisplay: formatDerivedDisplayValue(attributeId, fromValue),
-			toDisplay: formatDerivedDisplayValue(attributeId, toValue),
+			from,
+			to,
+			fromDisplay: formatValue(attributeId, from),
+			toDisplay: formatValue(attributeId, to),
 		});
 	}
 
+	return changes;
+}
+
+export function getGameRulesClassPrimaryAttributes(
+	className: ClassName,
+): PrimaryAttributes | null {
+	const stats = getCharstats(className);
+	if (stats == null) {
+		return null;
+	}
+
 	return {
-		values,
-		changes,
+		strength: stats.str,
+		dexterity: stats.dex,
+		energy: stats.int,
+		vitality: stats.vit,
 	};
+}
+
+export function projectGameRulesDerivedValues(save: EditorSave): GameRules {
+	const stats = requireCharstats(save.character.className);
+	const attributes = copyAttributes(save.attributes);
+
+	const level = clampInteger(save.attributes.level.value, 1, 99);
+	const levelsGained = level - 1;
+
+	const spentStats = countSpentStatPoints(save, stats);
+	const spentSkills = countSpentSkillPoints(save);
+
+	const lifePerLevel = stats.LifePerLevel / 4;
+	const staminaPerLevel = stats.StaminaPerLevel / 4;
+	const manaPerLevel = stats.ManaPerLevel / 4;
+	const lifePerVitality = stats.LifePerVitality / 4;
+	const staminaPerVitality = stats.StaminaPerVitality / 4;
+	const manaPerEnergy = stats.ManaPerMagic / 4;
+
+	const maxLife =
+		stats.hpadd +
+		stats.vit +
+		levelsGained * lifePerLevel +
+		(save.attributes.vitality.value - stats.vit) * lifePerVitality;
+
+	const maxMana =
+		stats.int +
+		levelsGained * manaPerLevel +
+		(save.attributes.energy.value - stats.int) * manaPerEnergy;
+
+	const maxStamina =
+		stats.stamina +
+		levelsGained * staminaPerLevel +
+		(save.attributes.vitality.value - stats.vit) * staminaPerVitality;
+
+	setAttrValue(attributes, "maxhp", Math.round(maxLife * RESOURCE_Q8_SCALE));
+	setAttrValue(attributes, "hitpoints", attributes.maxhp.value);
+
+	setAttrValue(attributes, "maxmana", Math.round(maxMana * RESOURCE_Q8_SCALE));
+	setAttrValue(attributes, "mana", attributes.maxmana.value);
+
+	setAttrValue(attributes, "maxstamina", Math.round(maxStamina * RESOURCE_Q8_SCALE));
+	setAttrValue(attributes, "stamina", attributes.maxstamina.value);
+
+	setAttrValue(
+		attributes,
+		"statpts",
+		levelsGained * stats.StatPerLevel - spentStats,
+	);
+
+	setAttrValue(
+		attributes,
+		"newskills",
+		levelsGained * stats.SkillsPerLevel - spentSkills,
+	);
+
+	addQuestRewards(save, attributes);
+
+	const values = buildValues(attributes);
+	const changes = buildChanges(save, values);
+
+	return { values, changes };
 }
 
 export function applyProjectedGameRulesValues(
 	save: EditorSave,
-	projectedValues: GameRulesDerivedValues,
+	values: GameRulesValues,
 ): void {
-	for (const attributeId of DERIVED_ATTRIBUTES) {
-		save.attributes[attributeId].value = projectedValues[attributeId];
+	for (const attributeId of DERIVED_RESOURCES) {
+		save.attributes[attributeId].value = values[attributeId];
 	}
 }

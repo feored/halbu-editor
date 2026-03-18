@@ -1,4 +1,4 @@
-import type { SkillSlot } from "$lib/types/skills";
+import type { SkillSlot } from "$lib/types/editor";
 import type { SkillData } from "$lib/editor/skills/skillsTypes";
 
 export type PageNotice = {
@@ -7,7 +7,6 @@ export type PageNotice = {
 };
 
 export type BuildPageNoticesOptions = {
-	skillsContextError: string;
 	hasKnownVersionSkills: boolean;
 	hasBackendClassSupport: boolean;
 	hasClassSkills: boolean;
@@ -89,7 +88,6 @@ export function getSelectedSkillId(
 }
 
 export function buildPageNotices({
-	skillsContextError,
 	hasKnownVersionSkills,
 	hasBackendClassSupport,
 	hasClassSkills,
@@ -99,12 +97,6 @@ export function buildPageNotices({
 	supportedClasses,
 }: BuildPageNoticesOptions): PageNotice[] {
 	const notices: PageNotice[] = [];
-	if (skillsContextError.length > 0) {
-		notices.push({
-			level: "warning",
-			text: `Failed to load skills context: ${skillsContextError}`,
-		});
-	}
 	if (!hasKnownVersionSkills) {
 		notices.push({
 			level: "warning",
@@ -193,17 +185,6 @@ export function buildSkillState(
 		canIncrement,
 		canDecrement,
 	};
-}
-
-export function getSkillLockReasons(
-	levelRequirementMet: boolean,
-	reqLevel: number,
-): string[] {
-	const reasons: string[] = [];
-	if (!levelRequirementMet) {
-		reasons.push(`Requires Level ${reqLevel}`);
-	}
-	return reasons;
 }
 
 export function buildSkillStatesById(

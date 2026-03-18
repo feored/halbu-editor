@@ -13,8 +13,8 @@ import type {
 	QuestId,
 	SaveLayoutVersion,
 	SaveFormatId,
+	SkillSlot,
 } from "$lib/types/editor";
-import type { SkillSlot } from "$lib/types/skills";
 import type {
 	BackendAct,
 	BackendAttributeValue,

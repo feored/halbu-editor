@@ -2,12 +2,15 @@
 	import { invoke } from "@tauri-apps/api/core";
 	import { save as pickSavePath } from "@tauri-apps/plugin-dialog";
 	import Button from "$lib/components/ui/button/button.svelte";
-	import { Message, buildMessage } from "$lib/utils/Message.svelte";
+	import { Message, buildMessage } from "$lib/utils/appMessage";
 	import * as settings from "$lib/utils/settings";
 	import { getErrorMessage } from "$lib/utils/errorMessage";
 	import { toEditorSave } from "$lib/types/converters";
 	import experienceTable from "$lib/editor/character/experience.json";
-	import { experienceForLevel, validateCharacterName } from "$lib/editor/character/characterLogic";
+	import {
+		experienceForLevel,
+		validateCharacterName,
+	} from "$lib/editor/character/characterLogic";
 	import {
 		applyProjectedGameRulesValues,
 		getGameRulesClassPrimaryAttributes,
@@ -22,12 +25,12 @@
 	import {
 		getSupportedExpansionTypes,
 		getSupportedClassesForExpansionType,
-	} from "$lib/utils/GameSupport";
+	} from "$lib/utils/gameData";
 	import { GAME_EDITIONS } from "$lib/types/editor";
 	import type { EditorSave, ExpansionType, GameEdition, KnownClassName } from "$lib/types/editor";
 	import type { BackendEditorSave, OutputFormatOption } from "$lib/types/backend";
 	import type { OpenedSessionData } from "$lib/editor/editorSession";
-	import type { AppMessage } from "$lib/utils/Message.svelte";
+	import type { AppMessage } from "$lib/utils/appMessage";
 
 	const DEFAULT_CHARACTER_NAME = "NewCharacter";
 

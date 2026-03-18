@@ -1,12 +1,11 @@
 import type { ClassName, EditorSave, ExpansionType } from "$lib/types/editor";
 
 import { clampInteger, getMaxValueForBitLength } from "$lib/utils/numbers";
+import { toExpansionType } from "$lib/utils/gameData";
 import {
-	getSaveExpansionType,
-	isExpandedMode,
-	toExpansionType,
-} from "$lib/utils/GameSupport";
-import { calcDifficultyBeaten, calcTitle } from "$lib/utils/Utils.svelte";
+	getCharacterTitle,
+	getDifficultyBeaten,
+} from "$lib/editor/character/characterTitle";
 import { experienceForLevel, levelForExperience } from "$lib/editor/character/characterLogic";
 
 const DIFFICULTY_BEATEN_ORDER = ["None", "Normal", "Nightmare", "Hell"] as const;
@@ -19,11 +18,11 @@ export type CharacterDerivedState = {
 };
 
 export function getCharacterDerivedState(save: EditorSave): CharacterDerivedState {
-	const expansionType = getSaveExpansionType(save);
+	const expansionType = save.expansionType;
 
 	return {
-		title: calcTitle(save.character, expansionType),
-		difficultyBeaten: calcDifficultyBeaten(
+		title: getCharacterTitle(save.character, expansionType),
+		difficultyBeaten: getDifficultyBeaten(
 			save.character,
 			expansionType,
 		) as DifficultyBeaten,
@@ -42,11 +41,11 @@ export function setDifficultyBeaten(
 	save: EditorSave,
 	difficultyBeaten: DifficultyBeaten,
 ): CharacterDerivedState {
-	const expansionType = getSaveExpansionType(save);
+	const expansionType = save.expansionType;
 	const difficultyIndex = DIFFICULTY_BEATEN_ORDER.indexOf(difficultyBeaten);
 
 	save.character.progression =
-		(4 + (isExpandedMode(expansionType) ? 1 : 0)) * difficultyIndex;
+		(4 + (expansionType !== "Classic" ? 1 : 0)) * difficultyIndex;
 
 	return getCharacterDerivedState(save);
 }

@@ -4,7 +4,7 @@ import {
 	type Difficulty,
 	type ExpansionType,
 } from "$lib/types/editor";
-import { RESOURCE_Q8_SCALE } from "$lib/utils/resources";
+import { RESOURCE_Q8_SCALE } from "$lib/utils/numbers";
 
 export const ACT_LABELS = {
 	Act1: "Act I",
@@ -26,12 +26,12 @@ export const EXPANSION_TYPE_LABELS = {
 	RotW: "Reign of the Warlock",
 } as const satisfies Record<ExpansionType, string>;
 
-export type AttributeDisplayMetadata = {
+type AttributeDisplayMetadata = {
 	label: string;
 	displayScale: number;
 };
 
-export const ATTRIBUTE_DISPLAY_METADATA = {
+const ATTRIBUTE_DISPLAY_METADATA = {
 	statpts: {
 		label: "Available Stat Points",
 		displayScale: 1,
@@ -98,26 +98,6 @@ export const ATTRIBUTE_DISPLAY_METADATA = {
 	},
 } as const satisfies Record<Attribute, AttributeDisplayMetadata>;
 
-export function getActLabel(act: Act): string {
-	return ACT_LABELS[act];
-}
-
-export function getDifficultyLabel(difficulty: Difficulty): string {
-	return DIFFICULTY_LABELS[difficulty];
-}
-
-export function getExpansionTypeLabel(expansionType: ExpansionType): string {
-	return EXPANSION_TYPE_LABELS[expansionType];
-}
-
 export function getAttributeLabel(attribute: Attribute): string {
 	return ATTRIBUTE_DISPLAY_METADATA[attribute].label;
-}
-
-export function getAttributeDisplayScale(attribute: Attribute): number {
-	return ATTRIBUTE_DISPLAY_METADATA[attribute].displayScale;
-}
-
-export function isScaledAttribute(attribute: Attribute): boolean {
-	return getAttributeDisplayScale(attribute) !== 1;
 }

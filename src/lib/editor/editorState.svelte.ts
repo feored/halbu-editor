@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 
-import { isUnknownSaveFormat } from "$lib/utils/GameSupport";
+import { isUnknownSaveFormat } from "$lib/utils/gameData";
 import { getErrorMessage } from "$lib/utils/errorMessage";
 
 import {

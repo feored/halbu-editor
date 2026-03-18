@@ -1,5 +1,3 @@
-import type { SkillSlot } from "$lib/types/skills";
-
 //
 // GENERAL
 //
@@ -163,6 +161,11 @@ export type SaveMetadata = {
 
 export type RawDataSection = {
 	data: number[];
+};
+
+export type SkillSlot = {
+	id: number;
+	points: number;
 };
 
 export type EditorSave = {

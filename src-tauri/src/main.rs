@@ -30,7 +30,6 @@ fn main() {
             backup_all_detected_saves,
             new_save,
             get_supported_output_formats,
-            get_skills_context,
             summary_folder
         ])
         .run(tauri::generate_context!());

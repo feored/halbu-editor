@@ -11,6 +11,8 @@ import type {
 	CompatibilityIssue,
 	ParseIssue,
 } from "$lib/types/backend";
+import { getSkillsDataset } from "$lib/utils/gameData";
+import { resizeSkillSlots } from "$lib/editor/skills/skillsSlots";
 
 export type EditorSession = {
 	save: EditorSave;
@@ -63,14 +65,48 @@ export function createEmptyEditValidation(): EditValidation {
 		warnings: [],
 	};
 }
+
+function deriveClassSkillSlotCount(
+	save: EditorSave,
+	parserLayoutVersion: SaveLayoutVersion | null,
+): number {
+	const effectiveVersion = parserLayoutVersion == null ? save.version : parserLayoutVersion;
+	const skillsDataset = getSkillsDataset(effectiveVersion);
+	if (skillsDataset == null) {
+		return save.skills.length;
+	}
+
+	const classSkills = skillsDataset.filter(
+		(skill) => skill.class === save.character.className,
+	);
+	if (classSkills.length < 1) {
+		return save.skills.length;
+	}
+
+	const maxSaveId = classSkills.reduce(
+		(maxSaveSlot, skill) => Math.max(maxSaveSlot, skill.saveId),
+		-1,
+	);
+	return maxSaveId + 1;
+}
+
 export function createOpenEditorSession(openedSessionData: OpenedSessionData): EditorSession {
+	const normalizedSave = structuredClone(openedSessionData.save);
+	const skillSlotCount = deriveClassSkillSlotCount(
+		normalizedSave,
+		openedSessionData.parserLayoutVersion,
+	);
+	if (skillSlotCount > 0 && normalizedSave.skills.length !== skillSlotCount) {
+		normalizedSave.skills = resizeSkillSlots(normalizedSave.skills, skillSlotCount);
+	}
+
 	const targetVersion =
-		openedSessionData.save.version === 99 || openedSessionData.save.version === 105
-			? openedSessionData.save.version
+		normalizedSave.version === 99 || normalizedSave.version === 105
+			? normalizedSave.version
 			: null;
 
 	return {
-		save: openedSessionData.save,
+		save: normalizedSave,
 		sourceBackendSave: openedSessionData.sourceBackendSave,
 
 		parseIssueCount: openedSessionData.parseIssueCount,
@@ -85,7 +121,7 @@ export function createOpenEditorSession(openedSessionData: OpenedSessionData): E
 
 		targetVersion,
 
-		baselineSave: structuredClone(openedSessionData.save),
+		baselineSave: structuredClone(normalizedSave),
 
 		compatibilityIssues: [],
 		compatibilityPending: false,

@@ -1,10 +1,6 @@
-import { skillIdToSaveId } from "$lib/utils/GameSupport";
-import {
-	type SkillPrerequisite,
-	getSkillLockReasons,
-} from "$lib/editor/skills/skillsState";
-import type { Character } from "$lib/types/editor";
-import type { SkillSlot } from "$lib/types/skills";
+import { skillIdToSaveId } from "$lib/utils/gameData";
+import type { SkillPrerequisite, SkillState } from "$lib/editor/skills/skillsState";
+import type { Character, SkillSlot } from "$lib/types/editor";
 import type { SkillData, SkillDescriptionLine } from "$lib/editor/skills/skillsTypes";
 
 export type SkillSynergyEntry = {
@@ -37,6 +33,7 @@ type BuildSkillDetailsOptions = {
 	skills: readonly SkillSlot[];
 	character: Pick<Character, "className" | "level">;
 	version: number;
+	skillState?: SkillState | null;
 };
 
 type ExpressionFunction = (...args: any[]) => unknown;
@@ -290,6 +287,14 @@ function normalizeDescription(description: string): string {
 	return upper.endsWith(".") ? upper : `${upper}.`;
 }
 
+function getSkillLockReasons(levelRequirementMet: boolean, reqLevel: number): string[] {
+	const reasons: string[] = [];
+	if (!levelRequirementMet) {
+		reasons.push(`Requires Level ${reqLevel}`);
+	}
+	return reasons;
+}
+
 function buildSynergyEntries(
 	synergyLines: readonly string[],
 	skillsData: readonly SkillData[],
@@ -326,6 +331,7 @@ export function buildSkillDetails({
 	skills,
 	character,
 	version,
+	skillState,
 }: BuildSkillDetailsOptions): SkillDetails {
 	const currentPoints = skills[skillData.saveId].points;
 	const calculator = createCalculator({ version, character, skills, skillData, skillsData });
@@ -348,8 +354,12 @@ export function buildSkillDetails({
 			? buildLines(skillData.desclines, calculator, { next: true, reverse: true })
 			: [];
 
-	const levelRequirementMet = characterLevel >= reqLevel;
-	const prerequisitesMet = prerequisites.every((required) => required.met);
+	const levelRequirementMet =
+		skillState == null ? characterLevel >= reqLevel : skillState.levelRequirementMet;
+	const prerequisitesMet =
+		skillState == null
+			? prerequisites.every((required) => required.met)
+			: skillState.prerequisitesMet;
 	const lockReasons = getSkillLockReasons(levelRequirementMet, reqLevel);
 
 	return {
@@ -362,7 +372,7 @@ export function buildSkillDetails({
 		levelRequirementMet,
 		prerequisites,
 		prerequisitesMet,
-		available: levelRequirementMet && prerequisitesMet,
+		available: skillState == null ? levelRequirementMet && prerequisitesMet : skillState.available,
 		lockReasons,
 		synergyLines,
 		synergyEntries,

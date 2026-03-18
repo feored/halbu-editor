@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Message } from "$lib/utils/Message.svelte";
+	import { Message } from "$lib/utils/appMessage";
 	import {
 		initialize as initializeSettings,
 		apply as applySettings,
@@ -21,7 +21,7 @@
 	import EditorWorkspace from "$lib/editor/EditorWorkspace.svelte";
 
 	import type { OpenedSessionData } from "$lib/editor/editorSession";
-	import type { AppMessage } from "$lib/utils/Message.svelte";
+	import type { AppMessage } from "$lib/utils/appMessage";
 	import type { ParseMode } from "$lib/types/backend";
 
 	const Screen = {
@@ -208,7 +208,10 @@
 	{:else if currentScreen === Screen.Library}
 		<Library parseMode={editorState.parseMode} onmessage={handleAppMessage} />
 	{:else if currentScreen === Screen.NewCharacter}
-		<NewCharacter outputFormatOptions={editorState.outputFormatOptions} onmessage={handleAppMessage} />
+		<NewCharacter
+			outputFormatOptions={editorState.outputFormatOptions}
+			onmessage={handleAppMessage}
+		/>
 	{:else if hasOpenSession}
 		<EditorWorkspace {currentSection} />
 	{/if}

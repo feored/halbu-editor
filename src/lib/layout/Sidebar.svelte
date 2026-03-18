@@ -1,7 +1,8 @@
 <script lang="ts">
+	import { clsx, type ClassValue } from "clsx";
 	import { AlertCircleIcon, SettingsIcon } from "lucide-svelte";
+	import { twMerge } from "tailwind-merge";
 	import Button from "$lib/components/ui/button/button.svelte";
-	import { cn } from "$lib/utils/cn";
 
 	type SidebarItem = {
 		id: string;
@@ -34,6 +35,10 @@
 		onNewCharacter?: () => void;
 		onSettings?: () => void;
 	}>();
+
+	function mergeClasses(...inputs: ClassValue[]): string {
+		return twMerge(clsx(inputs));
+	}
 </script>
 
 <nav class="sidebar-nav flex h-full min-h-0 flex-col">
@@ -46,7 +51,7 @@
 		<div class="grid gap-1">
 			<Button
 				variant="ghost"
-				class={cn(
+				class={mergeClasses(
 					"w-full justify-start rounded-none border-l-2 border-l-transparent px-2 py-1.5 text-sm",
 					libraryActive
 						? "bg-halbu-panel2 border-l-halbu-primary text-halbu-text"
@@ -58,7 +63,7 @@
 			</Button>
 			<Button
 				variant="ghost"
-				class={cn(
+				class={mergeClasses(
 					"w-full justify-start rounded-none border-l-2 border-l-transparent px-2 py-1.5 text-sm",
 					newCharacterActive
 						? "bg-halbu-panel2 border-l-halbu-primary text-halbu-text"
@@ -101,7 +106,7 @@
 					<li class="min-w-0">
 						<Button
 							variant="ghost"
-							class={cn(
+							class={mergeClasses(
 								"w-full justify-start rounded-none border-l-2 border-l-transparent px-2 py-1.5 text-sm hover:bg-halbu-panel2 hover:text-halbu-text",
 								activeId === item.id &&
 									"bg-halbu-panel2 border-l-halbu-primary text-halbu-text",
@@ -129,7 +134,7 @@
 	<div class="sidebar-nav__footer mt-auto border-t border-halbu-border pt-2">
 		<Button
 			variant="ghost"
-			class={cn(
+			class={mergeClasses(
 				"w-full justify-start rounded-none border-l-2 border-l-transparent px-2 py-1.5 text-sm",
 				settingsActive
 					? "bg-halbu-panel2 border-l-halbu-primary text-halbu-text"

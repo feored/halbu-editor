@@ -2,7 +2,7 @@
 	import { onMount } from "svelte";
 	import { open } from "@tauri-apps/plugin-dialog";
 	import Button from "$lib/components/ui/button/button.svelte";
-	import { Message, buildMessage } from "$lib/utils/Message.svelte";
+	import { Message, buildMessage } from "$lib/utils/appMessage";
 	import { invoke } from "@tauri-apps/api/core";
 	import * as settings from "$lib/utils/settings";
 	import { getErrorMessage } from "$lib/utils/errorMessage";
@@ -19,14 +19,16 @@
 	onMount(() => {
 		settings
 			.initialize()
-			.then(() => {
-				getExistingCharacters();
-			})
+			.then(() => getExistingCharacters())
 			.catch((err) => {
 				libraryError = `Failed to initialize settings: ${getErrorMessage(err, "unknown error")}`;
+			})
+			.finally(() => {
+				loading = false;
 			});
 	});
 
+	let loading = $state(true);
 	let saveFolderSet = $state(false);
 	let saveFilesFound = $state([]);
 	let currentSaveDirectory = $state("");
@@ -159,7 +161,9 @@
 			</div>
 		{/if}
 
-		{#if !saveFolderSet}
+		{#if loading}
+			<!-- waiting for settings + folder scan -->
+		{:else if !saveFolderSet}
 			<div class="text-center text-bg-warning p-3 m-3 rounded">
 				<div class="d-flex">
 					<AlertCircleIcon />&nbsp;Set a designated save folder in the settings to easily

@@ -161,8 +161,8 @@
 		display: flex;
 		justify-content: center;
 		gap: 0.25rem;
-		opacity: 0;
-		visibility: hidden;
+		opacity: 1;
+		visibility: visible;
 		transition: opacity 0.15s ease;
 	}
 
@@ -210,13 +210,6 @@
 	.skill-node__control:disabled {
 		opacity: 0.45;
 		cursor: not-allowed;
-	}
-
-	.skill-node:hover .skill-node__quick-edit,
-	.skill-node--selected .skill-node__quick-edit,
-	.skill-node__quick-edit--visible {
-		opacity: 1;
-		visibility: visible;
 	}
 
 	.skill-node--available {

@@ -3,7 +3,7 @@ import {
 	RESOURCE_Q8_SCALE,
 	fixedPointToDisplay,
 	formatDisplayNumber,
-} from "$lib/utils/resources";
+} from "$lib/utils/numbers";
 import {
 	ACT_NAMES,
 	ATTRIBUTES,
@@ -85,9 +85,9 @@ function buildQuestMaps(actDefinitions: readonly ActDisplay[]): {
 		const questOrderIndex: Record<string, number> = {};
 
 		for (let index = 0; index < actDefinition.quests.length; index += 1) {
-			const QuestDisplay = actDefinition.quests[index];
-			questLabels[QuestDisplay.id] = QuestDisplay.display;
-			questOrderIndex[QuestDisplay.id] = index;
+			const questDisplay = actDefinition.quests[index];
+			questLabels[questDisplay.id] = questDisplay.display;
+			questOrderIndex[questDisplay.id] = index;
 		}
 
 		nextQuestLabelsByActId[actDefinition.id] = questLabels;

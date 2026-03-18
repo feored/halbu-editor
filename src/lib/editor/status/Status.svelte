@@ -2,11 +2,10 @@
 	import { invoke } from "@tauri-apps/api/core";
 	import Button from "$lib/components/ui/button/button.svelte";
 	import {
-		getSaveExpansionType,
 		getSaveEditionLabel,
 		getSaveFormatIdLabel,
 		isUnknownSaveFormat,
-	} from "$lib/utils/GameSupport";
+	} from "$lib/utils/gameData";
 	import { getErrorMessage } from "$lib/utils/errorMessage";
 	import { editorState } from "$lib/editor/editorState.svelte";
 
@@ -206,7 +205,7 @@
 				<dd class="m-0 text-sm text-halbu-text">{save.version}</dd>
 			{/if}
 			<dt class="form-label mb-0">Gameplay mode</dt>
-			<dd class="m-0 text-sm text-halbu-text">{getSaveExpansionType(save)}</dd>
+			<dd class="m-0 text-sm text-halbu-text">{save.expansionType}</dd>
 			<dt class="form-label mb-0">Editor mode</dt>
 			<dd class="m-0 text-sm text-halbu-text">
 				{session.mode === "game-rules" ? "Game rules" : "Raw"}
@@ -298,7 +297,8 @@
 								<td class="whitespace-nowrap px-1.5 py-1 text-halbu-text"
 									>{issue.found ?? "-"}</td
 								>
-								<td class="min-w-64 px-1.5 py-1 text-halbu-text">{issue.message}</td>
+								<td class="min-w-64 px-1.5 py-1 text-halbu-text">{issue.message}</td
+								>
 							</tr>
 						{/each}
 					</tbody>

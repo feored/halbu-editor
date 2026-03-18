@@ -96,7 +96,11 @@
 			<h3 class="editor-card-title">{skillDetails.name}</h3>
 			<div class="mt-1 flex flex-wrap items-center gap-1">
 				<span
-					class="inline-flex items-center gap-1 rounded-xs border border-halbu-border bg-halbu-panel2 px-1.5 py-0.5 text-sm font-medium text-halbu-textMuted"
+					class={`inline-flex items-center gap-1 rounded-xs border px-1.5 py-0.5 text-sm font-medium ${
+						skillDetails.available
+							? "border-halbu-border bg-halbu-panel2 text-halbu-textMuted"
+							: "border-halbu-warning bg-halbu-warningSoft text-halbu-warning"
+					}`}
 				>
 					{#if skillDetails.available}
 						<CheckIcon size={12} strokeWidth={2} />
@@ -106,7 +110,11 @@
 					{skillDetails.available ? "Ready" : "Locked"}
 				</span>
 				<span
-					class="inline-flex items-center gap-1 rounded-xs border border-halbu-border bg-halbu-panel2 px-1.5 py-0.5 text-sm font-medium text-halbu-textMuted"
+					class={`inline-flex items-center gap-1 rounded-xs border px-1.5 py-0.5 text-sm font-medium ${
+						skillDetails.levelRequirementMet
+							? "border-halbu-border bg-halbu-panel2 text-halbu-textMuted"
+							: "border-halbu-warning bg-halbu-warningSoft text-halbu-warning"
+					}`}
 				>
 					{#if skillDetails.levelRequirementMet}
 						<CheckIcon size={12} strokeWidth={2} />
@@ -174,7 +182,11 @@
 			{:else}
 				<ul class="m-0 grid list-none gap-0.5 p-0 text-sm">
 					{#each skillDetails.prerequisites as prerequisite}
-						<li class="inline-flex items-center gap-1 text-halbu-text">
+						<li
+							class={`inline-flex items-center gap-1 ${
+								prerequisite.met ? "text-halbu-text" : "text-halbu-warning"
+							}`}
+						>
 							{#if prerequisite.met}
 								<CheckIcon
 									size={13}
@@ -185,7 +197,7 @@
 								<AlertCircleIcon
 									size={13}
 									strokeWidth={2}
-									class="shrink-0 text-halbu-textMuted"
+									class="shrink-0 text-halbu-warning"
 								/>
 							{/if}
 							{prerequisite.name}
@@ -220,7 +232,7 @@
 							firstLevelOpen ? "rotate-90" : ""
 						}`}
 					/>
-					<span>First Level Stats</span>
+					<span>First Level</span>
 				</summary>
 				<ul class="m-0 mt-1 grid list-none gap-0.5 p-0 text-sm">
 					{#each skillDetails.currentLines as line}

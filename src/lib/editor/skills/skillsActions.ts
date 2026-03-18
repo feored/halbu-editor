@@ -1,6 +1,6 @@
 import { addSkillPoints, clampSkillPoints, refundAllSkillPoints } from "$lib/editor/skills/skillsSlots";
 import type { SkillState } from "$lib/editor/skills/skillsState";
-import type { SkillSlot } from "$lib/types/skills";
+import type { SkillSlot } from "$lib/types/editor";
 
 type SkillSaveMutations = {
 	skills: SkillSlot[];

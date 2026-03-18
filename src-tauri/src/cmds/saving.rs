@@ -7,18 +7,7 @@ use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use super::backups::backup_existing_file;
-use super::{format_id_label, BackupConfig, OutputFormatOption, SaveCommandResult, SkillsContext};
-
-const KNOWN_CLASSES: [Class; 8] = [
-    Class::Amazon,
-    Class::Assassin,
-    Class::Barbarian,
-    Class::Druid,
-    Class::Necromancer,
-    Class::Paladin,
-    Class::Sorceress,
-    Class::Warlock,
-];
+use super::{format_id_label, BackupConfig, OutputFormatOption, SaveCommandResult};
 
 fn supports_class_for_format(format: FormatId, class: Class) -> bool {
     let probe_save = Save::new(format, class);
@@ -26,19 +15,6 @@ fn supports_class_for_format(format: FormatId, class: Class) -> bool {
         .check_compatibility(format)
         .into_iter()
         .any(|issue| issue.blocking)
-}
-
-fn supported_classes_for_version(version: u32) -> Vec<String> {
-    let Some(format) = FormatId::from_version(version) else {
-        return Vec::new();
-    };
-
-    KNOWN_CLASSES
-        .iter()
-        .copied()
-        .filter(|class_name| supports_class_for_format(format, *class_name))
-        .map(|class_name| class_name.to_string())
-        .collect()
 }
 
 fn write_bytes_atomic(path: &Path, bytes: &[u8]) -> Result<(), String> {
@@ -51,7 +27,10 @@ fn write_bytes_atomic(path: &Path, bytes: &[u8]) -> Result<(), String> {
         .duration_since(UNIX_EPOCH)
         .map_err(|e| e.to_string())?
         .as_nanos();
-    let tmp_path = parent.join(format!(".{file_name}.tmp-{}-{ts_nanos}", std::process::id()));
+    let tmp_path = parent.join(format!(
+        ".{file_name}.tmp-{}-{ts_nanos}",
+        std::process::id()
+    ));
 
     let mut tmp_file = OpenOptions::new()
         .write(true)
@@ -85,22 +64,6 @@ pub fn new_save(version: u32, class: Class) -> Result<Save, String> {
         ));
     }
     Ok(Save::new(format, class))
-}
-
-#[tauri::command]
-pub fn get_skills_context(version: u32, class: Class) -> Result<SkillsContext, String> {
-    let class_name = class.to_string();
-    let supported_classes = supported_classes_for_version(version);
-    let format = FormatId::from_version(version).unwrap_or(FormatId::Unknown(version));
-
-    Ok(SkillsContext {
-        save_version: version,
-        meta_format: format_id_label(format),
-        class_name: class_name.clone(),
-        class_supported_for_version: supported_classes.iter().any(|name| name == &class_name),
-        supported_classes,
-        skill_slot_count: halbu::skills::SKILL_POINTS_COUNT,
-    })
 }
 
 #[tauri::command]
