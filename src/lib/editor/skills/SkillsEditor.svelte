@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Tabs from "$lib/components/ui/Tabs.svelte";
 	import SkillsHeader from "$lib/editor/skills/components/SkillsHeader.svelte";
 	import SkillsTree from "$lib/editor/skills/components/SkillsTree.svelte";
 	import SkillsInspector from "$lib/editor/skills/components/SkillsInspector.svelte";
@@ -31,7 +32,9 @@
 	const mode = $derived(session.mode);
 	const effectiveDerivedValues = $derived(editorState.gameRulesValues.values);
 	const effectiveDerivedValuesError = $derived(editorState.gameRulesValues.error);
-	const editingVersion = $derived(editorState.targetVersion ?? editorState.layoutVersion ?? save.version);
+	const editingVersion = $derived(
+		editorState.targetVersion ?? editorState.layoutVersion ?? save.version,
+	);
 
 	const supportedClasses = $derived(getSupportedClassNames(editingVersion));
 	const classSupportedForVersion = $derived(
@@ -250,22 +253,12 @@
 					class="w-full min-w-0 rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2"
 				>
 					{#if pageIndexes.length > 1}
-						<div
-							class="mb-1.5 flex min-h-10 w-fit items-center gap-1.5 rounded-sm border border-halbu-border bg-halbu-panel px-1.5 py-1.5"
-						>
-							{#each pageIndexes as pageIndex}
-								<button
-									type="button"
-									class={`rounded-xs border px-3 py-1.5 text-sm font-medium leading-none transition ${
-										activePageIndex === pageIndex
-											? "border-halbu-primary bg-halbu-panel2 text-halbu-text"
-											: "border-halbu-border bg-halbu-panel text-halbu-textMuted hover:bg-halbu-panel2 hover:text-halbu-text"
-									}`}
-									onclick={() => selectSkillPage(pageIndex)}
-								>
-									{pageTitle(pageIndex)}
-								</button>
-							{/each}
+						<div class="mb-1.5 flex justify-center">
+							<Tabs
+								tabs={pageIndexes.map((i) => ({ value: i, label: pageTitle(i) }))}
+								active={activePageIndex}
+								onSelect={selectSkillPage}
+							/>
 						</div>
 					{/if}
 

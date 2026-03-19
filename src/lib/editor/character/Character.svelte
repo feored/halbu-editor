@@ -44,7 +44,6 @@
 	const effectiveDerivedValues = $derived(editorState.gameRulesValues.values);
 	const effectiveDerivedValuesError = $derived(editorState.gameRulesValues.error);
 	const layoutVersion = $derived(editorState.layoutVersion);
-	const validationIssues = $derived(session.validationReport.issues);
 
 	const MAX_GOLD_PER_LEVEL = 10000;
 	const MAX_XP = 3520485254;
@@ -103,14 +102,6 @@
 		}
 
 		return "";
-	});
-
-	const progressionValidationWarning = $derived.by(() => {
-		const issue = validationIssues.find(
-			(candidate) => candidate.code === "ProgressionNonCanonical",
-		);
-
-		return issue?.message ?? "";
 	});
 
 	$effect(() => {
@@ -371,14 +362,6 @@
 			</div>
 		</section>
 
-		{#if progressionValidationWarning.length > 0}
-			<div
-				class="rounded-sm border border-halbu-warning bg-halbu-warningSoft px-2 py-1.5 text-sm text-halbu-warning"
-			>
-				{progressionValidationWarning}
-			</div>
-		{/if}
-
 		<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
 			<h3 class="editor-card-title mb-1.5">Progression</h3>
 
@@ -546,8 +529,8 @@
 						type="button"
 						class={`h-7 min-w-20 px-2 text-sm font-semibold transition ${
 							mapSeedDisplayMode === "decimal"
-								? "bg-halbu-infoSoft text-halbu-info"
-								: "bg-halbu-panel2 text-halbu-text hover:bg-halbu-infoSoft"
+								? "bg-halbu-card text-halbu-text shadow-[inset_0_-2px_0_0_var(--halbu-primary)]"
+								: "bg-halbu-panel2 text-halbu-textMuted hover:bg-halbu-card hover:text-halbu-text"
 						}`}
 						onclick={() => {
 							mapSeedDisplayMode = "decimal";
@@ -559,8 +542,8 @@
 						type="button"
 						class={`h-7 min-w-20 border-l border-halbu-borderStrong px-2 text-sm font-semibold transition ${
 							mapSeedDisplayMode === "hex"
-								? "bg-halbu-infoSoft text-halbu-info"
-								: "bg-halbu-panel2 text-halbu-text hover:bg-halbu-infoSoft"
+								? "bg-halbu-card text-halbu-text shadow-[inset_0_-2px_0_0_var(--halbu-primary)]"
+								: "bg-halbu-panel2 text-halbu-textMuted hover:bg-halbu-card hover:text-halbu-text"
 						}`}
 						onclick={() => {
 							mapSeedDisplayMode = "hex";

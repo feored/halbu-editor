@@ -1,3 +1,11 @@
+@font-face {
+  font-family: "Inter";
+  src: url("../../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 @tailwind base;
 
 @tailwind components;
@@ -5,19 +13,19 @@
 @tailwind utilities;
 
 :root {
-  --halbu-bg-rgb: 20 20 20;
-  --halbu-panel-rgb: 27 27 27;
-  --halbu-panel2-rgb: 35 35 35;
-  --halbu-card-rgb: 43 43 43;
-  --halbu-border-rgb: 61 61 61;
-  --halbu-border-strong-rgb: 86 86 86;
-  --halbu-dark-sidebar-rgb: 24 24 24;
-  --halbu-dark-input-rgb: 18 18 18;
-  --halbu-text-rgb: 236 236 236;
-  --halbu-text-muted-rgb: 178 178 178;
-  --halbu-text-dim-rgb: 127 127 127;
+  --halbu-bg-rgb: 13 15 20;
+  --halbu-panel-rgb: 22 26 36;
+  --halbu-panel2-rgb: 30 35 50;
+  --halbu-card-rgb: 36 42 58;
+  --halbu-border-rgb: 50 58 80;
+  --halbu-border-strong-rgb: 68 78 106;
+  --halbu-dark-sidebar-rgb: 10 12 17;
+  --halbu-dark-input-rgb: 16 18 28;
+  --halbu-text-rgb: 242 245 255;
+  --halbu-text-muted-rgb: 205 216 242;
+  --halbu-text-dim-rgb: 135 150 188;
   --halbu-white-rgb: 255 255 255;
-  --halbu-link-rgb: 142 207 240;
+  --halbu-link-rgb: 108 162 230;
   --halbu-light-bg-rgb: 244 244 244;
   --halbu-light-panel-rgb: 255 255 255;
   --halbu-light-panel2-rgb: 239 239 239;
@@ -27,15 +35,15 @@
   --halbu-light-text-rgb: 28 28 28;
   --halbu-light-text-muted-rgb: 102 102 102;
   --halbu-light-emphasis-rgb: 16 16 16;
-  --halbu-primary-rgb: 46 163 230;
-  --halbu-primary-hover-rgb: 36 143 201;
-  --halbu-primary-active-rgb: 29 116 163;
-  --halbu-success-rgb: 79 163 109;
-  --halbu-warning-rgb: 227 181 98;
-  --halbu-danger-rgb: 217 83 79;
-  --halbu-danger-hover-rgb: 197 66 62;
-  --halbu-danger-active-rgb: 167 53 50;
-  --halbu-info-rgb: 103 189 233;
+  --halbu-primary-rgb: 86 138 218;
+  --halbu-primary-hover-rgb: 70 120 196;
+  --halbu-primary-active-rgb: 56 100 170;
+  --halbu-success-rgb: 66 178 112;
+  --halbu-warning-rgb: 232 148 52;
+  --halbu-danger-rgb: 210 68 68;
+  --halbu-danger-hover-rgb: 188 54 54;
+  --halbu-danger-active-rgb: 162 44 44;
+  --halbu-info-rgb: 80 174 222;
   --halbu-bg: rgb(var(--halbu-bg-rgb));
   --halbu-panel: rgb(var(--halbu-panel-rgb));
   --halbu-panel2: rgb(var(--halbu-panel2-rgb));
@@ -75,9 +83,9 @@
   --app-radius-sm: theme("borderRadius.sm");
   --app-radius-md: theme("borderRadius.md");
   --app-radius-lg: theme("borderRadius.lg");
-  --app-font: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
-  --app-soft-shadow: theme("boxShadow.panel");
-  --app-focus-ring: theme("boxShadow.focus");
+  --app-font: "Inter", "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --app-soft-shadow: 0 12px 32px rgba(0,0,0,0.50), 0 2px 6px rgba(0,0,0,0.30);
+  --app-focus-ring: 0 0 0 2px rgb(var(--halbu-primary-rgb) / 0.40);
 }
 
 html,
@@ -90,9 +98,12 @@ body,
 body {
   margin: 0;
   font-family: var(--app-font);
-  font-feature-settings: "cv01" 1, "cv02" 1, "ss03" 1;
+  font-feature-settings: "cv01" 1, "cv02" 1, "ss01" 1, "ss03" 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   background: var(--halbu-bg);
   color: var(--halbu-text);
+  letter-spacing: 0.005em;
 }
 
 /* Light theme stays supported, but the visual identity is tuned for desktop-dark first. */
@@ -141,18 +152,18 @@ body {
 
 [data-bs-theme="dark"] {
   color-scheme: dark;
-  --halbu-bg-rgb: 20 20 20;
-  --halbu-panel-rgb: 27 27 27;
-  --halbu-panel2-rgb: 35 35 35;
-  --halbu-card-rgb: 43 43 43;
-  --halbu-border-rgb: 61 61 61;
-  --halbu-border-strong-rgb: 86 86 86;
-  --halbu-dark-sidebar-rgb: 24 24 24;
-  --halbu-dark-input-rgb: 18 18 18;
-  --halbu-text-rgb: 236 236 236;
-  --halbu-text-muted-rgb: 178 178 178;
-  --halbu-text-dim-rgb: 127 127 127;
-  --halbu-link-rgb: 142 207 240;
+  --halbu-bg-rgb: 13 15 20;
+  --halbu-panel-rgb: 22 26 36;
+  --halbu-panel2-rgb: 30 35 50;
+  --halbu-card-rgb: 36 42 58;
+  --halbu-border-rgb: 50 58 80;
+  --halbu-border-strong-rgb: 68 78 106;
+  --halbu-dark-sidebar-rgb: 10 12 17;
+  --halbu-dark-input-rgb: 16 18 28;
+  --halbu-text-rgb: 242 245 255;
+  --halbu-text-muted-rgb: 205 216 242;
+  --halbu-text-dim-rgb: 135 150 188;
+  --halbu-link-rgb: 108 162 230;
   --bs-body-bg: var(--halbu-bg);
   --bs-body-color: var(--halbu-text);
   --bs-secondary-color: var(--halbu-text-muted);
@@ -203,12 +214,13 @@ body {
 .app-layout__top {
   position: relative;
   z-index: 2;
-  min-height: 2.75rem;
+  min-height: 2.5rem;
   display: flex;
   align-items: center;
-  padding: 0.375rem 0.75rem;
+  padding: 0 1rem;
   background: var(--app-topbar-bg);
   border-bottom: 1px solid var(--bs-border-color);
+  box-shadow: 0 1px 0 rgb(var(--halbu-border-rgb) / 0.6);
 }
 
 .app-layout__body {
@@ -223,8 +235,8 @@ body {
 .app-layout__sidebar {
   min-height: 0;
   background: var(--app-sidebar-bg);
-  border-right: 1px solid var(--bs-border-color);
-  padding: 0.625rem 0.5rem;
+  border-right: 1px solid rgb(var(--halbu-border-rgb) / 0.8);
+  padding: 0.75rem 0.5rem;
 }
 
 .app-layout__content {
@@ -232,7 +244,7 @@ body {
   min-height: 0;
   overflow: auto;
   background: var(--app-content-bg);
-  padding: 0.875rem;
+  padding: 1.25rem 1.5rem;
 }
 
 .app-layout__content > * {
@@ -312,11 +324,11 @@ body {
 /* Forms */
 .form-label,
 .col-form-label {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   line-height: 1.2;
-  letter-spacing: 0.005em;
+  letter-spacing: 0.015em;
   font-weight: 500;
-  color: color-mix(in srgb, var(--halbu-text) 78%, var(--halbu-text-muted));
+  color: rgb(var(--halbu-text-muted-rgb));
   margin-bottom: 0.25rem;
 }
 
@@ -330,20 +342,22 @@ legend {
 }
 
 .form-text {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   color: var(--bs-secondary-color);
+  line-height: 1.5;
 }
 
 .form-control,
 .form-select,
 .input-group-text {
-  min-height: 1.75rem;
+  min-height: 1.875rem;
   background: var(--app-input-bg);
   border-color: var(--app-input-border);
   color: var(--bs-body-color);
-  font-size: 1rem;
+  font-size: 0.8125rem;
   border-radius: var(--app-radius-sm);
-  box-shadow: none;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.25);
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
 }
 
 .form-control::placeholder {
@@ -354,9 +368,10 @@ legend {
 .form-control:focus,
 .form-select:focus {
   background: var(--app-input-bg);
-  border-color: var(--bs-primary);
-  box-shadow: var(--app-focus-ring);
+  border-color: rgb(var(--halbu-primary-rgb) / 0.7);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.25), var(--app-focus-ring);
   color: var(--bs-body-color);
+  outline: none;
 }
 
 .form-control[readonly] {
@@ -396,9 +411,12 @@ legend {
 .btn {
   --bs-btn-font-weight: 600;
   --bs-btn-border-radius: var(--app-radius-sm);
-  min-height: 1.75rem;
+  min-height: 1.875rem;
   line-height: 1;
+  font-size: 0.8125rem;
+  letter-spacing: 0.02em;
   box-shadow: none;
+  transition: background 0.12s ease, border-color 0.12s ease, opacity 0.12s ease;
 }
 
 .btn:hover:not(:disabled),
@@ -546,11 +564,12 @@ h6 {
 .editor-card-title {
   margin: 0;
   margin-bottom: 0.25rem;
-  font-size: 1rem;
+  font-size: 0.6875rem;
   line-height: 1.2;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  color: var(--bs-body-color);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: rgb(var(--halbu-text-muted-rgb));
 }
 
 hr {
@@ -594,23 +613,25 @@ a:hover {
 
 /* Scrollbars */
 ::-webkit-scrollbar {
-  width: 11px;
-  height: 11px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--app-content-bg);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: color-mix(in srgb, var(--bs-border-color) 86%, transparent);
+  background: rgb(var(--halbu-border-strong-rgb) / 0.6);
   border-radius: 999px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: color-mix(in srgb, var(--bs-primary) 40%, var(--bs-border-color));
+  background: rgb(var(--halbu-primary-rgb) / 0.5);
+  border-color: transparent;
+  background-clip: padding-box;
 }
 
 /* Responsive */
@@ -629,6 +650,6 @@ a:hover {
   }
 
   .app-layout__content {
-    padding: 0.625rem;
+    padding: 0.75rem 1rem;
   }
 }

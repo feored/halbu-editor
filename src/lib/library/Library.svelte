@@ -210,7 +210,7 @@
 								{/if}
 							</span>
 						</td>
-						<td>{saveFile.className ?? "-"}</td>
+						<td class="text-halbu-textMuted">{saveFile.className ?? "-"}</td>
 						<td class="font-medium">{saveFile.level ?? "-"}</td>
 						<td>
 							{#if saveFile.hardcore === true}
@@ -221,17 +221,17 @@
 								<span class="text-halbu-textMuted">Unknown</span>
 							{/if}
 						</td>
-						<td
+						<td class="text-halbu-textMuted"
 							>{saveFile.expansionType != null
 								? DISPLAY_EXPANSION_TYPE[saveFile.expansionType]
 								: "-"}</td
 						>
-						<td
+						<td class="text-halbu-textMuted"
 							>{saveFile.gameEdition != null
 								? DISPLAY_GAME_EDITION[saveFile.gameEdition]
 								: "-"}</td
 						>
-						<td class="font-mono">{saveFile.formatId ?? "-"}</td>
+						<td class="font-mono text-halbu-textDim">{saveFile.formatId ?? "-"}</td>
 					</tr>
 				{/each}
 			</tbody>
@@ -268,7 +268,7 @@
 	}
 
 	.library-table thead th {
-		font-size: 0.875rem;
+		font-size: 0.825rem;
 		line-height: 1.2;
 		letter-spacing: 0.005em;
 		font-weight: 500;
@@ -279,7 +279,7 @@
 	}
 
 	.library-table tbody td {
-		padding: 0.75rem 0.5rem;
+		padding: 0.625rem 0.5rem;
 		border-top: 1px solid var(--halbu-border);
 	}
 
@@ -289,6 +289,7 @@
 
 	.library-row {
 		cursor: pointer;
+		font-size: 0.875rem;
 	}
 
 	.library-table tbody tr.library-row:hover > * {

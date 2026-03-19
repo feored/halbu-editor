@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { editorState } from "$lib/editor/editorState.svelte";
+	import Tabs from "$lib/components/ui/Tabs.svelte";
 	import {
 		countActWaypoints,
 		countAllWaypoints,
@@ -33,25 +34,11 @@
 
 <div class="grid gap-2.5">
 	<div class="flex flex-wrap items-stretch justify-between gap-2">
-		<div
-			class="flex min-h-10 w-fit items-center gap-1.5 rounded-sm border border-halbu-border bg-halbu-panel px-1.5 py-1.5"
-		>
-			{#each DIFFICULTY_NAMES as difficulty}
-				<button
-					type="button"
-					class={`rounded-xs border px-3 py-1.5 text-sm font-medium leading-none transition ${
-						activeDifficulty === difficulty
-							? "border-halbu-primary bg-halbu-panel2 text-halbu-text"
-							: "border-halbu-border bg-halbu-panel text-halbu-textMuted hover:bg-halbu-panel2 hover:text-halbu-text"
-					}`}
-					onclick={() => {
-						activeDifficulty = difficulty;
-					}}
-				>
-					{difficulty}
-				</button>
-			{/each}
-		</div>
+		<Tabs
+			tabs={DIFFICULTY_NAMES.map((d) => ({ value: d, label: d }))}
+			active={activeDifficulty}
+			onSelect={(d) => (activeDifficulty = d)}
+		/>
 
 		<div
 			class="flex min-h-10 min-w-56 flex-1 flex-col justify-center rounded-sm border border-halbu-border bg-halbu-panel px-2 py-1.5"
@@ -131,7 +118,7 @@
 							></div>
 						</div>
 
-						<div class="grid gap-0.5">
+						<div class="grid gap-1">
 							{#each save.waypoints[activeDifficulty][act.id].waypoints as waypoint}
 								{@const defaultWaypoint = isDefaultWaypoint(waypoint.id)}
 								<label

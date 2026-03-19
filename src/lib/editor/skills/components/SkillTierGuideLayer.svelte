@@ -42,10 +42,10 @@
 	}
 
 	.skill-tier-label {
-		font-size: 0.75rem;
+		font-size: 0.6875rem;
 		font-weight: 600;
-		letter-spacing: 0.05em;
-		fill: color-mix(in srgb, var(--halbu-text) 42%, transparent);
+		letter-spacing: 0.06em;
+		fill: color-mix(in srgb, var(--halbu-text) 55%, transparent);
 		text-anchor: end;
 	}
 </style>

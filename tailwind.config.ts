@@ -53,16 +53,16 @@ export default {
 			},
 
 			boxShadow: {
-				panel: "0 8px 22px rgba(0,0,0,0.20)",
-				focus: "0 0 0 3px rgb(var(--halbu-primary-rgb) / 0.24)",
+				panel: "0 12px 32px rgba(0,0,0,0.50), 0 2px 6px rgba(0,0,0,0.30)",
+				focus: "0 0 0 2px rgb(var(--halbu-primary-rgb) / 0.40)",
 			},
 
 			borderRadius: {
 				xs: "2px",
-				sm: "4px",
-				md: "6px",
-				lg: "8px",
-				xl: "10px",
+				sm: "3px",
+				md: "4px",
+				lg: "5px",
+				xl: "6px",
 			},
 
 			letterSpacing: {

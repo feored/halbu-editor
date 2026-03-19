@@ -92,7 +92,8 @@
 		return "Passed";
 	});
 	const validationChecksClass = $derived.by(() => {
-		if ((validationError ?? "").length > 0 || hasBlockingValidationIssues) return "text-halbu-danger";
+		if ((validationError ?? "").length > 0 || hasBlockingValidationIssues)
+			return "text-halbu-danger";
 		if (validationPending || hasValidationWarnings) return "text-halbu-warning";
 		return "text-halbu-text";
 	});
@@ -138,7 +139,7 @@
 	const changeCount = $derived(changeReview.totalChanges);
 	const changeGroups = $derived(changeReview.groups);
 	const unsavedChangesClass = $derived(
-		changeCount > 0 ? "text-halbu-info" : "text-halbu-textMuted",
+		changeCount > 0 ? "text-halbu-primary" : "text-halbu-textMuted",
 	);
 	const unsavedChangesLabel = $derived(
 		changeCount === 1 ? "1 unsaved change" : `${changeCount} unsaved changes`,
@@ -351,17 +352,25 @@
 			{/if}
 		{/if}
 		{#if (validationError ?? "").length > 0}
-			<div class="form-text mt-1 text-halbu-danger">Validation check failed: {validationError}</div>
+			<div class="form-text mt-1 text-halbu-danger">
+				Validation check failed: {validationError}
+			</div>
 		{/if}
 		{#if saveIssues.length > 0}
-			<div class="mt-1 overflow-hidden rounded-xs border border-halbu-borderStrong bg-halbu-panel2">
-				<div class="flex items-center justify-between border-b border-halbu-border bg-halbu-panel px-2 py-1">
+			<div
+				class="mt-1 overflow-hidden rounded-xs border border-halbu-borderStrong bg-halbu-panel2"
+			>
+				<div
+					class="flex items-center justify-between border-b border-halbu-border bg-halbu-panel px-2 py-1"
+				>
 					<span class="text-sm font-semibold text-halbu-text">Issues</span>
 					<span class="text-xs text-halbu-textMuted">Validation and compatibility</span>
 				</div>
 				<table class="w-full border-collapse text-sm">
 					<thead>
-						<tr class="border-b border-halbu-border bg-halbu-panel text-halbu-textMuted">
+						<tr
+							class="border-b border-halbu-border bg-halbu-panel text-halbu-textMuted"
+						>
 							<th class="w-24 px-2 py-1 text-left font-medium">Source</th>
 							<th class="w-24 px-2 py-1 text-left font-medium">Severity</th>
 							<th class="px-2 py-1 text-left font-medium">Message</th>
@@ -371,7 +380,9 @@
 						{#each saveIssues as issue}
 							<tr class="border-b border-halbu-border last:border-b-0">
 								<td class="w-24 px-2 py-1 align-top whitespace-nowrap">
-									<span class="inline-flex rounded-xs border border-halbu-border bg-halbu-panel px-1.5 py-0.5 text-xs font-semibold text-halbu-textMuted">
+									<span
+										class="inline-flex rounded-xs border border-halbu-border bg-halbu-panel px-1.5 py-0.5 text-xs font-semibold text-halbu-textMuted"
+									>
 										{issue.source}
 									</span>
 								</td>
@@ -381,8 +392,7 @@
 											issue.blocking
 												? "border-halbu-danger bg-halbu-dangerSoft text-halbu-danger"
 												: "border-halbu-warning bg-halbu-warningSoft text-halbu-warning"
-										}`}
-										>{issue.blocking ? "Blocking" : "Warning"}</span
+										}`}>{issue.blocking ? "Blocking" : "Warning"}</span
 									>
 								</td>
 								<td class="px-2 py-1 align-top text-halbu-text">{issue.message}</td>
@@ -462,9 +472,6 @@
 		<div class="flex flex-wrap items-center gap-1.5">
 			<Button
 				variant="secondary"
-				class={changeCount > 0
-					? "border-halbu-borderStrong bg-halbu-infoSoft text-halbu-info hover:bg-halbu-infoSoft"
-					: ""}
 				onclick={openReviewDialog}
 				disabled={changeCount < 1}
 			>

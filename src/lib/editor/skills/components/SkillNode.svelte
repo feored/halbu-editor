@@ -109,9 +109,9 @@
 		cursor: pointer;
 		overflow: hidden;
 		transition:
-			background-color 0.15s ease,
-			border-color 0.15s ease,
-			box-shadow 0.15s ease;
+			background-color 0.12s ease,
+			border-color 0.12s ease,
+			box-shadow 0.12s ease;
 	}
 
 	.skill-node:focus-visible {
@@ -127,11 +127,12 @@
 	}
 
 	.skill-node__name {
-		font-size: 0.875rem;
+		font-size: 0.8125rem;
 		font-weight: 600;
 		line-height: 1.12;
 		word-break: break-word;
 		flex: 1;
+		color: var(--halbu-text);
 	}
 
 	.skill-node__bottom {
@@ -222,30 +223,30 @@
 	}
 
 	.skill-node--invested {
-		background-color: var(--halbu-panel2);
-		border-color: var(--halbu-primary);
+		background-color: color-mix(in srgb, var(--halbu-primary) 8%, var(--halbu-panel2));
+		border-color: color-mix(in srgb, var(--halbu-primary) 55%, var(--halbu-border));
 		color: var(--bs-body-color);
 	}
 
 	.skill-node--invested .skill-node__points {
-		border-color: var(--halbu-primary);
+		border-color: color-mix(in srgb, var(--halbu-primary) 55%, var(--halbu-border));
 	}
 
 	.skill-node--locked-level {
-		background-color: var(--halbu-panel2);
-		border-color: var(--halbu-warning);
-		color: var(--halbu-text-muted);
+		background-color: color-mix(in srgb, var(--halbu-danger) 5%, var(--halbu-panel2));
+		border-color: color-mix(in srgb, var(--halbu-danger) 45%, var(--halbu-border));
+		color: rgb(var(--halbu-danger-rgb) / 0.75);
 	}
 
 	.skill-node--locked-prereq {
-		background-color: var(--halbu-panel2);
-		border-color: var(--halbu-warning);
-		color: var(--halbu-text-muted);
+		background-color: color-mix(in srgb, var(--halbu-danger) 5%, var(--halbu-panel2));
+		border-color: color-mix(in srgb, var(--halbu-danger) 45%, var(--halbu-border));
+		color: rgb(var(--halbu-danger-rgb) / 0.75);
 	}
 
 	.skill-node--selected {
 		border-color: var(--halbu-primary);
-		background-color: var(--halbu-primary-soft);
-		box-shadow: inset 0 0 0 1px var(--halbu-primary);
+		background-color: color-mix(in srgb, var(--halbu-primary) 16%, var(--halbu-panel2));
+		box-shadow: inset 0 0 0 1px rgb(var(--halbu-primary-rgb) / 0.35);
 	}
 </style>

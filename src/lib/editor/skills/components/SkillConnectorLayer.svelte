@@ -34,14 +34,14 @@
 
 	.skill-connector {
 		fill: none;
-		stroke: color-mix(in srgb, var(--halbu-border-strong) 36%, transparent);
-		stroke-width: 0.95;
+		stroke: color-mix(in srgb, var(--halbu-border-strong) 70%, transparent);
+		stroke-width: 1.1;
 		stroke-linecap: round;
 		stroke-linejoin: round;
 	}
 
 	.skill-connector--selected {
 		stroke: var(--halbu-primary);
-		stroke-width: 1.15;
+		stroke-width: 1.5;
 	}
 </style>
