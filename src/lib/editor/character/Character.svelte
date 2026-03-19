@@ -1,10 +1,7 @@
 <script lang="ts">
 	import { enforceMinMax } from "$lib/utils/actions";
 	import { clampInteger, getMaxValueForBitLength } from "$lib/utils/numbers";
-	import {
-		getSupportedExpansionTypes,
-		isClassSupportedForVersion,
-	} from "$lib/utils/gameData";
+	import { getSupportedExpansionTypes, isClassSupportedForVersion } from "$lib/utils/gameData";
 	import {
 		ACT_LABELS,
 		DIFFICULTY_LABELS,
@@ -13,10 +10,7 @@
 	} from "$lib/editor/editorMetadata";
 
 	import experienceTable from "$lib/editor/character/experience.json";
-	import {
-		formatMapSeedValue,
-		parseMapSeedInput,
-	} from "$lib/editor/character/characterLogic";
+	import { formatMapSeedValue, parseMapSeedInput } from "$lib/editor/character/characterLogic";
 	import {
 		getCharacterDerivedState,
 		setCharacterExperience,
@@ -293,7 +287,6 @@
 			showPointsGameRulesHelp = false;
 		}
 	});
-
 </script>
 
 <div class="grid grid-cols-1 content-start gap-2.5 xl:grid-cols-2">
@@ -301,83 +294,87 @@
 		<section class="rounded-sm border border-halbu-borderStrong bg-halbu-panel2 px-2.5 py-2">
 			<h3 class="editor-card-title mb-1.5">Identity</h3>
 
-			<div class="grid grid-cols-form-32 items-center gap-x-2.5 gap-y-1">
-				<label class="form-label mb-0" for="name">Name</label>
-				<input
-					class="form-control"
-					type="text"
-					id="name"
-					name="name"
-					autocomplete="off"
-					size="15"
-					value={nameEdit.input}
-					onfocus={() => startFieldEdit(nameEdit, save.character.name)}
-					oninput={(event) => setFieldInput(nameEdit, event.currentTarget.value)}
-					onblur={finishNameEdit}
-					onkeydown={handleNameKeydown}
-				/>
+			<div class="grid gap-1">
+				<div class="grid grid-cols-form-32 items-center gap-x-2.5">
+					<label class="form-label mb-0" for="name">Name</label>
+					<input
+						class="form-control"
+						type="text"
+						id="name"
+						name="name"
+						autocomplete="off"
+						size="15"
+						value={nameEdit.input}
+						onfocus={() => startFieldEdit(nameEdit, save.character.name)}
+						oninput={(event) => setFieldInput(nameEdit, event.currentTarget.value)}
+						onblur={finishNameEdit}
+						onkeydown={handleNameKeydown}
+					/>
+				</div>
 
-				<div></div>
-			</div>
+				<ClassSelector {editingVersion} {classSupportWarning} />
 
-			<ClassSelector editingVersion={editingVersion} {classSupportWarning} />
+				<div class="grid grid-cols-form-32 items-center gap-x-2.5">
+					<label class="form-label mb-0" for="expansionType">Expansion</label>
+					<select
+						class="form-select"
+						id="expansionType"
+						name="expansionType"
+						value={save.expansionType}
+						onchange={(event) => setExpansionType(save, event.currentTarget.value)}
+					>
+						{#each supportedExpansionTypes as expansionType}
+							<option value={expansionType}
+								>{EXPANSION_TYPE_LABELS[expansionType]}</option
+							>
+						{/each}
+					</select>
+				</div>
 
-			<div class="mt-1 grid grid-cols-form-32 items-start gap-x-2.5 gap-y-0.5">
-				<label class="form-label mb-0" for="expansionType">Expansion</label>
-				<select
-					class="form-select h-7 w-full py-0"
-					id="expansionType"
-					name="expansionType"
-					value={save.expansionType}
-					onchange={(event) => setExpansionType(save, event.currentTarget.value)}
-				>
-					{#each supportedExpansionTypes as expansionType}
-						<option value={expansionType}>{EXPANSION_TYPE_LABELS[expansionType]}</option>
-					{/each}
-				</select>
-			</div>
+				<div class="grid grid-cols-form-32 items-start gap-x-2.5">
+					<span class="form-label mb-0">Game Flags</span>
+					<div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+						<label class="inline-flex items-center gap-1.5">
+							<input
+								class="form-check-input mt-0"
+								type="checkbox"
+								id="hardcore"
+								name="hardcore"
+								bind:checked={save.character.status.hardcore}
+							/>
+							<span>Hardcore</span>
+						</label>
 
-			<div class="grid grid-cols-form-32 items-start gap-x-2.5 gap-y-0.5">
-				<span class="form-label mb-0">Game Flags</span>
-				<div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-					<label class="inline-flex items-center gap-1.5">
-						<input
-							class="form-check-input mt-0"
-							type="checkbox"
-							id="hardcore"
-							name="hardcore"
-							bind:checked={save.character.status.hardcore}
-						/>
-						<span>Hardcore</span>
-					</label>
+						<label class="inline-flex items-center gap-1.5">
+							<input
+								class="form-check-input mt-0"
+								type="checkbox"
+								id="ladder"
+								name="ladder"
+								bind:checked={save.character.status.ladder}
+							/>
+							<span>Ladder</span>
+						</label>
 
-					<label class="inline-flex items-center gap-1.5">
-						<input
-							class="form-check-input mt-0"
-							type="checkbox"
-							id="ladder"
-							name="ladder"
-							bind:checked={save.character.status.ladder}
-						/>
-						<span>Ladder</span>
-					</label>
-
-					<label class="inline-flex items-center gap-1.5">
-						<input
-							class="form-check-input mt-0"
-							type="checkbox"
-							id="died"
-							name="died"
-							bind:checked={save.character.status.died}
-						/>
-						<span>Died</span>
-					</label>
+						<label class="inline-flex items-center gap-1.5">
+							<input
+								class="form-check-input mt-0"
+								type="checkbox"
+								id="died"
+								name="died"
+								bind:checked={save.character.status.died}
+							/>
+							<span>Died</span>
+						</label>
+					</div>
 				</div>
 			</div>
 		</section>
 
 		{#if progressionValidationWarning.length > 0}
-			<div class="rounded-sm border border-halbu-warning bg-halbu-warningSoft px-2 py-1.5 text-sm text-halbu-warning">
+			<div
+				class="rounded-sm border border-halbu-warning bg-halbu-warningSoft px-2 py-1.5 text-sm text-halbu-warning"
+			>
 				{progressionValidationWarning}
 			</div>
 		{/if}
@@ -600,13 +597,15 @@
 		<AttributesSection />
 
 		<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
-			<div class="mb-1 flex items-center justify-between gap-2">
+			<div class="mb-1.5 flex items-center justify-between gap-2">
 				<h3 class="editor-card-title mb-0">Points</h3>
 				{#if isGameRulesMode}
 					<button
 						type="button"
-						class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-halbu-borderStrong bg-halbu-panel2 text-[11px] font-semibold leading-none text-halbu-textMuted transition hover:bg-halbu-primarySoft hover:text-halbu-text"
-						aria-label={showPointsGameRulesHelp ? "Hide game rules explanation" : "Show game rules explanation"}
+						class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-halbu-borderStrong bg-halbu-panel2 text-2xs font-semibold leading-none text-halbu-textMuted transition hover:bg-halbu-primarySoft hover:text-halbu-text"
+						aria-label={showPointsGameRulesHelp
+							? "Hide game rules explanation"
+							: "Show game rules explanation"}
 						aria-expanded={showPointsGameRulesHelp}
 						onclick={() => {
 							showPointsGameRulesHelp = !showPointsGameRulesHelp;

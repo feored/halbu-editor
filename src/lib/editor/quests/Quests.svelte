@@ -326,11 +326,11 @@
 											isCompletionQuest ? "bg-halbu-panel" : "bg-halbu-panel2"
 										}`}
 									>
-										<h4 class="editor-card-title">
+										<h4 class="editor-card-title mb-1.5">
 											{isCompletionQuest ? "Act Completion" : quest.display}
 										</h4>
 
-										<div class="mt-1 grid gap-0.5">
+										<div class="grid gap-0.5">
 											{#each questFlags as flag}
 												<label
 													class="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-1.5 rounded-xs px-0.5 py-px text-sm text-halbu-text"
@@ -355,7 +355,8 @@
 																flag.id,
 															)}
 													/>
-													<span class="leading-[1.2]">{flag.display}</span
+													<span class="leading-compact"
+														>{flag.display}</span
 													>
 												</label>
 											{/each}
@@ -387,11 +388,11 @@
 											isCompletionQuest ? "bg-halbu-panel" : "bg-halbu-panel2"
 										}`}
 									>
-										<h4 class="editor-card-title">
+										<h4 class="editor-card-title mb-1.5">
 											{isCompletionQuest ? "Act Completion" : quest.display}
 										</h4>
 
-										<div class="mt-1 grid gap-0.5">
+										<div class="grid gap-0.5">
 											{#each quest.states ?? [] as state}
 												<label
 													class="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-1.5 rounded-xs px-0.5 py-px text-sm text-halbu-text"
@@ -419,7 +420,7 @@
 													/>
 													<span class="min-w-0">
 														<span
-															class={`block leading-[1.2] ${
+															class={`block leading-compact ${
 																state.display === "Completed"
 																	? "text-halbu-text"
 																	: "text-halbu-textMuted"

@@ -151,7 +151,7 @@
 										disabled={defaultWaypoint}
 									/>
 									<span class="min-w-0">
-										<span class="block leading-[1.2]">
+										<span class="block leading-compact">
 											{WAYPOINT_NAMES[waypoint.id] ?? waypoint.id}
 										</span>
 										{#if defaultWaypoint}

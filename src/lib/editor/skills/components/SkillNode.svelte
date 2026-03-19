@@ -179,7 +179,7 @@
 		border-radius: var(--app-radius-sm);
 		border: 1px solid var(--halbu-border-strong);
 		background: var(--halbu-panel);
-		color: var(--halbu-textMuted);
+		color: var(--halbu-text-muted);
 		cursor: pointer;
 		user-select: none;
 		transition:
@@ -234,13 +234,13 @@
 	.skill-node--locked-level {
 		background-color: var(--halbu-panel2);
 		border-color: var(--halbu-warning);
-		color: var(--halbu-textMuted);
+		color: var(--halbu-text-muted);
 	}
 
 	.skill-node--locked-prereq {
 		background-color: var(--halbu-panel2);
 		border-color: var(--halbu-warning);
-		color: var(--halbu-textMuted);
+		color: var(--halbu-text-muted);
 	}
 
 	.skill-node--selected {

@@ -107,7 +107,10 @@
 			return "Select a valid class for the current edition/mode.";
 		}
 		if (classDisabled(selectedClass)) {
-			return classDisabledReason(selectedClass);
+			if (getGameRulesClassPrimaryAttributes(selectedClass) == null) {
+				return "Missing class defaults in charstats.txt.";
+			}
+			return "Class is unavailable for the selected edition/mode.";
 		}
 		return "";
 	});
@@ -117,41 +120,13 @@
 		if (selectedVersion == null) {
 			return true;
 		}
-		if (getGameRulesClassPrimaryAttributes(className) == null) {
+		if (!availableClasses.includes(className)) {
 			return true;
 		}
-		if (className === "Warlock") {
-			return !(selectedEdition === "RotW" && selectedExpansionMode === "RotW");
-		}
-		if (
-			(className === "Druid" || className === "Assassin") &&
-			selectedExpansionMode === "Classic"
-		) {
+		if (getGameRulesClassPrimaryAttributes(className) == null) {
 			return true;
 		}
 		return false;
-	}
-
-	function classDisabledReason(className: KnownClassName): string {
-		if (selectedVersion == null) {
-			return "Selected edition is unavailable.";
-		}
-		if (getGameRulesClassPrimaryAttributes(className) == null) {
-			return "Missing class defaults in charstats.txt.";
-		}
-		if (className === "Warlock" && selectedEdition !== "RotW") {
-			return "Warlock requires RotW edition.";
-		}
-		if (className === "Warlock" && selectedExpansionMode !== "RotW") {
-			return "Warlock requires RotW expansion mode.";
-		}
-		if (
-			(className === "Druid" || className === "Assassin") &&
-			selectedExpansionMode === "Classic"
-		) {
-			return "Druid and Assassin require Expansion or RotW mode.";
-		}
-		return "Class is unavailable.";
 	}
 
 	function ensureD2sExtension(path: string): string {

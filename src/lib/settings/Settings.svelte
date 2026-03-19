@@ -8,10 +8,7 @@
 	import { onMount } from "svelte";
 	import { getVersion } from "@tauri-apps/api/app";
 
-	let {
-		parseMode = "lax",
-		onParseModeChange,
-	} = $props();
+	let { parseMode = "lax", onParseModeChange } = $props();
 
 	let appVersion = $state("");
 	let currentSettings = $state({});
@@ -33,10 +30,7 @@
 				directory: true,
 				title: "Set D2R Save Folder",
 			});
-			await Settings.set(
-				Settings.Key.SaveFolder,
-				selectedPath == null ? "" : selectedPath
-			);
+			await Settings.set(Settings.Key.SaveFolder, selectedPath == null ? "" : selectedPath);
 		} catch (err) {
 			await message(getErrorMessage(err, "Failed to set save folder."), {
 				title: "Settings",
@@ -92,7 +86,7 @@
 
 		const backupsPerCharacter = toPositiveInteger(
 			currentSettings[Settings.Key.BackupsPerCharacter],
-			20
+			20,
 		);
 
 		backupAllInProgress = true;
@@ -146,8 +140,12 @@
 	<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
 		<h3 class="editor-card-title mb-1.5">General</h3>
 		<div class="grid gap-2">
-			<fieldset class="grid gap-1">
-				<legend class="form-label mb-0">Theme</legend>
+			<div
+				class="grid gap-1 sm:grid-cols-form-36 sm:items-start sm:gap-x-2.5"
+				role="group"
+				aria-labelledby="theme-label"
+			>
+				<span id="theme-label" class="form-label mb-0 sm:pt-1">Theme</span>
 				<div class="flex flex-wrap gap-1.5">
 					<label
 						for="auto"
@@ -195,7 +193,7 @@
 						<span>Dark theme</span>
 					</label>
 				</div>
-			</fieldset>
+			</div>
 
 			<div class="grid gap-1 sm:grid-cols-form-36 sm:items-center sm:gap-x-2.5">
 				<label class="form-label mb-0" for="parse-mode-setting">Parse mode</label>
@@ -215,8 +213,9 @@
 		</div>
 	</section>
 
-		<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
-			<h3 class="editor-card-title mb-1.5">Paths</h3>
+	<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
+		<h3 class="editor-card-title mb-1.5">Paths</h3>
+		<div class="grid gap-2">
 			<div class="grid gap-1 sm:grid-cols-form-36 sm:items-center sm:gap-x-2.5">
 				<label class="form-label mb-0" for="settings-save-folder">Save folder</label>
 				<div class="grid gap-1.5 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
@@ -231,9 +230,7 @@
 				</div>
 			</div>
 
-			<div
-				class="mt-2 grid gap-1 sm:grid-cols-form-36 sm:items-center sm:gap-x-2.5"
-			>
+			<div class="grid gap-1 sm:grid-cols-form-36 sm:items-center sm:gap-x-2.5">
 				<label class="form-label mb-0" for="settings-backups-enabled">Backups</label>
 				<label
 					for="settings-backups-enabled"
@@ -251,9 +248,7 @@
 				</label>
 			</div>
 
-				<div
-					class="mt-1 grid gap-1 sm:grid-cols-form-36 sm:items-center sm:gap-x-2.5"
-				>
+			<div class="grid gap-1 sm:grid-cols-form-36 sm:items-center sm:gap-x-2.5">
 				<label class="form-label mb-0" for="settings-backups-per-character">
 					Backups per character
 				</label>
@@ -268,20 +263,19 @@
 				/>
 			</div>
 
-			<div
-				class="mt-1.5 grid gap-1.5 sm:grid-cols-form-36 sm:items-center sm:gap-x-2.5"
-			>
+			<div class="grid gap-1 sm:grid-cols-form-36 sm:items-center sm:gap-x-2.5">
 				<div></div>
 				<div class="flex flex-wrap gap-1.5">
-					<Button variant="secondary" onclick={openBackupFolder}>Open Back Up Folder</Button>
+					<Button variant="secondary" onclick={openBackupFolder}
+						>Open Back Up Folder</Button
+					>
 					<Button onclick={backupAllDetectedSaves} disabled={backupAllInProgress}>
-						{backupAllInProgress
-							? "Backing Up..."
-							: "Back Up All Detected Saves"}
+						{backupAllInProgress ? "Backing Up..." : "Back Up All Detected Saves"}
 					</Button>
 				</div>
 			</div>
-		</section>
+		</div>
+	</section>
 
 	<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
 		<h3 class="editor-card-title mb-1.5">Quests</h3>
@@ -302,8 +296,8 @@
 					<span>Advanced editing mode</span>
 				</span>
 				<span class="form-text m-0 pl-6">
-					Allows editing quest flags manually. Not recommended unless you know what you are
-					doing.
+					Allows editing quest flags manually. Not recommended unless you know what you
+					are doing.
 				</span>
 			</label>
 
@@ -346,8 +340,8 @@
 					<span>Quest display: show prologue</span>
 				</span>
 				<span class="form-text m-0 pl-6">
-					The prologue is the first quest of each act and controls act introduction flags for
-					certain NPCs.
+					The prologue is the first quest of each act and controls act introduction flags
+					for certain NPCs.
 				</span>
 			</label>
 		</div>

@@ -1,7 +1,9 @@
 import { invoke } from "@tauri-apps/api/core";
+import { message } from "@tauri-apps/plugin-dialog";
 
 import { isUnknownSaveFormat } from "$lib/utils/gameData";
 import { getErrorMessage } from "$lib/utils/errorMessage";
+import { toBackendSave } from "$lib/types/converters";
 
 import {
 	createOpenEditorSession,
@@ -11,14 +13,19 @@ import {
 } from "$lib/editor/editorSession";
 import { projectGameRulesDerivedValues } from "$lib/editor/character/gameRules";
 import {
-	analyzeSave,
 	saveCharacterFile,
 	type SaveCharacterResult,
 	type SaveCharacterOptions,
 } from "$lib/editor/save/saveWorkflow";
 
-import type { OutputFormatOption, ParseMode } from "$lib/types/backend";
-import type { EditorMode, SaveLayoutVersion } from "$lib/types/editor";
+import type {
+	CompatibilityIssue,
+	OutputFormatOption,
+	ParseMode,
+	ValidationReport,
+	BackendEditorSave,
+} from "$lib/types/backend";
+import type { EditorMode, EditorSave, SaveLayoutVersion } from "$lib/types/editor";
 
 function getLayoutVersion(version: number): SaveLayoutVersion | null {
 	if (version === 99 || version === 105) {
@@ -27,6 +34,28 @@ function getLayoutVersion(version: number): SaveLayoutVersion | null {
 
 	return null;
 }
+
+type SaveDecision =
+	| {
+			status: "blocked";
+			kind: "warning" | "error" | "info";
+			message: string;
+			throwAfterMessage: boolean;
+	  }
+	| {
+			status: "ready";
+			targetVersion: SaveLayoutVersion;
+			sourceLayoutVersion: SaveLayoutVersion | null;
+			saveAs: boolean;
+			forceConvert: boolean;
+	  };
+
+type SaveAnalysisResult = {
+	validationReport: ValidationReport;
+	validationError: string | null;
+	compatibilityIssues: CompatibilityIssue[];
+	compatibilityError: string | null;
+};
 
 type EditorState = {
 	readonly session: EditorSession | null;
@@ -54,11 +83,179 @@ type EditorState = {
 	save: (input?: SaveCharacterOptions) => Promise<SaveCharacterResult | null>;
 };
 
+function getSaveDecision(
+	session: EditorSession,
+	input: SaveCharacterOptions,
+	analyzedTargetVersion: SaveLayoutVersion | null,
+): SaveDecision {
+	const saveAs = input.saveAs === true || input.forceConvert === true;
+	const forceConvert = input.forceConvert === true;
+	const targetVersion = getEffectiveTargetVersion(session, input.targetVersion);
+	const isUnknownFormat = session.save.metadata.formatId.startsWith("Unknown(");
+	const sourceLayoutVersion = isUnknownFormat ? session.parserLayoutVersion : null;
+	const compatibilityResultsCurrent =
+		session.compatibilityResultsAreCurrent && analyzedTargetVersion === targetVersion;
+
+	if (isUnknownFormat && targetVersion == null) {
+		return {
+			status: "blocked",
+			kind: "warning",
+			message:
+				session.suggestedTargetVersion == null
+					? "This save uses an unknown source format. Select an output format (v99 or v105) in Conversion before saving."
+					: `This save uses an unknown source format. Suggested target is v${session.suggestedTargetVersion}. Confirm or change it in Conversion before saving.`,
+			throwAfterMessage: false,
+		};
+	}
+
+	if (targetVersion == null) {
+		return {
+			status: "blocked",
+			kind: "warning",
+			message: "No compatible output format was selected for this save. Choose v99 or v105.",
+			throwAfterMessage: false,
+		};
+	}
+
+	if (session.validationError != null) {
+		return {
+			status: "blocked",
+			kind: "error",
+			message: session.validationError,
+			throwAfterMessage: true,
+		};
+	}
+
+	const blockingValidationIssues = session.validationReport.issues.filter((issue) => issue.blocking);
+	if (blockingValidationIssues.length > 0) {
+		const details = blockingValidationIssues.map((issue) => `- ${issue.message}`).join("\n");
+		return {
+			status: "blocked",
+			kind: "warning",
+			message: `Cannot save because of blocking validation issues:\n${details}`,
+			throwAfterMessage: false,
+		};
+	}
+
+	if (session.compatibilityError != null) {
+		return {
+			status: "blocked",
+			kind: "error",
+			message: session.compatibilityError,
+			throwAfterMessage: true,
+		};
+	}
+
+	if (!compatibilityResultsCurrent) {
+		return {
+			status: "blocked",
+			kind: "warning",
+			message: "Compatibility check is not current for the selected output format.",
+			throwAfterMessage: false,
+		};
+	}
+
+	const blockingCompatibilityIssues = session.compatibilityIssues.filter((issue) => issue.blocking);
+	if (blockingCompatibilityIssues.length > 0 && !forceConvert) {
+		const details = blockingCompatibilityIssues.map((issue) => `- ${issue.message}`).join("\n");
+		return {
+			status: "blocked",
+			kind: "warning",
+			message: `Cannot save to v${targetVersion} because of blocking compatibility issues:\n${details}`,
+			throwAfterMessage: false,
+		};
+	}
+
+	if (forceConvert && blockingCompatibilityIssues.length === 0) {
+		return {
+			status: "blocked",
+			kind: "info",
+			message: "Blocking issues are no longer present. Use normal Save As.",
+			throwAfterMessage: false,
+		};
+	}
+
+	return {
+		status: "ready",
+		targetVersion,
+		sourceLayoutVersion,
+		saveAs,
+		forceConvert,
+	};
+}
+
+function getEffectiveTargetVersion(
+	session: EditorSession,
+	requestedTargetVersion?: SaveLayoutVersion | null,
+): SaveLayoutVersion | null {
+	if (requestedTargetVersion === 99 || requestedTargetVersion === 105) {
+		return requestedTargetVersion;
+	}
+
+	if (session.targetVersion === 99 || session.targetVersion === 105) {
+		return session.targetVersion;
+	}
+
+	if (session.save.version === 99 || session.save.version === 105) {
+		return session.save.version;
+	}
+
+	return null;
+}
+
+async function analyzeSave(
+	save: EditorSave,
+	targetVersion: SaveLayoutVersion | null,
+	sourceLayoutVersion: SaveLayoutVersion | null,
+	sourceBackendSave: BackendEditorSave,
+): Promise<SaveAnalysisResult> {
+	const backendSave = toBackendSave(sourceBackendSave, save, sourceLayoutVersion);
+	const validationPromise = invoke<ValidationReport>("validate_save", {
+		save: backendSave,
+	}).then(
+		(report) => ({ ok: true as const, report }),
+		(error) => ({ ok: false as const, error }),
+	);
+
+	const compatibilityPromise =
+		targetVersion == null
+			? Promise.resolve(null)
+			: invoke<CompatibilityIssue[]>("check_save_compatibility", {
+					save: backendSave,
+					targetVersion,
+				}).then(
+					(issues) => ({ ok: true as const, issues }),
+					(error) => ({ ok: false as const, error }),
+				);
+
+	const [validationResult, compatibilityResult] = await Promise.all([
+		validationPromise,
+		compatibilityPromise,
+	]);
+
+	return {
+		validationReport:
+			validationResult.ok === true ? validationResult.report : { issues: [] },
+		validationError:
+			validationResult.ok === true
+				? null
+				: getErrorMessage(validationResult.error, "Validation check failed."),
+		compatibilityIssues:
+			compatibilityResult?.ok === true ? compatibilityResult.issues : [],
+		compatibilityError:
+			compatibilityResult == null || compatibilityResult.ok === true
+				? null
+				: getErrorMessage(compatibilityResult.error, "Compatibility check failed."),
+	};
+}
+
 function createEditorState(): EditorState {
 	let session = $state<EditorSession | null>(null);
 	let outputFormatOptions = $state<OutputFormatOption[]>([]);
 	let parseMode = $state<ParseMode>("lax");
 	let analysisRevision = 0;
+	let saveInProgress = false;
+	let analyzedTargetVersion: SaveLayoutVersion | null = null;
 
 	const hasOpenSession = $derived(session != null);
 
@@ -224,17 +421,19 @@ function createEditorState(): EditorState {
 		session.advancedSaveOptionsEnabled = enabled;
 	}
 
-	async function refreshAnalysis(): Promise<void> {
+	async function refreshSaveAnalysis(requestedTargetVersion?: SaveLayoutVersion | null): Promise<void> {
 		if (session == null) {
 			return;
 		}
 
 		const requestSession = session;
 		const requestRevision = ++analysisRevision;
+		const targetVersion = getEffectiveTargetVersion(session, requestedTargetVersion);
+		analyzedTargetVersion = targetVersion;
 		const request = {
 			save: $state.snapshot(session.save),
 			sourceBackendSave: $state.snapshot(session.sourceBackendSave),
-			targetVersion: session.targetVersion,
+			targetVersion,
 			sourceLayoutVersion: isUnknownFormat ? session.parserLayoutVersion : null,
 		};
 
@@ -279,10 +478,12 @@ function createEditorState(): EditorState {
 			session.compatibilityIssues = analysis.compatibilityIssues;
 			session.compatibilityError = null;
 			session.compatibilityResultsAreCurrent = true;
+			analyzedTargetVersion = request.targetVersion;
 		} else {
 			session.compatibilityIssues = [];
 			session.compatibilityError = analysis.compatibilityError;
 			session.compatibilityResultsAreCurrent = false;
+			analyzedTargetVersion = request.targetVersion;
 		}
 		session.compatibilityPending = false;
 	}
@@ -292,38 +493,53 @@ function createEditorState(): EditorState {
 			return null;
 		}
 
-		await refreshAnalysis();
+		saveInProgress = true;
+		try {
+			await refreshSaveAnalysis(input.targetVersion);
 
-		if (session == null) {
-			return null;
+			const currentSession = session;
+			if (currentSession == null) {
+				return null;
+			}
+
+			const saveDecision = getSaveDecision(currentSession, input, analyzedTargetVersion);
+			if (saveDecision.status === "blocked") {
+				await message(saveDecision.message, {
+					title: saveDecision.kind === "info" ? "Force save not needed" : "Save blocked",
+					kind: saveDecision.kind,
+				});
+				if (saveDecision.throwAfterMessage) {
+					throw new Error(saveDecision.message);
+				}
+				return null;
+			}
+
+			const result = await saveCharacterFile({
+				save: currentSession.save,
+				sourceBackendSave: currentSession.sourceBackendSave,
+				sourceLayoutVersion: saveDecision.sourceLayoutVersion,
+				targetVersion: saveDecision.targetVersion,
+				sourcePath: currentSession.sourcePath,
+				saveAs: saveDecision.saveAs,
+				forceConvert: saveDecision.forceConvert,
+			});
+
+			if (result == null || session !== currentSession) {
+				return null;
+			}
+
+			currentSession.save.version = saveDecision.targetVersion;
+			currentSession.save.metadata.formatId =
+				saveDecision.targetVersion === 99 ? "V99" : "V105";
+			currentSession.sourceBackendSave = result.updatedBackendSave;
+			currentSession.sourcePath = result.filePath;
+			currentSession.baselineSave = $state.snapshot(currentSession.save);
+			currentSession.lastSaveUsedForceConversion = result.forceConvertUsed;
+			currentSession.saveRevision += 1;
+			return result;
+		} finally {
+			saveInProgress = false;
 		}
-
-		const result = await saveCharacterFile({
-			save: session.save,
-			sourceBackendSave: session.sourceBackendSave,
-			parserLayoutVersion: session.parserLayoutVersion,
-			selectedTargetVersion: session.targetVersion,
-			suggestedTargetVersion: session.suggestedTargetVersion,
-			sourcePath: session.sourcePath,
-			input,
-		});
-
-		if (result == null || session == null) {
-			return null;
-		}
-
-		if (targetVersion == null) {
-			return null;
-		}
-
-		session.save.version = targetVersion;
-		session.save.metadata.formatId = targetVersion === 99 ? "V99" : "V105";
-		session.sourceBackendSave = result.updatedBackendSave;
-		session.sourcePath = result.filePath;
-		session.baselineSave = $state.snapshot(session.save);
-		session.lastSaveUsedForceConversion = result.forceConvertUsed;
-		session.saveRevision += 1;
-		return result;
 	}
 
 	$effect.root(() => {
@@ -334,11 +550,11 @@ function createEditorState(): EditorState {
 			void session?.parserLayoutVersion;
 			void isUnknownFormat;
 
-			if (session == null) {
+			if (session == null || saveInProgress) {
 				return;
 			}
 
-			void refreshAnalysis();
+			void refreshSaveAnalysis();
 		});
 	});
 

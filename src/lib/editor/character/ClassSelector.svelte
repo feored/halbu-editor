@@ -10,8 +10,10 @@
 	import type { BackendEditorSave } from "$lib/types/backend";
 	import type { ClassName } from "$lib/types/editor";
 
-	let { editingVersion, classSupportWarning }: { editingVersion: number; classSupportWarning: string } =
-		$props();
+	let {
+		editingVersion,
+		classSupportWarning,
+	}: { editingVersion: number; classSupportWarning: string } = $props();
 
 	const session = $derived(editorState.session!);
 	const save = $derived(session.save);
@@ -49,7 +51,7 @@
 	});
 </script>
 
-<div class="mt-1 grid grid-cols-form-32 items-center gap-x-2.5">
+<div class="grid grid-cols-form-32 items-center gap-x-2.5">
 	<label class="form-label mb-0" for="class">Class</label>
 
 	{#if selectedClass != null}

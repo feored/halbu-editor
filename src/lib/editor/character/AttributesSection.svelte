@@ -32,13 +32,13 @@
 		getGameRulesClassPrimaryAttributes(save.character.className),
 	);
 
-	function getAvailableStatPoints(): number {
+	function getAvailableStatPoints(): number | null {
 		if (!isGameRulesMode) {
 			return save.attributes.statpts.value;
 		}
 
 		if (effectiveDerivedValues == null || !("statpts" in effectiveDerivedValues)) {
-			return 0;
+			return null;
 		}
 
 		return Math.max(0, effectiveDerivedValues.statpts);
@@ -53,6 +53,11 @@
 	}
 
 	function canDecreasePrimaryAttribute(attributeId: PrimaryAttributeId): boolean {
+		const availableStatPoints = getAvailableStatPoints();
+		if (isGameRulesMode && availableStatPoints == null) {
+			return false;
+		}
+
 		return save.attributes[attributeId].value > getPrimaryAttributeMinimum(attributeId);
 	}
 
@@ -64,7 +69,8 @@
 			return false;
 		}
 
-		if (isGameRulesMode && getAvailableStatPoints() < 1) {
+		const availableStatPoints = getAvailableStatPoints();
+		if (isGameRulesMode && (availableStatPoints == null || availableStatPoints < 1)) {
 			return false;
 		}
 
@@ -75,11 +81,16 @@
 		const nextValue = save.attributes[attributeId].value + delta;
 
 		if (isGameRulesMode) {
+			const availableStatPoints = getAvailableStatPoints();
+			if (availableStatPoints == null) {
+				return;
+			}
+
 			setPrimaryAttributeValueInGameRulesMode(
 				save,
 				attributeId,
 				nextValue,
-				getAvailableStatPoints(),
+				availableStatPoints,
 				getPrimaryAttributeMinimum(attributeId),
 			);
 			return;
@@ -98,11 +109,16 @@
 		}
 
 		if (isGameRulesMode) {
+			const availableStatPoints = getAvailableStatPoints();
+			if (availableStatPoints == null) {
+				return;
+			}
+
 			setPrimaryAttributeValueInGameRulesMode(
 				save,
 				attributeId,
 				parsedValue,
-				getAvailableStatPoints(),
+				availableStatPoints,
 				getPrimaryAttributeMinimum(attributeId),
 			);
 			return;
@@ -119,12 +135,12 @@
 </script>
 
 <section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
-	<div class="mb-1 flex items-center justify-between gap-2">
+	<div class="mb-1.5 flex items-center justify-between gap-2">
 		<h3 class="editor-card-title mb-0">Attributes</h3>
 		{#if isGameRulesMode}
 			<button
 				type="button"
-				class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-halbu-borderStrong bg-halbu-panel2 text-[11px] font-semibold leading-none text-halbu-textMuted transition hover:bg-halbu-primarySoft hover:text-halbu-text"
+				class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-halbu-borderStrong bg-halbu-panel2 text-2xs font-semibold leading-none text-halbu-textMuted transition hover:bg-halbu-primarySoft hover:text-halbu-text"
 				aria-label={showGameRulesHelp
 					? "Hide game rules explanation"
 					: "Show game rules explanation"}

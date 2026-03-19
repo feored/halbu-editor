@@ -54,7 +54,7 @@ export default {
 
 			boxShadow: {
 				panel: "0 8px 22px rgba(0,0,0,0.20)",
-				focus: "0 0 0 3px rgba(46,163,230,0.24)",
+				focus: "0 0 0 3px rgb(var(--halbu-primary-rgb) / 0.24)",
 			},
 
 			borderRadius: {
@@ -63,7 +63,18 @@ export default {
 				md: "6px",
 				lg: "8px",
 				xl: "10px",
-				xl2: "8px",
+			},
+
+			letterSpacing: {
+				label: "0.02em",
+			},
+
+			lineHeight: {
+				compact: "1.2",
+			},
+
+			fontSize: {
+				"2xs": ["0.6875rem", { lineHeight: "1.4" }],
 			},
 
 			gridTemplateColumns: {

@@ -44,7 +44,7 @@
 <nav class="sidebar-nav flex h-full min-h-0 flex-col">
 	<div class="sidebar-nav__library mb-2 border-b border-halbu-border pb-2">
 		<h1
-			class="sidebar-nav__title m-0 px-1.5 py-0.5 text-xs font-semibold tracking-[0.02em] text-halbu-textDim"
+			class="sidebar-nav__title m-0 px-1.5 py-0.5 text-xs font-semibold tracking-label text-halbu-textDim"
 		>
 			CHARACTERS
 		</h1>
@@ -80,13 +80,13 @@
 		<div class="sidebar-nav__main flex min-h-0 flex-col gap-2">
 			{#if title.length > 0}
 				<h1
-					class="sidebar-nav__title m-0 px-1.5 py-0.5 text-xs font-semibold tracking-[0.02em] text-halbu-textDim"
+					class="sidebar-nav__title m-0 px-1.5 py-0.5 text-xs font-semibold tracking-label text-halbu-textDim"
 				>
 					{title}
 				</h1>
 			{:else}
 				<h1
-					class="sidebar-nav__title m-0 px-1.5 py-0.5 text-xs font-semibold tracking-[0.02em] text-halbu-textDim"
+					class="sidebar-nav__title m-0 px-1.5 py-0.5 text-xs font-semibold tracking-label text-halbu-textDim"
 				>
 					SECTIONS
 				</h1>
@@ -97,7 +97,7 @@
 					{#if item.dividerBefore === true}
 						<li class="mt-1.5 border-t border-halbu-border pt-1.5">
 							<h2
-								class="sidebar-nav__title m-0 px-1.5 py-0.5 text-xs font-semibold tracking-[0.02em] text-halbu-textDim"
+								class="sidebar-nav__title m-0 px-1.5 py-0.5 text-xs font-semibold tracking-label text-halbu-textDim"
 							>
 								OVERVIEW
 							</h2>
@@ -110,8 +110,10 @@
 								"w-full justify-start rounded-none border-l-2 border-l-transparent px-2 py-1.5 text-sm hover:bg-halbu-panel2 hover:text-halbu-text",
 								activeId === item.id &&
 									"bg-halbu-panel2 border-l-halbu-primary text-halbu-text",
-								item.saveStatus === "blocked" && "text-halbu-danger hover:text-halbu-danger",
-								item.saveStatus === "warning" && "text-halbu-warning hover:text-halbu-warning",
+								item.saveStatus === "blocked" &&
+									"text-halbu-danger hover:text-halbu-danger",
+								item.saveStatus === "warning" &&
+									"text-halbu-warning hover:text-halbu-warning",
 							)}
 							disabled={item.disabled === true}
 							onclick={() => onSelect(item.id)}
