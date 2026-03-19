@@ -11,7 +11,10 @@ import {
 	type EditorSession,
 	type OpenedSessionData,
 } from "$lib/editor/editorSession";
-import { projectGameRulesDerivedValues } from "$lib/editor/character/gameRules";
+import {
+	applyProjectedGameRulesValues,
+	projectGameRulesDerivedValues,
+} from "$lib/editor/character/gameRules";
 import {
 	saveCharacterFile,
 	type SaveCharacterResult,
@@ -355,8 +358,9 @@ function createEditorState(): EditorState {
 		}
 
 		try {
+			const baselineSave = session.gameRulesBaselineSave ?? null;
 			return {
-				values: projectGameRulesDerivedValues(session.save).values,
+				values: projectGameRulesDerivedValues(session.save, baselineSave).values,
 				error: "",
 			};
 		} catch (error) {
@@ -400,6 +404,16 @@ function createEditorState(): EditorState {
 	function setMode(nextMode: EditorMode): void {
 		if (session == null) {
 			return;
+		}
+
+		if (nextMode === session.mode) {
+			return;
+		}
+
+		if (nextMode === "game-rules") {
+			session.gameRulesBaselineSave = $state.snapshot(session.save);
+		} else {
+			session.gameRulesBaselineSave = null;
 		}
 
 		session.mode = nextMode;
@@ -495,6 +509,14 @@ function createEditorState(): EditorState {
 
 		saveInProgress = true;
 		try {
+			if (session.mode === "game-rules") {
+				const projection = projectGameRulesDerivedValues(
+					session.save,
+					session.gameRulesBaselineSave ?? null,
+				);
+				applyProjectedGameRulesValues(session.save, projection.values);
+			}
+
 			await refreshSaveAnalysis(input.targetVersion);
 
 			const currentSession = session;

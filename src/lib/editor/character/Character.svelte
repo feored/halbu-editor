@@ -331,6 +331,7 @@
 								type="checkbox"
 								id="hardcore"
 								name="hardcore"
+								autocomplete="off"
 								bind:checked={save.character.status.hardcore}
 							/>
 							<span>Hardcore</span>
@@ -342,6 +343,7 @@
 								type="checkbox"
 								id="ladder"
 								name="ladder"
+								autocomplete="off"
 								bind:checked={save.character.status.ladder}
 							/>
 							<span>Ladder</span>
@@ -353,6 +355,7 @@
 								type="checkbox"
 								id="died"
 								name="died"
+								autocomplete="off"
 								bind:checked={save.character.status.died}
 							/>
 							<span>Died</span>
@@ -376,6 +379,7 @@
 							type="number"
 							name="level"
 							id="level"
+							autocomplete="off"
 							min="1"
 							max="99"
 							step="1"
@@ -437,6 +441,7 @@
 							type="number"
 							name="experience"
 							id="experience"
+							autocomplete="off"
 							min="0"
 							max={MAX_XP}
 							step="1"
@@ -475,6 +480,7 @@
 							type="text"
 							name="title"
 							id="title"
+							autocomplete="off"
 							value={title}
 							readonly
 						/>
@@ -496,6 +502,7 @@
 					type="number"
 					name="goldInventory"
 					id="goldInventory"
+					autocomplete="off"
 					min="0"
 					max={MAX_GOLD_PER_LEVEL * clampInteger(save.character.level, 1, 99)}
 					step="1"
@@ -509,6 +516,7 @@
 					type="number"
 					name="goldStash"
 					id="goldStash"
+					autocomplete="off"
 					min="0"
 					max="2500000"
 					step="1"
@@ -559,6 +567,7 @@
 					type="text"
 					name="mapSeed"
 					id="mapSeed"
+					autocomplete="off"
 					placeholder="123456789 or 0x075BCD15"
 					bind:this={mapSeedInput}
 					value={mapSeedEdit.input}
@@ -635,6 +644,7 @@
 									type="number"
 									name={field.inputId}
 									id={field.inputId}
+									autocomplete="off"
 									value={isGameRulesMode && effectiveDerivedValues != null
 										? effectiveDerivedValues[field.id]
 										: save.attributes[field.id].value}
@@ -647,6 +657,7 @@
 									type="number"
 									name={field.inputId}
 									id={field.inputId}
+									autocomplete="off"
 									min="0"
 									max={getMaxValueForBitLength(
 										save.attributes[field.id].bitLength,

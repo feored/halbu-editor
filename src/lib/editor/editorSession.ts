@@ -12,6 +12,7 @@ import { resizeSkillSlots } from "$lib/editor/skills/skillsSlots";
 export type EditorSession = {
 	save: EditorSave;
 	sourceBackendSave: BackendEditorSave;
+	gameRulesBaselineSave: EditorSave | null;
 
 	parseIssueCount: number;
 	parseIssues: ParseIssue[];
@@ -97,6 +98,7 @@ export function createOpenEditorSession(openedSessionData: OpenedSessionData): E
 	return {
 		save: normalizedSave,
 		sourceBackendSave: openedSessionData.sourceBackendSave,
+		gameRulesBaselineSave: null,
 
 		parseIssueCount: openedSessionData.parseIssueCount,
 		parseIssues: openedSessionData.parseIssues,
@@ -131,6 +133,7 @@ export function createOpenEditorSession(openedSessionData: OpenedSessionData): E
 
 export function restoreBaselineSave(session: EditorSession): void {
 	session.save = structuredClone(session.baselineSave);
+	session.gameRulesBaselineSave = $state.snapshot(session.save);
 	session.compatibilityIssues = [];
 	session.compatibilityPending = false;
 	session.compatibilityError = null;

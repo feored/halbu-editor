@@ -1,20 +1,9 @@
 <script lang="ts">
-import { message } from "@tauri-apps/plugin-dialog";
-import ConfirmDialog from "$lib/components/ConfirmDialog.svelte";
-import Tabs from "$lib/components/ui/Tabs.svelte";
-import { getSaveEditionLabel, isUnknownSaveFormat } from "$lib/utils/gameData";
-	import { getErrorMessage } from "$lib/utils/errorMessage";
-	import {
-		applyProjectedGameRulesValues,
-		projectGameRulesDerivedValues,
-	} from "$lib/editor/character/gameRules";
+	import Tabs from "$lib/components/ui/Tabs.svelte";
+	import { getSaveEditionLabel, isUnknownSaveFormat } from "$lib/utils/gameData";
 	import { editorState } from "$lib/editor/editorState.svelte";
 
 	import type { EditorMode } from "$lib/types/editor";
-
-	let gameRulesConfirmOpen = $state(false);
-	let gameRulesConfirmDetailItems = $state<string[]>([]);
-	let gameRulesConfirmResolve = $state<((confirmed: boolean) => void) | null>(null);
 
 	const session = $derived(editorState.session!);
 	const save = $derived(session.save);
@@ -38,58 +27,12 @@ import { getSaveEditionLabel, isUnknownSaveFormat } from "$lib/utils/gameData";
 		{ value: "game-rules" as const, label: "Game rules", title: gameRulesModeTooltipText },
 	];
 
-	function openGameRulesConfirm(detailItems: string[]): Promise<boolean> {
-		gameRulesConfirmDetailItems = detailItems;
-		gameRulesConfirmOpen = true;
-
-		return new Promise((resolve) => {
-			gameRulesConfirmResolve = resolve;
-		});
-	}
-
-	function closeGameRulesConfirm(confirmed: boolean): void {
-		gameRulesConfirmOpen = false;
-
-		if (gameRulesConfirmResolve != null) {
-			gameRulesConfirmResolve(confirmed);
-			gameRulesConfirmResolve = null;
-		}
-	}
-
-	async function handleEditorModeChange(nextMode: EditorMode): Promise<void> {
+	function handleEditorModeChange(nextMode: EditorMode): void {
 		if (nextMode === mode) {
 			return;
 		}
 
-		if (nextMode === "raw") {
-			editorState.setMode("raw");
-			return;
-		}
-
-		let projection: ReturnType<typeof projectGameRulesDerivedValues>;
-		try {
-			projection = projectGameRulesDerivedValues(save);
-		} catch (error) {
-			await message(getErrorMessage(error, "Unable to recalculate game rules values."), {
-				title: "Mode switch blocked",
-				kind: "warning",
-			});
-			return;
-		}
-
-		const detailItems = projection.changes.map(
-			(change) => `${change.label}: ${change.fromDisplay} -> ${change.toDisplay}`,
-		);
-
-		if (detailItems.length > 0) {
-			const confirmed = await openGameRulesConfirm(detailItems);
-			if (!confirmed) {
-				return;
-			}
-		}
-
-		applyProjectedGameRulesValues(save, projection.values);
-		editorState.setMode("game-rules");
+		editorState.setMode(nextMode);
 	}
 </script>
 
@@ -112,14 +55,3 @@ import { getSaveEditionLabel, isUnknownSaveFormat } from "$lib/utils/gameData";
 		<Tabs tabs={modeTabs} active={mode} onSelect={handleEditorModeChange} />
 	</div>
 </div>
-
-<ConfirmDialog
-	open={gameRulesConfirmOpen}
-	title="Switch to Game rules mode?"
-	message="Game rules mode recalculates life, mana, stamina, and remaining stat/skill points."
-	detailItems={gameRulesConfirmDetailItems}
-	confirmLabel="Switch mode"
-	cancelLabel="Cancel"
-	onConfirm={() => closeGameRulesConfirm(true)}
-	onCancel={() => closeGameRulesConfirm(false)}
-/>

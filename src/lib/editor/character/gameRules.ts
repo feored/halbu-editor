@@ -1,8 +1,10 @@
 import charstats from "../../../res/charstats.json";
 import type {
+	Act,
 	Attribute,
 	AttributeMap,
 	ClassName,
+	Difficulty,
 	EditorSave,
 	KnownClassName,
 	QuestId,
@@ -16,7 +18,6 @@ import {
 } from "$lib/utils/numbers";
 import {
 	applyQuestRewards as applyQuestRewardBonuses,
-	isQuestCompleted,
 } from "$lib/editor/quests/questsLogic";
 
 const DERIVED_RESOURCES = [
@@ -142,7 +143,7 @@ function addQuestRewards(save: EditorSave, attributes: AttributeMap): void {
 	for (const difficultyQuests of Object.values(save.quests)) {
 		for (const [actId, actQuests] of Object.entries(difficultyQuests)) {
 			for (const [questId, quest] of Object.entries(actQuests)) {
-				if (!isQuestCompleted(quest.flags)) {
+				if (!quest.flags.includes("RewardGranted")) {
 					continue;
 				}
 
@@ -152,6 +153,33 @@ function addQuestRewards(save: EditorSave, attributes: AttributeMap): void {
 					questId as QuestId,
 					true,
 				);
+			}
+		}
+	}
+}
+
+function addQuestRewardDelta(
+	save: EditorSave,
+	baselineSave: EditorSave,
+	attributes: AttributeMap,
+): void {
+	for (const difficulty of Object.keys(save.quests) as Difficulty[]) {
+		const currentDifficultyQuests = save.quests[difficulty];
+		const baselineDifficultyQuests = baselineSave.quests[difficulty];
+
+		for (const act of Object.keys(currentDifficultyQuests) as Act[]) {
+			const currentActQuests = currentDifficultyQuests[act];
+			const baselineActQuests = baselineDifficultyQuests[act];
+
+			for (const questId of Object.keys(currentActQuests) as QuestId[]) {
+				const currentGranted = currentActQuests[questId].flags.includes("RewardGranted");
+				const baselineGranted = baselineActQuests[questId].flags.includes("RewardGranted");
+
+				if (currentGranted === baselineGranted) {
+					continue;
+				}
+
+				applyQuestRewardBonuses(attributes, act, questId, currentGranted);
 			}
 		}
 	}
@@ -231,61 +259,129 @@ export function getGameRulesClassPrimaryAttributes(
 	};
 }
 
-export function projectGameRulesDerivedValues(save: EditorSave): GameRules {
+export function projectGameRulesDerivedValues(
+	save: EditorSave,
+	baselineSave: EditorSave | null = null,
+): GameRules {
 	const stats = requireCharstats(save.character.className);
-	const attributes = copyAttributes(save.attributes);
+	const attributes = baselineSave == null
+		? copyAttributes(save.attributes)
+		: copyAttributes(baselineSave.attributes);
 
-	const level = clampInteger(save.attributes.level.value, 1, 99);
-	const levelsGained = level - 1;
+	if (baselineSave == null) {
+		const level = clampInteger(save.attributes.level.value, 1, 99);
+		const levelsGained = level - 1;
 
-	const spentStats = countSpentStatPoints(save, stats);
-	const spentSkills = countSpentSkillPoints(save);
+		const spentStats = countSpentStatPoints(save, stats);
+		const spentSkills = countSpentSkillPoints(save);
 
-	const lifePerLevel = stats.LifePerLevel / 4;
-	const staminaPerLevel = stats.StaminaPerLevel / 4;
-	const manaPerLevel = stats.ManaPerLevel / 4;
-	const lifePerVitality = stats.LifePerVitality / 4;
-	const staminaPerVitality = stats.StaminaPerVitality / 4;
-	const manaPerEnergy = stats.ManaPerMagic / 4;
+		const lifePerLevel = stats.LifePerLevel / 4;
+		const staminaPerLevel = stats.StaminaPerLevel / 4;
+		const manaPerLevel = stats.ManaPerLevel / 4;
+		const lifePerVitality = stats.LifePerVitality / 4;
+		const staminaPerVitality = stats.StaminaPerVitality / 4;
+		const manaPerEnergy = stats.ManaPerMagic / 4;
 
-	const maxLife =
-		stats.hpadd +
-		stats.vit +
-		levelsGained * lifePerLevel +
-		(save.attributes.vitality.value - stats.vit) * lifePerVitality;
+		const maxLife =
+			stats.hpadd +
+			stats.vit +
+			levelsGained * lifePerLevel +
+			(save.attributes.vitality.value - stats.vit) * lifePerVitality;
 
-	const maxMana =
-		stats.int +
-		levelsGained * manaPerLevel +
-		(save.attributes.energy.value - stats.int) * manaPerEnergy;
+		const maxMana =
+			stats.int +
+			levelsGained * manaPerLevel +
+			(save.attributes.energy.value - stats.int) * manaPerEnergy;
 
-	const maxStamina =
-		stats.stamina +
-		levelsGained * staminaPerLevel +
-		(save.attributes.vitality.value - stats.vit) * staminaPerVitality;
+		const maxStamina =
+			stats.stamina +
+			levelsGained * staminaPerLevel +
+			(save.attributes.vitality.value - stats.vit) * staminaPerVitality;
 
-	setAttrValue(attributes, "maxhp", Math.round(maxLife * RESOURCE_Q8_SCALE));
+		setAttrValue(attributes, "maxhp", Math.round(maxLife * RESOURCE_Q8_SCALE));
+		setAttrValue(attributes, "hitpoints", attributes.maxhp.value);
+
+		setAttrValue(attributes, "maxmana", Math.round(maxMana * RESOURCE_Q8_SCALE));
+		setAttrValue(attributes, "mana", attributes.maxmana.value);
+
+		setAttrValue(attributes, "maxstamina", Math.round(maxStamina * RESOURCE_Q8_SCALE));
+		setAttrValue(attributes, "stamina", attributes.maxstamina.value);
+
+		setAttrValue(
+			attributes,
+			"statpts",
+			levelsGained * stats.StatPerLevel - spentStats,
+		);
+
+		setAttrValue(
+			attributes,
+			"newskills",
+			levelsGained * stats.SkillsPerLevel - spentSkills,
+		);
+
+		addQuestRewards(save, attributes);
+	} else {
+		const level = clampInteger(save.attributes.level.value, 1, 99);
+		const baselineLevel = clampInteger(baselineSave.attributes.level.value, 1, 99);
+		const levelDelta = level - baselineLevel;
+
+		const lifePerLevel = stats.LifePerLevel / 4;
+		const staminaPerLevel = stats.StaminaPerLevel / 4;
+		const manaPerLevel = stats.ManaPerLevel / 4;
+		const lifePerVitality = stats.LifePerVitality / 4;
+		const staminaPerVitality = stats.StaminaPerVitality / 4;
+		const manaPerEnergy = stats.ManaPerMagic / 4;
+
+		const vitalityDelta =
+			save.attributes.vitality.value - baselineSave.attributes.vitality.value;
+		const energyDelta = save.attributes.energy.value - baselineSave.attributes.energy.value;
+
+		const currentSpentStats = countSpentStatPoints(save, stats);
+		const baselineSpentStats = countSpentStatPoints(baselineSave, stats);
+		const currentSpentSkills = countSpentSkillPoints(save);
+		const baselineSpentSkills = countSpentSkillPoints(baselineSave);
+
+		setAttrValue(
+			attributes,
+			"maxhp",
+			baselineSave.attributes.maxhp.value +
+				Math.round(levelDelta * lifePerLevel + vitalityDelta * lifePerVitality),
+		);
+		setAttrValue(
+			attributes,
+			"maxmana",
+			baselineSave.attributes.maxmana.value +
+				Math.round(levelDelta * manaPerLevel + energyDelta * manaPerEnergy),
+		);
+		setAttrValue(
+			attributes,
+			"maxstamina",
+			baselineSave.attributes.maxstamina.value +
+				Math.round(levelDelta * staminaPerLevel + vitalityDelta * staminaPerVitality),
+		);
+
+		setAttrValue(
+			attributes,
+			"statpts",
+			baselineSave.attributes.statpts.value +
+				levelDelta * stats.StatPerLevel -
+				(currentSpentStats - baselineSpentStats),
+		);
+
+		setAttrValue(
+			attributes,
+			"newskills",
+			baselineSave.attributes.newskills.value +
+				levelDelta * stats.SkillsPerLevel -
+				(currentSpentSkills - baselineSpentSkills),
+		);
+
+		addQuestRewardDelta(save, baselineSave, attributes);
+	}
+
 	setAttrValue(attributes, "hitpoints", attributes.maxhp.value);
-
-	setAttrValue(attributes, "maxmana", Math.round(maxMana * RESOURCE_Q8_SCALE));
 	setAttrValue(attributes, "mana", attributes.maxmana.value);
-
-	setAttrValue(attributes, "maxstamina", Math.round(maxStamina * RESOURCE_Q8_SCALE));
 	setAttrValue(attributes, "stamina", attributes.maxstamina.value);
-
-	setAttrValue(
-		attributes,
-		"statpts",
-		levelsGained * stats.StatPerLevel - spentStats,
-	);
-
-	setAttrValue(
-		attributes,
-		"newskills",
-		levelsGained * stats.SkillsPerLevel - spentSkills,
-	);
-
-	addQuestRewards(save, attributes);
 
 	const values = buildValues(attributes);
 	const changes = buildChanges(save, values);

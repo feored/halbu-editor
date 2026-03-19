@@ -1,64 +1,90 @@
-
 # Halbu Editor
 
-<img src="static/assets/screenshots/home.png" />
+<img src="static/assets/screenshots/library.png" />
+
 <p float="left">
-  <img src="static/assets/screenshots/character.png" width="49%" /> 
+  <img src="static/assets/screenshots/reviewchanges.png" width="49%" />
   <img src="static/assets/screenshots/skills.png" width="49%" />
 </p>
 
+A native save editor for **Diablo II: Resurrected**.
+
+[Download the latest release](../../releases/latest) · [Changelog](CHANGELOG.md)
+
+---
+
+## About
+
+Halbu Editor started as a Rust learning project and grew into a full-featured hero editor for D2R.
+
+The design goals: a **fully offline** native editor, graceful handling of mangled saves, compatibility with the latest patches, validation checks to prevent broken save states, and zero reliance on copyrighted assets (no Exocet font or ripped skill icons).
+
+Save file parsing and writing is handled by [halbu](https://github.com/feored/halbu) — a dedicated Rust library that the editor frontend is built directly on top of.
+
+## Features
 
 
+- Edit your character information, skills, waypoints, quests and mercenary data
+- Built-in skill calculator
+- Per-quest flag editing, including advanced states and unused quests
+- Bulk controls for waypoints/quests
+- Validate saves before writing, with compatibility checks and force-convert support
+- Review full list of changes before committing to disk, grouped by section with old → new values
+- Inspect save metadata and parse issues in the Status tab
+- Restore workflow for reverting changes
+- Open saves directly from the character library once your save folder is configured
+- New character creation from built-in templates
+- Automatic backups for each character with configurable retention
 
-###  About
+## Limitations
 
-A save editor for Diablo II: Resurrected.
+- D2R only. Saves from 1.10+ classic D2 may parse correctly, but will be written back in D2R format. Do not overwrite non-D2R saves.
+- No item editing
+- Some minion skills (primarily Necromancer skeletons and golems) are unsupported and some rounding errors may occur in the skill calculator.
 
-This project started as a way for me to learn Rust. The goal is to have a native hero editor for D2R that's easy to use, lets you modify as many things as possible, parses mangled saves gracefully, is up to date with the latest patches,  includes a skill calculator and does not use copyrighted assets (no exocet font, skill icons, etc).
+> D2R must be relaunched after saving for changes to take effect.
 
-#### Features
+## Development
 
-* Edit your character's stats, mercenary, quests, skills and waypoints
-* Easy access to all characters from home page (must set save folder)
-* Skill calculator built-in
-* Granular quest edition (down to each quest flag, including unused quests)
-* New character creation from within the editor
-* Clean UI with light/dark theme
+Halbu Editor is a [Tauri](https://v2.tauri.app/) application with a [Svelte](https://svelte.dev) frontend. Save file parsing and serialization lives in the [halbu](https://github.com/feored/halbu) Rust library — changes to `.d2s` format handling should be made there.
 
-#### Drawbacks
-* Only supports the latest version of D2R (2.7). (Will probably successfully parse 1.10+ D2, but it will save in D2R format so **do not overwrite your non-D2R saves**.)
-* Item parsing/editing not supported yet (next on the roadmap).
-* Skill calculator does not support some minions skills (mainly necromancer skeletons/golems) and may contain rounding errors.
+### Prerequisites
 
-D2R will need to be launched again after saving a file for changes to take effect.
+- [Rust](https://www.rust-lang.org/tools/install)
+- [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/)
+- Node.js / npm
 
+### Setup
 
-### Development
+Initialize the `halbu` submodule and install dependencies:
 
-The editor relies on the [halbu](https://github.com/feored/halbu) Rust library to parse save files.
-Changes to how .d2s files are parsed and saved should be made there. 
-
-Rust and [Tauri](https://v2.tauri.app/start/prerequisites/) are prerequisites.
-
-Init halbu submodule and install dependencies
+```sh
+git submodule update --init --recursive
+npm install
 ```
-$ git submodule update --init --recursive
-$ npm install
-```
- 
-Run in dev mode
-```
-$ npm run tauri dev
+
+### Running
+
+```sh
+npm run tauri dev
 ```
 
-Build
-```
-$ npm run tauri build
+### Building
+
+```sh
+npm run tauri build
 ```
 
-The skill calculator relies on a python program (found in `/static/tools/preprocess/`) that processes the D2 data text files into versioned JSON files (for example `/static/data/generated/skills/v99/skills_complete.json` and `/static/data/generated/skills/v105/skills_complete.json`) containing descriptions and calculations for every skill.
+## Skill Data Preprocessing
 
-Regenerate all supported version datasets:
+The skill calculator is backed by versioned JSON files generated from D2's data text files. The preprocessor lives in `/static/tools/preprocess/` and outputs files like:
+
+- `static/data/generated/skills/v99/skills_complete.json`
+- `static/data/generated/skills/v105/skills_complete.json`
+
+To regenerate all supported version datasets:
+
+```sh
+npm run preprocess:skills
 ```
-$ npm run preprocess:skills
-```
+

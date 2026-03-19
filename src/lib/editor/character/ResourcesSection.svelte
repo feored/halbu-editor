@@ -253,6 +253,7 @@
 					type="number"
 					name={field.id}
 					id={field.id}
+					autocomplete="off"
 					min={RESOURCE_DISPLAY_MIN}
 					max={RESOURCE_DISPLAY_MAX}
 					step="1"

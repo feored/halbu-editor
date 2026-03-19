@@ -275,6 +275,7 @@
 						id="new-character-name"
 						class="form-control"
 						type="text"
+						autocomplete="off"
 						bind:value={characterName}
 						placeholder={DEFAULT_CHARACTER_NAME}
 					/>
@@ -345,6 +346,7 @@
 						<input
 							class="form-check-input mt-0"
 							type="checkbox"
+							autocomplete="off"
 							bind:checked={hardcoreEnabled}
 						/>
 						<span>Hardcore</span>
@@ -353,6 +355,7 @@
 						<input
 							class="form-check-input mt-0"
 							type="checkbox"
+							autocomplete="off"
 							bind:checked={ladderEnabled}
 						/>
 						<span>Ladder</span>
@@ -376,6 +379,7 @@
 							class="form-check-input mt-0"
 							type="radio"
 							name="new-character-template"
+							autocomplete="off"
 							value={template.id}
 							checked={selectedTemplate === template.id}
 							onchange={() => {
@@ -429,10 +433,10 @@
 				<div class="form-text mt-1 text-halbu-warning">{createBlockedReason}</div>
 			{/if}
 			{#if pathError.length > 0}
-				<div class="form-text mt-1 text-halbu-warning">{pathError}</div>
+				<div class="form-text mt-1 text-halbu-danger">{pathError}</div>
 			{/if}
 			{#if createError.length > 0}
-				<div class="form-text mt-1 text-halbu-warning">{createError}</div>
+				<div class="form-text mt-1 text-halbu-danger">{createError}</div>
 			{/if}
 		</section>
 	</div>

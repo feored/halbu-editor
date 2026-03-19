@@ -1285,7 +1285,7 @@ dependencies = [
 
 [[package]]
 name = "halbu"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "bit",
  "serde",
@@ -1296,7 +1296,7 @@ dependencies = [
 
 [[package]]
 name = "halbu-editor"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "chrono",
  "halbu",

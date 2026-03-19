@@ -181,6 +181,7 @@
 						type="number"
 						name={field}
 						id={field}
+						autocomplete="off"
 						min={getPrimaryAttributeMinimum(field)}
 						max={getMaxValueForBitLength(save.attributes[field].bitLength)}
 						step="1"

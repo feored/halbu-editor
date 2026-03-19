@@ -72,6 +72,7 @@
 			type="text"
 			name="class"
 			id="class"
+			autocomplete="off"
 			value={save.character.className}
 			readonly
 		/>

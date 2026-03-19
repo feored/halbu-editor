@@ -1,3 +1,5 @@
+import actQuests from "$lib/editor/quests/actquests.json";
+import { DIFFICULTY_NAMES } from "$lib/types/editor";
 import type {
 	Act,
 	Attribute,
@@ -31,6 +33,29 @@ export type RewardFeedback = {
 	kind: "warning" | "info";
 	text: string;
 };
+
+type RawActDisplay = Omit<ActDisplay, "id"> & { id: Lowercase<Act> };
+
+const QUEST_ACTS = (actQuests as RawActDisplay[]).map((act) => ({
+	...act,
+	id: {
+		act1: "Act1",
+		act2: "Act2",
+		act3: "Act3",
+		act4: "Act4",
+		act5: "Act5",
+	}[act.id],
+})) as ActDisplay[];
+
+const EMPTY_UNUSED_ACT_QUESTS: Record<Act, QuestDisplay[]> = {
+	Act1: [],
+	Act2: [],
+	Act3: [],
+	Act4: [],
+	Act5: [],
+};
+
+const EMPTY_QUEST_FLAGS: readonly { id: QuestFlag }[] = [];
 
 const QUEST_REWARDS = [
 	{ act: "Act1", quest: "q1", attribute: "newskills", value: 1 },
@@ -273,6 +298,24 @@ export function setAllActQuestFlags(
 			} else {
 				removeQuestFlag(quests, difficulty, act.id, quest.id, flag);
 			}
+		}
+	}
+}
+
+export function setAllQuestFlagsCompleted(quests: QuestMap): void {
+	for (const difficulty of DIFFICULTY_NAMES) {
+		for (const act of QUEST_ACTS) {
+			setAllActQuestFlags(
+				quests,
+				difficulty,
+				act,
+				true,
+				false,
+				false,
+				EMPTY_UNUSED_ACT_QUESTS,
+				EMPTY_QUEST_FLAGS,
+				true,
+			);
 		}
 	}
 }
