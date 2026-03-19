@@ -11,7 +11,7 @@ import {
 } from "$lib/editor/editorSession";
 import { projectGameRulesDerivedValues } from "$lib/editor/character/gameRules";
 import {
-	checkSaveCompatibility,
+	analyzeSave,
 	saveCharacterFile,
 	type SaveCharacterResult,
 	type SaveCharacterOptions,
@@ -51,8 +51,6 @@ type EditorState = {
 	setMode: (nextMode: EditorMode) => void;
 	setTargetVersion: (nextTargetVersion: SaveLayoutVersion | null) => void;
 	setAdvancedSaveOptionsEnabled: (enabled: boolean) => void;
-	clearCompatibility: () => void;
-	refreshCompatibility: () => Promise<void>;
 	save: (input?: SaveCharacterOptions) => Promise<SaveCharacterResult | null>;
 };
 
@@ -60,6 +58,7 @@ function createEditorState(): EditorState {
 	let session = $state<EditorSession | null>(null);
 	let outputFormatOptions = $state<OutputFormatOption[]>([]);
 	let parseMode = $state<ParseMode>("lax");
+	let analysisRevision = 0;
 
 	const hasOpenSession = $derived(session != null);
 
@@ -95,12 +94,12 @@ function createEditorState(): EditorState {
 		return isUnknownFormat && targetVersion == null;
 	});
 
-	const hasEditErrors = $derived.by(() => {
+	const hasBlockingValidationIssues = $derived.by(() => {
 		if (session == null) {
 			return false;
 		}
 
-		return session.editValidation.errors.length > 0;
+		return session.validationReport.issues.some((issue) => issue.blocking);
 	});
 
 	const hasBlockingCompatibilityIssues = $derived.by(() => {
@@ -117,6 +116,7 @@ function createEditorState(): EditorState {
 		}
 
 		return (
+			!hasBlockingValidationIssues &&
 			!needsTargetVersion &&
 			session.compatibilityResultsAreCurrent &&
 			hasBlockingCompatibilityIssues
@@ -129,7 +129,8 @@ function createEditorState(): EditorState {
 		}
 
 		return (
-			hasEditErrors ||
+			hasBlockingValidationIssues ||
+			session.validationError != null ||
 			session.compatibilityError != null ||
 			hasBlockingCompatibilityIssues ||
 			needsTargetVersion
@@ -185,7 +186,6 @@ function createEditorState(): EditorState {
 
 	function open(openedSessionData: OpenedSessionData): void {
 		session = createOpenEditorSession(openedSessionData);
-		void refreshCompatibility();
 	}
 
 	function close(): void {
@@ -198,7 +198,6 @@ function createEditorState(): EditorState {
 		}
 
 		restoreBaselineSave(session);
-		void refreshCompatibility();
 	}
 
 	function setMode(nextMode: EditorMode): void {
@@ -215,7 +214,6 @@ function createEditorState(): EditorState {
 		}
 
 		session.targetVersion = nextTargetVersion;
-		void refreshCompatibility();
 	}
 
 	function setAdvancedSaveOptionsEnabled(enabled: boolean): void {
@@ -226,92 +224,67 @@ function createEditorState(): EditorState {
 		session.advancedSaveOptionsEnabled = enabled;
 	}
 
-	function clearCompatibility(): void {
+	async function refreshAnalysis(): Promise<void> {
 		if (session == null) {
 			return;
 		}
 
-		session.compatibilityIssues = [];
-		session.compatibilityError = null;
-		session.compatibilityPending = false;
-		session.compatibilityResultsAreCurrent = false;
-	}
-
-	async function refreshCompatibility(): Promise<void> {
-		if (session == null) {
-			return;
-		}
-
-		if (targetVersion == null) {
-			clearCompatibility();
-			return;
-		}
-
+		const requestSession = session;
+		const requestRevision = ++analysisRevision;
 		const request = {
 			save: $state.snapshot(session.save),
 			sourceBackendSave: $state.snapshot(session.sourceBackendSave),
-			saveRevision: session.saveRevision,
-			selectedTargetVersion: session.targetVersion,
-			parserLayoutVersion: session.parserLayoutVersion,
+			targetVersion: session.targetVersion,
 			sourceLayoutVersion: isUnknownFormat ? session.parserLayoutVersion : null,
 		};
 
-		session.compatibilityPending = true;
-		session.compatibilityError = null;
-		session.compatibilityResultsAreCurrent = false;
+		session.validationReport = { issues: [] };
+		session.validationPending = true;
+		session.validationError = null;
 
-		try {
-			const issues = await checkSaveCompatibility(
-				request.save,
-				targetVersion,
-				request.sourceLayoutVersion,
-				request.sourceBackendSave,
-			);
-
-			if (session == null) {
-				return;
-			}
-
-			if (
-				session.saveRevision !== request.saveRevision ||
-				session.targetVersion !== request.selectedTargetVersion ||
-				session.parserLayoutVersion !== request.parserLayoutVersion
-			) {
-				return;
-			}
-
-			session.compatibilityIssues = issues;
-			session.compatibilityResultsAreCurrent = true;
-		} catch (error) {
-			if (session == null) {
-				return;
-			}
-
-			if (
-				session.saveRevision !== request.saveRevision ||
-				session.targetVersion !== request.selectedTargetVersion ||
-				session.parserLayoutVersion !== request.parserLayoutVersion
-			) {
-				return;
-			}
-
+		if (request.targetVersion == null) {
 			session.compatibilityIssues = [];
-			session.compatibilityError = getErrorMessage(error, "Compatibility check failed.");
+			session.compatibilityPending = false;
+			session.compatibilityError = null;
 			session.compatibilityResultsAreCurrent = false;
-		} finally {
-			if (session == null) {
-				return;
-			}
-
-			if (
-				session.saveRevision
-				=== request.saveRevision &&
-				session.targetVersion === request.selectedTargetVersion &&
-				session.parserLayoutVersion === request.parserLayoutVersion
-			) {
-				session.compatibilityPending = false;
-			}
+		} else {
+			session.compatibilityIssues = [];
+			session.compatibilityPending = true;
+			session.compatibilityError = null;
+			session.compatibilityResultsAreCurrent = false;
 		}
+
+		const analysis = await analyzeSave(
+			request.save,
+			request.targetVersion,
+			request.sourceLayoutVersion,
+			request.sourceBackendSave,
+		);
+
+		if (session == null || session !== requestSession || analysisRevision !== requestRevision) {
+			return;
+		}
+
+		session.validationReport = analysis.validationReport;
+		session.validationError = analysis.validationError;
+		session.validationPending = false;
+
+		if (request.targetVersion == null) {
+			session.compatibilityPending = false;
+			session.compatibilityResultsAreCurrent = false;
+			return;
+		}
+
+		if (analysis.compatibilityError == null) {
+			session.compatibilityIssues = analysis.compatibilityIssues;
+			session.compatibilityError = null;
+			session.compatibilityResultsAreCurrent = true;
+		} else {
+			session.compatibilityIssues = [];
+			session.compatibilityError = analysis.compatibilityError;
+			session.compatibilityResultsAreCurrent = false;
+		}
+		session.compatibilityPending = false;
 	}
 
 	async function save(input: SaveCharacterOptions = {}): Promise<SaveCharacterResult | null> {
@@ -319,7 +292,7 @@ function createEditorState(): EditorState {
 			return null;
 		}
 
-		await refreshCompatibility();
+		await refreshAnalysis();
 
 		if (session == null) {
 			return null;
@@ -331,10 +304,6 @@ function createEditorState(): EditorState {
 			parserLayoutVersion: session.parserLayoutVersion,
 			selectedTargetVersion: session.targetVersion,
 			suggestedTargetVersion: session.suggestedTargetVersion,
-			currentTargetVersion: targetVersion,
-			canForceConvert,
-			compatibilityPending: session.compatibilityPending,
-			compatibilityError: session.compatibilityError,
 			sourcePath: session.sourcePath,
 			input,
 		});
@@ -343,37 +312,33 @@ function createEditorState(): EditorState {
 			return null;
 		}
 
-		if (result.refreshedCompatibilityIssues != null) {
-			session.compatibilityIssues = result.refreshedCompatibilityIssues;
-			session.compatibilityError = null;
-			session.compatibilityResultsAreCurrent = true;
+		if (targetVersion == null) {
+			return null;
 		}
 
+		session.save.version = targetVersion;
+		session.save.metadata.formatId = targetVersion === 99 ? "V99" : "V105";
 		session.sourceBackendSave = result.updatedBackendSave;
 		session.sourcePath = result.filePath;
 		session.baselineSave = $state.snapshot(session.save);
 		session.lastSaveUsedForceConversion = result.forceConvertUsed;
 		session.saveRevision += 1;
-		await refreshCompatibility();
 		return result;
 	}
 
 	$effect.root(() => {
 		$effect(() => {
 			void session?.save;
+			void session?.sourceBackendSave;
 			void session?.targetVersion;
 			void session?.parserLayoutVersion;
-			void session?.saveRevision;
 			void isUnknownFormat;
 
 			if (session == null) {
 				return;
 			}
 
-			session.compatibilityResultsAreCurrent = false;
-			session.compatibilityIssues = [];
-			session.compatibilityError = null;
-			session.compatibilityPending = false;
+			void refreshAnalysis();
 		});
 	});
 
@@ -419,8 +384,6 @@ function createEditorState(): EditorState {
 		setMode,
 		setTargetVersion,
 		setAdvancedSaveOptionsEnabled,
-		clearCompatibility,
-		refreshCompatibility,
 		save,
 	};
 }

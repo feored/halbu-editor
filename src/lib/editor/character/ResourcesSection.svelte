@@ -62,6 +62,7 @@
 	const effectiveDerivedValues = $derived(editorState.gameRulesValues.values);
 
 	const isGameRulesMode = $derived(mode === "game-rules");
+	let showGameRulesHelp = $state(false);
 
 	let resourceEditByField = $state<Record<string, FieldEditState>>({});
 
@@ -205,13 +206,33 @@
 			}
 		}
 	});
+
+	$effect(() => {
+		if (!isGameRulesMode) {
+			showGameRulesHelp = false;
+		}
+	});
 </script>
 
 <section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
-	<h3 class="editor-card-title mb-1.5">Resources</h3>
-
-	{#if isGameRulesMode}
-		<div class="form-text mb-1">
+	<div class="mb-1 flex items-center justify-between gap-2">
+		<h3 class="editor-card-title mb-0">Resources</h3>
+		{#if isGameRulesMode}
+			<button
+				type="button"
+				class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-halbu-borderStrong bg-halbu-panel2 text-[11px] font-semibold leading-none text-halbu-textMuted transition hover:bg-halbu-primarySoft hover:text-halbu-text"
+				aria-label={showGameRulesHelp ? "Hide game rules explanation" : "Show game rules explanation"}
+				aria-expanded={showGameRulesHelp}
+				onclick={() => {
+					showGameRulesHelp = !showGameRulesHelp;
+				}}
+			>
+				?
+			</button>
+		{/if}
+	</div>
+	{#if isGameRulesMode && showGameRulesHelp}
+		<div class="form-text mb-1 mt-0.5">
 			Game rules mode: resources are recalculated. Edit level or attributes to change them.
 		</div>
 	{/if}

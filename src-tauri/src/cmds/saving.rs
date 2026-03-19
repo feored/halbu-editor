@@ -147,3 +147,8 @@ pub fn check_save_compatibility(
         .ok_or_else(|| format!("Unsupported save version {target_version}."))?;
     Ok(save.check_compatibility(target_format))
 }
+
+#[tauri::command]
+pub fn validate_save(save: Save) -> halbu::validation::ValidationReport {
+    save.validate()
+}

@@ -7,10 +7,7 @@
 	import { getErrorMessage } from "$lib/utils/errorMessage";
 	import { toEditorSave } from "$lib/types/converters";
 	import experienceTable from "$lib/editor/character/experience.json";
-	import {
-		experienceForLevel,
-		validateCharacterName,
-	} from "$lib/editor/character/characterLogic";
+	import { experienceForLevel } from "$lib/editor/character/characterLogic";
 	import {
 		applyProjectedGameRulesValues,
 		getGameRulesClassPrimaryAttributes,
@@ -64,7 +61,6 @@
 			null
 		);
 	});
-	const nameValidation = $derived(validateCharacterName(characterName));
 	const availableExpansionModes = $derived.by((): readonly ExpansionType[] => {
 		if (selectedVersion == null) {
 			return [];
@@ -80,9 +76,6 @@
 		);
 	});
 
-	const nameInputClass = $derived(
-		nameValidation.valid ? "form-control" : "form-control border-halbu-danger",
-	);
 	const suggestedFileName = $derived.by(() => {
 		const trimmedName = characterName.trim();
 		const baseName = trimmedName.length > 0 ? trimmedName : DEFAULT_CHARACTER_NAME;
@@ -109,9 +102,6 @@
 	const createBlockedReason = $derived.by(() => {
 		if (selectedVersion == null) {
 			return "No supported output format is available for this edition.";
-		}
-		if (!nameValidation.valid) {
-			return nameValidation.message;
 		}
 		if (selectedClass == null) {
 			return "Select a valid class for the current edition/mode.";
@@ -304,16 +294,11 @@
 				<div class="grid gap-0.5">
 					<input
 						id="new-character-name"
-						class={nameInputClass}
+						class="form-control"
 						type="text"
 						bind:value={characterName}
-						minlength="2"
-						maxlength="15"
 						placeholder={DEFAULT_CHARACTER_NAME}
 					/>
-					{#if !nameValidation.valid}
-						<div class="form-text text-halbu-danger">{nameValidation.message}</div>
-					{/if}
 				</div>
 
 				<span class="form-label mb-0">Game Edition</span>

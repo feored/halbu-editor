@@ -1,15 +1,10 @@
-import type {
-	EditValidation,
-	EditorMode,
-	EditorSave,
-	GameEdition,
-	SaveLayoutVersion,
-} from "$lib/types/editor";
+import type { EditorMode, EditorSave, GameEdition, SaveLayoutVersion } from "$lib/types/editor";
 
 import type {
 	BackendEditorSave,
 	CompatibilityIssue,
 	ParseIssue,
+	ValidationReport,
 } from "$lib/types/backend";
 import { getSkillsDataset } from "$lib/utils/gameData";
 import { resizeSkillSlots } from "$lib/editor/skills/skillsSlots";
@@ -36,11 +31,12 @@ export type EditorSession = {
 	compatibilityPending: boolean;
 	compatibilityError: string | null;
 	compatibilityResultsAreCurrent: boolean;
+	validationReport: ValidationReport;
+	validationPending: boolean;
+	validationError: string | null;
 
 	lastSaveUsedForceConversion: boolean;
 	saveRevision: number;
-
-	editValidation: EditValidation;
 	mode: EditorMode;
 	advancedSaveOptionsEnabled: boolean;
 };
@@ -58,13 +54,6 @@ export type OpenedSessionData = {
 	suggestedTargetVersion: SaveLayoutVersion | null;
 	parserLayoutVersion: SaveLayoutVersion | null;
 };
-
-export function createEmptyEditValidation(): EditValidation {
-	return {
-		errors: [],
-		warnings: [],
-	};
-}
 
 function deriveClassSkillSlotCount(
 	save: EditorSave,
@@ -127,11 +116,14 @@ export function createOpenEditorSession(openedSessionData: OpenedSessionData): E
 		compatibilityPending: false,
 		compatibilityError: null,
 		compatibilityResultsAreCurrent: false,
+		validationReport: {
+			issues: [],
+		},
+		validationPending: false,
+		validationError: null,
 
 		lastSaveUsedForceConversion: false,
 		saveRevision: 0,
-
-		editValidation: createEmptyEditValidation(),
 		mode: "raw",
 		advancedSaveOptionsEnabled: false,
 	};
@@ -139,9 +131,13 @@ export function createOpenEditorSession(openedSessionData: OpenedSessionData): E
 
 export function restoreBaselineSave(session: EditorSession): void {
 	session.save = structuredClone(session.baselineSave);
-	session.editValidation = createEmptyEditValidation();
 	session.compatibilityIssues = [];
 	session.compatibilityPending = false;
 	session.compatibilityError = null;
 	session.compatibilityResultsAreCurrent = false;
+	session.validationReport = {
+		issues: [],
+	};
+	session.validationPending = false;
+	session.validationError = null;
 }

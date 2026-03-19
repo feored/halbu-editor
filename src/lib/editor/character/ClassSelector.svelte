@@ -10,13 +10,12 @@
 	import type { BackendEditorSave } from "$lib/types/backend";
 	import type { ClassName } from "$lib/types/editor";
 
-	let { classSupportWarning }: { classSupportWarning: string } = $props();
+	let { editingVersion, classSupportWarning }: { editingVersion: number; classSupportWarning: string } =
+		$props();
 
 	const session = $derived(editorState.session!);
 	const save = $derived(session.save);
-	const layoutVersion = $derived(editorState.layoutVersion);
-	const effectiveVersion = $derived(layoutVersion == null ? save.version : layoutVersion);
-	const supportedClasses = $derived(getSupportedClassNames(effectiveVersion));
+	const supportedClasses = $derived(getSupportedClassNames(editingVersion));
 
 	let classChangeError = $state("");
 	let selectedClass = $state<string | null>(null);
@@ -30,7 +29,7 @@
 
 		try {
 			const response = await invoke<BackendEditorSave>("new_save", {
-				version: effectiveVersion,
+				version: editingVersion,
 				class: nextClassName,
 			});
 
@@ -41,12 +40,12 @@
 			save.skills = resizeSkillSlots(templateSave.skills, slotCount);
 		} catch (error) {
 			classChangeError = getErrorMessage(error, "Failed to apply class template.");
-			selectedClass = getSupportedClass(effectiveVersion, save.character.className);
+			selectedClass = getSupportedClass(editingVersion, save.character.className);
 		}
 	}
 
 	$effect(() => {
-		selectedClass = getSupportedClass(effectiveVersion, save.character.className);
+		selectedClass = getSupportedClass(editingVersion, save.character.className);
 	});
 </script>
 

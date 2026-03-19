@@ -57,11 +57,8 @@
 				This save has blocking compatibility issues for v{effectiveTargetVersion}.
 			</p>
 			<p class="form-text m-0">
-				Halbu can still write a converted file, but the output may load incorrectly, lose data,
-				or behave unexpectedly.
-			</p>
-			<p class="form-text m-0">
-				Force conversion writes to a new file only and bypasses compatibility checks.
+				You can choose to still write a converted file, but that may result in a broken save
+				state.
 			</p>
 		</div>
 

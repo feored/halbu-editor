@@ -8,6 +8,14 @@
 
 	import type { CompatibilityIssue } from "$lib/types/backend";
 
+	type SaveIssueSource = "Validation" | "Compatibility";
+
+	type SaveIssueRow = {
+		source: SaveIssueSource;
+		blocking: boolean;
+		message: string;
+	};
+
 	const session = $derived(editorState.session!);
 	const save = $derived(session.save);
 
@@ -17,17 +25,41 @@
 	let forceSaveDialogOpen = $state(false);
 	let advancedOpen = $state(false);
 
-	const editErrors = $derived(session.editValidation.errors);
-	const editWarnings = $derived(session.editValidation.warnings);
-	const errorCount = $derived(editErrors.length);
-	const warningCount = $derived(editWarnings.length);
-	const hasEditErrors = $derived(errorCount > 0);
-	const hasEditWarnings = $derived(warningCount > 0);
+	const validationIssues = $derived(session.validationReport.issues);
+	const validationErrors = $derived(validationIssues.filter((issue) => issue.blocking));
+	const validationWarnings = $derived(validationIssues.filter((issue) => !issue.blocking));
+	const validationError = $derived(session.validationError);
+	const validationPending = $derived(session.validationPending);
+	const validationErrorCount = $derived(validationErrors.length);
+	const validationWarningCount = $derived(validationWarnings.length);
+	const hasBlockingValidationIssues = $derived(validationErrorCount > 0);
+	const hasValidationWarnings = $derived(validationWarningCount > 0);
 	const compatibilityIssues = $derived(session.compatibilityIssues);
 	const blockingIssues = $derived(compatibilityIssues.filter((issue) => issue.blocking));
 	const warningIssues = $derived(compatibilityIssues.filter((issue) => !issue.blocking));
 	const hasBlockingIssues = $derived(blockingIssues.length > 0);
 	const hasCompatibilityIssues = $derived(compatibilityIssues.length > 0);
+	const saveIssues = $derived.by(() => {
+		const issues: SaveIssueRow[] = [];
+
+		for (const issue of validationIssues) {
+			issues.push({
+				source: "Validation",
+				blocking: issue.blocking,
+				message: issue.message,
+			});
+		}
+
+		for (const issue of compatibilityIssues) {
+			issues.push({
+				source: "Compatibility",
+				blocking: issue.blocking,
+				message: getCompatibilityMessage(issue),
+			});
+		}
+
+		return issues;
+	});
 	const currentVersion = $derived(save.version);
 	const effectiveTargetVersion = $derived(editorState.targetVersion);
 	const targetVersionLabel = $derived.by(() =>
@@ -44,22 +76,24 @@
 	);
 	const saveReadinessLabel = $derived.by(() => {
 		if (editorState.isSaveBlocked) return "Blocked";
-		if (hasEditWarnings || hasConversionWarnings) return "Warning";
+		if (hasValidationWarnings || hasConversionWarnings) return "Warning";
 		return "Ready";
 	});
 	const saveReadinessClass = $derived.by(() => {
 		if (editorState.isSaveBlocked) return "text-halbu-danger";
-		if (hasEditWarnings || hasConversionWarnings) return "text-halbu-warning";
+		if (hasValidationWarnings || hasConversionWarnings) return "text-halbu-warning";
 		return "text-halbu-text";
 	});
-	const editChecksLabel = $derived.by(() => {
-		if (hasEditErrors) return `Failed (${errorCount} error(s))`;
-		if (hasEditWarnings) return `Passed with warnings (${warningCount})`;
+	const validationChecksLabel = $derived.by(() => {
+		if (validationPending) return "Checking...";
+		if ((validationError ?? "").length > 0) return "Check failed";
+		if (hasBlockingValidationIssues) return `Failed (${validationErrorCount} error(s))`;
+		if (hasValidationWarnings) return `Passed with warnings (${validationWarningCount})`;
 		return "Passed";
 	});
-	const editChecksClass = $derived.by(() => {
-		if (hasEditErrors) return "text-halbu-danger";
-		if (hasEditWarnings) return "text-halbu-warning";
+	const validationChecksClass = $derived.by(() => {
+		if ((validationError ?? "").length > 0 || hasBlockingValidationIssues) return "text-halbu-danger";
+		if (validationPending || hasValidationWarnings) return "text-halbu-warning";
 		return "text-halbu-text";
 	});
 	const compatibilityChecksLabel = $derived.by(() => {
@@ -83,10 +117,11 @@
 		}
 		return "text-halbu-text";
 	});
-	const hasValidationIssues = $derived(
+	const hasSaveIssues = $derived(
 		editorState.needsTargetVersion ||
-			hasEditErrors ||
-			hasEditWarnings ||
+			hasBlockingValidationIssues ||
+			hasValidationWarnings ||
+			(validationError ?? "").length > 0 ||
 			hasCompatibilityIssues ||
 			(session.compatibilityError ?? "").length > 0,
 	);
@@ -96,16 +131,8 @@
 		if (session.compatibilityPending)
 			return `Converting to v${effectiveTargetVersion} (checking compatibility)`;
 		if ((session.compatibilityError ?? "").length > 0)
-			return `Converting to v${effectiveTargetVersion} (validation failed)`;
+			return `Converting to v${effectiveTargetVersion} (check failed)`;
 		return `Converting to v${effectiveTargetVersion}`;
-	});
-	const conversionClass = $derived.by(() => {
-		if ((session.compatibilityError ?? "").length > 0 || hasBlockingIssues) {
-			return "text-halbu-danger";
-		}
-		if (!isConversionRelevant) return "text-halbu-textMuted";
-		if (session.compatibilityPending || hasCompatibilityIssues) return "text-halbu-warning";
-		return "text-halbu-text";
 	});
 	const changeReview = $derived(buildChangeReview(session.baselineSave, save));
 	const changeCount = $derived(changeReview.totalChanges);
@@ -119,8 +146,13 @@
 	const nextActionLabel = $derived.by(() => {
 		if (editorState.needsTargetVersion)
 			return "Select an output format in Conversion before saving.";
-		if (hasEditErrors || hasBlockingIssues || (session.compatibilityError ?? "").length > 0) {
-			return "Fix validation issues before saving.";
+		if (
+			hasBlockingValidationIssues ||
+			hasBlockingIssues ||
+			(validationError ?? "").length > 0 ||
+			(session.compatibilityError ?? "").length > 0
+		) {
+			return "Fix issues before saving.";
 		}
 		if (editorState.isSaveBlocked) return "Saving is currently unavailable.";
 		if (changeCount > 0) return "Review changes, then save.";
@@ -250,7 +282,13 @@
 			<dt class="form-label mb-0">Target version</dt>
 			<dd class="m-0 text-sm text-halbu-text">{targetVersionLabel}</dd>
 			<dt class="form-label mb-0">Conversion</dt>
-			<dd class={`m-0 text-sm font-semibold ${conversionClass}`}>{conversionLabel}</dd>
+			<dd
+				class={`m-0 text-sm font-semibold ${
+					!isConversionRelevant ? "text-halbu-textMuted" : "text-halbu-text"
+				}`}
+			>
+				{conversionLabel}
+			</dd>
 		</dl>
 		<div class="form-text mt-1">{nextActionLabel}</div>
 		{#if isGameRulesMode}
@@ -270,10 +308,12 @@
 	</section>
 
 	<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
-		<h3 class="editor-card-title mb-1.5">Validation</h3>
+		<h3 class="editor-card-title mb-1.5">Issues</h3>
 		<dl class="m-0 grid grid-cols-form-48 items-baseline gap-x-2.5 gap-y-1">
-			<dt class="form-label mb-0">Edit checks</dt>
-			<dd class={`m-0 text-sm font-semibold ${editChecksClass}`}>{editChecksLabel}</dd>
+			<dt class="form-label mb-0">Validation</dt>
+			<dd class={`m-0 text-sm font-semibold ${validationChecksClass}`}>
+				{validationChecksLabel}
+			</dd>
 			<dt class="form-label mb-0">
 				Target compatibility{#if !editorState.needsTargetVersion && effectiveTargetVersion != null}
 					(v{effectiveTargetVersion}){/if}
@@ -310,27 +350,54 @@
 				</div>
 			{/if}
 		{/if}
-		{#if hasEditErrors || hasEditWarnings}
-			<ul class="mt-1 mb-0 pl-4 text-sm text-halbu-textMuted">
-				{#each editErrors as issue}<li class="text-halbu-danger">{issue}</li>{/each}
-				{#each editWarnings as issue}<li>{issue}</li>{/each}
-			</ul>
+		{#if (validationError ?? "").length > 0}
+			<div class="form-text mt-1 text-halbu-danger">Validation check failed: {validationError}</div>
+		{/if}
+		{#if saveIssues.length > 0}
+			<div class="mt-1 overflow-hidden rounded-xs border border-halbu-borderStrong bg-halbu-panel2">
+				<div class="flex items-center justify-between border-b border-halbu-border bg-halbu-panel px-2 py-1">
+					<span class="text-sm font-semibold text-halbu-text">Issues</span>
+					<span class="text-xs text-halbu-textMuted">Validation and compatibility</span>
+				</div>
+				<table class="w-full border-collapse text-sm">
+					<thead>
+						<tr class="border-b border-halbu-border bg-halbu-panel text-halbu-textMuted">
+							<th class="w-24 px-2 py-1 text-left font-medium">Source</th>
+							<th class="w-24 px-2 py-1 text-left font-medium">Severity</th>
+							<th class="px-2 py-1 text-left font-medium">Message</th>
+						</tr>
+					</thead>
+					<tbody>
+						{#each saveIssues as issue}
+							<tr class="border-b border-halbu-border last:border-b-0">
+								<td class="w-24 px-2 py-1 align-top whitespace-nowrap">
+									<span class="inline-flex rounded-xs border border-halbu-border bg-halbu-panel px-1.5 py-0.5 text-xs font-semibold text-halbu-textMuted">
+										{issue.source}
+									</span>
+								</td>
+								<td class="w-24 px-2 py-1 align-top whitespace-nowrap">
+									<span
+										class={`inline-flex rounded-xs border px-1.5 py-0.5 text-xs font-semibold ${
+											issue.blocking
+												? "border-halbu-danger bg-halbu-dangerSoft text-halbu-danger"
+												: "border-halbu-warning bg-halbu-warningSoft text-halbu-warning"
+										}`}
+										>{issue.blocking ? "Blocking" : "Warning"}</span
+									>
+								</td>
+								<td class="px-2 py-1 align-top text-halbu-text">{issue.message}</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			</div>
 		{/if}
 		{#if (session.compatibilityError ?? "").length > 0}
 			<div class="form-text mt-1 text-halbu-danger">
 				Compatibility check failed: {session.compatibilityError}
 			</div>
 		{/if}
-		{#if hasCompatibilityIssues}
-			<ul class="mt-1 mb-0 pl-4 text-sm text-halbu-textMuted">
-				{#each compatibilityIssues as issue}
-					<li class={issue.blocking ? "text-halbu-danger" : ""}>
-						{issue.blocking ? "Blocking" : "Warning"}: {getCompatibilityMessage(issue)}
-					</li>
-				{/each}
-			</ul>
-		{/if}
-		{#if !hasValidationIssues && !session.compatibilityPending}
+		{#if !hasSaveIssues && !session.compatibilityPending && !validationPending}
 			<div class="form-text mt-1">All checks passed for this save and target version.</div>
 		{/if}
 	</section>
@@ -350,7 +417,13 @@
 					>Conversion</span
 				>
 			</span>
-			<span class={`text-sm font-semibold ${conversionClass}`}>{conversionLabel}</span>
+			<span
+				class={`text-sm font-semibold ${
+					!isConversionRelevant ? "text-halbu-textMuted" : "text-halbu-text"
+				}`}
+			>
+				{conversionLabel}
+			</span>
 		</summary>
 		{#if advancedOpen}
 			{#if canChooseTargetFormat}

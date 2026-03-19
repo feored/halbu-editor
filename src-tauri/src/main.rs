@@ -24,6 +24,7 @@ fn main() {
             get_character_from_path_with_meta,
             save_file_as_version,
             check_save_compatibility,
+            validate_save,
             open_backup_folder,
             open_backup_folder_for_source,
             get_backup_status,

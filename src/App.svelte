@@ -70,12 +70,41 @@
 		return hasOpenSession ? currentSection : currentScreen;
 	});
 
+	const saveSidebarStatus = $derived.by(() => {
+		const session = editorState.session;
+		if (session == null) {
+			return undefined;
+		}
+
+		if (editorState.isSaveBlocked) {
+			return "blocked" as const;
+		}
+
+		const hasValidationWarnings = session.validationReport.issues.some(
+			(issue) => !issue.blocking,
+		);
+		const hasCompatibilityWarnings = session.compatibilityIssues.some(
+			(issue) => !issue.blocking,
+		);
+
+		if (
+			hasValidationWarnings ||
+			hasCompatibilityWarnings
+		) {
+			return "warning" as const;
+		}
+
+		return undefined;
+	});
+
 	const sidebarItems = $derived.by(() => {
 		if (!hasOpenSession) {
 			return [];
 		}
 
-		return editorSidebarItems;
+		return editorSidebarItems.map((item) =>
+			item.id === Section.Save ? { ...item, saveStatus: saveSidebarStatus } : item,
+		);
 	});
 
 	initializeSettings().then(() => {

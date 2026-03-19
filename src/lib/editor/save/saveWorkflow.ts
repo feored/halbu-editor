@@ -9,6 +9,7 @@ import type {
 	BackendEditorSave,
 	CompatibilityIssue,
 	SaveCommandResult,
+	ValidationReport,
 } from "$lib/types/backend";
 
 type SaveCharacterParams = {
@@ -17,10 +18,6 @@ type SaveCharacterParams = {
 	parserLayoutVersion: SaveLayoutVersion | null;
 	selectedTargetVersion: SaveLayoutVersion | null;
 	suggestedTargetVersion: SaveLayoutVersion | null;
-	currentTargetVersion: SaveLayoutVersion | null;
-	canForceConvert: boolean;
-	compatibilityPending: boolean;
-	compatibilityError: string | null;
 	sourcePath: string | null;
 	input?: SaveCharacterOptions;
 };
@@ -34,8 +31,14 @@ export type SaveCharacterOptions = {
 export type SaveCharacterResult = {
 	filePath: string;
 	forceConvertUsed: boolean;
-	refreshedCompatibilityIssues: CompatibilityIssue[] | null;
 	updatedBackendSave: BackendEditorSave;
+};
+
+type SaveAnalysisResult = {
+	validationReport: ValidationReport;
+	validationError: string | null;
+	compatibilityIssues: CompatibilityIssue[];
+	compatibilityError: string | null;
 };
 
 export async function checkSaveCompatibility(
@@ -50,6 +53,54 @@ export async function checkSaveCompatibility(
 	});
 }
 
+export async function validateSave(
+	save: EditorSave,
+	sourceLayoutVersion: SaveLayoutVersion | null,
+	sourceBackendSave: BackendEditorSave,
+): Promise<ValidationReport> {
+	return invoke<ValidationReport>("validate_save", {
+		save: toBackendSave(sourceBackendSave, save, sourceLayoutVersion),
+	});
+}
+
+export async function analyzeSave(
+	save: EditorSave,
+	targetVersion: SaveLayoutVersion | null,
+	sourceLayoutVersion: SaveLayoutVersion | null,
+	sourceBackendSave: BackendEditorSave,
+): Promise<SaveAnalysisResult> {
+	const validationPromise = validateSave(save, sourceLayoutVersion, sourceBackendSave).then(
+		(report) => ({ ok: true as const, report }),
+		(error) => ({ ok: false as const, error }),
+	);
+
+	const compatibilityPromise =
+		targetVersion == null
+			? Promise.resolve(null)
+			: checkSaveCompatibility(save, targetVersion, sourceLayoutVersion, sourceBackendSave).then(
+					(issues) => ({ ok: true as const, issues }),
+					(error) => ({ ok: false as const, error }),
+				);
+
+	const [validationResult, compatibilityResult] = await Promise.all([
+		validationPromise,
+		compatibilityPromise,
+	]);
+
+	return {
+		validationReport:
+			validationResult.ok === true ? validationResult.report : { issues: [] },
+		validationError:
+			validationResult.ok === true ? null : getErrorMessage(validationResult.error, "Validation check failed."),
+		compatibilityIssues:
+			compatibilityResult?.ok === true ? compatibilityResult.issues : [],
+		compatibilityError:
+			compatibilityResult == null || compatibilityResult.ok === true
+				? null
+				: getErrorMessage(compatibilityResult.error, "Compatibility check failed."),
+	};
+}
+
 export async function saveCharacterFile(params: SaveCharacterParams): Promise<SaveCharacterResult | null> {
 	const input = params.input ?? {};
 	const saveAs = input.saveAs === true || input.forceConvert === true;
@@ -61,8 +112,6 @@ export async function saveCharacterFile(params: SaveCharacterParams): Promise<Sa
 		[input.targetVersion, params.selectedTargetVersion, params.save.version].find(
 			(v) => v === 99 || v === 105,
 		) ?? null;
-
-	// validation
 
 	if (isUnknownFormat && targetVersion == null) {
 		const suggestion =
@@ -76,23 +125,6 @@ export async function saveCharacterFile(params: SaveCharacterParams): Promise<Sa
 		return null;
 	}
 
-	if (forceConvert) {
-		if (!params.canForceConvert) {
-			await message(
-				"Force conversion is only available when compatibility results are current and include blocking issues.",
-				{ title: "Force save blocked", kind: "warning" },
-			);
-			return null;
-		}
-		if (params.compatibilityPending || (params.compatibilityError ?? "").length > 0) {
-			await message(
-				"Force conversion is unavailable while compatibility checks are pending or failed.",
-				{ title: "Force save blocked", kind: "warning" },
-			);
-			return null;
-		}
-	}
-
 	if (targetVersion == null) {
 		await message(
 			"No compatible output format was selected for this save. Choose v99 or v105.",
@@ -101,23 +133,34 @@ export async function saveCharacterFile(params: SaveCharacterParams): Promise<Sa
 		return null;
 	}
 
-	// compatibility check
+	const analysis = await analyzeSave(
+		params.save,
+		targetVersion,
+		sourceLayoutVersion,
+		params.sourceBackendSave,
+	);
 
-	let compatibilityIssues: CompatibilityIssue[];
-	try {
-		compatibilityIssues = await checkSaveCompatibility(
-			params.save,
-			targetVersion,
-			sourceLayoutVersion,
-			params.sourceBackendSave,
-		);
-	} catch (error) {
-		const detail = getErrorMessage(error, "Compatibility check failed.");
-		await message(detail, { title: "Save blocked", kind: "error" });
-		throw error;
+	if (analysis.validationError != null) {
+		await message(analysis.validationError, { title: "Save blocked", kind: "error" });
+		throw new Error(analysis.validationError);
 	}
 
-	const blockingIssues = compatibilityIssues.filter((issue) => issue.blocking);
+	const blockingValidationIssues = analysis.validationReport.issues.filter((issue) => issue.blocking);
+	if (blockingValidationIssues.length > 0) {
+		const details = blockingValidationIssues.map((issue) => `- ${issue.message}`).join("\n");
+		await message(
+			`Cannot save because of blocking validation issues:\n${details}`,
+			{ title: "Save blocked", kind: "warning" },
+		);
+		return null;
+	}
+
+	if (analysis.compatibilityError != null) {
+		await message(analysis.compatibilityError, { title: "Save blocked", kind: "error" });
+		throw new Error(analysis.compatibilityError);
+	}
+
+	const blockingIssues = analysis.compatibilityIssues.filter((issue) => issue.blocking);
 
 	if (blockingIssues.length > 0 && !forceConvert) {
 		const details = blockingIssues.map((issue) => `- ${issue.message}`).join("\n");
@@ -178,9 +221,6 @@ export async function saveCharacterFile(params: SaveCharacterParams): Promise<Sa
 			},
 		});
 
-		params.save.version = targetVersion;
-		params.save.metadata.formatId = targetVersion === 99 ? "V99" : "V105";
-
 		if ((result.cleanupWarning ?? "").length > 0) {
 			console.warn(`[backup cleanup warning] ${result.cleanupWarning}`);
 		}
@@ -188,8 +228,6 @@ export async function saveCharacterFile(params: SaveCharacterParams): Promise<Sa
 		return {
 			filePath,
 			forceConvertUsed: forceConvert,
-			refreshedCompatibilityIssues:
-				targetVersion === params.currentTargetVersion ? compatibilityIssues : null,
 			updatedBackendSave: backendSave,
 		};
 	} catch (error) {

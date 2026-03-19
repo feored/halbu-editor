@@ -57,6 +57,33 @@ export type CompatibilityIssue = {
 	message: string;
 };
 
+//
+// VALIDATION
+//
+
+export type ValidationCode =
+	| "InvalidCharacterName"
+	| "UnknownClassId"
+	| "CharacterLevelMismatch"
+	| "CharacterLevelOutOfRange"
+	| "ProgressionNonCanonical"
+	| "ImpossibleDifficultySelection"
+	| "ImpossibleActSelection"
+	| "MercenaryVariantUnknown"
+	| "MercenaryNameIdOutOfRange"
+	| "MercenaryLevelImpossible"
+	| "QuestStateImpossible";
+
+export type ValidationIssue = {
+	code: ValidationCode;
+	blocking: boolean;
+	message: string;
+};
+
+export type ValidationReport = {
+	issues: ValidationIssue[];
+};
+
 export type SaveCommandResult = {
 	message: string;
 	backupPerformed: boolean;

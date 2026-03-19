@@ -43,14 +43,14 @@ export function applySkillPointDelta({
 	}
 
 	if (delta > 0) {
-		if (!skillState.available || availableSkillPoints < delta) {
+		if (!skillState.available) {
+			return;
+		}
+		if (isGameRulesMode && availableSkillPoints < delta) {
 			return;
 		}
 		const nextSkills = addSkillPoints(save.skills, skillSlot, delta);
 		if (nextSkills !== save.skills) {
-			if (!isGameRulesMode) {
-				save.attributes.newskills.value -= delta;
-			}
 			save.skills = nextSkills;
 		}
 		return;
@@ -62,23 +62,16 @@ export function applySkillPointDelta({
 	}
 	const nextSkills = addSkillPoints(save.skills, skillSlot, delta);
 	if (nextSkills !== save.skills) {
-		if (!isGameRulesMode) {
-			save.attributes.newskills.value += pointsToRefund;
-		}
 		save.skills = nextSkills;
 	}
 }
 
 export function refundAllSkillPointsInSave(
 	save: SkillSaveMutations,
-	isGameRulesMode: boolean,
 ): void {
 	const { skills: nextSkills, refundedPoints } = refundAllSkillPoints(save.skills);
 	if (refundedPoints < 1) {
 		return;
-	}
-	if (!isGameRulesMode) {
-		save.attributes.newskills.value += refundedPoints;
 	}
 	save.skills = nextSkills;
 }

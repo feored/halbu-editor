@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { clsx, type ClassValue } from "clsx";
-	import { AlertCircleIcon, SettingsIcon } from "lucide-svelte";
+	import { AlertTriangleIcon, SettingsIcon } from "lucide-svelte";
 	import { twMerge } from "tailwind-merge";
 	import Button from "$lib/components/ui/button/button.svelte";
 
@@ -9,7 +9,7 @@
 		label: string;
 		dividerBefore?: boolean;
 		disabled?: boolean;
-		saveBlocked?: boolean;
+		saveStatus?: "blocked" | "warning";
 	};
 
 	let {
@@ -110,17 +110,25 @@
 								"w-full justify-start rounded-none border-l-2 border-l-transparent px-2 py-1.5 text-sm hover:bg-halbu-panel2 hover:text-halbu-text",
 								activeId === item.id &&
 									"bg-halbu-panel2 border-l-halbu-primary text-halbu-text",
+								item.saveStatus === "blocked" && "text-halbu-danger hover:text-halbu-danger",
+								item.saveStatus === "warning" && "text-halbu-warning hover:text-halbu-warning",
 							)}
 							disabled={item.disabled === true}
 							onclick={() => onSelect(item.id)}
 						>
 							<span class="flex w-full min-w-0 items-center justify-between gap-2">
 								<span>{item.label}</span>
-								{#if item.saveBlocked === true}
-									<AlertCircleIcon
+								{#if item.saveStatus === "blocked"}
+									<AlertTriangleIcon
 										size={12}
 										strokeWidth={2.1}
 										class="shrink-0 text-halbu-danger"
+									/>
+								{:else if item.saveStatus === "warning"}
+									<AlertTriangleIcon
+										size={12}
+										strokeWidth={2.1}
+										class="shrink-0 text-halbu-warning"
 									/>
 								{/if}
 							</span>

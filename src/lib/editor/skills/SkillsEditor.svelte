@@ -31,15 +31,11 @@
 	const mode = $derived(session.mode);
 	const effectiveDerivedValues = $derived(editorState.gameRulesValues.values);
 	const effectiveDerivedValuesError = $derived(editorState.gameRulesValues.error);
-	const parserLayoutVersion = $derived(editorState.layoutVersion);
+	const editingVersion = $derived(editorState.targetVersion ?? editorState.layoutVersion ?? save.version);
 
-	const effectiveVersion = $derived(
-		parserLayoutVersion == null ? save.version : parserLayoutVersion,
-	);
-
-	const supportedClasses = $derived(getSupportedClassNames(effectiveVersion));
+	const supportedClasses = $derived(getSupportedClassNames(editingVersion));
 	const classSupportedForVersion = $derived(
-		isClassSupportedForVersion(effectiveVersion, save.character.className),
+		isClassSupportedForVersion(editingVersion, save.character.className),
 	);
 
 	const isGameRulesMode = $derived(mode === "game-rules");
@@ -50,11 +46,11 @@
 		return save.attributes.newskills.value;
 	});
 
-	const skillsDataset = $derived(getSkillsDataset(effectiveVersion));
+	const skillsDataset = $derived(getSkillsDataset(editingVersion));
 	const hasKnownVersionSkills = $derived(skillsDataset != null);
 
 	const skillsData = $derived(
-		getSkillsData(skillsDataset, effectiveVersion, save.character.className),
+		getSkillsData(skillsDataset, editingVersion, save.character.className),
 	);
 	const skillSlotCount = $derived.by(() => {
 		if (skillsData.length < 1) {
@@ -68,7 +64,7 @@
 	const hasClassSkills = $derived(skillsData.length > 0 && classSupportedForVersion);
 	const pageIndexes = $derived(getPageIndexes(skillsData));
 	const skillPageNames = $derived(
-		getSkillPageNames(effectiveVersion, save.character.className, skillsData),
+		getSkillPageNames(editingVersion, save.character.className, skillsData),
 	);
 	const canRenderTrees = $derived(hasClassSkills && skillSlotsReady);
 	const headerDisabled = $derived(!hasClassSkills);
@@ -80,7 +76,7 @@
 			hasBackendClassSupport: classSupportedForVersion,
 			hasClassSkills,
 			skillSlotsReady,
-			version: effectiveVersion,
+			version: editingVersion,
 			className: save.character.className,
 			supportedClasses: [...supportedClasses],
 		}),
@@ -103,7 +99,7 @@
 	});
 
 	function getSkillSlot(skillId: number): number {
-		return skillIdToSaveId(effectiveVersion, save.character.className, skillId);
+		return skillIdToSaveId(editingVersion, save.character.className, skillId);
 	}
 
 	const skillStatesById = $derived(
@@ -112,6 +108,7 @@
 			saveSkills: save.skills,
 			characterLevel: save.character.level,
 			availableSkillPoints: effectiveSkillPointsLeft,
+			isGameRulesMode,
 			getSkillSlot,
 		}),
 	);
@@ -130,7 +127,7 @@
 	}
 
 	function refund() {
-		refundAllSkillPointsInSave(save, isGameRulesMode);
+		refundAllSkillPointsInSave(save);
 	}
 
 	const selectedSkill = $derived.by(() =>
@@ -153,7 +150,7 @@
 					skillsData,
 					skills: save.skills,
 					character: save.character,
-					version: effectiveVersion,
+					version: editingVersion,
 					skillState: selectedSkillState,
 				}),
 	);

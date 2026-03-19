@@ -41,6 +41,18 @@
 		cancelFieldEdit(pointsEdit, String(pointsLeft));
 	}
 
+	function handlePointsInput(event: Event): void {
+		const input = event.currentTarget as HTMLInputElement;
+		setFieldInput(pointsEdit, input.value);
+
+		const parsed = Number(input.value);
+		if (!Number.isFinite(parsed)) {
+			return;
+		}
+
+		onPointsLeftChange(clampSkillPoints(parsed));
+	}
+
 	function handlePointsKeydown(event: KeyboardEvent): void {
 		if (event.key === "Enter") {
 			event.preventDefault();
@@ -75,7 +87,7 @@
 				value={pointsEdit.input}
 				disabled={pointsInputDisabled}
 				onfocus={() => startFieldEdit(pointsEdit, String(pointsLeft))}
-				oninput={(event) => setFieldInput(pointsEdit, event.currentTarget.value)}
+				oninput={handlePointsInput}
 				onblur={finishPointsEdit}
 				onkeydown={handlePointsKeydown}
 			/>

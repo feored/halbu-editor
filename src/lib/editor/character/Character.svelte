@@ -1,7 +1,10 @@
 <script lang="ts">
 	import { enforceMinMax } from "$lib/utils/actions";
 	import { clampInteger, getMaxValueForBitLength } from "$lib/utils/numbers";
-	import { isClassSupportedForVersion } from "$lib/utils/gameData";
+	import {
+		getSupportedExpansionTypes,
+		isClassSupportedForVersion,
+	} from "$lib/utils/gameData";
 	import {
 		ACT_LABELS,
 		DIFFICULTY_LABELS,
@@ -11,10 +14,8 @@
 
 	import experienceTable from "$lib/editor/character/experience.json";
 	import {
-		buildCharacterEditValidation,
 		formatMapSeedValue,
 		parseMapSeedInput,
-		validateCharacterName,
 	} from "$lib/editor/character/characterLogic";
 	import {
 		getCharacterDerivedState,
@@ -49,6 +50,7 @@
 	const effectiveDerivedValues = $derived(editorState.gameRulesValues.values);
 	const effectiveDerivedValuesError = $derived(editorState.gameRulesValues.error);
 	const layoutVersion = $derived(editorState.layoutVersion);
+	const validationIssues = $derived(session.validationReport.issues);
 
 	const MAX_GOLD_PER_LEVEL = 10000;
 	const MAX_XP = 3520485254;
@@ -80,11 +82,8 @@
 		"Hell",
 	];
 
-	let nameInput: HTMLInputElement | null = null;
 	let mapSeedInput: HTMLInputElement | null = null;
 
-	let validName = $state(true);
-	let nameValidationMessage = $state("");
 	let mapSeedDisplayMode = $state<"decimal" | "hex">("decimal");
 
 	let levelEdit = $state(initFieldEdit(""));
@@ -94,36 +93,40 @@
 
 	const isGameRulesMode = $derived(mode === "game-rules");
 	const effectiveVersion = $derived(layoutVersion == null ? save.version : layoutVersion);
+	const editingVersion = $derived(editorState.targetVersion ?? effectiveVersion);
 	const mapSeedDisplayValue = $derived(
 		formatMapSeedValue(save.character.mapSeed, mapSeedDisplayMode),
 	);
 	const characterDerivedState = $derived(getCharacterDerivedState(save));
 	const difficultyBeaten = $derived(characterDerivedState.difficultyBeaten);
 	const title = $derived(characterDerivedState.title);
+	const supportedExpansionTypes = $derived(getSupportedExpansionTypes(editingVersion));
+	let showPointsGameRulesHelp = $state(false);
 
 	const classSupportWarning = $derived.by(() => {
-		if (!isClassSupportedForVersion(effectiveVersion, save.character.className)) {
-			return `Current class (${save.character.className}) is not recognized for layout version ${effectiveVersion}. Apply a supported class template to continue.`;
+		if (!isClassSupportedForVersion(editingVersion, save.character.className)) {
+			return `Current class (${save.character.className}) is not recognized for editing version ${editingVersion}. Apply a supported class template to continue.`;
 		}
 
 		return "";
 	});
 
 	const progressionValidationWarning = $derived.by(() => {
-		const expansionType = save.expansionType;
-		const difficultyIndex = ["None", "Normal", "Nightmare", "Hell"].indexOf(difficultyBeaten);
+		const issue = validationIssues.find(
+			(candidate) => candidate.code === "ProgressionNonCanonical",
+		);
 
-		if (difficultyIndex < 0) {
-			return "";
+		return issue?.message ?? "";
+	});
+
+	$effect(() => {
+		if (supportedExpansionTypes.length === 0) {
+			return;
 		}
 
-		const expectedProgression = (4 + (expansionType !== "Classic" ? 1 : 0)) * difficultyIndex;
-
-		if (save.character.progression === expectedProgression) {
-			return "";
+		if (!supportedExpansionTypes.includes(save.expansionType)) {
+			setExpansionType(save, supportedExpansionTypes[0]);
 		}
-
-		return `Progression value ${save.character.progression} is non-canonical for ${difficultyBeaten} ${expansionType}. Re-select Difficulty beaten to normalize it.`;
 	});
 
 	function finishLevelEdit(): void {
@@ -204,16 +207,6 @@
 		setClampedAttributeValue(save, attributeId, save.attributes[attributeId].value + delta);
 	}
 
-	function syncNameValidationState(): void {
-		const result = validateCharacterName(save.character.name);
-		validName = result.valid;
-		nameValidationMessage = result.message;
-
-		if (nameInput != null) {
-			nameInput.setCustomValidity(result.message);
-		}
-	}
-
 	function reportInputValidity(input: HTMLInputElement | null, message: string): void {
 		if (input == null) {
 			return;
@@ -225,20 +218,9 @@
 	}
 
 	function finishNameEdit(): void {
-		const result = validateCharacterName(nameEdit.input);
-		if (!result.valid) {
-			setFieldError(nameEdit, result.message);
-			validName = false;
-			nameValidationMessage = result.message;
-			reportInputValidity(nameInput, result.message);
-			cancelFieldEdit(nameEdit, save.character.name);
-			return;
-		}
-
-		save.character.name = result.value;
+		save.character.name = nameEdit.input;
 		finishFieldEdit(nameEdit);
 		syncFieldFromValue(nameEdit, save.character.name);
-		syncNameValidationState();
 	}
 
 	function handleNameKeydown(event: KeyboardEvent): void {
@@ -252,8 +234,6 @@
 		if (event.key === "Escape") {
 			event.preventDefault();
 			cancelFieldEdit(nameEdit, save.character.name);
-			validName = true;
-			nameValidationMessage = "";
 			(event.currentTarget as HTMLInputElement).blur();
 		}
 	}
@@ -309,17 +289,11 @@
 	});
 
 	$effect(() => {
-		syncNameValidationState();
+		if (!isGameRulesMode) {
+			showPointsGameRulesHelp = false;
+		}
 	});
 
-	$effect(() => {
-		session.editValidation = buildCharacterEditValidation(
-			validName,
-			nameValidationMessage,
-			classSupportWarning,
-			progressionValidationWarning,
-		);
-	});
 </script>
 
 <div class="grid grid-cols-1 content-start gap-2.5 xl:grid-cols-2">
@@ -331,38 +305,22 @@
 				<label class="form-label mb-0" for="name">Name</label>
 				<input
 					class="form-control"
-					bind:this={nameInput}
 					type="text"
 					id="name"
 					name="name"
 					autocomplete="off"
-					required
-					minlength="2"
-					maxlength="15"
 					size="15"
 					value={nameEdit.input}
-					title="2-15 characters"
 					onfocus={() => startFieldEdit(nameEdit, save.character.name)}
-					oninput={(event) => {
-						setFieldInput(nameEdit, event.currentTarget.value);
-						validName = true;
-						nameValidationMessage = "";
-						if (nameInput != null) {
-							nameInput.setCustomValidity("");
-						}
-					}}
+					oninput={(event) => setFieldInput(nameEdit, event.currentTarget.value)}
 					onblur={finishNameEdit}
 					onkeydown={handleNameKeydown}
 				/>
 
 				<div></div>
-				<div class="form-text m-0">
-					Name rules: 2-15 characters, starts with a letter, letters plus `_` or `-` only,
-					and at most one `_` and one `-`.
-				</div>
 			</div>
 
-			<ClassSelector {classSupportWarning} />
+			<ClassSelector editingVersion={editingVersion} {classSupportWarning} />
 
 			<div class="mt-1 grid grid-cols-form-32 items-start gap-x-2.5 gap-y-0.5">
 				<label class="form-label mb-0" for="expansionType">Expansion</label>
@@ -373,9 +331,9 @@
 					value={save.expansionType}
 					onchange={(event) => setExpansionType(save, event.currentTarget.value)}
 				>
-					<option value="Classic">{EXPANSION_TYPE_LABELS.Classic}</option>
-					<option value="Expansion">{EXPANSION_TYPE_LABELS.Expansion}</option>
-					<option value="RotW">{EXPANSION_TYPE_LABELS.RotW}</option>
+					{#each supportedExpansionTypes as expansionType}
+						<option value={expansionType}>{EXPANSION_TYPE_LABELS[expansionType]}</option>
+					{/each}
 				</select>
 			</div>
 
@@ -417,6 +375,12 @@
 				</div>
 			</div>
 		</section>
+
+		{#if progressionValidationWarning.length > 0}
+			<div class="rounded-sm border border-halbu-warning bg-halbu-warningSoft px-2 py-1.5 text-sm text-halbu-warning">
+				{progressionValidationWarning}
+			</div>
+		{/if}
 
 		<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
 			<h3 class="editor-card-title mb-1.5">Progression</h3>
@@ -636,10 +600,24 @@
 		<AttributesSection />
 
 		<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
-			<h3 class="editor-card-title mb-1.5">Points</h3>
-
-			{#if isGameRulesMode}
-				<div class="form-text mb-1">
+			<div class="mb-1 flex items-center justify-between gap-2">
+				<h3 class="editor-card-title mb-0">Points</h3>
+				{#if isGameRulesMode}
+					<button
+						type="button"
+						class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-halbu-borderStrong bg-halbu-panel2 text-[11px] font-semibold leading-none text-halbu-textMuted transition hover:bg-halbu-primarySoft hover:text-halbu-text"
+						aria-label={showPointsGameRulesHelp ? "Hide game rules explanation" : "Show game rules explanation"}
+						aria-expanded={showPointsGameRulesHelp}
+						onclick={() => {
+							showPointsGameRulesHelp = !showPointsGameRulesHelp;
+						}}
+					>
+						?
+					</button>
+				{/if}
+			</div>
+			{#if isGameRulesMode && showPointsGameRulesHelp}
+				<div class="form-text mb-1 mt-0.5">
 					Game rules mode: points are recalculated from level, attributes, skills, and
 					completed quests.
 				</div>

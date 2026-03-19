@@ -143,6 +143,7 @@ export type BuildSkillStateOptions = {
 	saveSkills: readonly SkillSlot[];
 	characterLevel: number;
 	availableSkillPoints: number;
+	isGameRulesMode: boolean;
 	getSkillSlot: (skillId: number) => number;
 	skillSlotsReady?: boolean;
 };
@@ -151,7 +152,13 @@ export function buildSkillState(
 	skillData: SkillData,
 	options: BuildSkillStateOptions,
 ): SkillState {
-	const { saveSkills, characterLevel, availableSkillPoints, getSkillSlot } = options;
+	const {
+		saveSkills,
+		characterLevel,
+		availableSkillPoints,
+		isGameRulesMode,
+		getSkillSlot,
+	} = options;
 	const reqLevel = skillData.reqlevel;
 	const levelRequirementMet = characterLevel >= reqLevel;
 	const unmetPrerequisites = skillData.reqskills.filter((requiredSkillId) => {
@@ -162,7 +169,8 @@ export function buildSkillState(
 	const available = levelRequirementMet && prerequisitesMet;
 	const saveId = skillData.saveId;
 	const points = saveSkills[saveId].points;
-	const canIncrement = points < 255 && available && availableSkillPoints > 0;
+	const canIncrement =
+		points < 255 && available && (isGameRulesMode ? availableSkillPoints > 0 : true);
 	const canDecrement = points > 0;
 
 	let state: SkillState["state"] = "available";

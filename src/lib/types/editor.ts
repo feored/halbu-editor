@@ -181,11 +181,6 @@ export type EditorSave = {
 	metadata: SaveMetadata;
 };
 
-export type EditValidation = {
-	errors: string[];
-	warnings: string[];
-};
-
 export type SaveSummary = {
 	path: string;
 	title: string | null;

@@ -51,6 +51,22 @@
 		cancelFieldEdit(pointsEdit, String(skillDetails.currentPoints));
 	}
 
+	function handlePointsInput(event: Event): void {
+		if (skillDetails == null) {
+			return;
+		}
+
+		const input = event.currentTarget as HTMLInputElement;
+		setFieldInput(pointsEdit, input.value);
+
+		const parsed = Number(input.value);
+		if (!Number.isFinite(parsed)) {
+			return;
+		}
+
+		onSetPoints(clampSkillPoints(parsed));
+	}
+
 	function handlePointsKeydown(event: KeyboardEvent): void {
 		if (skillDetails == null) {
 			return;
@@ -147,7 +163,7 @@
 					step="1"
 					value={pointsEdit.input}
 					onfocus={() => startFieldEdit(pointsEdit, String(skillDetails.currentPoints))}
-					oninput={(event) => setFieldInput(pointsEdit, event.currentTarget.value)}
+					oninput={handlePointsInput}
 					onblur={finishPointsEdit}
 					onkeydown={handlePointsKeydown}
 					{disabled}
