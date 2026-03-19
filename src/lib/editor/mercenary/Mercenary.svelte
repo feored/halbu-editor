@@ -102,9 +102,17 @@
 	function setHired(nextHired: boolean): void {
 		mercenary.id = nextHired ? randomMercenaryId() : 0;
 
-		if (!nextHired) {
-			mercenary.isDead = false;
+		if (nextHired) {
+			if (
+				getLevelFromExperience(mercenary.experience, currentVariant.rate) <
+				MERCENARY_LEVEL_MIN
+			) {
+				mercenary.experience = getExperienceForLevel(MERCENARY_LEVEL_MIN, currentVariant.rate);
+			}
+			return;
 		}
+
+		mercenary.isDead = false;
 	}
 
 	function setVariantById(nextVariantId: number): void {
@@ -115,8 +123,15 @@
 			return;
 		}
 
+		const nextLevel = clampMercenaryLevel(
+			getLevelFromExperience(mercenary.experience, currentVariant.rate),
+		);
+
 		mercenary.variantId = nextVariant.id;
-		setExperience(mercenary.experience);
+		mercenary.experience = getExperienceForLevel(
+			nextLevel < MERCENARY_LEVEL_MIN ? MERCENARY_LEVEL_MIN : nextLevel,
+			nextVariant.rate,
+		);
 		clampNameId();
 	}
 
@@ -196,10 +211,7 @@
 	}
 
 	function setExperience(nextExperience: number): void {
-		const nextLevel = clampMercenaryLevel(
-			getLevelFromExperience(nextExperience, currentVariant.rate),
-		);
-		mercenary.experience = getExperienceForLevel(nextLevel, currentVariant.rate);
+		mercenary.experience = clampInteger(nextExperience, 0, U32_MAX);
 	}
 
 	function finishLevelEdit(): void {
