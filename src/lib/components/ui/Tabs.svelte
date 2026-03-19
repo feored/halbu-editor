@@ -2,6 +2,7 @@
 	interface Tab<T> {
 		value: T;
 		label: string;
+		title?: string;
 	}
 
 	interface Props<T> {
@@ -19,6 +20,7 @@
 	{#each tabs as tab}
 		<button
 			type="button"
+			title={tab.title}
 			class={`border px-3 py-1.5 text-sm font-medium leading-none transition ${
 				active === tab.value
 					? "tab-active border-halbu-borderStrong bg-halbu-card text-halbu-text"

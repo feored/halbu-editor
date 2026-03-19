@@ -1,7 +1,8 @@
 <script lang="ts">
-	import { message } from "@tauri-apps/plugin-dialog";
-	import ConfirmDialog from "$lib/components/ConfirmDialog.svelte";
-	import { getSaveEditionLabel, isUnknownSaveFormat } from "$lib/utils/gameData";
+import { message } from "@tauri-apps/plugin-dialog";
+import ConfirmDialog from "$lib/components/ConfirmDialog.svelte";
+import Tabs from "$lib/components/ui/Tabs.svelte";
+import { getSaveEditionLabel, isUnknownSaveFormat } from "$lib/utils/gameData";
 	import { getErrorMessage } from "$lib/utils/errorMessage";
 	import {
 		applyProjectedGameRulesValues,
@@ -32,6 +33,10 @@
 	const rawModeTooltipText = "Edit values directly.";
 	const gameRulesModeTooltipText =
 		"Values like life, mana or available skill points are calculated from class, level, attributes, skills, and completed quests and not directly editable.";
+	const modeTabs = [
+		{ value: "raw" as const, label: "Raw", title: rawModeTooltipText },
+		{ value: "game-rules" as const, label: "Game rules", title: gameRulesModeTooltipText },
+	];
 
 	function openGameRulesConfirm(detailItems: string[]): Promise<boolean> {
 		gameRulesConfirmDetailItems = detailItems;
@@ -104,38 +109,7 @@
 	</p>
 
 	<div class="session-bar__mode-control flex items-center gap-2">
-		<div
-			class="inline-flex items-center rounded-xs border border-halbu-border bg-halbu-panel p-0.5"
-			role="group"
-			aria-label="Document mode"
-		>
-			<button
-				type="button"
-				class={`rounded-xs px-2 py-1 text-sm font-medium leading-none transition ${
-					mode === "raw"
-						? "border border-halbu-primary bg-halbu-primarySoft text-halbu-primary"
-						: "border border-transparent text-halbu-text hover:border-halbu-border hover:bg-halbu-panel2"
-				}`}
-				title={rawModeTooltipText}
-				aria-pressed={mode === "raw"}
-				onclick={() => mode !== "raw" && handleEditorModeChange("raw")}
-			>
-				Raw
-			</button>
-			<button
-				type="button"
-				class={`rounded-xs px-2 py-1 text-sm font-medium leading-none transition ${
-					mode === "game-rules"
-						? "border border-halbu-primary bg-halbu-primarySoft text-halbu-primary"
-						: "border border-transparent text-halbu-text hover:border-halbu-border hover:bg-halbu-panel2"
-				}`}
-				title={gameRulesModeTooltipText}
-				aria-pressed={mode === "game-rules"}
-				onclick={() => mode !== "game-rules" && handleEditorModeChange("game-rules")}
-			>
-				Game rules
-			</button>
-		</div>
+		<Tabs tabs={modeTabs} active={mode} onSelect={handleEditorModeChange} />
 	</div>
 </div>
 

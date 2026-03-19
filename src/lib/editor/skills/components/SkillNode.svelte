@@ -215,7 +215,7 @@
 
 	.skill-node--available {
 		background-color: var(--halbu-panel2);
-		color: var(--bs-body-color);
+		color: var(--halbu-text);
 	}
 
 	.skill-node--available:hover {
@@ -225,7 +225,7 @@
 	.skill-node--invested {
 		background-color: color-mix(in srgb, var(--halbu-primary) 8%, var(--halbu-panel2));
 		border-color: color-mix(in srgb, var(--halbu-primary) 55%, var(--halbu-border));
-		color: var(--bs-body-color);
+		color: var(--halbu-text);
 	}
 
 	.skill-node--invested .skill-node__points {

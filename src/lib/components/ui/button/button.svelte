@@ -13,7 +13,7 @@
 		outline:
 			"border border-halbu-borderStrong bg-transparent text-halbu-text hover:bg-halbu-primarySoft disabled:border-halbu-border disabled:bg-halbu-panel disabled:text-halbu-textDim",
 		destructive:
-			"bg-halbu-danger text-halbu-text hover:bg-halbu-dangerHover active:bg-halbu-dangerActive disabled:bg-halbu-panel2 disabled:text-halbu-textDim",
+			"bg-halbu-danger text-halbu-white hover:bg-halbu-dangerHover active:bg-halbu-dangerActive disabled:bg-halbu-panel2 disabled:text-halbu-textDim",
 		ghost: "text-halbu-text hover:bg-halbu-primarySoft disabled:text-halbu-textDim disabled:bg-halbu-panel",
 	};
 

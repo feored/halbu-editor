@@ -284,7 +284,7 @@
 	}
 
 	.library-table tbody tr:nth-of-type(even) > * {
-		background: color-mix(in srgb, var(--halbu-panel2) 34%, transparent);
+		background: color-mix(in srgb, var(--halbu-panel2) 50%, transparent);
 	}
 
 	.library-row {
