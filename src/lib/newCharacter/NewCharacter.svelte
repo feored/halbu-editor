@@ -23,7 +23,11 @@
 		getSupportedExpansionTypes,
 		getSupportedClassesForExpansionType,
 	} from "$lib/utils/gameData";
-	import { GAME_EDITIONS } from "$lib/types/editor";
+	import {
+		GAME_EDITIONS,
+		DISPLAY_EXPANSION_TYPE,
+		DISPLAY_GAME_EDITION,
+	} from "$lib/types/editor";
 	import type { EditorSave, ExpansionType, GameEdition, KnownClassName } from "$lib/types/editor";
 	import type { BackendEditorSave, OutputFormatOption } from "$lib/types/backend";
 	import type { OpenedSessionData } from "$lib/editor/editorSession";
@@ -290,7 +294,7 @@
 								selectedEdition = edition;
 							}}
 						>
-							{edition}
+							{DISPLAY_GAME_EDITION[edition]}
 						</button>
 					{/each}
 				</div>
@@ -309,7 +313,7 @@
 								selectedExpansionMode = mode;
 							}}
 						>
-							{mode}
+							{DISPLAY_EXPANSION_TYPE[mode]}
 						</button>
 					{/each}
 				</div>
