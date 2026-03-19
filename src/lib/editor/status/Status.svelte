@@ -181,9 +181,11 @@
 	});
 </script>
 
-<div class="grid content-start gap-2.5">
-	<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
-		<h3 class="editor-card-title mb-1.5">File Information</h3>
+<div class="divide-y divide-halbu-border">
+	<section class="pb-3">
+		<p class="mb-2 text-xs font-semibold uppercase tracking-wider text-halbu-textMuted">
+			File Information
+		</p>
 		<dl class="m-0 grid grid-cols-form-48 items-baseline gap-x-2.5 gap-y-1">
 			{#if isUnknownFormat}
 				<dt class="form-label mb-0">Detected version</dt>
@@ -223,8 +225,10 @@
 		</dl>
 	</section>
 
-	<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
-		<h3 class="editor-card-title mb-1.5">Parser Status</h3>
+	<section class="py-3">
+		<p class="mb-2 text-xs font-semibold uppercase tracking-wider text-halbu-textMuted">
+			Parser Status
+		</p>
 		<dl class="m-0 grid grid-cols-form-48 items-baseline gap-x-2.5 gap-y-1">
 			<dt class="form-label mb-0">Parse mode</dt>
 			<dd class="m-0 text-sm text-halbu-text">{parseModeLabel}</dd>
@@ -235,15 +239,17 @@
 		</dl>
 	</section>
 
-	<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
-		<h3 class="editor-card-title mb-1.5">Backups</h3>
+	<section class="py-3">
+		<p class="mb-2 text-xs font-semibold uppercase tracking-wider text-halbu-textMuted">
+			Backups
+		</p>
 		<dl class="m-0 grid grid-cols-form-48 items-baseline gap-x-2.5 gap-y-1">
 			<dt class="form-label mb-0">Backups stored</dt>
 			<dd class="m-0 text-sm text-halbu-text">{backupCountLabel}</dd>
 			<dt class="form-label mb-0">Last backup</dt>
 			<dd class="m-0 text-sm text-halbu-text">{lastBackupLabel}</dd>
 		</dl>
-		<div class="mt-1">
+		<div class="mt-2">
 			<Button
 				variant="secondary"
 				onclick={openBackupFolder}
@@ -251,16 +257,20 @@
 				>{openingBackupFolder ? "Opening..." : "Open Backup Folder"}</Button
 			>
 		</div>
-		{#if backupStatusError.length > 0}<div class="form-text text-halbu-warning mt-1">
+		{#if backupStatusError.length > 0}
+			<div class="form-text mt-1 text-halbu-warning">
 				Backup status unavailable: {backupStatusError}
-			</div>{/if}
-		{#if backupFolderError.length > 0}<div class="form-text text-halbu-warning mt-1">
-				{backupFolderError}
-			</div>{/if}
+			</div>
+		{/if}
+		{#if backupFolderError.length > 0}
+			<div class="form-text mt-1 text-halbu-warning">{backupFolderError}</div>
+		{/if}
 	</section>
 
-	<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
-		<h3 class="editor-card-title mb-1.5">Diagnostics</h3>
+	<section class="pt-3">
+		<p class="mb-2 text-xs font-semibold uppercase tracking-wider text-halbu-textMuted">
+			Diagnostics
+		</p>
 		{#if parseIssues.length > 0}
 			<div class="overflow-auto rounded-xs border border-halbu-border bg-halbu-panel2">
 				<table class="w-full border-collapse text-sm">
@@ -305,7 +315,7 @@
 				</table>
 			</div>
 		{:else}
-			<div class="form-text">No parse diagnostics recorded.</div>
+			<p class="m-0 text-sm text-halbu-textMuted">No parse diagnostics recorded.</p>
 		{/if}
 	</section>
 </div>

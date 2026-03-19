@@ -13,6 +13,17 @@ export type ExpansionType = (typeof EXPANSION_TYPE_NAMES)[number];
 export const GAME_EDITIONS = ["D2R Legacy", "RotW"] as const;
 export type GameEdition = (typeof GAME_EDITIONS)[number];
 
+export const DISPLAY_EXPANSION_TYPE: Record<ExpansionType, string> = {
+	Classic: "Classic",
+	Expansion: "Expansion",
+	RotW: "Reign of the Warlock",
+};
+
+export const DISPLAY_GAME_EDITION: Record<GameEdition, string> = {
+	"D2R Legacy": "D2R Legacy",
+	RotW: "Reign of the Warlock",
+};
+
 export const DIFFICULTY_NAMES = ["Normal", "Nightmare", "Hell"] as const;
 export type Difficulty = (typeof DIFFICULTY_NAMES)[number];
 

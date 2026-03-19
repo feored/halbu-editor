@@ -8,6 +8,7 @@
 	import { getErrorMessage } from "$lib/utils/errorMessage";
 	import { AlertCircleIcon } from "lucide-svelte";
 	import { toOpenedSessionData } from "$lib/types/converters";
+	import { DISPLAY_EXPANSION_TYPE, DISPLAY_GAME_EDITION } from "$lib/types/editor";
 	import type { BackendOpenSaveResult } from "$lib/types/backend";
 
 	let { onmessage, parseMode = "lax" } = $props();
@@ -124,135 +125,123 @@
 </script>
 
 <div class="container m-0">
-	<div class="col">
-		<div class="row g-2 align-items-end mb-3">
-			<div class="col-auto d-flex gap-2">
-				<Button class="font-semibold" onclick={readFileContents}>Open File</Button>
-				<Button variant="secondary" onclick={getExistingCharacters}>Refresh Folder</Button>
-			</div>
-			<div class="col-md-3">
-				<label class="form-label mb-1" for="library-filter">Search</label>
-				<input
-					id="library-filter"
-					class="form-control"
-					type="text"
-					placeholder="Filter saves"
-					bind:value={filterText}
-				/>
-			</div>
-			<div class="col">
-				<label class="form-label mb-1" for="library-directory">Save Directory</label>
-				<div
-					id="library-directory"
-					class="save-directory-field"
-					title={currentSaveDirectory}
-					aria-readonly="true"
-				>
-					<span class="save-directory-path">{currentSaveDirectory}</span>
-				</div>
+	<div class="mb-4 flex flex-wrap items-end gap-2">
+		<div class="flex gap-2">
+			<Button class="font-semibold" onclick={readFileContents}>Open File</Button>
+			<Button variant="secondary" onclick={getExistingCharacters}>Refresh Folder</Button>
+		</div>
+		<div class="w-full sm:w-56">
+			<label class="form-label mb-1" for="library-filter">Search</label>
+			<input
+				id="library-filter"
+				class="form-control"
+				type="text"
+				placeholder="Filter saves"
+				bind:value={filterText}
+			/>
+		</div>
+		<div class="min-w-0 flex-1">
+			<label class="form-label mb-1" for="library-directory">Save Directory</label>
+			<div
+				id="library-directory"
+				class="save-directory-field"
+				title={currentSaveDirectory}
+				aria-readonly="true"
+			>
+				<span class="save-directory-path">{currentSaveDirectory}</span>
 			</div>
 		</div>
-
-		{#if libraryError.length > 0}
-			<div
-				class="rounded border border-halbu-warning bg-halbu-warningSoft p-2 text-sm text-halbu-warning"
-			>
-				{libraryError}
-			</div>
-		{/if}
-
-		{#if loading}
-			<!-- waiting for settings + folder scan -->
-		{:else if !saveFolderSet}
-			<div class="text-center text-bg-warning p-3 m-3 rounded">
-				<div class="d-flex">
-					<AlertCircleIcon />&nbsp;Set a designated save folder in the settings to easily
-					pick from existing characters.
-				</div>
-			</div>
-		{:else if saveFilesFound.length < 1}
-			<div class="text-center text-bg-warning p-3 m-3 rounded">
-				<div class="d-flex">
-					<AlertCircleIcon />&nbsp;Found no valid .d2s files in save folder.
-				</div>
-			</div>
-		{:else}
-			<table class="table library-table">
-				<thead>
-					<tr>
-						<th scope="col" class="form-label mb-0">Name</th>
-						<th scope="col" class="form-label mb-0">Class</th>
-						<th scope="col" class="form-label mb-0">Level</th>
-						<th scope="col" class="form-label mb-0">Mode</th>
-						<th scope="col" class="form-label mb-0">Expansion</th>
-						<th scope="col" class="form-label mb-0">Edition</th>
-						<th scope="col" class="form-label mb-0">Version</th>
-					</tr>
-				</thead>
-				<tbody>
-					{#each filteredSaveFiles as saveFile}
-						<tr
-							class="library-row"
-							role="button"
-							tabindex="0"
-							onclick={() => loadSavePath(saveFile.path)}
-							onkeydown={(event) => handleRowKeydown(event, saveFile.path)}
-						>
-							<td class="py-3">
-								<span class="font-semibold text-halbu-text">
-									{#if saveFile.title != null && saveFile.title.length > 0}
-										{saveFile.title}{" "}
-									{/if}
-									{#if saveFile.name != null && saveFile.name.length > 0}
-										{saveFile.name}
-									{:else}
-										Corrupted Name
-									{/if}
-								</span>
-							</td>
-							<td class="py-3">{saveFile.className ?? "-"}</td>
-							<td class="py-3">{saveFile.level ?? "-"}</td>
-							<td class="py-3">
-								{#if saveFile.hardcore === true}
-									<span
-										class="inline-flex items-center rounded-full bg-halbu-dangerSoft px-2 py-0.5 text-xs font-semibold text-halbu-danger"
-									>
-										Hardcore
-									</span>
-								{:else if saveFile.hardcore === false}
-									<span
-										class="inline-flex items-center rounded-full bg-halbu-panel2 px-2 py-0.5 text-xs font-semibold text-halbu-textMuted"
-									>
-										Softcore
-									</span>
-								{:else}
-									<span class="text-halbu-textMuted">Unknown</span>
-								{/if}
-							</td>
-							<td class="py-3">
-								<small class="text-halbu-text"
-									>{saveFile.expansionType ?? "-"}</small
-								>
-							</td>
-							<td class="py-3">
-								<small class="text-halbu-text">{saveFile.gameEdition ?? "-"}</small>
-							</td>
-							<td class="py-3">
-								<small class="font-monospace text-halbu-text"
-									>{saveFile.formatId ?? "-"}</small
-								>
-							</td>
-						</tr>
-					{/each}
-				</tbody>
-			</table>
-			{#if filteredSaveFiles.length === 0}
-				<div class="text-center text-bg-warning p-3 rounded">
-					No saves matched "{filterText}".
-				</div>
-			{/if}
-		{/if}
 	</div>
+
+	{#if libraryError.length > 0}
+		<div
+			class="rounded border border-halbu-warning bg-halbu-warningSoft p-2 text-sm text-halbu-warning"
+		>
+			{libraryError}
+		</div>
+	{/if}
+
+	{#if loading}
+		<!-- waiting for settings + folder scan -->
+	{:else if !saveFolderSet}
+		<div class="m-3 rounded-sm bg-halbu-warningSoft p-3 text-center text-halbu-warning">
+			<div class="flex items-center gap-1">
+				<AlertCircleIcon />&nbsp;Set a designated save folder in the settings to easily pick
+				from existing characters.
+			</div>
+		</div>
+	{:else if saveFilesFound.length < 1}
+		<div class="m-3 rounded-sm bg-halbu-warningSoft p-3 text-center text-halbu-warning">
+			<div class="flex items-center gap-1">
+				<AlertCircleIcon />&nbsp;Found no valid .d2s files in save folder.
+			</div>
+		</div>
+	{:else}
+		<table class="w-full border-collapse library-table">
+			<thead>
+				<tr>
+					<th>Name</th>
+					<th>Class</th>
+					<th>Level</th>
+					<th>Mode</th>
+					<th>Expansion</th>
+					<th>Edition</th>
+					<th>Version</th>
+				</tr>
+			</thead>
+			<tbody>
+				{#each filteredSaveFiles as saveFile}
+					<tr
+						class="library-row"
+						role="button"
+						tabindex="0"
+						onclick={() => loadSavePath(saveFile.path)}
+						onkeydown={(event) => handleRowKeydown(event, saveFile.path)}
+					>
+						<td>
+							<span class="font-semibold text-halbu-text">
+								{#if saveFile.title != null && saveFile.title.length > 0}
+									{saveFile.title}{" "}
+								{/if}
+								{#if saveFile.name != null && saveFile.name.length > 0}
+									{saveFile.name}
+								{:else}
+									Corrupted Name
+								{/if}
+							</span>
+						</td>
+						<td>{saveFile.className ?? "-"}</td>
+						<td class="font-medium">{saveFile.level ?? "-"}</td>
+						<td>
+							{#if saveFile.hardcore === true}
+								<span class="font-medium text-halbu-danger">Hardcore</span>
+							{:else if saveFile.hardcore === false}
+								<span class="text-halbu-textMuted">Softcore</span>
+							{:else}
+								<span class="text-halbu-textMuted">Unknown</span>
+							{/if}
+						</td>
+						<td
+							>{saveFile.expansionType != null
+								? DISPLAY_EXPANSION_TYPE[saveFile.expansionType]
+								: "-"}</td
+						>
+						<td
+							>{saveFile.gameEdition != null
+								? DISPLAY_GAME_EDITION[saveFile.gameEdition]
+								: "-"}</td
+						>
+						<td class="font-mono">{saveFile.formatId ?? "-"}</td>
+					</tr>
+				{/each}
+			</tbody>
+		</table>
+		{#if filteredSaveFiles.length === 0}
+			<div class="rounded-sm bg-halbu-warningSoft p-3 text-center text-halbu-warning">
+				No saves matched "{filterText}".
+			</div>
+		{/if}
+	{/if}
 </div>
 
 <style>
@@ -285,13 +274,13 @@
 		font-weight: 500;
 		color: color-mix(in srgb, var(--halbu-text) 78%, var(--halbu-text-muted));
 		text-transform: none;
-		padding-top: 0.5rem;
-		padding-bottom: 0.5rem;
+		padding: 0.5rem;
+		border-bottom: 1px solid var(--halbu-border-strong);
 	}
 
 	.library-table tbody td {
-		padding-top: 0.75rem;
-		padding-bottom: 0.75rem;
+		padding: 0.75rem 0.5rem;
+		border-top: 1px solid var(--halbu-border);
 	}
 
 	.library-table tbody tr:nth-of-type(even) > * {

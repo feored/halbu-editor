@@ -347,5 +347,5 @@
 		</div>
 	</section>
 
-	<div class="text-right font-monospace text-sm text-halbu-textMuted">Version {appVersion}</div>
+	<div class="text-right font-mono text-sm text-halbu-textMuted">Version {appVersion}</div>
 </div>
