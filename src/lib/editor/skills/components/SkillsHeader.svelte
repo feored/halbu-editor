@@ -14,13 +14,11 @@
 	let {
 		pointsLeft,
 		disabled,
-		pointsInputDisabled = disabled,
 		onPointsLeftChange,
 		onRefund,
 	} = $props<{
 		pointsLeft: number;
 		disabled: boolean;
-		pointsInputDisabled?: boolean;
 		onPointsLeftChange: (pointsLeft: number) => void;
 		onRefund: () => void;
 	}>();
@@ -85,7 +83,7 @@
 				max="255"
 				step="1"
 				value={pointsEdit.input}
-				disabled={pointsInputDisabled}
+				disabled={disabled}
 				onfocus={() => startFieldEdit(pointsEdit, String(pointsLeft))}
 				oninput={handlePointsInput}
 				onblur={finishPointsEdit}

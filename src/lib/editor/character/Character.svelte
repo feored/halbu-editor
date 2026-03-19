@@ -49,7 +49,7 @@
 	const MAX_GOLD_PER_LEVEL = 10000;
 	const MAX_XP = 3520485254;
 	const MAP_SEED_MAX = 0xffffffff;
-	const QUICK_ADJUST_STEP = 10;
+	const QUICK_ADJUST_STEP = 5;
 
 	type PointsAttributeId = "statpts" | "newskills";
 
@@ -503,7 +503,9 @@
 		<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
 			<h3 class="editor-card-title mb-1.5">Gold</h3>
 
-			<div class="grid grid-cols-form-28 gap-y-1 sm:grid-cols-form-32 sm:gap-x-2.5">
+			<div
+				class="grid grid-cols-form-28 items-center gap-y-1 sm:grid-cols-form-32 sm:gap-x-2.5"
+			>
 				<label class="form-label mb-0" for="goldInventory">Inventory</label>
 				<input
 					class="form-control"

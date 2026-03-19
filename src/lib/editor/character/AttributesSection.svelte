@@ -11,7 +11,7 @@
 
 	type PrimaryAttributeId = "strength" | "dexterity" | "vitality" | "energy";
 
-	const QUICK_ADJUST_STEP = 10;
+	const QUICK_ADJUST_STEP = 5;
 
 	const primaryAttributes: ReadonlyArray<PrimaryAttributeId> = [
 		"strength",

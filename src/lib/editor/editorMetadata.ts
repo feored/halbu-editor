@@ -33,11 +33,11 @@ type AttributeDisplayMetadata = {
 
 const ATTRIBUTE_DISPLAY_METADATA = {
 	statpts: {
-		label: "Available Stat Points",
+		label: "Stat Points",
 		displayScale: 1,
 	},
 	newskills: {
-		label: "Available Skill Points",
+		label: "Skill Points",
 		displayScale: 1,
 	},
 	experience: {

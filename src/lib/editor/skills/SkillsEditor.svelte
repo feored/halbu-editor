@@ -68,7 +68,6 @@
 	);
 	const canRenderTrees = $derived(hasClassSkills && skillSlotsReady);
 	const headerDisabled = $derived(!hasClassSkills);
-	const pointsInputDisabled = $derived(headerDisabled || isGameRulesMode);
 	const inspectorDisabled = $derived(!canRenderTrees);
 	const pageNotices = $derived(
 		buildPageNotices({
@@ -212,18 +211,13 @@
 </script>
 
 <div class="skills-page grid content-start gap-2.5">
-	<SkillsHeader
-		pointsLeft={effectiveSkillPointsLeft}
-		disabled={headerDisabled}
-		{pointsInputDisabled}
-		onRefund={refund}
-		onPointsLeftChange={setPointsLeft}
-	/>
 	{#if isGameRulesMode}
-		<div class="form-text">
-			Game rules mode: available points are recalculated from level, quests, and spent skill
-			points.
-		</div>
+		<SkillsHeader
+			pointsLeft={effectiveSkillPointsLeft}
+			disabled={headerDisabled}
+			onRefund={refund}
+			onPointsLeftChange={setPointsLeft}
+		/>
 	{/if}
 	{#if isGameRulesMode && effectiveDerivedValuesError.length > 0}
 		<div
