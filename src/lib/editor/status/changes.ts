@@ -8,6 +8,7 @@ import {
 	type Difficulty,
 	type EditorSave,
 } from "$lib/types/editor";
+import { getSkillsDataset } from "$lib/utils/gameData";
 import {
 	RESOURCE_Q8_SCALE,
 	fixedPointToDisplay,
@@ -94,8 +95,32 @@ function formatWaypointState(acquired: boolean): string {
 	return acquired ? "Acquired" : "Not acquired";
 }
 
-function formatSkillSlot(slot: { id: number; points: number }): string {
-	return `Skill ${slot.id}, ${slot.points} point(s)`;
+function getSkillName(save: EditorSave, slotIndex: number): string | null {
+	const skills = getSkillsDataset(save.version);
+	if (skills == null) {
+		return null;
+	}
+
+	const skill = skills.find(
+		(entry) => entry.class === save.character.className && entry.saveId === slotIndex,
+	);
+	return skill?.name ?? null;
+}
+
+function getSkillLabel(save: EditorSave, slotIndex: number): string {
+	return getSkillName(save, slotIndex) ?? `Slot #${slotIndex + 1}`;
+}
+
+function formatSkillPoints(points: number): string {
+	return `${points} point(s)`;
+}
+
+function formatSkillSlot(
+	save: EditorSave,
+	slotIndex: number,
+	slot: { points: number },
+): string {
+	return `${getSkillLabel(save, slotIndex)}, ${formatSkillPoints(slot.points)}`;
 }
 
 function formatAttributeValue(attributeId: string, value: number): string {
@@ -289,21 +314,21 @@ function getSkillChanges(beforeSave: EditorSave, afterSave: EditorSave): Change[
 	for (let index = 0; index < maxLength; index += 1) {
 		const before = beforeSkills[index] ?? null;
 		const after = afterSkills[index] ?? null;
-		const label = `Slot #${index + 1}`;
+		const slotLabel = `Slot #${index + 1}`;
 
 		if (before == null && after != null) {
 			changes.push({
-				label: `${label} Added`,
+				label: `${getSkillLabel(afterSave, index)} Added`,
 				before: "None",
-				after: formatSkillSlot(after),
+				after: formatSkillPoints(after.points),
 			});
 			continue;
 		}
 
 		if (before != null && after == null) {
 			changes.push({
-				label: `${label} Removed`,
-				before: formatSkillSlot(before),
+				label: `${getSkillLabel(beforeSave, index)} Removed`,
+				before: formatSkillPoints(before.points),
 				after: "None",
 			});
 			continue;
@@ -313,8 +338,31 @@ function getSkillChanges(beforeSave: EditorSave, afterSave: EditorSave): Change[
 			continue;
 		}
 
-		pushChange(changes, `${label} Skill ID`, before.id, after.id);
-		pushChange(changes, `${label} Points (Skill ${after.id})`, before.points, after.points);
+		const beforeLabel = getSkillLabel(beforeSave, index);
+		const afterLabel = getSkillLabel(afterSave, index);
+
+		if (beforeLabel !== afterLabel) {
+			pushFormattedChange(changes, slotLabel, beforeLabel, afterLabel);
+		}
+
+		if (before.points !== after.points) {
+			if (beforeLabel === afterLabel) {
+				pushFormattedChange(
+					changes,
+					afterLabel,
+					formatSkillPoints(before.points),
+					formatSkillPoints(after.points),
+				);
+				continue;
+			}
+
+			pushFormattedChange(
+				changes,
+				`${slotLabel} Points`,
+				formatSkillSlot(beforeSave, index, before),
+				formatSkillSlot(afterSave, index, after),
+			);
+		}
 	}
 
 	return changes;

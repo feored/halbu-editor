@@ -69,6 +69,16 @@ npm install
 npm run tauri dev
 ```
 
+### Testing
+
+Frontend tests currently use Vitest and are focused on quest logic and game-rules-sensitive quest behavior.
+
+Run them with:
+
+```sh
+npm test
+```
+
 ### Building
 
 ```sh
@@ -87,4 +97,3 @@ To regenerate all supported version datasets:
 ```sh
 npm run preprocess:skills
 ```
-

@@ -8,6 +8,7 @@
 		nodeState,
 		isSelected,
 		canIncrement,
+		incrementReason,
 		canDecrement,
 		onSelect,
 		onIncrement,
@@ -18,6 +19,7 @@
 		nodeState: SkillState["state"];
 		isSelected: boolean;
 		canIncrement: boolean;
+		incrementReason: string | null;
 		canDecrement: boolean;
 		onSelect: (skillId: number) => void;
 		onIncrement: (skillId: number) => void;
@@ -61,6 +63,7 @@
 	role="button"
 	tabindex="0"
 	aria-pressed={isSelected}
+	title={canIncrement ? undefined : incrementReason ?? undefined}
 >
 	<div class="skill-node__top">
 		<div class="skill-node__name">{skillData.name}</div>
@@ -95,6 +98,7 @@
 
 <style>
 	.skill-node {
+		position: relative;
 		display: grid;
 		grid-template-rows: 1fr auto;
 		row-gap: 0.125rem;
@@ -210,7 +214,8 @@
 
 	.skill-node__control:disabled {
 		opacity: 0.45;
-		cursor: not-allowed;
+		cursor: default;
+		pointer-events: none;
 	}
 
 	.skill-node--available {
@@ -245,8 +250,9 @@
 	}
 
 	.skill-node--selected {
-		border-color: var(--halbu-primary);
-		background-color: color-mix(in srgb, var(--halbu-primary) 16%, var(--halbu-panel2));
-		box-shadow: inset 0 0 0 1px rgb(var(--halbu-primary-rgb) / 0.35);
+		border-color: color-mix(in srgb, var(--halbu-primary) 78%, var(--halbu-border));
+		box-shadow:
+			0 0 0 2px rgb(var(--halbu-primary-rgb) / 0.68),
+			inset 0 0 0 1px rgb(var(--halbu-primary-rgb) / 0.34);
 	}
 </style>

@@ -7,6 +7,7 @@
 		"dev": "vite",
 		"build": "vite build",
 		"typecheck": "tsc --noEmit -p ./tsconfig.json",
+		"test": "vitest run",
 		"check": "npm run typecheck && svelte-check --tsconfig ./tsconfig.json",
 		"preview": "vite preview",
 		"preprocess:skills": "python3 static/tools/preprocess/main.py --all",
@@ -32,6 +33,7 @@
 		"svelte": "^5.53.7",
 		"svelte-check": "^4.4.5",
 		"tailwindcss": "^3.4.17",
-		"vite": "^7.3.1"
+		"vite": "^7.3.1",
+		"vitest": "^4.1.0"
 	}
 }

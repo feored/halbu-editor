@@ -127,6 +127,7 @@ export type SkillState = {
 	prerequisitesMet: boolean;
 	state: "available" | "invested" | "locked-level" | "locked-prereq";
 	canIncrement: boolean;
+	incrementReason: string | null;
 	canDecrement: boolean;
 };
 
@@ -161,6 +162,17 @@ function getSkillState(
 		state = "locked-prereq";
 	}
 
+	let incrementReason: string | null = null;
+	if (points >= 255) {
+		incrementReason = "Already at maximum";
+	} else if (!levelRequirementMet) {
+		incrementReason = `Requires Level ${skill.reqlevel}`;
+	} else if (!prerequisitesMet) {
+		incrementReason = "Requires prerequisite skills";
+	} else if (isGameRulesMode && availableSkillPoints < 1) {
+		incrementReason = "No skill points available";
+	}
+
 	return {
 		id: skill.id,
 		saveId: skill.saveId,
@@ -169,8 +181,8 @@ function getSkillState(
 		levelRequirementMet,
 		prerequisitesMet,
 		state,
-		canIncrement:
-			points < 255 && available && (!isGameRulesMode || availableSkillPoints > 0),
+		canIncrement: incrementReason == null,
+		incrementReason,
 		canDecrement: points > 0,
 	};
 }

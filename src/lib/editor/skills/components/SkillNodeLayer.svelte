@@ -27,6 +27,7 @@
 				nodeState={skillState.state}
 				isSelected={selectedSkillId === nodeRect.id}
 				canIncrement={skillState.canIncrement}
+				incrementReason={skillState.incrementReason}
 				canDecrement={skillState.canDecrement}
 				{onSelect}
 				{onIncrement}

@@ -146,7 +146,7 @@
 				<Button
 					type="button"
 					variant="secondary"
-					class="h-8 w-9 rounded-xs px-0"
+					class="h-8 w-9 rounded-xs px-0 disabled:cursor-default"
 					onclick={onDecrement}
 					disabled={disabled || !canDecrement}
 				>
@@ -169,7 +169,7 @@
 				<Button
 					type="button"
 					variant="secondary"
-					class="h-8 w-9 rounded-xs px-0"
+					class="h-8 w-9 rounded-xs px-0 disabled:cursor-default"
 					onclick={onIncrement}
 					disabled={disabled || !canIncrement}
 				>
@@ -197,10 +197,26 @@
 			<p class="mb-1 text-2xs font-semibold uppercase tracking-wider text-halbu-textMuted">
 				Requirements
 			</p>
-			{#if skillDetails.prerequisites.length === 0}
-				<p class="m-0 text-sm text-halbu-textMuted">Prerequisites: none</p>
-			{:else}
-				<ul class="m-0 grid list-none gap-0.5 p-0 text-sm">
+			<ul class="m-0 grid list-none gap-0.5 p-0 text-sm">
+				<li
+					class={`inline-flex items-center gap-1 ${
+						skillDetails.levelRequirementMet ? "text-halbu-text" : "text-halbu-danger"
+					}`}
+				>
+					{#if skillDetails.levelRequirementMet}
+						<CheckIcon size={13} strokeWidth={2} class="shrink-0 text-halbu-textMuted" />
+					{:else}
+						<AlertCircleIcon
+							size={13}
+							strokeWidth={2}
+							class="shrink-0 text-halbu-danger"
+						/>
+					{/if}
+					Level: {skillDetails.reqLevel}
+				</li>
+				{#if skillDetails.prerequisites.length === 0}
+					<li class="text-halbu-textMuted">Skill: none</li>
+				{:else}
 					{#each skillDetails.prerequisites as prerequisite}
 						<li
 							class={`inline-flex items-center gap-1 ${
@@ -220,26 +236,11 @@
 									class="shrink-0 text-halbu-danger"
 								/>
 							{/if}
-							{prerequisite.name}
+							Skill: {prerequisite.name}
 						</li>
 					{/each}
-				</ul>
-			{/if}
-
-			{#if skillDetails.lockReasons.length > 0}
-				<ul class="m-0 mt-1 grid list-none gap-0.5 p-0 text-sm">
-					{#each skillDetails.lockReasons as reason}
-						<li class="inline-flex items-center gap-1 text-halbu-textMuted">
-							<AlertCircleIcon
-								size={13}
-								strokeWidth={2}
-								class="shrink-0 text-halbu-textMuted"
-							/>
-							{reason}
-						</li>
-					{/each}
-				</ul>
-			{/if}
+				{/if}
+			</ul>
 		</section>
 
 		{#if skillDetails.currentPoints === 0 && skillDetails.currentLines.length > 0}

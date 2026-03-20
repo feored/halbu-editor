@@ -19,7 +19,6 @@ export type SkillDetails = {
 	prerequisites: SkillPrerequisite[];
 	prerequisitesMet: boolean;
 	available: boolean;
-	lockReasons: string[];
 	synergyLines: string[];
 	synergyEntries: SkillSynergyEntry[];
 	currentLines: string[];
@@ -80,10 +79,21 @@ function countOccurrences(text: string, token: string): number {
 	return text.split(token).length - 1;
 }
 
+function formatSkillNumber(value: number): string {
+	const truncated = Math.trunc(value * 100) / 100;
+	const normalized = Object.is(truncated, -0) ? 0 : truncated;
+
+	if (Number.isInteger(normalized)) {
+		return String(normalized);
+	}
+
+	return normalized.toFixed(2).replace(/\.?0+$/, "");
+}
+
 function replaceFirstNumber(line: string, number: number): string {
 	const signedIndex = line.indexOf("%+d");
 	const generalIndex = line.indexOf("%d");
-	const value = number.toString();
+	const value = formatSkillNumber(number);
 
 	if (signedIndex !== -1 && (generalIndex === -1 || signedIndex < generalIndex)) {
 		return line.replace("%+d", `${number > 0 ? "+" : ""}${value}`);
@@ -287,14 +297,6 @@ function normalizeDescription(description: string): string {
 	return upper.endsWith(".") ? upper : `${upper}.`;
 }
 
-function getSkillLockReasons(levelRequirementMet: boolean, reqLevel: number): string[] {
-	const reasons: string[] = [];
-	if (!levelRequirementMet) {
-		reasons.push(`Requires Level ${reqLevel}`);
-	}
-	return reasons;
-}
-
 function buildSynergyEntries(
 	synergyLines: readonly string[],
 	skillsData: readonly SkillData[],
@@ -360,7 +362,6 @@ export function buildSkillDetails({
 		skillState == null
 			? prerequisites.every((required) => required.met)
 			: skillState.prerequisitesMet;
-	const lockReasons = getSkillLockReasons(levelRequirementMet, reqLevel);
 
 	return {
 		id: skillData.id,
@@ -373,7 +374,6 @@ export function buildSkillDetails({
 		prerequisites,
 		prerequisitesMet,
 		available: skillState == null ? levelRequirementMet && prerequisitesMet : skillState.available,
-		lockReasons,
 		synergyLines,
 		synergyEntries,
 		currentLines,
