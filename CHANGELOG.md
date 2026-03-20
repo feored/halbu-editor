@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.2
+
+- Improved save workflow with clearer warnings
+- Many bugfixes, including game-rules mode resource recalculation and a mismatch in Act 3 mercenary variant mapping
+- Added a script to check for import path casing issues that could break Linux builds
+
 ## 0.2.1
 
 - Added validation checks for invalid save states
