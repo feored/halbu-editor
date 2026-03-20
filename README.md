@@ -71,9 +71,9 @@ npm run tauri dev
 
 ### Testing
 
-Frontend tests currently use Vitest and are focused on quest logic and game-rules-sensitive quest behavior.
+Frontend tests currently use Vitest.
 
-Run them with:
+Run with:
 
 ```sh
 npm test

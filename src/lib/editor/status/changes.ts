@@ -1,5 +1,8 @@
 import { getAttributeLabel } from "$lib/editor/editorMetadata";
-import actQuestDisplays from "$lib/editor/quests/actquests.json";
+import namesJson from "$lib/editor/mercenary/names.json";
+import variantsJson from "$lib/editor/mercenary/variants.json";
+import { ACTS, getQuestFlagLabel, type QuestDisplay } from "$lib/editor/quests/quests";
+import { WAYPOINT_NAMES } from "$lib/editor/waypoints/waypoints";
 import {
 	ACT_NAMES,
 	ATTRIBUTES,
@@ -7,12 +10,12 @@ import {
 	type Act,
 	type Difficulty,
 	type EditorSave,
+	type QuestFlag,
 } from "$lib/types/editor";
 import { getSkillsDataset } from "$lib/utils/gameData";
 import {
 	RESOURCE_Q8_SCALE,
 	fixedPointToDisplay,
-	formatDisplayNumber,
 } from "$lib/utils/numbers";
 
 export type Change = {
@@ -23,6 +26,7 @@ export type Change = {
 
 export type ChangeGroup = {
 	section: string;
+	collapsed?: boolean;
 	changes: Change[];
 };
 
@@ -31,15 +35,11 @@ export type ChangeReview = {
 	groups: ChangeGroup[];
 };
 
-type QuestDisplay = {
-	id: string;
-	display: string;
-};
-
-type ActDisplay = {
-	id: string;
-	display: string;
-	quests: QuestDisplay[];
+type MercenaryVariant = {
+	id: number;
+	type: string;
+	variant: string;
+	difficulty: Difficulty;
 };
 
 const q8Attributes = new Set([
@@ -52,19 +52,31 @@ const q8Attributes = new Set([
 ]);
 
 const actLabelsById: Record<string, string> = {};
+const questDisplaysByAct: Record<string, Record<string, QuestDisplay>> = {};
 const questLabelsByAct: Record<string, Record<string, string>> = {};
 const questOrderByAct: Record<string, Record<string, number>> = {};
+const mercenaryVariants = variantsJson as MercenaryVariant[];
+const mercenaryNamesByType = namesJson as Record<string, string[]>;
+const mercenaryVariantsById = new Map(mercenaryVariants.map((variant) => [variant.id, variant]));
 
-for (const act of actQuestDisplays as ActDisplay[]) {
+for (const act of ACTS) {
 	actLabelsById[act.id] = act.display;
+	questDisplaysByAct[act.id] = {};
 	questLabelsByAct[act.id] = {};
 	questOrderByAct[act.id] = {};
 
 	for (let index = 0; index < act.quests.length; index += 1) {
 		const quest = act.quests[index];
+		questDisplaysByAct[act.id][quest.id] = quest;
 		questLabelsByAct[act.id][quest.id] = quest.display;
 		questOrderByAct[act.id][quest.id] = index;
 	}
+}
+
+function formatNumber(value: number, maxFractionDigits = Number.isInteger(value) ? 0 : 3): string {
+	return new Intl.NumberFormat("en-US", {
+		maximumFractionDigits: maxFractionDigits,
+	}).format(value);
 }
 
 function formatValue(value: unknown): string {
@@ -77,7 +89,11 @@ function formatValue(value: unknown): string {
 	}
 
 	if (typeof value === "boolean") {
-		return value ? "True" : "False";
+		return value ? "On" : "Off";
+	}
+
+	if (typeof value === "number") {
+		return formatNumber(value);
 	}
 
 	if (typeof value === "string") {
@@ -87,12 +103,8 @@ function formatValue(value: unknown): string {
 	return String(value);
 }
 
-function formatList(values: readonly string[] | readonly number[]): string {
-	return values.length > 0 ? values.join(", ") : "None";
-}
-
 function formatWaypointState(acquired: boolean): string {
-	return acquired ? "Acquired" : "Not acquired";
+	return acquired ? "Acquired" : "Locked";
 }
 
 function getSkillName(save: EditorSave, slotIndex: number): string | null {
@@ -124,15 +136,65 @@ function formatSkillSlot(
 }
 
 function formatAttributeValue(attributeId: string, value: number): string {
-	if (!q8Attributes.has(attributeId)) {
-		return String(value);
+	return q8Attributes.has(attributeId)
+		? formatNumber(fixedPointToDisplay(value, RESOURCE_Q8_SCALE), 3)
+		: formatNumber(value);
+}
+
+function formatQuestFlag(flag: string): string {
+	return getQuestFlagLabel(flag as QuestFlag);
+}
+
+function formatQuestFlags(flags: readonly string[]): string {
+	return flags.map((flag) => formatQuestFlag(flag)).join(", ");
+}
+
+function formatQuestState(act: Act, questId: string, flags: readonly string[]): string {
+	if (flags.length < 1) {
+		return "Not started";
 	}
 
-	return formatDisplayNumber(fixedPointToDisplay(value, RESOURCE_Q8_SCALE));
+	const states = questDisplaysByAct[act]?.[questId]?.states ?? [];
+	const matchedStates = states.filter((state) =>
+		state.flags.every((flag) => flags.includes(flag)),
+	);
+
+	if (matchedStates.length < 1) {
+		return flags.length === 1 ? formatQuestFlag(flags[0]) : formatQuestFlags(flags);
+	}
+
+	const labels = [...new Set(matchedStates.map((state) => state.display))];
+	const matchedFlags = new Set(matchedStates.flatMap((state) => state.flags));
+	const extraFlags = flags.filter((flag) => !matchedFlags.has(flag as QuestFlag));
+
+	if (extraFlags.length < 1) {
+		return labels.join(", ");
+	}
+
+	return `${labels.join(", ")} + ${formatQuestFlags(extraFlags)}`;
+}
+
+function getMercenaryVariantLabel(variantId: number): string {
+	const variant = mercenaryVariantsById.get(variantId);
+	if (variant == null) {
+		return `Unknown (${variantId})`;
+	}
+
+	return `${variant.type} / ${variant.variant} / ${variant.difficulty}`;
+}
+
+function getMercenaryNameLabel(variantId: number, nameId: number): string {
+	const variant = mercenaryVariantsById.get(variantId);
+	if (variant == null) {
+		return `Name #${nameId}`;
+	}
+
+	const name = mercenaryNamesByType[variant.type]?.[nameId];
+	return name ?? `Name #${nameId}`;
 }
 
 function formatWaypointId(waypointId: string): string {
-	return waypointId.replace(/([a-z0-9])([A-Z])/g, "$1 $2");
+	return WAYPOINT_NAMES[waypointId] ?? waypointId.replace(/([a-z0-9])([A-Z])/g, "$1 $2");
 }
 
 function formatProgressLabel(
@@ -256,7 +318,12 @@ function getCharacterChanges(beforeSave: EditorSave, afterSave: EditorSave): Cha
 	pushChange(changes, "Class", before.className, after.className);
 	pushChange(changes, "Level", before.level, after.level);
 	pushChange(changes, "Difficulty", before.difficulty, after.difficulty);
-	pushChange(changes, "Act", before.act, after.act);
+	pushFormattedChange(
+		changes,
+		"Act",
+		actLabelsById[before.act] ?? before.act,
+		actLabelsById[after.act] ?? after.act,
+	);
 	pushChange(changes, "Map Seed", before.mapSeed, after.mapSeed);
 	pushChange(changes, "Last Played", before.lastPlayed, after.lastPlayed);
 	pushChange(changes, "Progression", before.progression, after.progression);
@@ -273,11 +340,22 @@ function getMercenaryChanges(beforeSave: EditorSave, afterSave: EditorSave): Cha
 	const before = beforeSave.character.mercenary;
 	const after = afterSave.character.mercenary;
 
+	pushChange(changes, "Hired", before.id !== 0, after.id !== 0);
 	pushChange(changes, "ID", before.id, after.id);
 	pushChange(changes, "Dead", before.isDead, after.isDead);
-	pushChange(changes, "Variant", before.variantId, after.variantId);
+	pushFormattedChange(
+		changes,
+		"Variant",
+		getMercenaryVariantLabel(before.variantId),
+		getMercenaryVariantLabel(after.variantId),
+	);
+	pushFormattedChange(
+		changes,
+		"Name",
+		getMercenaryNameLabel(before.variantId, before.nameId),
+		getMercenaryNameLabel(after.variantId, after.nameId),
+	);
 	pushChange(changes, "Experience", before.experience, after.experience);
-	pushChange(changes, "Name Index", before.nameId, after.nameId);
 
 	return changes;
 }
@@ -390,8 +468,8 @@ function getQuestChanges(beforeSave: EditorSave, afterSave: EditorSave): Change[
 						act,
 						questLabelsByAct[act]?.[questId] ?? questId,
 					),
-					before: formatList(beforeFlags),
-					after: formatList(afterFlags),
+					before: formatQuestState(act, questId, beforeFlags),
+					after: formatQuestState(act, questId, afterFlags),
 				});
 			}
 		}
@@ -471,48 +549,49 @@ function getRawDataChanges(beforeSave: EditorSave, afterSave: EditorSave): Chang
 	return changes;
 }
 
+function addGroup(
+	groups: ChangeGroup[],
+	section: string,
+	changes: Change[],
+	collapsed = false,
+): void {
+	if (changes.length < 1) {
+		return;
+	}
+
+	groups.push({
+		section,
+		collapsed,
+		changes,
+	});
+}
+
 export function getChangeReview(beforeSave: EditorSave, afterSave: EditorSave): ChangeReview {
 	const groups: ChangeGroup[] = [];
 
-	let changes = getSaveChanges(beforeSave, afterSave);
-	if (changes.length > 0) {
-		groups.push({ section: "Save", changes });
-	}
-
-	changes = getCharacterChanges(beforeSave, afterSave);
-	if (changes.length > 0) {
-		groups.push({ section: "Character", changes });
-	}
+	let changes = getCharacterChanges(beforeSave, afterSave);
+	addGroup(groups, "Character", changes);
 
 	changes = getMercenaryChanges(beforeSave, afterSave);
-	if (changes.length > 0) {
-		groups.push({ section: "Mercenary", changes });
-	}
+	addGroup(groups, "Mercenary", changes);
 
 	changes = getAttributeChanges(beforeSave, afterSave);
-	if (changes.length > 0) {
-		groups.push({ section: "Attributes", changes });
-	}
+	addGroup(groups, "Attributes", changes);
 
 	changes = getSkillChanges(beforeSave, afterSave);
-	if (changes.length > 0) {
-		groups.push({ section: "Skills", changes });
-	}
+	addGroup(groups, "Skills", changes);
 
 	changes = getQuestChanges(beforeSave, afterSave);
-	if (changes.length > 0) {
-		groups.push({ section: "Quests", changes });
-	}
+	addGroup(groups, "Quests", changes);
 
 	changes = getWaypointChanges(beforeSave, afterSave);
-	if (changes.length > 0) {
-		groups.push({ section: "Waypoints", changes });
-	}
+	addGroup(groups, "Waypoints", changes);
+
+	changes = getSaveChanges(beforeSave, afterSave);
+	addGroup(groups, "Save", changes, true);
 
 	changes = getRawDataChanges(beforeSave, afterSave);
-	if (changes.length > 0) {
-		groups.push({ section: "Raw Data", changes });
-	}
+	addGroup(groups, "Raw Data", changes, true);
 
 	return {
 		totalChanges: groups.reduce((sum, group) => sum + group.changes.length, 0),

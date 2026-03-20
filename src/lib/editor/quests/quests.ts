@@ -49,6 +49,25 @@ export const ACTS = (actQuests as RawActDisplay[]).map((act) => ({
 	id: actIdByJsonId[act.id],
 })) as ActDisplay[];
 
+export const QUEST_FLAGS: ReadonlyArray<{ id: QuestFlag; display: string }> = [
+	{ id: "RewardGranted", display: "Reward Granted" },
+	{ id: "RewardPending", display: "Reward Pending" },
+	{ id: "Started", display: "Started" },
+	{ id: "LeaveTown", display: "Leave Town" },
+	{ id: "EnterArea", display: "Enter Area" },
+	{ id: "Custom1", display: "Custom 1" },
+	{ id: "Custom2", display: "Custom 2" },
+	{ id: "Custom3", display: "Custom 3" },
+	{ id: "Custom4", display: "Custom 4" },
+	{ id: "Custom5", display: "Custom 5" },
+	{ id: "Custom6", display: "Custom 6" },
+	{ id: "Custom7", display: "Custom 7" },
+	{ id: "UpdateQuestLog", display: "Update Quest Log" },
+	{ id: "PrimaryGoalDone", display: "Primary Goal Done" },
+	{ id: "CompletedNow", display: "Completed Now" },
+	{ id: "CompletedBefore", display: "Completed Before" },
+];
+
 const UNUSED_QUESTS: Record<Act, QuestDisplay[]> = {
 	Act1: [],
 	Act2: [],
@@ -86,6 +105,9 @@ const ATTRIBUTE_SCALE: Partial<Record<Attribute, number>> = {
 	stamina: 256,
 	maxstamina: 256,
 };
+const questFlagLabels = Object.fromEntries(
+	QUEST_FLAGS.map((flag) => [flag.id, flag.display]),
+) as Record<QuestFlag, string>;
 
 function getQuestFlags(
 	quests: QuestMap,
@@ -115,6 +137,10 @@ function formatSignedValue(value: number): string {
 		: absoluteValue.toFixed(2).replace(/\.?0+$/, "");
 
 	return value > 0 ? `+${formattedValue}` : `-${formattedValue}`;
+}
+
+export function getQuestFlagLabel(flag: QuestFlag): string {
+	return questFlagLabels[flag] ?? flag;
 }
 
 export function getStandardActQuests(act: ActDisplay, showPrologue: boolean): QuestDisplay[] {

@@ -266,14 +266,14 @@
 				</div>
 
 				<span class="form-label mb-0">Game Edition</span>
-				<div class="flex flex-wrap gap-1.5">
+				<div class="selection-grid">
 					{#each GAME_EDITIONS as edition}
 						<button
 							type="button"
-							class={`rounded-xs border px-3 py-1.5 text-sm font-medium leading-none transition ${
+							class={`selection-button ${
 								selectedEdition === edition
-									? "border-halbu-primary bg-halbu-panel2 text-halbu-text"
-									: "border-halbu-border bg-halbu-panel text-halbu-textMuted hover:bg-halbu-panel2 hover:text-halbu-text"
+									? "selection-button--selected"
+									: "selection-button--idle"
 							}`}
 							onclick={() => {
 								selectedEdition = edition;
@@ -285,14 +285,14 @@
 				</div>
 
 				<span class="form-label mb-0">Expansion Mode</span>
-				<div class="flex flex-wrap gap-1.5">
+				<div class="selection-grid">
 					{#each availableExpansionModes as mode}
 						<button
 							type="button"
-							class={`rounded-xs border px-3 py-1.5 text-sm font-medium leading-none transition ${
+							class={`selection-button ${
 								selectedExpansionMode === mode
-									? "border-halbu-primary bg-halbu-panel2 text-halbu-text"
-									: "border-halbu-border bg-halbu-panel text-halbu-textMuted hover:bg-halbu-panel2 hover:text-halbu-text"
+									? "selection-button--selected"
+									: "selection-button--idle"
 							}`}
 							onclick={() => {
 								selectedExpansionMode = mode;
@@ -304,15 +304,15 @@
 				</div>
 
 				<span class="form-label mb-0">Class</span>
-				<div class="flex flex-wrap gap-1.5">
+				<div class="selection-grid">
 					{#each availableClasses as className}
 						{@const classIsDisabled = isClassDisabled(className)}
 						<button
 							type="button"
-							class={`rounded-xs border px-2 py-1.5 text-left text-sm font-medium leading-tight transition ${
+							class={`selection-button ${
 								selectedClass === className
-									? "border-halbu-primary bg-halbu-panel2 text-halbu-text"
-									: "border-halbu-border bg-halbu-panel text-halbu-text hover:bg-halbu-panel2"
+									? "selection-button--selected"
+									: "selection-button--idle"
 							}`}
 							disabled={classIsDisabled}
 							onclick={() => {
@@ -425,3 +425,54 @@
 		</section>
 	</div>
 </div>
+
+<style>
+	.selection-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(8rem, 10rem));
+		justify-content: start;
+		gap: 0.375rem;
+	}
+
+	.selection-button {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 100%;
+		min-height: 2.125rem;
+		padding: 0.375rem 0.625rem;
+		border: 1px solid var(--halbu-border-strong);
+		border-radius: var(--app-radius-xs);
+		background: var(--halbu-panel2);
+		color: var(--halbu-text);
+		font-size: 0.8125rem;
+		font-weight: 600;
+		line-height: 1.15;
+		text-align: center;
+		transition:
+			background-color 0.12s ease,
+			border-color 0.12s ease,
+			box-shadow 0.12s ease,
+			color 0.12s ease;
+	}
+
+	.selection-button--idle {
+		color: var(--halbu-text-muted);
+	}
+
+	.selection-button--idle:hover:not(:disabled) {
+		background: var(--halbu-card);
+		color: var(--halbu-text);
+	}
+
+	.selection-button--selected {
+		background: var(--halbu-card);
+		box-shadow: inset 0 -2px 0 0 var(--halbu-primary);
+		color: var(--halbu-text);
+	}
+
+	.selection-button:disabled {
+		opacity: 0.55;
+		cursor: default;
+	}
+</style>

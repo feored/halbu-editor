@@ -6,6 +6,7 @@
 	import { applyGameRulesValues, getGameRules } from "$lib/editor/character/gameRules";
 	import {
 		ACTS,
+		QUEST_FLAGS,
 		applyRewardGrantedChange,
 		countActProgress,
 		getRenderedActQuests,
@@ -30,24 +31,7 @@
 	let showAllQuests = $state(settings.get(settings.Key.QuestsAdvancedAllQuests));
 	let activeDifficulty = $state<Difficulty>("Normal");
 
-	const questFlags: Array<{ id: QuestFlag; display: string }> = [
-		{ id: "RewardGranted", display: "Reward Granted" },
-		{ id: "RewardPending", display: "Reward Pending" },
-		{ id: "Started", display: "Started" },
-		{ id: "LeaveTown", display: "Leave Town" },
-		{ id: "EnterArea", display: "Enter Area" },
-		{ id: "Custom1", display: "Custom 1" },
-		{ id: "Custom2", display: "Custom 2" },
-		{ id: "Custom3", display: "Custom 3" },
-		{ id: "Custom4", display: "Custom 4" },
-		{ id: "Custom5", display: "Custom 5" },
-		{ id: "Custom6", display: "Custom 6" },
-		{ id: "Custom7", display: "Custom 7" },
-		{ id: "UpdateQuestLog", display: "Update Quest Log" },
-		{ id: "PrimaryGoalDone", display: "Primary Goal Done" },
-		{ id: "CompletedNow", display: "Completed Now" },
-		{ id: "CompletedBefore", display: "Completed Before" },
-	];
+	const questFlags = QUEST_FLAGS;
 
 	const rewardInfoTimeoutMs = 3500;
 	const rewardWarningTimeoutMs = 6000;

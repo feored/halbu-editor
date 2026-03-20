@@ -80,11 +80,16 @@
 		{:else}
 			<div class="grid gap-2">
 				{#each changeGroups as group}
-					<section class="rounded-xs border border-halbu-border bg-halbu-panel px-2 py-1.5">
-						<h4 class="editor-card-title mb-1">
-							{group.section} ({group.changes.length})
-						</h4>
-						<div class="grid gap-0.5">
+					<details
+						class="rounded-xs border border-halbu-border bg-halbu-panel px-2 py-1.5"
+						open={!group.collapsed}
+					>
+						<summary class="review-group-summary">
+							<h4 class="editor-card-title mb-0">
+								{group.section} ({group.changes.length})
+							</h4>
+						</summary>
+						<div class="mt-1.5 grid gap-0.5">
 							{#each group.changes as change}
 								<div
 									class="grid gap-0.5 border-b border-halbu-border pb-0.5 last:border-b-0 last:pb-0"
@@ -96,7 +101,7 @@
 								</div>
 							{/each}
 						</div>
-					</section>
+					</details>
 				{/each}
 			</div>
 		{/if}
@@ -115,3 +120,14 @@
 		undoConfirmOpen = false;
 	}}
 />
+
+<style>
+	.review-group-summary {
+		cursor: pointer;
+		list-style: none;
+	}
+
+	.review-group-summary::-webkit-details-marker {
+		display: none;
+	}
+</style>

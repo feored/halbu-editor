@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Button from "$lib/components/ui/button/button.svelte";
 	import Tabs from "$lib/components/ui/Tabs.svelte";
 	import SkillsHeader from "$lib/editor/skills/components/SkillsHeader.svelte";
 	import SkillsTree from "$lib/editor/skills/components/SkillsTree.svelte";
@@ -133,6 +134,16 @@
 		}
 		return skillsData.filter((skill) => skill.page === activePageIndex + 1);
 	});
+	const pagePoints = $derived.by(() => {
+		const points: Record<number, number> = {};
+
+		for (const skill of skillsData) {
+			points[skill.page - 1] = (points[skill.page - 1] ?? 0) + (save.skills[skill.saveId]?.points ?? 0);
+		}
+
+		return points;
+	});
+	const activePagePoints = $derived(activePageIndex == null ? 0 : (pagePoints[activePageIndex] ?? 0));
 	const selectedSkillDetails = $derived.by(() =>
 		selectedSkill == null
 			? null
@@ -173,6 +184,31 @@
 			availableSkillPoints: skillPointsLeft,
 			isGameRulesMode,
 		});
+	}
+
+	function resetActiveTree() {
+		if (isGameRulesMode || activePageSkills.length < 1) {
+			return;
+		}
+
+		let changed = false;
+		const nextSkills = [...save.skills];
+
+		for (const skill of activePageSkills) {
+			if (nextSkills[skill.saveId].points < 1) {
+				continue;
+			}
+
+			nextSkills[skill.saveId] = {
+				...nextSkills[skill.saveId],
+				points: 0,
+			};
+			changed = true;
+		}
+
+		if (changed) {
+			save.skills = nextSkills;
+		}
 	}
 </script>
 
@@ -219,18 +255,34 @@
 				<section
 					class="w-full min-w-0 rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2"
 				>
-					{#if pageIndexes.length > 1}
-						<div class="mb-1.5 flex justify-center">
-							<Tabs
-								tabs={pageIndexes.map((pageIndex) => ({
-									value: pageIndex,
-									label: skillPageNames[pageIndex] ?? `Skill Page ${pageIndex + 1}`,
-								}))}
-								active={activePageIndex}
-								onSelect={(pageIndex) => {
-									activePageIndex = pageIndex;
-								}}
-							/>
+					{#if pageIndexes.length > 1 || !isGameRulesMode}
+						<div class="mb-1.5 flex flex-wrap items-center justify-between gap-1.5">
+							{#if pageIndexes.length > 1}
+								<Tabs
+									tabs={pageIndexes.map((pageIndex) => ({
+										value: pageIndex,
+										label: `${skillPageNames[pageIndex] ?? `Skill Page ${pageIndex + 1}`} (${pagePoints[pageIndex] ?? 0})`,
+										title: `${pagePoints[pageIndex] ?? 0} point(s) invested`,
+									}))}
+									active={activePageIndex}
+									onSelect={(pageIndex) => {
+										activePageIndex = pageIndex;
+									}}
+								/>
+							{:else}
+								<div></div>
+							{/if}
+
+							{#if !isGameRulesMode}
+								<Button
+									variant="secondary"
+									type="button"
+									onclick={resetActiveTree}
+									disabled={activePagePoints < 1}
+								>
+									Reset Tree
+								</Button>
+							{/if}
 						</div>
 					{/if}
 
