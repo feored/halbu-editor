@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enforceMinMax } from "$lib/utils/actions";
 	import { clampInteger, getMaxValueForBitLength } from "$lib/utils/numbers";
-import { getSupportedExpansionTypes } from "$lib/utils/gameData";
+	import { getSupportedExpansionTypes } from "$lib/utils/gameData";
 	import {
 		ACT_LABELS,
 		DIFFICULTY_LABELS,
@@ -30,11 +30,11 @@ import { getSupportedExpansionTypes } from "$lib/utils/gameData";
 		type DifficultyBeaten,
 	} from "$lib/editor/character/character";
 	import {
-		applyGameRulesValues,
-		getGameRules,
+		applyGameRules,
 	} from "$lib/editor/character/gameRules";
 	import {
 		cancelFieldEdit,
+		type FieldEditState,
 		finishFieldEdit,
 		initFieldEdit,
 		setFieldError,
@@ -87,76 +87,90 @@ import { getSupportedExpansionTypes } from "$lib/utils/gameData";
 	const expansionSupported = $derived(supportedExpansionTypes.includes(save.expansionType));
 	let showPointsHelp = $state(false);
 
-	function finishLevelEdit(): void {
-		const parsedValue = Number(levelEdit.input);
-		if (!Number.isFinite(parsedValue)) {
-			setFieldError(levelEdit, "Enter a number.");
-			cancelFieldEdit(levelEdit, String(save.attributes.level.value));
+	function syncGameRules(): void {
+		if (isGameRulesMode) {
+			applyGameRules(save, session.gameRulesBaselineSave ?? null);
+		}
+	}
+
+	function handleEditKeydown(
+		event: KeyboardEvent,
+		onEnter: () => void,
+		onEscape: () => void,
+	): void {
+		if (event.key === "Enter") {
+			event.preventDefault();
+			onEnter();
+			(event.currentTarget as HTMLInputElement).blur();
 			return;
 		}
 
-		setLevel(save, parsedValue, experienceTable);
-		if (isGameRulesMode) {
-			const values = getGameRules(
-				save,
-				session.gameRulesBaselineSave ?? null,
-			).values;
-			applyGameRulesValues(save, values);
+		if (event.key === "Escape") {
+			event.preventDefault();
+			onEscape();
+			(event.currentTarget as HTMLInputElement).blur();
 		}
-		finishFieldEdit(levelEdit);
+	}
+
+	function finishNumberEdit(
+		fieldEdit: FieldEditState,
+		currentValue: string,
+		apply: (value: number) => void,
+	): boolean {
+		const parsedValue = Number(fieldEdit.input);
+		if (!Number.isFinite(parsedValue)) {
+			setFieldError(fieldEdit, "Enter a number.");
+			cancelFieldEdit(fieldEdit, currentValue);
+			return false;
+		}
+
+		apply(parsedValue);
+		finishFieldEdit(fieldEdit);
+		return true;
+	}
+
+	function finishLevelEdit(): void {
+		if (
+			!finishNumberEdit(levelEdit, String(save.attributes.level.value), (value) => {
+				setLevel(save, value, experienceTable);
+				syncGameRules();
+			})
+		) {
+			return;
+		}
+
 		syncFieldFromValue(levelEdit, String(save.attributes.level.value));
 		syncFieldFromValue(experienceEdit, String(save.attributes.experience.value));
 	}
 
 	function handleLevelKeydown(event: KeyboardEvent): void {
-		if (event.key === "Enter") {
-			event.preventDefault();
-			finishLevelEdit();
-			(event.currentTarget as HTMLInputElement).blur();
-			return;
-		}
-
-		if (event.key === "Escape") {
-			event.preventDefault();
-			cancelFieldEdit(levelEdit, String(save.attributes.level.value));
-			(event.currentTarget as HTMLInputElement).blur();
-		}
+		handleEditKeydown(
+			event,
+			finishLevelEdit,
+			() => cancelFieldEdit(levelEdit, String(save.attributes.level.value)),
+		);
 	}
 
 	function finishExperienceEdit(): void {
-		const parsedValue = Number(experienceEdit.input);
-		if (!Number.isFinite(parsedValue)) {
-			setFieldError(experienceEdit, "Enter a number.");
-			cancelFieldEdit(experienceEdit, String(save.attributes.experience.value));
+		if (
+			!finishNumberEdit(experienceEdit, String(save.attributes.experience.value), (value) => {
+				setExperience(save, value, experienceTable, MAX_EXPERIENCE);
+				syncGameRules();
+			})
+		) {
 			return;
 		}
 
-		setExperience(save, parsedValue, experienceTable, MAX_EXPERIENCE);
-		if (isGameRulesMode) {
-			const values = getGameRules(
-				save,
-				session.gameRulesBaselineSave ?? null,
-			).values;
-			applyGameRulesValues(save, values);
-		}
-		finishFieldEdit(experienceEdit);
 		syncFieldFromValue(experienceEdit, String(save.attributes.experience.value));
 		syncFieldFromValue(levelEdit, String(save.attributes.level.value));
 	}
 
 	function handleExperienceKeydown(event: KeyboardEvent): void {
-		if (event.key === "Enter") {
-			event.preventDefault();
-			finishExperienceEdit();
-			(event.currentTarget as HTMLInputElement).blur();
-			return;
-		}
-
-		if (event.key === "Escape") {
-			event.preventDefault();
-			cancelFieldEdit(experienceEdit, String(save.attributes.experience.value));
-			(event.currentTarget as HTMLInputElement).blur();
-		}
+		handleEditKeydown(
+			event,
+			finishExperienceEdit,
+			() => cancelFieldEdit(experienceEdit, String(save.attributes.experience.value)),
+		);
 	}
 
 	function canAdjustPointsField(attributeId: "statpts" | "newskills", delta: number): boolean {
@@ -196,18 +210,7 @@ import { getSupportedExpansionTypes } from "$lib/utils/gameData";
 	}
 
 	function handleNameKeydown(event: KeyboardEvent): void {
-		if (event.key === "Enter") {
-			event.preventDefault();
-			finishNameEdit();
-			(event.currentTarget as HTMLInputElement).blur();
-			return;
-		}
-
-		if (event.key === "Escape") {
-			event.preventDefault();
-			cancelFieldEdit(nameEdit, save.character.name);
-			(event.currentTarget as HTMLInputElement).blur();
-		}
+		handleEditKeydown(event, finishNameEdit, () => cancelFieldEdit(nameEdit, save.character.name));
 	}
 
 	function finishMapSeedEdit(): void {
@@ -226,18 +229,11 @@ import { getSupportedExpansionTypes } from "$lib/utils/gameData";
 	}
 
 	function handleMapSeedKeydown(event: KeyboardEvent): void {
-		if (event.key === "Enter") {
-			event.preventDefault();
-			finishMapSeedEdit();
-			(event.currentTarget as HTMLInputElement).blur();
-			return;
-		}
-
-		if (event.key === "Escape") {
-			event.preventDefault();
-			cancelFieldEdit(mapSeedEdit, mapSeedDisplayValue);
-			(event.currentTarget as HTMLInputElement).blur();
-		}
+		handleEditKeydown(
+			event,
+			finishMapSeedEdit,
+			() => cancelFieldEdit(mapSeedEdit, mapSeedDisplayValue),
+		);
 	}
 
 	$effect(() => {

@@ -41,7 +41,6 @@ export type EditorSession = {
 	lastSaveUsedForceSave: boolean;
 	saveRevision: number;
 	mode: EditorMode;
-	advancedSaveOptionsEnabled: boolean;
 };
 
 export type OpenedSessionData = {
@@ -148,7 +147,6 @@ export function createOpenEditorSession(openedSessionData: OpenedSessionData): E
 		lastSaveUsedForceSave: false,
 		saveRevision: 0,
 		mode: "raw",
-		advancedSaveOptionsEnabled: false,
 	};
 }
 

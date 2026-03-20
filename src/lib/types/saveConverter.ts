@@ -1,6 +1,5 @@
-import { ACT_NAMES, DIFFICULTY_NAMES } from "$lib/types/editor";
-
 import type {
+	Act,
 	Difficulty,
 	EditorSave,
 	EncodableSaveFormatId,
@@ -16,6 +15,20 @@ import type {
 	BackendEnumValue,
 	BackendQuestState,
 } from "$lib/types/backend";
+
+const DIFFICULTIES = [
+	{ editor: "Normal", backend: "normal" },
+	{ editor: "Nightmare", backend: "nightmare" },
+	{ editor: "Hell", backend: "hell" },
+] as const satisfies readonly { editor: Difficulty; backend: BackendDifficulty }[];
+
+const ACTS = [
+	{ editor: "Act1", backend: "act1" },
+	{ editor: "Act2", backend: "act2" },
+	{ editor: "Act3", backend: "act3" },
+	{ editor: "Act4", backend: "act4" },
+	{ editor: "Act5", backend: "act5" },
+] as const satisfies readonly { editor: Act; backend: BackendAct }[];
 
 function toEditorEnum<KnownValue extends string>(
 	value: BackendEnumValue<KnownValue>,
@@ -122,14 +135,12 @@ function toBackendQuestStates(
 function toEditorQuests(backendQuests: BackendEditorSave["quests"]): EditorSave["quests"] {
 	const quests = {} as EditorSave["quests"];
 
-	for (const difficulty of DIFFICULTY_NAMES) {
-		const backendDifficulty = difficulty.toLowerCase() as BackendDifficulty;
-		quests[difficulty] = {} as EditorSave["quests"][Difficulty];
+	for (const difficulty of DIFFICULTIES) {
+		quests[difficulty.editor] = {} as EditorSave["quests"][Difficulty];
 
-		for (const act of ACT_NAMES) {
-			const backendAct = act.toLowerCase() as BackendAct;
-			quests[difficulty][act] = toEditorQuestStates(
-				backendQuests[backendDifficulty][backendAct],
+		for (const act of ACTS) {
+			quests[difficulty.editor][act.editor] = toEditorQuestStates(
+				backendQuests[difficulty.backend][act.backend],
 			);
 		}
 	}
@@ -140,14 +151,12 @@ function toEditorQuests(backendQuests: BackendEditorSave["quests"]): EditorSave[
 function toBackendQuests(editorQuests: EditorSave["quests"]): BackendEditorSave["quests"] {
 	const quests = {} as BackendEditorSave["quests"];
 
-	for (const difficulty of DIFFICULTY_NAMES) {
-		const backendDifficulty = difficulty.toLowerCase() as BackendDifficulty;
-		quests[backendDifficulty] = {} as BackendEditorSave["quests"][BackendDifficulty];
+	for (const difficulty of DIFFICULTIES) {
+		quests[difficulty.backend] = {} as BackendEditorSave["quests"][BackendDifficulty];
 
-		for (const act of ACT_NAMES) {
-			const backendAct = act.toLowerCase() as BackendAct;
-			quests[backendDifficulty][backendAct] = toBackendQuestStates(
-				editorQuests[difficulty][act],
+		for (const act of ACTS) {
+			quests[difficulty.backend][act.backend] = toBackendQuestStates(
+				editorQuests[difficulty.editor][act.editor],
 			);
 		}
 	}
@@ -160,16 +169,14 @@ function toEditorWaypoints(
 ): EditorSave["waypoints"] {
 	const waypoints = {} as EditorSave["waypoints"];
 
-	for (const difficulty of DIFFICULTY_NAMES) {
-		const backendDifficulty = difficulty.toLowerCase() as BackendDifficulty;
-		waypoints[difficulty] = {} as EditorSave["waypoints"][Difficulty];
+	for (const difficulty of DIFFICULTIES) {
+		waypoints[difficulty.editor] = {} as EditorSave["waypoints"][Difficulty];
 
-		for (const act of ACT_NAMES) {
-			const backendAct = act.toLowerCase() as BackendAct;
-			const backendWaypointGroup = backendWaypoints[backendDifficulty][backendAct];
+		for (const act of ACTS) {
+			const backendWaypointGroup = backendWaypoints[difficulty.backend][act.backend];
 
-			waypoints[difficulty][act] = {
-				act,
+			waypoints[difficulty.editor][act.editor] = {
+				act: act.editor,
 				waypoints: backendWaypointGroup.waypoints.map((waypoint) => ({
 					id: waypoint.id,
 					acquired: waypoint.acquired,
@@ -186,17 +193,15 @@ function toBackendWaypoints(
 ): BackendEditorSave["waypoints"] {
 	const waypoints = {} as BackendEditorSave["waypoints"];
 
-	for (const difficulty of DIFFICULTY_NAMES) {
-		const backendDifficulty = difficulty.toLowerCase() as BackendDifficulty;
-		waypoints[backendDifficulty] =
+	for (const difficulty of DIFFICULTIES) {
+		waypoints[difficulty.backend] =
 			{} as BackendEditorSave["waypoints"][BackendDifficulty];
 
-		for (const act of ACT_NAMES) {
-			const backendAct = act.toLowerCase() as BackendAct;
-			const editorWaypointGroup = editorWaypoints[difficulty][act];
+		for (const act of ACTS) {
+			const editorWaypointGroup = editorWaypoints[difficulty.editor][act.editor];
 
-			waypoints[backendDifficulty][backendAct] = {
-				act,
+			waypoints[difficulty.backend][act.backend] = {
+				act: act.editor,
 				waypoints: editorWaypointGroup.waypoints.map((waypoint) => ({
 					id: waypoint.id,
 					acquired: waypoint.acquired,
@@ -238,46 +243,32 @@ export function toBackendSave(
 			? (`V${sourceLayoutVersion}` as EncodableSaveFormatId)
 			: editorSave.metadata.formatId;
 
-	return {
-		...sourceBackendSave,
-		version: editorSave.version,
-		expansion_type: editorSave.expansionType,
-		character: {
-			...sourceBackendSave.character,
-			name: editorSave.character.name,
-			class: toBackendEnum(editorSave.character.className),
-			level: editorSave.character.level,
-			progression: editorSave.character.progression,
-			act: editorSave.character.act,
-			difficulty: editorSave.character.difficulty,
-			map_seed: editorSave.character.mapSeed,
-			last_played: editorSave.character.lastPlayed,
-			status: {
-				...sourceBackendSave.character.status,
-				hardcore: editorSave.character.status.hardcore,
-				ladder: editorSave.character.status.ladder,
-				died: editorSave.character.status.died,
-				expansion: editorSave.character.status.expansion,
-			},
-			mercenary: {
-				...sourceBackendSave.character.mercenary,
-				id: editorSave.character.mercenary.id,
-				is_dead: editorSave.character.mercenary.isDead,
-				variant_id: editorSave.character.mercenary.variantId,
-				experience: editorSave.character.mercenary.experience,
-				name_id: editorSave.character.mercenary.nameId,
-			},
-		},
-		quests: toBackendQuests(editorSave.quests),
-		waypoints: toBackendWaypoints(editorSave.waypoints),
-		npcs: editorSave.npcs,
-		attributes: toBackendAttributes(editorSave.attributes),
-		skills: {
-			points: editorSave.skills.map((skill) => skill.points),
-		},
-		items: editorSave.items,
-		meta: {
-			format: toBackendEnum(formatId),
-		},
-	};
+	const save = structuredClone(sourceBackendSave);
+	save.version = editorSave.version;
+	save.expansion_type = editorSave.expansionType;
+	save.character.name = editorSave.character.name;
+	save.character.class = toBackendEnum(editorSave.character.className);
+	save.character.level = editorSave.character.level;
+	save.character.progression = editorSave.character.progression;
+	save.character.act = editorSave.character.act;
+	save.character.difficulty = editorSave.character.difficulty;
+	save.character.map_seed = editorSave.character.mapSeed;
+	save.character.last_played = editorSave.character.lastPlayed;
+	save.character.status.hardcore = editorSave.character.status.hardcore;
+	save.character.status.ladder = editorSave.character.status.ladder;
+	save.character.status.died = editorSave.character.status.died;
+	save.character.status.expansion = editorSave.character.status.expansion;
+	save.character.mercenary.id = editorSave.character.mercenary.id;
+	save.character.mercenary.is_dead = editorSave.character.mercenary.isDead;
+	save.character.mercenary.variant_id = editorSave.character.mercenary.variantId;
+	save.character.mercenary.experience = editorSave.character.mercenary.experience;
+	save.character.mercenary.name_id = editorSave.character.mercenary.nameId;
+	save.quests = toBackendQuests(editorSave.quests);
+	save.waypoints = toBackendWaypoints(editorSave.waypoints);
+	save.npcs = editorSave.npcs;
+	save.attributes = toBackendAttributes(editorSave.attributes);
+	save.skills.points = editorSave.skills.map((skill) => skill.points);
+	save.items = editorSave.items;
+	save.meta.format = toBackendEnum(formatId);
+	return save;
 }

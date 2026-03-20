@@ -5,8 +5,7 @@
 	import { editorState } from "$lib/editor/editorState.svelte";
 	import {
 		getClassBaseAttributes,
-		applyGameRulesValues,
-		getGameRules,
+		applyGameRules,
 	} from "$lib/editor/character/gameRules";
 
 	type PrimaryAttributeId = "strength" | "dexterity" | "vitality" | "energy";
@@ -66,11 +65,7 @@
 				attribute.value = Math.min(clampedTargetValue, attribute.value + allowedIncrease);
 			}
 
-			const values = getGameRules(
-				save,
-				session.gameRulesBaselineSave ?? null,
-			).values;
-			applyGameRulesValues(save, values);
+			applyGameRules(save, session.gameRulesBaselineSave ?? null);
 			return;
 		}
 
@@ -100,11 +95,7 @@
 				attribute.value = Math.min(clampedTargetValue, attribute.value + allowedIncrease);
 			}
 
-			const values = getGameRules(
-				save,
-				session.gameRulesBaselineSave ?? null,
-			).values;
-			applyGameRulesValues(save, values);
+			applyGameRules(save, session.gameRulesBaselineSave ?? null);
 			return;
 		}
 

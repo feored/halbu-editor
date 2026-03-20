@@ -3,7 +3,7 @@
 	import Tabs from "$lib/components/ui/Tabs.svelte";
 	import * as settings from "$lib/utils/settings";
 	import { editorState } from "$lib/editor/editorState.svelte";
-	import { applyGameRulesValues, getGameRules } from "$lib/editor/character/gameRules";
+	import { applyGameRules } from "$lib/editor/character/gameRules";
 	import {
 		ACTS,
 		QUEST_FLAGS,
@@ -167,10 +167,7 @@
 		}
 
 		if (session.mode === "game-rules") {
-			applyGameRulesValues(
-				save,
-				getGameRules(save, session.gameRulesBaselineSave!).values,
-			);
+			applyGameRules(save, session.gameRulesBaselineSave!);
 			clearFeedback(difficulty, act, questId);
 			return;
 		}
@@ -205,10 +202,7 @@
 		);
 
 		if (session.mode === "game-rules") {
-			applyGameRulesValues(
-				save,
-				getGameRules(save, session.gameRulesBaselineSave!).values,
-			);
+			applyGameRules(save, session.gameRulesBaselineSave!);
 			for (const quest of quests) {
 				clearFeedback(difficulty, act.id, quest.id);
 			}
@@ -250,10 +244,7 @@
 		toggleQuestState(save.quests, difficulty, act, questId, state);
 
 		if (session.mode === "game-rules") {
-			applyGameRulesValues(
-				save,
-				getGameRules(save, session.gameRulesBaselineSave!).values,
-			);
+			applyGameRules(save, session.gameRulesBaselineSave!);
 			clearFeedback(difficulty, act, questId);
 			return;
 		}

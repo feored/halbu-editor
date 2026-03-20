@@ -8,9 +8,8 @@
 	import { toEditorSave } from "$lib/types/saveConverter";
 	import experienceTable from "$lib/editor/character/experience.json";
 	import {
-		applyGameRulesValues,
+		applyGameRules,
 		getClassBaseAttributes,
-		getGameRules,
 	} from "$lib/editor/character/gameRules";
 	import { setLevel } from "$lib/editor/character/character";
 	import {
@@ -202,7 +201,7 @@
 			} else {
 				setLevel(saveData, 1, experienceTable);
 			}
-			applyGameRulesValues(saveData, getGameRules(saveData).values);
+			applyGameRules(saveData);
 
 			const sourcePath = savePath.trim().length > 0 ? savePath.trim() : null;
 

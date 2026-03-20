@@ -1,11 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { message } from "@tauri-apps/plugin-dialog";
 
-import { isUnknownSaveFormat } from "$lib/utils/gameData";
 import { getErrorMessage } from "$lib/utils/errorMessage";
-import { toBackendSave } from "$lib/types/saveConverter";
-import { getValidationMessage } from "$lib/editor/save/validation";
-
 import {
 	createOpenEditorSession,
 	restoreBaselineSave,
@@ -13,7 +9,7 @@ import {
 	type OpenedSessionData,
 } from "$lib/editor/session";
 import {
-	applyGameRulesValues,
+	applyGameRules,
 	getGameRules,
 } from "$lib/editor/character/gameRules";
 import {
@@ -21,45 +17,18 @@ import {
 	type SaveCharacterResult,
 	type SaveCharacterOptions,
 } from "$lib/editor/save/saveFile";
+import {
+	analyzeSave,
+	getSaveDecision,
+	getSaveState,
+	type SaveState,
+} from "$lib/editor/save/saveState";
 
 import type {
-	CompatibilityIssue,
 	OutputFormatOption,
 	ParseMode,
-	ValidationReport,
-	BackendEditorSave,
 } from "$lib/types/backend";
-import type { EditorMode, EditorSave, SaveLayoutVersion } from "$lib/types/editor";
-
-function getLayoutVersion(version: number): SaveLayoutVersion | null {
-	if (version === 99 || version === 105) {
-		return version;
-	}
-
-	return null;
-}
-
-type SaveDecision =
-	| {
-			status: "blocked";
-			kind: "warning" | "error" | "info";
-			message: string;
-			throwAfterMessage: boolean;
-	  }
-	| {
-			status: "ready";
-			targetVersion: SaveLayoutVersion;
-			sourceLayoutVersion: SaveLayoutVersion | null;
-			saveAs: boolean;
-			forceSave: boolean;
-	  };
-
-type SaveAnalysisResult = {
-	validationReport: ValidationReport;
-	validationError: string | null;
-	compatibilityIssues: CompatibilityIssue[];
-	compatibilityError: string | null;
-};
+import type { EditorMode, SaveLayoutVersion } from "$lib/types/editor";
 
 type EditorState = {
 	readonly session: EditorSession | null;
@@ -72,6 +41,7 @@ type EditorState = {
 	readonly canForceSave: boolean;
 	readonly isSaveBlocked: boolean;
 	readonly layoutVersion: SaveLayoutVersion | null;
+	readonly saveState: SaveState | null;
 	readonly gameRules: {
 		error: string;
 	};
@@ -85,181 +55,6 @@ type EditorState = {
 	save: (input?: SaveCharacterOptions) => Promise<SaveCharacterResult | null>;
 };
 
-function getSaveDecision(
-	session: EditorSession,
-	input: SaveCharacterOptions,
-	checkedTargetVersion: SaveLayoutVersion | null,
-): SaveDecision {
-	const saveAs = input.saveAs === true || input.forceSave === true;
-	const forceSave = input.forceSave === true;
-	const targetVersion = getTargetVersion(session, input.targetVersion);
-	const isUnknownFormat = session.save.metadata.formatId.startsWith("Unknown(");
-	const sourceLayoutVersion = isUnknownFormat ? session.parserLayoutVersion : null;
-	const compatibilityCurrent =
-		session.compatibilityResultsAreCurrent && checkedTargetVersion === targetVersion;
-
-	if (isUnknownFormat && targetVersion == null) {
-		return {
-			status: "blocked",
-			kind: "warning",
-			message:
-				session.suggestedTargetVersion == null
-					? "This save uses an unknown source format. Select an output format (v99 or v105) in Conversion before saving."
-					: `This save uses an unknown source format. Suggested target is v${session.suggestedTargetVersion}. Confirm or change it in Conversion before saving.`,
-			throwAfterMessage: false,
-		};
-	}
-
-	if (targetVersion == null) {
-		return {
-			status: "blocked",
-			kind: "warning",
-			message: "No compatible output format was selected for this save. Choose v99 or v105.",
-			throwAfterMessage: false,
-		};
-	}
-
-	if (session.validationError != null && !forceSave) {
-		return {
-			status: "blocked",
-			kind: "error",
-			message: session.validationError,
-			throwAfterMessage: true,
-		};
-	}
-
-	const blockingValidationIssues = session.validationReport.issues.filter((issue) => issue.blocking);
-	if (blockingValidationIssues.length > 0 && !forceSave) {
-		const details = blockingValidationIssues
-			.map((issue) => `- ${getValidationMessage(issue, session.save)}`)
-			.join("\n");
-		return {
-			status: "blocked",
-			kind: "warning",
-			message: `Cannot save because of blocking validation issues:\n${details}`,
-			throwAfterMessage: false,
-		};
-	}
-
-	if (session.compatibilityError != null && !forceSave) {
-		return {
-			status: "blocked",
-			kind: "error",
-			message: session.compatibilityError,
-			throwAfterMessage: true,
-		};
-	}
-
-	if (!compatibilityCurrent && !forceSave) {
-		return {
-			status: "blocked",
-			kind: "warning",
-			message: "Compatibility check is not current for the selected output format.",
-			throwAfterMessage: false,
-		};
-	}
-
-	const blockingCompatibilityIssues = session.compatibilityIssues.filter((issue) => issue.blocking);
-	if (blockingCompatibilityIssues.length > 0 && !forceSave) {
-		const details = blockingCompatibilityIssues.map((issue) => `- ${issue.message}`).join("\n");
-		return {
-			status: "blocked",
-			kind: "warning",
-			message: `Cannot save to v${targetVersion} because of blocking compatibility issues:\n${details}`,
-			throwAfterMessage: false,
-		};
-	}
-
-	if (
-		forceSave &&
-		session.validationError == null &&
-		blockingValidationIssues.length === 0 &&
-		session.compatibilityError == null &&
-		blockingCompatibilityIssues.length === 0 &&
-		compatibilityCurrent
-	) {
-		return {
-			status: "blocked",
-			kind: "info",
-			message: "Blocking issues are no longer present. Use normal Save As.",
-			throwAfterMessage: false,
-		};
-	}
-
-	return {
-		status: "ready",
-		targetVersion,
-		sourceLayoutVersion,
-		saveAs,
-		forceSave,
-	};
-}
-
-function getTargetVersion(
-	session: EditorSession,
-	requestedTargetVersion?: SaveLayoutVersion | null,
-): SaveLayoutVersion | null {
-	if (requestedTargetVersion === 99 || requestedTargetVersion === 105) {
-		return requestedTargetVersion;
-	}
-
-	if (session.targetVersion === 99 || session.targetVersion === 105) {
-		return session.targetVersion;
-	}
-
-	if (session.save.version === 99 || session.save.version === 105) {
-		return session.save.version;
-	}
-
-	return null;
-}
-
-async function analyzeSave(
-	save: EditorSave,
-	targetVersion: SaveLayoutVersion | null,
-	sourceLayoutVersion: SaveLayoutVersion | null,
-	sourceBackendSave: BackendEditorSave,
-): Promise<SaveAnalysisResult> {
-	const backendSave = toBackendSave(sourceBackendSave, save, sourceLayoutVersion);
-	const validationPromise = invoke<ValidationReport>("validate_save", {
-		save: backendSave,
-	}).then(
-		(report) => ({ ok: true as const, report }),
-		(error) => ({ ok: false as const, error }),
-	);
-
-	const compatibilityPromise =
-		targetVersion == null
-			? Promise.resolve(null)
-			: invoke<CompatibilityIssue[]>("check_save_compatibility", {
-					save: backendSave,
-					targetVersion,
-				}).then(
-					(issues) => ({ ok: true as const, issues }),
-					(error) => ({ ok: false as const, error }),
-				);
-
-	const [validationResult, compatibilityResult] = await Promise.all([
-		validationPromise,
-		compatibilityPromise,
-	]);
-
-	return {
-		validationReport:
-			validationResult.ok === true ? validationResult.report : { issues: [] },
-		validationError:
-			validationResult.ok === true
-				? null
-				: getErrorMessage(validationResult.error, "Validation check failed."),
-		compatibilityIssues:
-			compatibilityResult?.ok === true ? compatibilityResult.issues : [],
-		compatibilityError:
-			compatibilityResult == null || compatibilityResult.ok === true
-				? null
-				: getErrorMessage(compatibilityResult.error, "Compatibility check failed."),
-	};
-}
-
 function createEditorState(): EditorState {
 	let session = $state<EditorSession | null>(null);
 	let outputFormatOptions = $state<OutputFormatOption[]>([]);
@@ -270,96 +65,20 @@ function createEditorState(): EditorState {
 
 	const hasOpenSession = $derived(session != null);
 
-	const isUnknownFormat = $derived.by(() => {
-		if (session == null) {
-			return false;
-		}
-
-		return isUnknownSaveFormat(session.save);
-	});
-
-	const targetVersion = $derived.by(() => {
+	const saveState = $derived.by(() => {
 		if (session == null) {
 			return null;
 		}
 
-		if (session.targetVersion === 99 || session.targetVersion === 105) {
-			return session.targetVersion;
-		}
-
-		if (session.save.version === 99 || session.save.version === 105) {
-			return session.save.version;
-		}
-
-		return null;
+		return getSaveState(session, checkedTargetVersion);
 	});
 
-	const needsTargetVersion = $derived.by(() => {
-		if (session == null) {
-			return false;
-		}
-
-		return isUnknownFormat && targetVersion == null;
-	});
-
-	const hasBlockingValidationIssues = $derived.by(() => {
-		if (session == null) {
-			return false;
-		}
-
-		return session.validationReport.issues.some((issue) => issue.blocking);
-	});
-
-	const hasBlockingCompatibilityIssues = $derived.by(() => {
-		if (session == null) {
-			return false;
-		}
-
-		return session.compatibilityIssues.some((issue) => issue.blocking);
-	});
-
-	const canForceSave = $derived.by(() => {
-		if (session == null) {
-			return false;
-		}
-
-		if (needsTargetVersion) {
-			return false;
-		}
-
-		return (
-			hasBlockingValidationIssues ||
-			session.validationError != null ||
-			hasBlockingCompatibilityIssues ||
-			session.compatibilityError != null
-		);
-	});
-
-	const isSaveBlocked = $derived.by(() => {
-		if (session == null) {
-			return true;
-		}
-
-		return (
-			hasBlockingValidationIssues ||
-			session.validationError != null ||
-			session.compatibilityError != null ||
-			hasBlockingCompatibilityIssues ||
-			needsTargetVersion
-		);
-	});
-
-	const layoutVersion = $derived.by(() => {
-		if (session == null) {
-			return null;
-		}
-
-		if (isUnknownFormat) {
-			return session.parserLayoutVersion ?? getLayoutVersion(session.save.version);
-		}
-
-		return getLayoutVersion(session.save.version);
-	});
+	const isUnknownFormat = $derived(saveState?.unknownFormat ?? false);
+	const targetVersion = $derived(saveState?.targetVersion ?? null);
+	const needsTargetVersion = $derived(saveState?.needsTargetVersion ?? false);
+	const canForceSave = $derived(saveState?.canForceSave ?? false);
+	const isSaveBlocked = $derived(saveState?.isSaveBlocked ?? true);
+	const layoutVersion = $derived(saveState?.layoutVersion ?? null);
 
 	const gameRules = $derived.by(() => {
 		if (session?.mode === "game-rules") {
@@ -441,13 +160,13 @@ function createEditorState(): EditorState {
 
 		const requestSession = session;
 		const requestRevision = ++analysisRevision;
-		const targetVersion = getTargetVersion(session, requestedTargetVersion);
-		checkedTargetVersion = targetVersion;
+		const requestState = getSaveState(session, checkedTargetVersion, requestedTargetVersion);
+		checkedTargetVersion = requestState.targetVersion;
 		const request = {
 			save: $state.snapshot(session.save),
 			sourceBackendSave: $state.snapshot(session.sourceBackendSave),
-			targetVersion,
-			sourceLayoutVersion: isUnknownFormat ? session.parserLayoutVersion : null,
+			targetVersion: requestState.targetVersion,
+			sourceLayoutVersion: requestState.sourceLayoutVersion,
 		};
 
 		session.validationReport = { issues: [] };
@@ -509,11 +228,7 @@ function createEditorState(): EditorState {
 		saveInProgress = true;
 		try {
 			if (session.mode === "game-rules") {
-				const values = getGameRules(
-					session.save,
-					session.gameRulesBaselineSave ?? null,
-				).values;
-				applyGameRulesValues(session.save, values);
+				applyGameRules(session.save, session.gameRulesBaselineSave ?? null);
 			}
 
 			await refreshSaveAnalysis(input.targetVersion);
@@ -523,7 +238,12 @@ function createEditorState(): EditorState {
 				return null;
 			}
 
-			const saveDecision = getSaveDecision(currentSession, input, checkedTargetVersion);
+			const currentSaveState = getSaveState(
+				currentSession,
+				checkedTargetVersion,
+				input.targetVersion,
+			);
+			const saveDecision = getSaveDecision(currentSession, input, currentSaveState);
 			if (saveDecision.status === "blocked") {
 				await message(saveDecision.message, {
 					title: saveDecision.kind === "info" ? "Save anyway not needed" : "Save blocked",
@@ -609,6 +329,9 @@ function createEditorState(): EditorState {
 		},
 		get layoutVersion() {
 			return layoutVersion;
+		},
+		get saveState() {
+			return saveState;
 		},
 		get gameRules() {
 			return gameRules;
