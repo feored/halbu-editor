@@ -1,22 +1,18 @@
 import type {
 	Act,
+	Attribute,
 	Difficulty,
-	EditorSave,
 	EncodableSaveFormatId,
 	ExpansionType,
 	GameEdition,
 	KnownClassName,
 	QuestFlag,
+	QuestId,
 	SaveLayoutVersion,
 } from "$lib/types/editor";
 
-
 export type BackendAct = "act1" | "act2" | "act3" | "act4" | "act5";
 export type BackendDifficulty = "normal" | "nightmare" | "hell";
-
-//
-// PARSE DIAGNOSTICS
-//
 
 export type ParseIssueSeverity = "Warning" | "Error";
 
@@ -40,10 +36,6 @@ export type ParseIssue = {
 	message: string;
 };
 
-//
-// COMPATIBILITY / SAVE WORKFLOW
-//
-
 export type CompatibilityCode =
 	| "WarlockRequiresRotW"
 	| "WarlockRequiresRotWExpansion"
@@ -56,10 +48,6 @@ export type CompatibilityIssue = {
 	blocking: boolean;
 	message: string;
 };
-
-//
-// VALIDATION
-//
 
 export type ValidationCode =
 	| "InvalidCharacterName"
@@ -97,21 +85,9 @@ export type OutputFormatOption = {
 	gameEdition: GameEdition;
 };
 
-//
-// ENUM DECODING STRUCTURES
-//
-
-export type BackendUnknownEnumVariant = {
-	Unknown: number;
-};
-
 export type BackendEnumValue<KnownValue extends string> =
 	| KnownValue
-	| BackendUnknownEnumVariant;
-
-//
-// BACKEND PRIMITIVE STRUCTURES
-//
+	| { Unknown: number };
 
 export type BackendSkillPointList = {
 	points: number[];
@@ -153,10 +129,6 @@ export type BackendRawDataSection = {
 	data: number[];
 };
 
-//
-// BACKEND CHARACTER STRUCTURE
-//
-
 export type BackendCharacter = {
 	weapon_switch: boolean;
 	assigned_skills: number[];
@@ -188,18 +160,14 @@ export type BackendQuestState = {
 };
 
 export type BackendQuestMap = Record<
-	"normal" | "nightmare" | "hell",
-	Record<"act1" | "act2" | "act3" | "act4" | "act5", Record<string, BackendQuestState>>
+	BackendDifficulty,
+	Record<BackendAct, Record<QuestId, BackendQuestState>>
 >;
 
 export type BackendWaypointMap = Record<
-	"normal" | "nightmare" | "hell",
-	Record<"act1" | "act2" | "act3" | "act4" | "act5", BackendActWaypoints>
+	BackendDifficulty,
+	Record<BackendAct, BackendActWaypoints>
 >;
-
-//
-// BACKEND SAVE STRUCTURE
-//
 
 export type BackendEditorSave = {
 	version: number;
@@ -208,7 +176,7 @@ export type BackendEditorSave = {
 	quests: BackendQuestMap;
 	waypoints: BackendWaypointMap;
 	npcs: BackendRawDataSection;
-	attributes: Record<string, BackendAttributeValue>;
+	attributes: Record<Attribute, BackendAttributeValue>;
 	skills: BackendSkillPointList;
 	items: BackendRawDataSection;
 	meta: BackendSaveMetadata;

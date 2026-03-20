@@ -7,7 +7,7 @@
 		isDefaultWaypoint,
 		setActWaypoints,
 		WAYPOINT_NAMES,
-	} from "$lib/editor/waypoints/waypointsLogic";
+	} from "$lib/editor/waypoints/waypoints";
 
 	import { type Act, type Difficulty, DIFFICULTY_NAMES } from "$lib/types/editor";
 	import { ACT_LABELS } from "$lib/editor/editorMetadata";
@@ -27,9 +27,7 @@
 
 	let activeDifficulty = $state<Difficulty>("Normal");
 
-	const totalProgress = $derived.by(() => {
-		return countAllWaypoints(save.waypoints);
-	});
+	const totalProgress = $derived(countAllWaypoints(save.waypoints));
 </script>
 
 <div class="grid gap-2.5">

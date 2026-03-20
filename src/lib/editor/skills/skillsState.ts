@@ -6,41 +6,30 @@ export type PageNotice = {
 	text: string;
 };
 
-export type BuildPageNoticesOptions = {
-	hasKnownVersionSkills: boolean;
-	hasBackendClassSupport: boolean;
-	hasClassSkills: boolean;
-	skillSlotsReady: boolean;
-	version: number;
-	className: string;
-	supportedClasses: string[];
-};
-
 export function getSkillsData(
 	skillsDataset: readonly SkillData[] | null,
 	version: number,
-	characterClass: string,
+	className: string,
 ): SkillData[] {
 	if (skillsDataset == null) {
 		return [];
 	}
-	return skillsDataset
-		.filter((skillData) => skillData.class === characterClass)
-		.map((skillData) => {
-			if (version === 105 && characterClass === "Warlock") {
-				return {
-					...skillData,
-					page: 4 - skillData.page,
-				};
-			}
-			return skillData;
-		});
+
+	return skillsDataset.filter((skill) => skill.class === className).map((skill) => {
+		if (version === 105 && className === "Warlock") {
+			return {
+				...skill,
+				page: 4 - skill.page,
+			};
+		}
+
+		return skill;
+	});
 }
 
 export function getPageIndexes(skillsData: readonly SkillData[]): number[] {
-	return Array.from(
-		new Set(skillsData.map((skill) => skill.page - 1).filter((page) => page >= 0)),
-	).sort((left, right) => left - right);
+	return [...new Set(skillsData.map((skill) => skill.page - 1).filter((page) => page >= 0))]
+		.sort((left, right) => left - right);
 }
 
 export function getActivePageIndex(
@@ -51,9 +40,11 @@ export function getActivePageIndex(
 	if (!canRenderTrees || pageIndexes.length === 0) {
 		return null;
 	}
+
 	if (activePageIndex != null && pageIndexes.includes(activePageIndex)) {
 		return activePageIndex;
 	}
+
 	return pageIndexes[0];
 }
 
@@ -67,58 +58,64 @@ export function getSelectedSkillId(
 		return null;
 	}
 
-	const activePageSkills = skillsData.filter(
-		(skill) => skill.page === activePageIndex + 1,
-	);
-	if (
-		selectedSkillId != null &&
-		activePageSkills.some((skill) => skill.id === selectedSkillId)
-	) {
+	const pageSkills = skillsData.filter((skill) => skill.page === activePageIndex + 1);
+	if (selectedSkillId != null && pageSkills.some((skill) => skill.id === selectedSkillId)) {
 		return selectedSkillId;
 	}
 
-	const orderedSkills = [...activePageSkills].sort((left, right) => {
+	const orderedSkills = [...pageSkills].sort((left, right) => {
 		const rowDelta = left.row - right.row;
 		if (rowDelta !== 0) {
 			return rowDelta;
 		}
+
 		return left.column - right.column;
 	});
-	return orderedSkills.length > 0 ? orderedSkills[0].id : null;
+
+	return orderedSkills[0]?.id ?? null;
 }
 
-export function buildPageNotices({
-	hasKnownVersionSkills,
-	hasBackendClassSupport,
-	hasClassSkills,
-	skillSlotsReady,
-	version,
-	className,
-	supportedClasses,
-}: BuildPageNoticesOptions): PageNotice[] {
-	const notices: PageNotice[] = [];
+export function getPageNotices(
+	hasKnownVersionSkills: boolean,
+	hasBackendClassSupport: boolean,
+	hasClassSkills: boolean,
+	skillSlotsReady: boolean,
+	version: number,
+	className: string,
+	supportedClasses: readonly string[],
+): PageNotice[] {
 	if (!hasKnownVersionSkills) {
-		notices.push({
-			level: "warning",
-			text: `Skills editor is not available for unsupported save version ${version}.`,
-		});
-	} else if (!hasBackendClassSupport) {
-		notices.push({
-			level: "warning",
-			text: `Skills editor is not available for class ${className} in save version ${version}. Supported classes: ${supportedClasses.join(", ")}.`,
-		});
-	} else if (!hasClassSkills) {
-		notices.push({
-			level: "warning",
-			text: `Skills editor has no data for class ${className} in save version ${version}.`,
-		});
-	} else if (!skillSlotsReady) {
-		notices.push({
-			level: "info",
-			text: "Preparing skills data...",
-		});
+		return [
+			{
+				level: "warning",
+				text: `Skills editor is not available for unsupported save version ${version}.`,
+			},
+		];
 	}
-	return notices;
+
+	if (!hasBackendClassSupport) {
+		return [
+			{
+				level: "warning",
+				text: `Skills editor is not available for class ${className} in save version ${version}. Supported classes: ${supportedClasses.join(", ")}.`,
+			},
+		];
+	}
+
+	if (!hasClassSkills) {
+		return [
+			{
+				level: "warning",
+				text: `Skills editor has no data for class ${className} in save version ${version}.`,
+			},
+		];
+	}
+
+	if (!skillSlotsReady) {
+		return [{ level: "info", text: "Preparing skills data..." }];
+	}
+
+	return [];
 }
 
 export type SkillState = {
@@ -139,39 +136,21 @@ export type SkillPrerequisite = {
 	met: boolean;
 };
 
-export type BuildSkillStateOptions = {
-	saveSkills: readonly SkillSlot[];
-	characterLevel: number;
-	availableSkillPoints: number;
-	isGameRulesMode: boolean;
-	getSkillSlot: (skillId: number) => number;
-	skillSlotsReady?: boolean;
-};
-
-export function buildSkillState(
-	skillData: SkillData,
-	options: BuildSkillStateOptions,
+function getSkillState(
+	skill: SkillData,
+	saveSkills: readonly SkillSlot[],
+	characterLevel: number,
+	availableSkillPoints: number,
+	isGameRulesMode: boolean,
+	getSkillSlot: (skillId: number) => number,
 ): SkillState {
-	const {
-		saveSkills,
-		characterLevel,
-		availableSkillPoints,
-		isGameRulesMode,
-		getSkillSlot,
-	} = options;
-	const reqLevel = skillData.reqlevel;
-	const levelRequirementMet = characterLevel >= reqLevel;
-	const unmetPrerequisites = skillData.reqskills.filter((requiredSkillId) => {
-		const requiredSaveId = getSkillSlot(requiredSkillId);
-		return requiredSaveId < 0 || saveSkills[requiredSaveId].points < 1;
+	const levelRequirementMet = characterLevel >= skill.reqlevel;
+	const prerequisitesMet = skill.reqskills.every((requiredSkillId) => {
+		const slot = getSkillSlot(requiredSkillId);
+		return slot >= 0 && saveSkills[slot].points > 0;
 	});
-	const prerequisitesMet = unmetPrerequisites.length === 0;
 	const available = levelRequirementMet && prerequisitesMet;
-	const saveId = skillData.saveId;
-	const points = saveSkills[saveId].points;
-	const canIncrement =
-		points < 255 && available && (isGameRulesMode ? availableSkillPoints > 0 : true);
-	const canDecrement = points > 0;
+	const points = saveSkills[skill.saveId].points;
 
 	let state: SkillState["state"] = "available";
 	if (points > 0) {
@@ -183,28 +162,43 @@ export function buildSkillState(
 	}
 
 	return {
-		id: skillData.id,
-		saveId,
+		id: skill.id,
+		saveId: skill.saveId,
 		points,
 		available,
 		levelRequirementMet,
 		prerequisitesMet,
 		state,
-		canIncrement,
-		canDecrement,
+		canIncrement:
+			points < 255 && available && (!isGameRulesMode || availableSkillPoints > 0),
+		canDecrement: points > 0,
 	};
 }
 
-export function buildSkillStatesById(
+export function getSkillStates(
 	skillsData: readonly SkillData[],
-	options: BuildSkillStateOptions,
+	saveSkills: readonly SkillSlot[],
+	characterLevel: number,
+	availableSkillPoints: number,
+	isGameRulesMode: boolean,
+	getSkillSlot: (skillId: number) => number,
+	skillSlotsReady: boolean,
 ): Record<number, SkillState> {
-	if (!options.skillSlotsReady) {
+	if (!skillSlotsReady) {
 		return {};
 	}
+
 	const states: Record<number, SkillState> = {};
 	for (const skill of skillsData) {
-		states[skill.id] = buildSkillState(skill, options);
+		states[skill.id] = getSkillState(
+			skill,
+			saveSkills,
+			characterLevel,
+			availableSkillPoints,
+			isGameRulesMode,
+			getSkillSlot,
+		);
 	}
+
 	return states;
 }

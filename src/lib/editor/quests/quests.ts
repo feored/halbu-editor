@@ -1,3 +1,4 @@
+import { getAttributeLabel } from "$lib/editor/editorMetadata";
 import actQuests from "$lib/editor/quests/actquests.json";
 import { DIFFICULTY_NAMES } from "$lib/types/editor";
 import type {
@@ -10,9 +11,8 @@ import type {
 	QuestId,
 	QuestMap,
 } from "$lib/types/editor";
-import { getAttributeLabel } from "$lib/editor/editorMetadata";
 
-export type QuestPreset = {
+export type QuestState = {
 	flags: QuestFlag[];
 	display: string;
 };
@@ -20,7 +20,7 @@ export type QuestPreset = {
 export type QuestDisplay = {
 	id: QuestId;
 	display: string;
-	states?: QuestPreset[];
+	states?: QuestState[];
 };
 
 export type ActDisplay = {
@@ -36,26 +36,33 @@ export type RewardFeedback = {
 
 type RawActDisplay = Omit<ActDisplay, "id"> & { id: Lowercase<Act> };
 
-const QUEST_ACTS = (actQuests as RawActDisplay[]).map((act) => ({
+const actIdByJsonId: Record<Lowercase<Act>, Act> = {
+	act1: "Act1",
+	act2: "Act2",
+	act3: "Act3",
+	act4: "Act4",
+	act5: "Act5",
+};
+
+export const ACTS = (actQuests as RawActDisplay[]).map((act) => ({
 	...act,
-	id: {
-		act1: "Act1",
-		act2: "Act2",
-		act3: "Act3",
-		act4: "Act4",
-		act5: "Act5",
-	}[act.id],
+	id: actIdByJsonId[act.id],
 })) as ActDisplay[];
 
-const EMPTY_UNUSED_ACT_QUESTS: Record<Act, QuestDisplay[]> = {
+const UNUSED_QUESTS: Record<Act, QuestDisplay[]> = {
 	Act1: [],
 	Act2: [],
 	Act3: [],
-	Act4: [],
-	Act5: [],
+	Act4: [
+		{ id: "unused_1", display: "Unused Quest 1" },
+		{ id: "unused_2", display: "Unused Quest 2" },
+		{ id: "unused_3", display: "Unused Quest 3" },
+	],
+	Act5: [
+		{ id: "unused_1", display: "Unused Quest 1" },
+		{ id: "unused_2", display: "Unused Quest 2" },
+	],
 };
-
-const EMPTY_QUEST_FLAGS: readonly { id: QuestFlag }[] = [];
 
 const QUEST_REWARDS = [
 	{ act: "Act1", quest: "q1", attribute: "newskills", value: 1 },
@@ -71,7 +78,7 @@ const QUEST_REWARDS = [
 	value: number;
 }>;
 
-const ATTRIBUTE_STORAGE_SCALE: Partial<Record<Attribute, number>> = {
+const ATTRIBUTE_SCALE: Partial<Record<Attribute, number>> = {
 	hitpoints: 256,
 	maxhp: 256,
 	mana: 256,
@@ -80,65 +87,52 @@ const ATTRIBUTE_STORAGE_SCALE: Partial<Record<Attribute, number>> = {
 	maxstamina: 256,
 };
 
-function getAttributeStorageScale(attribute: Attribute): number {
-	return ATTRIBUTE_STORAGE_SCALE[attribute] ?? 1;
+function getQuestFlags(
+	quests: QuestMap,
+	difficulty: Difficulty,
+	act: Act,
+	questId: QuestId,
+): QuestFlag[] {
+	return quests[difficulty][act][questId].flags;
 }
 
-function toStoredRewardValue(attribute: Attribute, gameValue: number): number {
-	return gameValue * getAttributeStorageScale(attribute);
+function toStoredValue(attribute: Attribute, value: number): number {
+	return value * (ATTRIBUTE_SCALE[attribute] ?? 1);
 }
 
-function toDisplayedRewardDelta(attribute: Attribute, storedDelta: number): number {
-	return storedDelta / getAttributeStorageScale(attribute);
+function toDisplayedValue(attribute: Attribute, value: number): number {
+	return value / (ATTRIBUTE_SCALE[attribute] ?? 1);
 }
 
-function formatSignedDelta(value: number): string {
+function formatSignedValue(value: number): string {
 	if (value === 0) {
 		return "0";
 	}
 
 	const absoluteValue = Math.abs(value);
-	const formattedAbsoluteValue = Number.isInteger(absoluteValue)
+	const formattedValue = Number.isInteger(absoluteValue)
 		? String(absoluteValue)
 		: absoluteValue.toFixed(2).replace(/\.?0+$/, "");
 
-	return value > 0 ? `+${formattedAbsoluteValue}` : `-${formattedAbsoluteValue}`;
-}
-
-function getQuestFlags(quests: QuestMap, difficulty: Difficulty, act: Act, questId: QuestId): QuestFlag[] {
-	return quests[difficulty][act][questId].flags;
-}
-
-export function shouldShowQuest(quest: QuestDisplay, showPrologue: boolean): boolean {
-	return quest.id !== "prologue" || showPrologue;
+	return value > 0 ? `+${formattedValue}` : `-${formattedValue}`;
 }
 
 export function getStandardActQuests(act: ActDisplay, showPrologue: boolean): QuestDisplay[] {
-	return act.quests.filter((quest) => shouldShowQuest(quest, showPrologue));
+	return act.quests.filter((quest) => showPrologue || quest.id !== "prologue");
 }
 
 export function getRenderedActQuests(
 	act: ActDisplay,
 	showPrologue: boolean,
 	showAllQuests: boolean,
-	unusedActQuests: Record<Act, QuestDisplay[]>,
 ): QuestDisplay[] {
-	const standardQuests = getStandardActQuests(act, showPrologue);
+	const quests = getStandardActQuests(act, showPrologue);
 
 	if (!showAllQuests) {
-		return standardQuests;
+		return quests;
 	}
 
-	return [...standardQuests, ...(unusedActQuests[act.id] ?? [])];
-}
-
-export function isQuestCompleted(flags: readonly QuestFlag[]): boolean {
-	return (
-		flags.includes("RewardGranted") ||
-		flags.includes("CompletedNow") ||
-		flags.includes("CompletedBefore") ||
-		flags.includes("PrimaryGoalDone")
-	);
+	return [...quests, ...UNUSED_QUESTS[act.id]];
 }
 
 export function countActProgress(
@@ -148,20 +142,27 @@ export function countActProgress(
 	showPrologue: boolean,
 ): { completed: number; total: number; percent: number } {
 	const visibleQuests = getStandardActQuests(act, showPrologue);
-
 	let completed = 0;
+
 	for (const quest of visibleQuests) {
-		if (isQuestCompleted(getQuestFlags(quests, difficulty, act.id, quest.id))) {
+		const flags = getQuestFlags(quests, difficulty, act.id, quest.id);
+		if (
+			flags.includes("RewardGranted") ||
+			flags.includes("CompletedNow") ||
+			flags.includes("CompletedBefore") ||
+			flags.includes("PrimaryGoalDone")
+		) {
 			completed += 1;
 		}
 	}
 
-	const total = visibleQuests.length;
-
 	return {
 		completed,
-		total,
-		percent: total > 0 ? Math.round((completed / total) * 100) : 0,
+		total: visibleQuests.length,
+		percent:
+			visibleQuests.length > 0
+				? Math.round((completed / visibleQuests.length) * 100)
+				: 0,
 	};
 }
 
@@ -175,14 +176,13 @@ export function getQuestFlagsForBulkToggle(
 	}
 
 	const flags = new Set<QuestFlag>();
-
 	for (const state of quest.states ?? []) {
 		for (const flag of state.flags) {
 			flags.add(flag);
 		}
 	}
 
-	return Array.from(flags);
+	return [...flags];
 }
 
 export function hasQuestFlag(
@@ -203,7 +203,6 @@ export function addQuestFlag(
 	flag: QuestFlag,
 ): boolean {
 	const flags = getQuestFlags(quests, difficulty, act, questId);
-
 	if (flags.includes(flag)) {
 		return false;
 	}
@@ -220,27 +219,12 @@ export function removeQuestFlag(
 	flag: QuestFlag,
 ): boolean {
 	const flags = getQuestFlags(quests, difficulty, act, questId);
-
 	if (!flags.includes(flag)) {
 		return false;
 	}
 
-	quests[difficulty][act][questId].flags = flags.filter((currentFlag) => currentFlag !== flag);
+	quests[difficulty][act][questId].flags = flags.filter((current) => current !== flag);
 	return true;
-}
-
-export function toggleQuestFlag(
-	quests: QuestMap,
-	difficulty: Difficulty,
-	act: Act,
-	questId: QuestId,
-	flag: QuestFlag,
-): boolean {
-	if (hasQuestFlag(quests, difficulty, act, questId, flag)) {
-		return removeQuestFlag(quests, difficulty, act, questId, flag);
-	}
-
-	return addQuestFlag(quests, difficulty, act, questId, flag);
 }
 
 export function isQuestStatePresent(
@@ -248,19 +232,18 @@ export function isQuestStatePresent(
 	difficulty: Difficulty,
 	act: Act,
 	questId: QuestId,
-	state: QuestPreset,
+	state: QuestState,
 ): boolean {
 	const flags = getQuestFlags(quests, difficulty, act, questId);
 	return state.flags.every((flag) => flags.includes(flag));
 }
-
 
 export function toggleQuestState(
 	quests: QuestMap,
 	difficulty: Difficulty,
 	act: Act,
 	questId: QuestId,
-	state: QuestPreset,
+	state: QuestState,
 ): void {
 	if (isQuestStatePresent(quests, difficulty, act, questId, state)) {
 		for (const flag of state.flags) {
@@ -281,18 +264,15 @@ export function setAllActQuestFlags(
 	showPrologue: boolean,
 	advancedFlags: boolean,
 	showAllQuests: boolean,
-	unusedActQuests: Record<Act, QuestDisplay[]>,
 	questFlags: ReadonlyArray<{ id: QuestFlag }>,
 	value: boolean,
 ): void {
-	const renderedQuests = advancedFlags
-		? getRenderedActQuests(act, showPrologue, showAllQuests, unusedActQuests)
+	const visibleQuests = advancedFlags
+		? getRenderedActQuests(act, showPrologue, showAllQuests)
 		: getStandardActQuests(act, showPrologue);
 
-	for (const quest of renderedQuests) {
-		const flags = getQuestFlagsForBulkToggle(quest, advancedFlags, questFlags);
-
-		for (const flag of flags) {
+	for (const quest of visibleQuests) {
+		for (const flag of getQuestFlagsForBulkToggle(quest, advancedFlags, questFlags)) {
 			if (value) {
 				addQuestFlag(quests, difficulty, act.id, quest.id, flag);
 			} else {
@@ -304,18 +284,12 @@ export function setAllActQuestFlags(
 
 export function setAllQuestFlagsCompleted(quests: QuestMap): void {
 	for (const difficulty of DIFFICULTY_NAMES) {
-		for (const act of QUEST_ACTS) {
-			setAllActQuestFlags(
-				quests,
-				difficulty,
-				act,
-				true,
-				false,
-				false,
-				EMPTY_UNUSED_ACT_QUESTS,
-				EMPTY_QUEST_FLAGS,
-				true,
-			);
+		for (const act of ACTS) {
+			for (const quest of getStandardActQuests(act, true)) {
+				for (const flag of getQuestFlagsForBulkToggle(quest, false, [])) {
+					addQuestFlag(quests, difficulty, act.id, quest.id, flag);
+				}
+			}
 		}
 	}
 }
@@ -326,65 +300,59 @@ export function applyQuestRewards(
 	questId: QuestId,
 	add: boolean,
 ): RewardFeedback | null {
-	const rewardLines = QUEST_REWARDS.filter((reward) => {
-		return reward.act === act && reward.quest === questId;
-	});
-
-	if (rewardLines.length < 1) {
+	const rewards = QUEST_REWARDS.filter((reward) => reward.act === act && reward.quest === questId);
+	if (rewards.length < 1) {
 		return null;
 	}
 
-	let hasClampedChange = false;
-	const rewardChanges: string[] = [];
-	const clampedChanges: string[] = [];
+	let clamped = false;
+	const changes: string[] = [];
+	const limitedChanges: string[] = [];
 
-	for (const reward of rewardLines) {
+	for (const reward of rewards) {
 		const attribute = attributes[reward.attribute];
 		const previousValue = attribute.value;
 		const maxValue = 2 ** attribute.bitLength - 1;
-		const storedRewardValue = toStoredRewardValue(reward.attribute, reward.value);
-
-		const targetValue = add
-			? previousValue + storedRewardValue
-			: previousValue - storedRewardValue;
-
+		const change = toStoredValue(reward.attribute, reward.value);
+		const targetValue = add ? previousValue + change : previousValue - change;
 		const nextValue = Math.max(0, Math.min(targetValue, maxValue));
+		const actualChange = nextValue - previousValue;
+		const expectedChange = add ? change : -change;
+		const label = getAttributeLabel(reward.attribute);
+		const displayedChange = formatSignedValue(
+			toDisplayedValue(reward.attribute, actualChange),
+		);
+
 		attribute.value = nextValue;
 
-		const effectiveDelta = nextValue - previousValue;
-		const expectedDelta = add ? storedRewardValue : -storedRewardValue;
-
-		if (effectiveDelta !== expectedDelta) {
-			hasClampedChange = true;
+		if (actualChange !== 0) {
+			changes.push(`${displayedChange} ${label}`);
 		}
 
-		const attributeLabel = getAttributeLabel(reward.attribute);
-		const displayedDelta = toDisplayedRewardDelta(reward.attribute, effectiveDelta);
-
-		if (effectiveDelta !== 0) {
-			rewardChanges.push(`${formatSignedDelta(displayedDelta)} ${attributeLabel}`);
-		}
-
-		if (effectiveDelta !== expectedDelta) {
-			clampedChanges.push(`${formatSignedDelta(displayedDelta)} ${attributeLabel} (at limit)`);
+		if (actualChange !== expectedChange) {
+			clamped = true;
+			limitedChanges.push(`${displayedChange} ${label} (at limit)`);
 		}
 	}
 
-	if (!hasClampedChange) {
+	if (!clamped) {
 		return {
 			kind: "info",
-			text: `${add ? "Reward applied:" : "Reward removed:"} ${rewardChanges.length > 0 ? rewardChanges.join(", ") : "no effective stat change."
-				}`,
+			text: `${add ? "Reward applied:" : "Reward removed:"} ${
+				changes.length > 0 ? changes.join(", ") : "no stat change."
+			}`,
 		};
 	}
 
 	return {
 		kind: "warning",
 		text: add
-			? `Reward was only partially applied because this stat reached its limit.${clampedChanges.length > 0 ? ` Applied: ${clampedChanges.join(", ")}.` : ""
-			}`
-			: `Reward was only partially removed because this stat is already at its minimum.${clampedChanges.length > 0 ? ` Removed: ${clampedChanges.join(", ")}.` : ""
-			}`,
+			? `Reward was only partially applied because this stat reached its limit.${
+					limitedChanges.length > 0 ? ` Applied: ${limitedChanges.join(", ")}.` : ""
+				}`
+			: `Reward was only partially removed because this stat is already at its minimum.${
+					limitedChanges.length > 0 ? ` Removed: ${limitedChanges.join(", ")}.` : ""
+				}`,
 	};
 }
 

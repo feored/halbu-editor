@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { enforceMinMax } from "$lib/utils/actions";
-	import { getMaxValueForBitLength } from "$lib/utils/numbers";
+	import { clampInteger, getMaxValueForBitLength } from "$lib/utils/numbers";
 	import { getAttributeLabel } from "$lib/editor/editorMetadata";
 	import { editorState } from "$lib/editor/editorState.svelte";
 	import {
-		setClampedAttributeValue,
-		setPrimaryAttributeValueInGameRulesMode,
-	} from "$lib/editor/character/characterActions";
-	import { getGameRulesClassPrimaryAttributes } from "$lib/editor/character/gameRules";
+		getClassBaseAttributes,
+		applyGameRulesValues,
+		getGameRules,
+	} from "$lib/editor/character/gameRules";
 
 	type PrimaryAttributeId = "strength" | "dexterity" | "vitality" | "energy";
 
@@ -23,42 +23,16 @@
 	const session = $derived(editorState.session!);
 	const save = $derived(session.save);
 	const mode = $derived(session.mode);
-	const effectiveDerivedValues = $derived(editorState.gameRulesValues.values);
 
 	const isGameRulesMode = $derived(mode === "game-rules");
-	let showGameRulesHelp = $state(false);
+	let showHelp = $state(false);
 
-	const gameRulesClassPrimaryAttributes = $derived.by(() =>
-		getGameRulesClassPrimaryAttributes(save.character.className),
-	);
-
-	function getAvailableStatPoints(): number | null {
-		if (!isGameRulesMode) {
-			return save.attributes.statpts.value;
-		}
-
-		if (effectiveDerivedValues == null || !("statpts" in effectiveDerivedValues)) {
-			return null;
-		}
-
-		return Math.max(0, effectiveDerivedValues.statpts);
-	}
-
-	function getPrimaryAttributeMinimum(attributeId: PrimaryAttributeId): number {
-		if (!isGameRulesMode || gameRulesClassPrimaryAttributes == null) {
-			return 0;
-		}
-
-		return gameRulesClassPrimaryAttributes[attributeId] ?? 0;
-	}
+	const baseAttributes = $derived.by(() => getClassBaseAttributes(save.character.className));
 
 	function canDecreasePrimaryAttribute(attributeId: PrimaryAttributeId): boolean {
-		const availableStatPoints = getAvailableStatPoints();
-		if (isGameRulesMode && availableStatPoints == null) {
-			return false;
-		}
+		const minimum = isGameRulesMode ? baseAttributes?.[attributeId] ?? 0 : 0;
 
-		return save.attributes[attributeId].value > getPrimaryAttributeMinimum(attributeId);
+		return save.attributes[attributeId].value > minimum;
 	}
 
 	function canIncreasePrimaryAttribute(attributeId: PrimaryAttributeId): boolean {
@@ -69,8 +43,7 @@
 			return false;
 		}
 
-		const availableStatPoints = getAvailableStatPoints();
-		if (isGameRulesMode && (availableStatPoints == null || availableStatPoints < 1)) {
+		if (isGameRulesMode && save.attributes.statpts.value < 1) {
 			return false;
 		}
 
@@ -78,25 +51,30 @@
 	}
 
 	function adjustPrimaryAttribute(attributeId: PrimaryAttributeId, delta: number): void {
-		const nextValue = save.attributes[attributeId].value + delta;
+		const attribute = save.attributes[attributeId];
+		const maxValue = getMaxValueForBitLength(attribute.bitLength);
+		const nextValue = attribute.value + delta;
 
 		if (isGameRulesMode) {
-			const availableStatPoints = getAvailableStatPoints();
-			if (availableStatPoints == null) {
-				return;
+			const minimum = baseAttributes?.[attributeId] ?? 0;
+			const clampedTargetValue = clampInteger(nextValue, minimum, maxValue);
+
+			if (clampedTargetValue <= attribute.value) {
+				attribute.value = clampedTargetValue;
+			} else {
+				const allowedIncrease = Math.max(0, save.attributes.statpts.value);
+				attribute.value = Math.min(clampedTargetValue, attribute.value + allowedIncrease);
 			}
 
-			setPrimaryAttributeValueInGameRulesMode(
+			const values = getGameRules(
 				save,
-				attributeId,
-				nextValue,
-				availableStatPoints,
-				getPrimaryAttributeMinimum(attributeId),
-			);
+				session.gameRulesBaselineSave ?? null,
+			).values;
+			applyGameRulesValues(save, values);
 			return;
 		}
 
-		setClampedAttributeValue(save, attributeId, nextValue);
+		attribute.value = clampInteger(nextValue, 0, maxValue);
 	}
 
 	function setPrimaryAttributeFromInput(
@@ -108,28 +86,34 @@
 			return;
 		}
 
+		const attribute = save.attributes[attributeId];
+		const maxValue = getMaxValueForBitLength(attribute.bitLength);
+
 		if (isGameRulesMode) {
-			const availableStatPoints = getAvailableStatPoints();
-			if (availableStatPoints == null) {
-				return;
+			const minimum = baseAttributes?.[attributeId] ?? 0;
+			const clampedTargetValue = clampInteger(parsedValue, minimum, maxValue);
+
+			if (clampedTargetValue <= attribute.value) {
+				attribute.value = clampedTargetValue;
+			} else {
+				const allowedIncrease = Math.max(0, save.attributes.statpts.value);
+				attribute.value = Math.min(clampedTargetValue, attribute.value + allowedIncrease);
 			}
 
-			setPrimaryAttributeValueInGameRulesMode(
+			const values = getGameRules(
 				save,
-				attributeId,
-				parsedValue,
-				availableStatPoints,
-				getPrimaryAttributeMinimum(attributeId),
-			);
+				session.gameRulesBaselineSave ?? null,
+			).values;
+			applyGameRulesValues(save, values);
 			return;
 		}
 
-		setClampedAttributeValue(save, attributeId, parsedValue);
+		attribute.value = clampInteger(parsedValue, 0, maxValue);
 	}
 
 	$effect(() => {
 		if (!isGameRulesMode) {
-			showGameRulesHelp = false;
+			showHelp = false;
 		}
 	});
 </script>
@@ -141,19 +125,19 @@
 			<button
 				type="button"
 				class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-halbu-borderStrong bg-halbu-panel2 text-2xs font-semibold leading-none text-halbu-textMuted transition hover:bg-halbu-primarySoft hover:text-halbu-text"
-				aria-label={showGameRulesHelp
+				aria-label={showHelp
 					? "Hide game rules explanation"
 					: "Show game rules explanation"}
-				aria-expanded={showGameRulesHelp}
+				aria-expanded={showHelp}
 				onclick={() => {
-					showGameRulesHelp = !showGameRulesHelp;
+					showHelp = !showHelp;
 				}}
 			>
 				?
 			</button>
 		{/if}
 	</div>
-	{#if isGameRulesMode && showGameRulesHelp}
+	{#if isGameRulesMode && showHelp}
 		<div class="form-text mb-1 mt-0.5">
 			Game rules mode: increasing attributes spends available stat points and decreasing
 			attributes refunds points. Class base attributes are the minimum.
@@ -182,7 +166,7 @@
 						name={field}
 						id={field}
 						autocomplete="off"
-						min={getPrimaryAttributeMinimum(field)}
+						min={isGameRulesMode ? baseAttributes?.[field] ?? 0 : 0}
 						max={getMaxValueForBitLength(save.attributes[field].bitLength)}
 						step="1"
 						use:enforceMinMax

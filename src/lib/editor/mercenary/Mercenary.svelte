@@ -1,6 +1,6 @@
 <script lang="ts">
-	import names from "$lib/editor/mercenary/names.json";
-	import variants from "$lib/editor/mercenary/variants.json";
+	import namesJson from "$lib/editor/mercenary/names.json";
+	import variantsJson from "$lib/editor/mercenary/variants.json";
 
 	import { enforceMinMax } from "$lib/utils/actions";
 	import {
@@ -13,8 +13,8 @@
 		syncFieldFromValue,
 	} from "$lib/utils/fieldEdit";
 	import { clampInteger } from "$lib/utils/numbers";
-	import { editorState } from "$lib/editor/editorState.svelte";
 	import { DIFFICULTY_LABELS } from "$lib/editor/editorMetadata";
+	import { editorState } from "$lib/editor/editorState.svelte";
 
 	import type { Difficulty } from "$lib/types/editor";
 
@@ -28,59 +28,41 @@
 		rate: number;
 	};
 
-	type MercenaryNamesByType = Record<string, string[]>;
+	type MercenaryNames = Record<string, string[]>;
 
-	const mercenaryVariants = variants as MercenaryVariant[];
-	const mercenaryNames = names as MercenaryNamesByType;
+	const variants = variantsJson as MercenaryVariant[];
+	const namesByType = namesJson as MercenaryNames;
+	const types: MercenaryType[] = ["Rogue", "Desert Mercenary", "Iron Wolf", "Barbarian"];
 
 	const U32_MAX = 4294967295;
-	const MERCENARY_LEVEL_MIN = 1;
-	const MERCENARY_LEVEL_MAX = 98;
+	const MIN_LEVEL = 1;
+	const MAX_LEVEL = 98;
 
 	const session = $derived(editorState.session!);
 	const save = $derived(session.save);
 	const mercenary = $derived(save.character.mercenary);
 
-	const isHired = $derived(mercenary.id !== 0);
-
-	const currentVariant = $derived.by(() => {
-		return (
-			mercenaryVariants.find((variant) => variant.id === mercenary.variantId) ??
-			mercenaryVariants[0]
-		);
-	});
-
-	const possibleVariants = $derived.by(() => {
-		return mercenaryVariants.filter((variant) => {
-			return (
-				variant.type === currentVariant.type &&
-				variant.difficulty === currentVariant.difficulty
-			);
-		});
-	});
-
-	const variantNames = $derived.by(() => {
-		return mercenaryNames[currentVariant.type] ?? [];
-	});
-
-	const mercenaryLevelCap = $derived.by(() => {
-		return clampInteger(save.character.level, MERCENARY_LEVEL_MIN, MERCENARY_LEVEL_MAX);
-	});
-
-	const mercenaryLevel = $derived.by(() => {
-		return clampMercenaryLevel(
-			getLevelFromExperience(mercenary.experience, currentVariant.rate),
-		);
-	});
+	const hired = $derived(mercenary.id !== 0);
+	const variant = $derived(
+		variants.find((current) => current.id === mercenary.variantId) ?? variants[0],
+	);
+	const variantOptions = $derived(
+		variants.filter((current) => {
+			return current.type === variant.type && current.difficulty === variant.difficulty;
+		}),
+	);
+	const nameOptions = $derived(namesByType[variant.type] ?? []);
+	const maxLevel = $derived(clampInteger(save.character.level, MIN_LEVEL, MAX_LEVEL));
+	const level = $derived(clampLevel(levelFromExperience(mercenary.experience, variant.rate)));
 
 	let levelEdit = $state(initFieldEdit(""));
 	let experienceEdit = $state(initFieldEdit(""));
 
-	function getExperienceForLevel(level: number, rate: number): number {
+	function experienceForLevel(level: number, rate: number): number {
 		return rate * (level + 1) * level * level;
 	}
 
-	function getLevelFromExperience(experience: number, rate: number): number {
+	function levelFromExperience(experience: number, rate: number): number {
 		const scaledExperience = experience / rate;
 		const guess = Math.floor(Math.pow(scaledExperience, 1 / 3));
 
@@ -91,140 +73,125 @@
 		return guess;
 	}
 
-	function clampMercenaryLevel(level: number): number {
-		return clampInteger(level, MERCENARY_LEVEL_MIN, mercenaryLevelCap);
+	function clampLevel(level: number): number {
+		return clampInteger(level, MIN_LEVEL, maxLevel);
 	}
 
-	function randomMercenaryId(): number {
+	function randomId(): number {
 		return Math.floor(Math.random() * U32_MAX);
 	}
 
-	function setHired(nextHired: boolean): void {
-		mercenary.id = nextHired ? randomMercenaryId() : 0;
-
-		if (nextHired) {
-			if (
-				getLevelFromExperience(mercenary.experience, currentVariant.rate) <
-				MERCENARY_LEVEL_MIN
-			) {
-				mercenary.experience = getExperienceForLevel(MERCENARY_LEVEL_MIN, currentVariant.rate);
-			}
+	function syncNameId(): void {
+		if (nameOptions.length < 1) {
+			mercenary.nameId = 0;
 			return;
 		}
 
-		mercenary.isDead = false;
+		mercenary.nameId = clampInteger(mercenary.nameId, 0, nameOptions.length - 1);
 	}
 
-	function setVariantById(nextVariantId: number): void {
-		const nextVariant =
-			mercenaryVariants.find((variant) => variant.id === nextVariantId) ?? null;
+	function setHired(hired: boolean): void {
+		mercenary.id = hired ? randomId() : 0;
 
-		if (nextVariant == null) {
+		if (!hired) {
+			mercenary.isDead = false;
 			return;
 		}
 
-		const nextLevel = clampMercenaryLevel(
-			getLevelFromExperience(mercenary.experience, currentVariant.rate),
-		);
+		if (levelFromExperience(mercenary.experience, variant.rate) < MIN_LEVEL) {
+			mercenary.experience = experienceForLevel(MIN_LEVEL, variant.rate);
+		}
+	}
+
+	function setVariant(variantId: number): void {
+		const nextVariant = variants.find((current) => current.id === variantId) ?? variants[0];
+		const currentLevel = clampLevel(levelFromExperience(mercenary.experience, variant.rate));
 
 		mercenary.variantId = nextVariant.id;
-		mercenary.experience = getExperienceForLevel(
-			nextLevel < MERCENARY_LEVEL_MIN ? MERCENARY_LEVEL_MIN : nextLevel,
-			nextVariant.rate,
-		);
-		clampNameId();
+		mercenary.experience = experienceForLevel(currentLevel, nextVariant.rate);
+		syncNameId();
 	}
 
-	function setVariantType(nextType: MercenaryType): void {
+	function setType(type: MercenaryType): void {
 		const nextVariant =
-			possibleVariants.find((variant) => variant.type === nextType) ??
-			mercenaryVariants.find((variant) => {
+			variants.find((current) => {
 				return (
-					variant.type === nextType && variant.difficulty === currentVariant.difficulty
+					current.type === type &&
+					current.difficulty === variant.difficulty &&
+					current.variant === variant.variant
 				);
 			}) ??
-			mercenaryVariants.find((variant) => variant.type === nextType) ??
-			mercenaryVariants[0];
+			variants.find((current) => {
+				return current.type === type && current.difficulty === variant.difficulty;
+			}) ??
+			variants.find((current) => current.type === type) ??
+			variants[0];
 
-		setVariantById(nextVariant.id);
+		setVariant(nextVariant.id);
 	}
 
-	function setVariantDifficulty(nextDifficulty: Difficulty): void {
+	function setDifficulty(difficulty: Difficulty): void {
 		const nextVariant =
-			possibleVariants.find((variant) => variant.difficulty === nextDifficulty) ??
-			mercenaryVariants.find((variant) => {
+			variants.find((current) => {
 				return (
-					variant.type === currentVariant.type &&
-					variant.difficulty === nextDifficulty &&
-					variant.variant === currentVariant.variant
+					current.type === variant.type &&
+					current.difficulty === difficulty &&
+					current.variant === variant.variant
 				);
 			}) ??
-			mercenaryVariants.find((variant) => {
-				return (
-					variant.type === currentVariant.type && variant.difficulty === nextDifficulty
-				);
+			variants.find((current) => {
+				return current.type === variant.type && current.difficulty === difficulty;
 			}) ??
-			mercenaryVariants[0];
+			variants[0];
 
-		setVariantById(nextVariant.id);
+		setVariant(nextVariant.id);
 	}
 
-	function setVariantName(nextVariantName: string): void {
-		const nextVariant =
-			possibleVariants.find((variant) => variant.variant === nextVariantName) ??
-			possibleVariants[0];
-
-		if (nextVariant == null) {
-			return;
-		}
-
-		setVariantById(nextVariant.id);
+	function setVariantName(name: string): void {
+		const nextVariant = variantOptions.find((current) => current.variant === name) ?? variant;
+		setVariant(nextVariant.id);
 	}
 
 	function setRandomName(): void {
-		if (variantNames.length < 1) {
+		if (nameOptions.length < 1) {
 			return;
 		}
 
-		mercenary.nameId = Math.floor(Math.random() * variantNames.length);
+		mercenary.nameId = Math.floor(Math.random() * nameOptions.length);
 	}
 
-	function clampNameId(): void {
-		if (variantNames.length < 1) {
-			mercenary.nameId = 0;
-			return;
-		}
-
-		if (mercenary.nameId < 0) {
-			mercenary.nameId = 0;
-			return;
-		}
-
-		if (mercenary.nameId >= variantNames.length) {
-			mercenary.nameId = variantNames.length - 1;
-		}
+	function setLevel(level: number): void {
+		mercenary.experience = experienceForLevel(clampLevel(level), variant.rate);
 	}
 
-	function setLevel(nextLevel: number): void {
-		const clampedLevel = clampMercenaryLevel(nextLevel);
-		mercenary.experience = getExperienceForLevel(clampedLevel, currentVariant.rate);
-	}
-
-	function setExperience(nextExperience: number): void {
-		mercenary.experience = clampInteger(nextExperience, 0, U32_MAX);
+	function setExperience(experience: number): void {
+		mercenary.experience = clampInteger(experience, 0, U32_MAX);
 	}
 
 	function finishLevelEdit(): void {
-		const parsedValue = Number(levelEdit.input);
-		if (!Number.isFinite(parsedValue)) {
+		const value = Number(levelEdit.input);
+		if (!Number.isFinite(value)) {
 			setFieldError(levelEdit, "Enter a number.");
-			cancelFieldEdit(levelEdit, String(mercenaryLevel));
+			cancelFieldEdit(levelEdit, String(level));
 			return;
 		}
 
-		setLevel(parsedValue);
+		setLevel(value);
 		finishFieldEdit(levelEdit);
-		syncFieldFromValue(levelEdit, String(mercenaryLevel));
+		syncFieldFromValue(levelEdit, String(level));
+	}
+
+	function finishExperienceEdit(): void {
+		const value = Number(experienceEdit.input);
+		if (!Number.isFinite(value)) {
+			setFieldError(experienceEdit, "Enter a number.");
+			cancelFieldEdit(experienceEdit, String(mercenary.experience));
+			return;
+		}
+
+		setExperience(value);
+		finishFieldEdit(experienceEdit);
+		syncFieldFromValue(experienceEdit, String(mercenary.experience));
 	}
 
 	function handleLevelKeydown(event: KeyboardEvent): void {
@@ -237,22 +204,9 @@
 
 		if (event.key === "Escape") {
 			event.preventDefault();
-			cancelFieldEdit(levelEdit, String(mercenaryLevel));
+			cancelFieldEdit(levelEdit, String(level));
 			(event.currentTarget as HTMLInputElement).blur();
 		}
-	}
-
-	function finishExperienceEdit(): void {
-		const parsedValue = Number(experienceEdit.input);
-		if (!Number.isFinite(parsedValue)) {
-			setFieldError(experienceEdit, "Enter a number.");
-			cancelFieldEdit(experienceEdit, String(mercenary.experience));
-			return;
-		}
-
-		setExperience(parsedValue);
-		finishFieldEdit(experienceEdit);
-		syncFieldFromValue(experienceEdit, String(mercenary.experience));
 	}
 
 	function handleExperienceKeydown(event: KeyboardEvent): void {
@@ -271,11 +225,11 @@
 	}
 
 	$effect(() => {
-		clampNameId();
+		syncNameId();
 	});
 
 	$effect(() => {
-		syncFieldFromValue(levelEdit, String(mercenaryLevel));
+		syncFieldFromValue(levelEdit, String(level));
 	});
 
 	$effect(() => {
@@ -294,8 +248,8 @@
 					type="checkbox"
 					id="hired"
 					name="hired"
-					checked={isHired}
-					onchange={(event) => setHired(event.currentTarget.checked)}
+					checked={hired}
+					onchange={(event) => setHired((event.currentTarget as HTMLInputElement).checked)}
 				/>
 				<span>Hired</span>
 			</label>
@@ -308,24 +262,22 @@
 					name="alive"
 					checked={!mercenary.isDead}
 					onchange={(event) => {
-						mercenary.isDead = !event.currentTarget.checked;
+						mercenary.isDead = !(event.currentTarget as HTMLInputElement).checked;
 					}}
-					disabled={!isHired}
+					disabled={!hired}
 				/>
 				<span>Alive</span>
 			</label>
 		</div>
 
-		{#if !isHired}
-			<div class="form-text mt-1">
-				Mercenary data is inactive until the mercenary is hired.
-			</div>
+		{#if !hired}
+			<div class="form-text mt-1">Mercenary data is inactive until the mercenary is hired.</div>
 		{/if}
 	</section>
 
 	<section
 		class={`rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2 ${
-			!isHired ? "opacity-60" : ""
+			!hired ? "opacity-60" : ""
 		}`}
 	>
 		<h3 class="editor-card-title mb-1.5">Identity</h3>
@@ -338,9 +290,9 @@
 					bind:value={mercenary.nameId}
 					name="mercenary-name"
 					id="mercenary-name"
-					disabled={!isHired}
+					disabled={!hired}
 				>
-					{#each variantNames as name, index}
+					{#each nameOptions as name, index}
 						<option value={index}>{name}</option>
 					{/each}
 				</select>
@@ -349,7 +301,7 @@
 					type="button"
 					class="rounded-xs border border-halbu-border bg-halbu-panel2 px-2 py-1 text-xs font-medium text-halbu-text hover:bg-halbu-panel"
 					onclick={setRandomName}
-					disabled={!isHired || variantNames.length < 1}
+					disabled={!hired || nameOptions.length < 1}
 				>
 					Random
 				</button>
@@ -366,14 +318,14 @@
 				step="1"
 				use:enforceMinMax
 				bind:value={mercenary.id}
-				disabled={!isHired}
+				disabled={!hired}
 			/>
 		</div>
 	</section>
 
 	<section
 		class={`rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2 ${
-			!isHired ? "opacity-60" : ""
+			!hired ? "opacity-60" : ""
 		}`}
 	>
 		<h3 class="editor-card-title mb-1.5">Type</h3>
@@ -382,40 +334,45 @@
 			<label class="form-label mb-0" for="mercenary-type">Class</label>
 			<select
 				class="form-select"
-				value={currentVariant.type}
+				value={variant.type}
 				name="mercenary-type"
 				id="mercenary-type"
-				onchange={(event) => setVariantType(event.currentTarget.value as MercenaryType)}
-				disabled={!isHired}
+				onchange={(event) => {
+					setType((event.currentTarget as HTMLSelectElement).value as MercenaryType);
+				}}
+				disabled={!hired}
 			>
-				<option value="Rogue">Rogue</option>
-				<option value="Desert Mercenary">Desert Mercenary</option>
-				<option value="Iron Wolf">Iron Wolf</option>
-				<option value="Barbarian">Barbarian</option>
+				{#each types as type}
+					<option value={type}>{type}</option>
+				{/each}
 			</select>
 
 			<label class="form-label mb-0" for="mercenary-variant">Variant</label>
 			<select
 				class="form-select"
-				value={currentVariant.variant}
+				value={variant.variant}
 				name="mercenary-variant"
 				id="mercenary-variant"
-				onchange={(event) => setVariantName(event.currentTarget.value)}
-				disabled={!isHired}
+				onchange={(event) => {
+					setVariantName((event.currentTarget as HTMLSelectElement).value);
+				}}
+				disabled={!hired}
 			>
-				{#each possibleVariants as variant}
-					<option value={variant.variant}>{variant.variant}</option>
+				{#each variantOptions as current}
+					<option value={current.variant}>{current.variant}</option>
 				{/each}
 			</select>
 
 			<label class="form-label mb-0" for="mercenary-difficulty">Difficulty hired</label>
 			<select
 				class="form-select"
-				value={currentVariant.difficulty}
+				value={variant.difficulty}
 				name="mercenary-difficulty"
 				id="mercenary-difficulty"
-				onchange={(event) => setVariantDifficulty(event.currentTarget.value as Difficulty)}
-				disabled={!isHired}
+				onchange={(event) => {
+					setDifficulty((event.currentTarget as HTMLSelectElement).value as Difficulty);
+				}}
+				disabled={!hired}
 			>
 				<option value="Normal">{DIFFICULTY_LABELS.Normal}</option>
 				<option value="Nightmare">{DIFFICULTY_LABELS.Nightmare}</option>
@@ -426,7 +383,7 @@
 
 	<section
 		class={`rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2 ${
-			!isHired ? "opacity-60" : ""
+			!hired ? "opacity-60" : ""
 		}`}
 	>
 		<h3 class="editor-card-title mb-1.5">Progression</h3>
@@ -440,14 +397,16 @@
 				name="mercenary-level"
 				id="mercenary-level"
 				min="1"
-				max={mercenaryLevelCap}
+				max={maxLevel}
 				step="1"
 				value={levelEdit.input}
-				onfocus={() => startFieldEdit(levelEdit, String(mercenaryLevel))}
-				oninput={(event) => setFieldInput(levelEdit, event.currentTarget.value)}
+				onfocus={() => startFieldEdit(levelEdit, String(level))}
+				oninput={(event) => {
+					setFieldInput(levelEdit, (event.currentTarget as HTMLInputElement).value);
+				}}
 				onblur={finishLevelEdit}
 				onkeydown={handleLevelKeydown}
-				disabled={!isHired}
+				disabled={!hired}
 			/>
 
 			<label class="form-label mb-0" for="mercenary-experience">Experience</label>
@@ -462,10 +421,12 @@
 				step="1"
 				value={experienceEdit.input}
 				onfocus={() => startFieldEdit(experienceEdit, String(mercenary.experience))}
-				oninput={(event) => setFieldInput(experienceEdit, event.currentTarget.value)}
+				oninput={(event) => {
+					setFieldInput(experienceEdit, (event.currentTarget as HTMLInputElement).value);
+				}}
 				onblur={finishExperienceEdit}
 				onkeydown={handleExperienceKeydown}
-				disabled={!isHired}
+				disabled={!hired}
 			/>
 		</div>
 	</section>

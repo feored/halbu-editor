@@ -33,14 +33,14 @@
 		...rest
 	} = $props();
 
-	const resolvedVariant = $derived(VARIANTS[variant] ?? VARIANTS.default);
-	const resolvedSize = $derived(SIZES[size] ?? SIZES.default);
-	const resolvedType = $derived(type === "submit" || type === "reset" ? type : "button");
+	const variantClass = $derived(VARIANTS[variant] ?? VARIANTS.default);
+	const sizeClass = $derived(SIZES[size] ?? SIZES.default);
+	const buttonType = $derived(type === "submit" || type === "reset" ? type : "button");
 </script>
 
 <button
-	type={resolvedType}
-	class={twMerge(clsx(BASE, resolvedVariant, resolvedSize, className))}
+	type={buttonType}
+	class={twMerge(clsx(BASE, variantClass, sizeClass, className))}
 	{...rest}
 >
 	{@render children?.()}

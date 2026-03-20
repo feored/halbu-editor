@@ -1,13 +1,12 @@
 <script lang="ts">
 	import { onDestroy } from "svelte";
 	import Tabs from "$lib/components/ui/Tabs.svelte";
-	import * as Settings from "$lib/utils/settings";
-	import actsJson from "$lib/editor/quests/actquests.json";
+	import * as settings from "$lib/utils/settings";
 	import { editorState } from "$lib/editor/editorState.svelte";
 	import {
+		ACTS,
 		applyRewardGrantedChange,
 		countActProgress,
-		getQuestFlagsForBulkToggle,
 		getRenderedActQuests,
 		getStandardActQuests,
 		hasQuestFlag,
@@ -16,52 +15,17 @@
 		addQuestFlag,
 		setAllActQuestFlags,
 		toggleQuestState,
-		type ActDisplay,
-		type QuestDisplay,
-		type QuestPreset,
 		type RewardFeedback,
-	} from "$lib/editor/quests/questsLogic";
-	import { DIFFICULTY_NAMES } from "$lib/types/editor";
-
-	import type { Act, Difficulty, QuestFlag } from "$lib/types/editor";
-
-	type RawActDisplay = Omit<ActDisplay, "id"> & { id: Lowercase<Act> };
-
-	const ACT_ID_BY_JSON_ID: Record<Lowercase<Act>, Act> = {
-		act1: "Act1",
-		act2: "Act2",
-		act3: "Act3",
-		act4: "Act4",
-		act5: "Act5",
-	};
-
-	const acts = (actsJson as RawActDisplay[]).map((act) => ({
-		...act,
-		id: ACT_ID_BY_JSON_ID[act.id],
-	})) as ActDisplay[];
+	} from "$lib/editor/quests/quests";
+	import { DIFFICULTY_NAMES, type Act, type Difficulty, type QuestFlag, type QuestId } from "$lib/types/editor";
 
 	const session = $derived(editorState.session!);
 	const save = $derived(session.save);
 
-	let showPrologue = $state(Settings.get(Settings.Key.QuestsShowPrologue));
-	let advancedFlags = $state(Settings.get(Settings.Key.QuestsAdvancedFlags));
-	let showAllQuests = $state(Settings.get(Settings.Key.QuestsAdvancedAllQuests));
+	let showPrologue = $state(settings.get(settings.Key.QuestsShowPrologue));
+	let advancedFlags = $state(settings.get(settings.Key.QuestsAdvancedFlags));
+	let showAllQuests = $state(settings.get(settings.Key.QuestsAdvancedAllQuests));
 	let activeDifficulty = $state<Difficulty>("Normal");
-
-	const unusedActQuests: Record<Act, QuestDisplay[]> = {
-		Act1: [],
-		Act2: [],
-		Act3: [],
-		Act4: [
-			{ id: "unused_1", display: "Unused Quest 1" },
-			{ id: "unused_2", display: "Unused Quest 2" },
-			{ id: "unused_3", display: "Unused Quest 3" },
-		],
-		Act5: [
-			{ id: "unused_1", display: "Unused Quest 1" },
-			{ id: "unused_2", display: "Unused Quest 2" },
-		],
-	};
 
 	const questFlags: Array<{ id: QuestFlag; display: string }> = [
 		{ id: "RewardGranted", display: "Reward Granted" },
@@ -85,15 +49,15 @@
 	const rewardInfoTimeoutMs = 3500;
 	const rewardWarningTimeoutMs = 6000;
 
-	let rewardFeedbackByQuest = $state<Record<string, RewardFeedback>>({});
+	let rewardFeedback = $state<Record<string, RewardFeedback>>({});
 
-	const rewardFeedbackTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
+	const feedbackTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
 
 	onDestroy(() => {
-		for (const timeoutId of rewardFeedbackTimeouts.values()) {
+		for (const timeoutId of feedbackTimeouts.values()) {
 			clearTimeout(timeoutId);
 		}
-		rewardFeedbackTimeouts.clear();
+		feedbackTimeouts.clear();
 	});
 
 	const totalProgress = $derived.by(() => {
@@ -101,7 +65,7 @@
 		let total = 0;
 
 		for (const difficulty of DIFFICULTY_NAMES) {
-			for (const act of acts) {
+			for (const act of ACTS) {
 				const progress = countActProgress(difficulty, act, save.quests, showPrologue);
 				completed += progress.completed;
 				total += progress.total;
@@ -115,101 +79,97 @@
 		};
 	});
 
-	const actColumns = $derived([acts.slice(0, 3), acts.slice(3)]);
+	const actColumns = $derived([ACTS.slice(0, 3), ACTS.slice(3)]);
 
-	function getRewardFeedbackKey(difficulty: Difficulty, act: Act, questId: string): string {
+	function getFeedbackKey(difficulty: Difficulty, act: Act, questId: QuestId): string {
 		return `${difficulty}:${act}:${questId}`;
 	}
 
-	function setRewardFeedback(
+	function setFeedback(
 		difficulty: Difficulty,
 		act: Act,
-		questId: string,
+		questId: QuestId,
 		kind: RewardFeedback["kind"],
 		text: string,
 	): void {
-		const key = getRewardFeedbackKey(difficulty, act, questId);
+		const key = getFeedbackKey(difficulty, act, questId);
 
-		rewardFeedbackByQuest = {
-			...rewardFeedbackByQuest,
+		rewardFeedback = {
+			...rewardFeedback,
 			[key]: { kind, text },
 		};
 
-		const existingTimeout = rewardFeedbackTimeouts.get(key);
+		const existingTimeout = feedbackTimeouts.get(key);
 		if (existingTimeout != null) {
 			clearTimeout(existingTimeout);
-			rewardFeedbackTimeouts.delete(key);
+			feedbackTimeouts.delete(key);
 		}
 
 		const timeoutMs = kind === "warning" ? rewardWarningTimeoutMs : rewardInfoTimeoutMs;
 		const timeoutId = setTimeout(() => {
-			clearRewardFeedbackByKey(key);
+			clearFeedbackKey(key);
 		}, timeoutMs);
 
-		rewardFeedbackTimeouts.set(key, timeoutId);
+		feedbackTimeouts.set(key, timeoutId);
 	}
 
-	function clearRewardFeedbackByKey(key: string): void {
-		if (!(key in rewardFeedbackByQuest)) {
+	function clearFeedbackKey(key: string): void {
+		if (!(key in rewardFeedback)) {
 			return;
 		}
 
-		const timeoutId = rewardFeedbackTimeouts.get(key);
+		const timeoutId = feedbackTimeouts.get(key);
 		if (timeoutId != null) {
 			clearTimeout(timeoutId);
-			rewardFeedbackTimeouts.delete(key);
+			feedbackTimeouts.delete(key);
 		}
 
-		const nextRewardFeedbackByQuest = { ...rewardFeedbackByQuest };
-		delete nextRewardFeedbackByQuest[key];
-		rewardFeedbackByQuest = nextRewardFeedbackByQuest;
+		const nextFeedback = { ...rewardFeedback };
+		delete nextFeedback[key];
+		rewardFeedback = nextFeedback;
 	}
 
-	function clearRewardFeedback(difficulty: Difficulty, act: Act, questId: string): void {
-		clearRewardFeedbackByKey(getRewardFeedbackKey(difficulty, act, questId));
+	function clearFeedback(difficulty: Difficulty, act: Act, questId: QuestId): void {
+		clearFeedbackKey(getFeedbackKey(difficulty, act, questId));
 	}
 
-	function getRewardFeedback(
+	function getFeedback(difficulty: Difficulty, act: Act, questId: QuestId): RewardFeedback | null {
+		return rewardFeedback[getFeedbackKey(difficulty, act, questId)] ?? null;
+	}
+
+	function updateRewardFeedback(
 		difficulty: Difficulty,
 		act: Act,
-		questId: string,
-	): RewardFeedback | null {
-		return rewardFeedbackByQuest[getRewardFeedbackKey(difficulty, act, questId)] ?? null;
-	}
-
-	function applyRewardFeedback(
-		difficulty: Difficulty,
-		act: Act,
-		questId: string,
+		questId: QuestId,
 		flag: QuestFlag,
 		add: boolean,
 	): void {
 		const feedback = applyRewardGrantedChange(save, difficulty, act, questId, flag, add);
 
 		if (feedback == null) {
-			clearRewardFeedback(difficulty, act, questId);
+			clearFeedback(difficulty, act, questId);
 			return;
 		}
 
-		setRewardFeedback(difficulty, act, questId, feedback.kind, feedback.text);
+		setFeedback(difficulty, act, questId, feedback.kind, feedback.text);
 	}
 
-	function toggleFlag(difficulty: Difficulty, act: Act, questId: string, flag: QuestFlag): void {
+	function toggleFlag(difficulty: Difficulty, act: Act, questId: QuestId, flag: QuestFlag): void {
 		if (hasQuestFlag(save.quests, difficulty, act, questId, flag)) {
 			const removed = removeQuestFlag(save.quests, difficulty, act, questId, flag);
 			if (removed) {
-				applyRewardFeedback(difficulty, act, questId, flag, false);
+				updateRewardFeedback(difficulty, act, questId, flag, false);
 			}
 			return;
 		}
 
 		const added = addQuestFlag(save.quests, difficulty, act, questId, flag);
 		if (added) {
-			applyRewardFeedback(difficulty, act, questId, flag, true);
+			updateRewardFeedback(difficulty, act, questId, flag, true);
 		}
 	}
 
-	function toggleAllActQuests(difficulty: Difficulty, act: ActDisplay, value: boolean): void {
+	function toggleAllActQuests(difficulty: Difficulty, act: (typeof ACTS)[number], value: boolean): void {
 		setAllActQuestFlags(
 			save.quests,
 			difficulty,
@@ -217,7 +177,6 @@
 			showPrologue,
 			advancedFlags,
 			showAllQuests,
-			unusedActQuests,
 			questFlags,
 			value,
 		);
@@ -301,9 +260,9 @@
 
 						<div class="grid gap-1.5">
 							{#if advancedFlags}
-								{#each getRenderedActQuests(act, showPrologue, showAllQuests, unusedActQuests) as quest}
+								{#each getRenderedActQuests(act, showPrologue, showAllQuests) as quest}
 									{@const isCompletionQuest = quest.id === "completion"}
-									{@const rewardFeedback = getRewardFeedback(
+									{@const rewardFeedback = getFeedback(
 										activeDifficulty,
 										act.id,
 										quest.id,
@@ -365,7 +324,7 @@
 							{:else}
 								{#each getStandardActQuests(act, showPrologue) as quest}
 									{@const isCompletionQuest = quest.id === "completion"}
-									{@const rewardFeedback = getRewardFeedback(
+									{@const rewardFeedback = getFeedback(
 										activeDifficulty,
 										act.id,
 										quest.id,

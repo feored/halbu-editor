@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Button from "$lib/components/ui/button/button.svelte";
 	import { getErrorMessage } from "$lib/utils/errorMessage";
-	import { buildChangeReview } from "$lib/editor/status/reviewChanges";
+	import { getChangeReview } from "$lib/editor/status/changes";
 	import SaveChangeReviewDialog from "$lib/editor/save/SaveChangeReviewDialog.svelte";
 	import SaveForceConvertDialog from "$lib/editor/save/SaveForceConvertDialog.svelte";
 	import { editorState } from "$lib/editor/editorState.svelte";
@@ -26,18 +26,22 @@
 	let advancedOpen = $state(false);
 
 	const validationIssues = $derived(session.validationReport.issues);
-	const validationErrors = $derived(validationIssues.filter((issue) => issue.blocking));
+	const blockingValidationIssues = $derived(validationIssues.filter((issue) => issue.blocking));
 	const validationWarnings = $derived(validationIssues.filter((issue) => !issue.blocking));
 	const validationError = $derived(session.validationError);
 	const validationPending = $derived(session.validationPending);
-	const validationErrorCount = $derived(validationErrors.length);
+	const validationErrorCount = $derived(blockingValidationIssues.length);
 	const validationWarningCount = $derived(validationWarnings.length);
 	const hasBlockingValidationIssues = $derived(validationErrorCount > 0);
 	const hasValidationWarnings = $derived(validationWarningCount > 0);
 	const compatibilityIssues = $derived(session.compatibilityIssues);
-	const blockingIssues = $derived(compatibilityIssues.filter((issue) => issue.blocking));
-	const warningIssues = $derived(compatibilityIssues.filter((issue) => !issue.blocking));
-	const hasBlockingIssues = $derived(blockingIssues.length > 0);
+	const blockingCompatibilityIssues = $derived(
+		compatibilityIssues.filter((issue) => issue.blocking),
+	);
+	const compatibilityWarnings = $derived(
+		compatibilityIssues.filter((issue) => !issue.blocking),
+	);
+	const hasBlockingCompatibilityIssues = $derived(blockingCompatibilityIssues.length > 0);
 	const hasCompatibilityIssues = $derived(compatibilityIssues.length > 0);
 	const saveIssues = $derived.by(() => {
 		const issues: SaveIssueRow[] = [];
@@ -61,9 +65,9 @@
 		return issues;
 	});
 	const currentVersion = $derived(save.version);
-	const effectiveTargetVersion = $derived(editorState.targetVersion);
+	const targetVersion = $derived(editorState.targetVersion);
 	const targetVersionLabel = $derived.by(() =>
-		effectiveTargetVersion == null ? "Not selected" : `v${effectiveTargetVersion}`,
+		targetVersion == null ? "Not selected" : `v${targetVersion}`,
 	);
 	const isGameRulesMode = $derived(session.mode === "game-rules");
 	const hasConversionWarnings = $derived(
@@ -71,9 +75,7 @@
 			(session.compatibilityError ?? "").length > 0 ||
 			hasCompatibilityIssues,
 	);
-	const isConversionRelevant = $derived(
-		effectiveTargetVersion != null && effectiveTargetVersion !== currentVersion,
-	);
+	const isConverting = $derived(targetVersion != null && targetVersion !== currentVersion);
 	const saveReadinessLabel = $derived.by(() => {
 		if (editorState.isSaveBlocked) return "Blocked";
 		if (hasValidationWarnings || hasConversionWarnings) return "Warning";
@@ -101,12 +103,14 @@
 		if (editorState.needsTargetVersion) return "Target required";
 		if (session.compatibilityPending) return "Checking...";
 		if ((session.compatibilityError ?? "").length > 0) return "Check failed";
-		if (hasBlockingIssues) return `Failed (${blockingIssues.length} blocking issue(s))`;
-		if (hasCompatibilityIssues) return `Passed with warnings (${warningIssues.length})`;
+		if (hasBlockingCompatibilityIssues) {
+			return `Failed (${blockingCompatibilityIssues.length} blocking issue(s))`;
+		}
+		if (hasCompatibilityIssues) return `Passed with warnings (${compatibilityWarnings.length})`;
 		return "Passed";
 	});
 	const compatibilityChecksClass = $derived.by(() => {
-		if ((session.compatibilityError ?? "").length > 0 || hasBlockingIssues) {
+		if ((session.compatibilityError ?? "").length > 0 || hasBlockingCompatibilityIssues) {
 			return "text-halbu-danger";
 		}
 		if (
@@ -118,7 +122,7 @@
 		}
 		return "text-halbu-text";
 	});
-	const hasSaveIssues = $derived(
+	const hasIssues = $derived(
 		editorState.needsTargetVersion ||
 			hasBlockingValidationIssues ||
 			hasValidationWarnings ||
@@ -127,15 +131,15 @@
 			(session.compatibilityError ?? "").length > 0,
 	);
 	const conversionLabel = $derived.by(() => {
-		if (effectiveTargetVersion == null) return "No target selected";
-		if (!isConversionRelevant) return "No conversion";
+		if (targetVersion == null) return "No target selected";
+		if (!isConverting) return "No conversion";
 		if (session.compatibilityPending)
-			return `Converting to v${effectiveTargetVersion} (checking compatibility)`;
+			return `Converting to v${targetVersion} (checking compatibility)`;
 		if ((session.compatibilityError ?? "").length > 0)
-			return `Converting to v${effectiveTargetVersion} (check failed)`;
-		return `Converting to v${effectiveTargetVersion}`;
+			return `Converting to v${targetVersion} (check failed)`;
+		return `Converting to v${targetVersion}`;
 	});
-	const changeReview = $derived(buildChangeReview(session.baselineSave, save));
+	const changeReview = $derived(getChangeReview(session.baselineSave, save));
 	const changeCount = $derived(changeReview.totalChanges);
 	const changeGroups = $derived(changeReview.groups);
 	const unsavedChangesClass = $derived(
@@ -144,12 +148,12 @@
 	const unsavedChangesLabel = $derived(
 		changeCount === 1 ? "1 unsaved change" : `${changeCount} unsaved changes`,
 	);
-	const nextActionLabel = $derived.by(() => {
+	const nextStep = $derived.by(() => {
 		if (editorState.needsTargetVersion)
 			return "Select an output format in Conversion before saving.";
 		if (
 			hasBlockingValidationIssues ||
-			hasBlockingIssues ||
+			hasBlockingCompatibilityIssues ||
 			(validationError ?? "").length > 0 ||
 			(session.compatibilityError ?? "").length > 0
 		) {
@@ -183,20 +187,8 @@
 	}
 
 	const blockingIssueMessages = $derived(
-		blockingIssues.map((issue) => getCompatibilityMessage(issue)),
+		blockingCompatibilityIssues.map((issue) => getCompatibilityMessage(issue)),
 	);
-
-	function handleTargetVersionChange(event: Event): void {
-		const nextVersion = Number((event.currentTarget as HTMLSelectElement).value);
-		if (nextVersion !== 99 && nextVersion !== 105) return;
-		editorState.setTargetVersion(nextVersion);
-	}
-
-	function handleAdvancedToggle(event: Event): void {
-		const isOpen = (event.currentTarget as HTMLDetailsElement).open === true;
-		advancedOpen = isOpen;
-		editorState.setAdvancedSaveOptionsEnabled(isOpen);
-	}
 
 	async function saveNow(): Promise<void> {
 		statusError = "";
@@ -222,15 +214,6 @@
 		}
 	}
 
-	function openForceSaveDialog(): void {
-		if (!editorState.canForceConvert || saveInProgress) return;
-		forceSaveDialogOpen = true;
-	}
-
-	function closeForceSaveDialog(): void {
-		forceSaveDialogOpen = false;
-	}
-
 	async function forceSaveAs(): Promise<void> {
 		statusError = "";
 		saveInProgress = true;
@@ -244,20 +227,11 @@
 		}
 	}
 
-	function openReviewDialog(): void {
-		if (changeCount < 1) return;
-		reviewDialogOpen = true;
-	}
-
-	function closeReviewDialog(): void {
-		reviewDialogOpen = false;
-	}
-
 	async function undoAllChanges(): Promise<void> {
 		if (changeCount < 1) return;
 		try {
 			editorState.restore();
-			closeReviewDialog();
+			reviewDialogOpen = false;
 		} catch (error) {
 			statusError = getErrorMessage(error, "Failed to restore changes.");
 		}
@@ -285,13 +259,13 @@
 			<dt class="form-label mb-0">Conversion</dt>
 			<dd
 				class={`m-0 text-sm font-semibold ${
-					!isConversionRelevant ? "text-halbu-textMuted" : "text-halbu-text"
+					!isConverting ? "text-halbu-textMuted" : "text-halbu-text"
 				}`}
 			>
 				{conversionLabel}
 			</dd>
 		</dl>
-		<div class="form-text mt-1">{nextActionLabel}</div>
+		<div class="form-text mt-1">{nextStep}</div>
 		{#if isGameRulesMode}
 			<div class="form-text mt-1">
 				Game rules mode: Save writes recalculated life, mana, stamina, and remaining
@@ -316,8 +290,8 @@
 				{validationChecksLabel}
 			</dd>
 			<dt class="form-label mb-0">
-				Target compatibility{#if !editorState.needsTargetVersion && effectiveTargetVersion != null}
-					(v{effectiveTargetVersion}){/if}
+				Target compatibility{#if !editorState.needsTargetVersion && targetVersion != null}
+					(v{targetVersion}){/if}
 			</dt>
 			<dd class={`m-0 text-sm font-semibold ${compatibilityChecksClass}`}>
 				{compatibilityChecksLabel}
@@ -407,15 +381,18 @@
 				Compatibility check failed: {session.compatibilityError}
 			</div>
 		{/if}
-		{#if !hasSaveIssues && !session.compatibilityPending && !validationPending}
+		{#if !hasIssues && !session.compatibilityPending && !validationPending}
 			<div class="form-text mt-1">All checks passed for this save and target version.</div>
 		{/if}
 	</section>
 
 	<details
 		bind:open={advancedOpen}
-		ontoggle={handleAdvancedToggle}
-		class={`rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2 ${!isConversionRelevant && !advancedOpen ? "opacity-90" : ""}`}
+		ontoggle={(event) => {
+			advancedOpen = (event.currentTarget as HTMLDetailsElement).open === true;
+			editorState.setAdvancedSaveOptionsEnabled(advancedOpen);
+		}}
+		class={`rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2 ${!isConverting && !advancedOpen ? "opacity-90" : ""}`}
 	>
 		<summary class="flex cursor-pointer list-none items-center justify-between gap-2">
 			<span class="inline-flex items-center gap-1.5">
@@ -423,13 +400,13 @@
 					>{advancedOpen ? "v" : ">"}</span
 				>
 				<span
-					class={`editor-card-title ${!isConversionRelevant ? "text-halbu-textMuted" : ""}`}
+					class={`editor-card-title ${!isConverting ? "text-halbu-textMuted" : ""}`}
 					>Conversion</span
 				>
 			</span>
 			<span
 				class={`text-sm font-semibold ${
-					!isConversionRelevant ? "text-halbu-textMuted" : "text-halbu-text"
+					!isConverting ? "text-halbu-textMuted" : "text-halbu-text"
 				}`}
 			>
 				{conversionLabel}
@@ -443,7 +420,12 @@
 						id="save-target-format"
 						class="form-select"
 						value={session.targetVersion == null ? "" : session.targetVersion}
-						onchange={handleTargetVersionChange}
+						onchange={(event) => {
+							const nextVersion = Number((event.currentTarget as HTMLSelectElement).value);
+							if (nextVersion === 99 || nextVersion === 105) {
+								editorState.setTargetVersion(nextVersion);
+							}
+						}}
 					>
 						{#if editorState.needsTargetVersion}<option value=""
 								>Select target format...</option
@@ -460,7 +442,7 @@
 					No output format options are available for this save.
 				</div>
 			{/if}
-		{:else if !isConversionRelevant}
+		{:else if !isConverting}
 			<div class="form-text mt-1">
 				No conversion is required. Expand to change target settings.
 			</div>
@@ -472,7 +454,11 @@
 		<div class="flex flex-wrap items-center gap-1.5">
 			<Button
 				variant="secondary"
-				onclick={openReviewDialog}
+				onclick={() => {
+					if (changeCount > 0) {
+						reviewDialogOpen = true;
+					}
+				}}
 				disabled={changeCount < 1}
 			>
 				{changeCount > 0 ? `Review Changes (${changeCount})` : "Review Changes"}
@@ -485,7 +471,11 @@
 			{#if editorState.canForceConvert}
 				<Button
 					variant="destructive"
-					onclick={openForceSaveDialog}
+					onclick={() => {
+						if (editorState.canForceConvert && !saveInProgress) {
+							forceSaveDialogOpen = true;
+						}
+					}}
 					disabled={saveInProgress}>Force Save As...</Button
 				>
 			{/if}
@@ -501,17 +491,21 @@
 
 <SaveChangeReviewDialog
 	open={reviewDialogOpen}
-	reviewChangeCount={changeCount}
-	reviewChangeGroups={changeGroups}
-	onClose={closeReviewDialog}
+	changeCount={changeCount}
+	changeGroups={changeGroups}
+	onClose={() => {
+		reviewDialogOpen = false;
+	}}
 	onUndoAllChanges={undoAllChanges}
 />
 <SaveForceConvertDialog
 	open={forceSaveDialogOpen}
-	{effectiveTargetVersion}
-	{blockingIssueMessages}
-	canForceConvert={editorState.canForceConvert}
-	{saveInProgress}
-	onClose={closeForceSaveDialog}
-	onConfirmForceSave={forceSaveAs}
+	targetVersion={targetVersion ?? currentVersion}
+	issues={blockingIssueMessages}
+	canForceSave={editorState.canForceConvert}
+	saving={saveInProgress}
+	onClose={() => {
+		forceSaveDialogOpen = false;
+	}}
+	onConfirm={forceSaveAs}
 />

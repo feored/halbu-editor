@@ -18,7 +18,7 @@ import {
 } from "$lib/utils/numbers";
 import {
 	applyQuestRewards as applyQuestRewardBonuses,
-} from "$lib/editor/quests/questsLogic";
+} from "$lib/editor/quests/quests";
 
 const DERIVED_RESOURCES = [
 	"hitpoints",
@@ -243,9 +243,7 @@ function buildChanges(save: EditorSave, values: GameRulesValues): GameRulesChang
 	return changes;
 }
 
-export function getGameRulesClassPrimaryAttributes(
-	className: ClassName,
-): PrimaryAttributes | null {
+export function getClassBaseAttributes(className: ClassName): PrimaryAttributes | null {
 	const stats = getCharstats(className);
 	if (stats == null) {
 		return null;
@@ -259,7 +257,7 @@ export function getGameRulesClassPrimaryAttributes(
 	};
 }
 
-export function projectGameRulesDerivedValues(
+export function getGameRules(
 	save: EditorSave,
 	baselineSave: EditorSave | null = null,
 ): GameRules {
@@ -345,19 +343,28 @@ export function projectGameRulesDerivedValues(
 			attributes,
 			"maxhp",
 			baselineSave.attributes.maxhp.value +
-				Math.round(levelDelta * lifePerLevel + vitalityDelta * lifePerVitality),
+				Math.round(
+					(levelDelta * lifePerLevel + vitalityDelta * lifePerVitality) *
+						RESOURCE_Q8_SCALE,
+				),
 		);
 		setAttrValue(
 			attributes,
 			"maxmana",
 			baselineSave.attributes.maxmana.value +
-				Math.round(levelDelta * manaPerLevel + energyDelta * manaPerEnergy),
+				Math.round(
+					(levelDelta * manaPerLevel + energyDelta * manaPerEnergy) *
+						RESOURCE_Q8_SCALE,
+				),
 		);
 		setAttrValue(
 			attributes,
 			"maxstamina",
 			baselineSave.attributes.maxstamina.value +
-				Math.round(levelDelta * staminaPerLevel + vitalityDelta * staminaPerVitality),
+				Math.round(
+					(levelDelta * staminaPerLevel + vitalityDelta * staminaPerVitality) *
+						RESOURCE_Q8_SCALE,
+				),
 		);
 
 		setAttrValue(
@@ -389,7 +396,7 @@ export function projectGameRulesDerivedValues(
 	return { values, changes };
 }
 
-export function applyProjectedGameRulesValues(
+export function applyGameRulesValues(
 	save: EditorSave,
 	values: GameRulesValues,
 ): void {

@@ -6,13 +6,12 @@
 		get as getSetting,
 		Key as SettingKey,
 	} from "$lib/utils/settings";
-	import { buildChangeReview } from "$lib/editor/status/reviewChanges";
+	import { getChangeReview } from "$lib/editor/status/changes";
 	import { editorState } from "$lib/editor/editorState.svelte";
 
 	import AppLayout from "$lib/layout/AppLayout.svelte";
 	import ConfirmDialog from "$lib/components/ConfirmDialog.svelte";
 	import Sidebar from "$lib/layout/Sidebar.svelte";
-	import TopBar from "$lib/layout/TopBar.svelte";
 	import SessionBar from "$lib/layout/SessionBar.svelte";
 
 	import Library from "$lib/library/Library.svelte";
@@ -20,7 +19,7 @@
 	import Settings from "$lib/settings/Settings.svelte";
 	import EditorWorkspace from "$lib/editor/EditorWorkspace.svelte";
 
-	import type { OpenedSessionData } from "$lib/editor/editorSession";
+	import type { OpenedSessionData } from "$lib/editor/session";
 	import type { AppMessage } from "$lib/utils/appMessage";
 	import type { ParseMode } from "$lib/types/backend";
 
@@ -57,8 +56,8 @@
 	let settingsOriginScreen = $state<Screen>(Screen.Library);
 	let currentSection = $state<Section>(Section.Status);
 
-	let leaveEditorConfirmOpen = $state(false);
-	let leaveEditorDestination = $state<Screen | null>(null);
+	let leaveConfirmOpen = $state(false);
+	let leaveDestination = $state<Screen | null>(null);
 
 	const hasOpenSession = $derived(editorState.hasOpenSession);
 
@@ -114,13 +113,13 @@
 
 	void editorState.loadOutputFormatOptions();
 
-	function openEditorSession(openedSessionData: OpenedSessionData): void {
+	function openSession(openedSessionData: OpenedSessionData): void {
 		editorState.open(openedSessionData);
 		currentSection = openedSessionData.parseIssueCount > 0 ? Section.Status : Section.Character;
 		currentScreen = Screen.Editor;
 	}
 
-	function closeEditorSession(nextScreen: Screen = Screen.Library): void {
+	function closeSession(nextScreen: Screen = Screen.Library): void {
 		editorState.close();
 		currentSection = Section.Status;
 		currentScreen = nextScreen;
@@ -133,29 +132,29 @@
 			return;
 		}
 
-		const changeReview = buildChangeReview(session.baselineSave, session.save);
+		const changeReview = getChangeReview(session.baselineSave, session.save);
 		if (changeReview.totalChanges < 1) {
-			closeEditorSession(nextScreen);
+			closeSession(nextScreen);
 			return;
 		}
 
-		leaveEditorDestination = nextScreen;
-		leaveEditorConfirmOpen = true;
+		leaveDestination = nextScreen;
+		leaveConfirmOpen = true;
 	}
 
-	function cancelLeaveEditor(): void {
-		leaveEditorConfirmOpen = false;
-		leaveEditorDestination = null;
+	function cancelLeave(): void {
+		leaveConfirmOpen = false;
+		leaveDestination = null;
 	}
 
-	function confirmLeaveEditor(): void {
-		leaveEditorConfirmOpen = false;
+	function confirmLeave(): void {
+		leaveConfirmOpen = false;
 
-		if (leaveEditorDestination != null) {
-			closeEditorSession(leaveEditorDestination);
+		if (leaveDestination != null) {
+			closeSession(leaveDestination);
 		}
 
-		leaveEditorDestination = null;
+		leaveDestination = null;
 	}
 
 	function toggleSettings(): void {
@@ -169,7 +168,7 @@
 		currentScreen = Screen.Settings;
 	}
 
-	function handleSidebarSelection(itemId: Screen | Section): void {
+	function selectSidebarItem(itemId: Screen | Section): void {
 		if (hasOpenSession) {
 			currentSection = itemId as Section;
 			currentScreen = Screen.Editor;
@@ -179,13 +178,13 @@
 		currentScreen = itemId as Screen;
 	}
 
-	async function handleAppMessage(nextMessage: AppMessage): Promise<void> {
+	async function onMessage(nextMessage: AppMessage): Promise<void> {
 		switch (nextMessage.id) {
 			case Message.CharacterUnpicked:
-				closeEditorSession();
+				closeSession();
 				break;
 			case Message.CharacterPicked:
-				openEditorSession(nextMessage.data);
+				openSession(nextMessage.data);
 				break;
 			case Message.SaveFile:
 				if (hasOpenSession) {
@@ -204,12 +203,14 @@
 	{#snippet topbar()}
 		{#if hasOpenSession && (currentScreen === Screen.Editor || (currentScreen === Screen.Settings && settingsOriginScreen === Screen.Editor))}
 			<SessionBar />
-		{:else if currentScreen === Screen.Library}
-			<TopBar title="Library" />
-		{:else if currentScreen === Screen.NewCharacter}
-			<TopBar title="New Character" />
 		{:else}
-			<TopBar title="Halbu Editor" />
+			<h2 class="m-0 text-base font-bold tracking-label">
+				{currentScreen === Screen.Library
+					? "Library"
+					: currentScreen === Screen.NewCharacter
+						? "New Character"
+						: "Halbu Editor"}
+			</h2>
 		{/if}
 	{/snippet}
 
@@ -220,7 +221,7 @@
 			libraryActive={currentScreen === Screen.Library}
 			newCharacterActive={currentScreen === Screen.NewCharacter}
 			settingsActive={currentScreen === Screen.Settings}
-			onSelect={handleSidebarSelection}
+			onSelect={selectSidebarItem}
 			onLibrary={() => requestLeaveEditor(Screen.Library)}
 			onNewCharacter={() => requestLeaveEditor(Screen.NewCharacter)}
 			onSettings={toggleSettings}
@@ -235,24 +236,24 @@
 			}}
 		/>
 	{:else if currentScreen === Screen.Library}
-		<Library parseMode={editorState.parseMode} onmessage={handleAppMessage} />
+		<Library parseMode={editorState.parseMode} onmessage={onMessage} />
 	{:else if currentScreen === Screen.NewCharacter}
 		<NewCharacter
 			outputFormatOptions={editorState.outputFormatOptions}
-			onmessage={handleAppMessage}
+			onmessage={onMessage}
 		/>
 	{:else if hasOpenSession}
 		<EditorWorkspace {currentSection} />
 	{/if}
 
 	<ConfirmDialog
-		open={leaveEditorConfirmOpen}
+		open={leaveConfirmOpen}
 		title="Discard unsaved changes?"
 		message="Leaving the editor now will discard current unsaved changes."
 		confirmLabel="Leave without saving"
 		cancelLabel="Cancel"
 		confirmVariant="destructive"
-		onConfirm={confirmLeaveEditor}
-		onCancel={cancelLeaveEditor}
+		onConfirm={confirmLeave}
+		onCancel={cancelLeave}
 	/>
 </AppLayout>

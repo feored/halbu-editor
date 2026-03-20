@@ -3,23 +3,23 @@ import { message } from "@tauri-apps/plugin-dialog";
 
 import { isUnknownSaveFormat } from "$lib/utils/gameData";
 import { getErrorMessage } from "$lib/utils/errorMessage";
-import { toBackendSave } from "$lib/types/converters";
+import { toBackendSave } from "$lib/types/saveConverter";
 
 import {
 	createOpenEditorSession,
 	restoreBaselineSave,
 	type EditorSession,
 	type OpenedSessionData,
-} from "$lib/editor/editorSession";
+} from "$lib/editor/session";
 import {
-	applyProjectedGameRulesValues,
-	projectGameRulesDerivedValues,
+	applyGameRulesValues,
+	getGameRules,
 } from "$lib/editor/character/gameRules";
 import {
 	saveCharacterFile,
 	type SaveCharacterResult,
 	type SaveCharacterOptions,
-} from "$lib/editor/save/saveWorkflow";
+} from "$lib/editor/save/saveFile";
 
 import type {
 	CompatibilityIssue,
@@ -71,8 +71,7 @@ type EditorState = {
 	readonly canForceConvert: boolean;
 	readonly isSaveBlocked: boolean;
 	readonly layoutVersion: SaveLayoutVersion | null;
-	readonly gameRulesValues: {
-		values: ReturnType<typeof projectGameRulesDerivedValues>["values"] | null;
+	readonly gameRules: {
 		error: string;
 	};
 	loadOutputFormatOptions: () => Promise<void>;
@@ -89,15 +88,15 @@ type EditorState = {
 function getSaveDecision(
 	session: EditorSession,
 	input: SaveCharacterOptions,
-	analyzedTargetVersion: SaveLayoutVersion | null,
+	checkedTargetVersion: SaveLayoutVersion | null,
 ): SaveDecision {
 	const saveAs = input.saveAs === true || input.forceConvert === true;
 	const forceConvert = input.forceConvert === true;
-	const targetVersion = getEffectiveTargetVersion(session, input.targetVersion);
+	const targetVersion = getTargetVersion(session, input.targetVersion);
 	const isUnknownFormat = session.save.metadata.formatId.startsWith("Unknown(");
 	const sourceLayoutVersion = isUnknownFormat ? session.parserLayoutVersion : null;
-	const compatibilityResultsCurrent =
-		session.compatibilityResultsAreCurrent && analyzedTargetVersion === targetVersion;
+	const compatibilityCurrent =
+		session.compatibilityResultsAreCurrent && checkedTargetVersion === targetVersion;
 
 	if (isUnknownFormat && targetVersion == null) {
 		return {
@@ -149,7 +148,7 @@ function getSaveDecision(
 		};
 	}
 
-	if (!compatibilityResultsCurrent) {
+	if (!compatibilityCurrent) {
 		return {
 			status: "blocked",
 			kind: "warning",
@@ -187,7 +186,7 @@ function getSaveDecision(
 	};
 }
 
-function getEffectiveTargetVersion(
+function getTargetVersion(
 	session: EditorSession,
 	requestedTargetVersion?: SaveLayoutVersion | null,
 ): SaveLayoutVersion | null {
@@ -258,7 +257,7 @@ function createEditorState(): EditorState {
 	let parseMode = $state<ParseMode>("lax");
 	let analysisRevision = 0;
 	let saveInProgress = false;
-	let analyzedTargetVersion: SaveLayoutVersion | null = null;
+	let checkedTargetVersion: SaveLayoutVersion | null = null;
 
 	const hasOpenSession = $derived(session != null);
 
@@ -349,26 +348,21 @@ function createEditorState(): EditorState {
 		return getLayoutVersion(session.save.version);
 	});
 
-	const gameRulesValues = $derived.by(() => {
-		if (session == null || session.mode !== "game-rules") {
-			return {
-				values: null,
-				error: "",
-			};
+	const gameRules = $derived.by(() => {
+		if (session?.mode === "game-rules") {
+			try {
+				const baselineSave = session.gameRulesBaselineSave ?? null;
+				getGameRules(session.save, baselineSave);
+			} catch (error) {
+				return {
+					error: getErrorMessage(error, "Game rules recalculation failed."),
+				};
+			}
 		}
 
-		try {
-			const baselineSave = session.gameRulesBaselineSave ?? null;
-			return {
-				values: projectGameRulesDerivedValues(session.save, baselineSave).values,
-				error: "",
-			};
-		} catch (error) {
-			return {
-				values: null,
-				error: getErrorMessage(error, "Game rules recalculation failed."),
-			};
-		}
+		return {
+			error: "",
+		};
 	});
 
 	async function loadOutputFormatOptions(): Promise<void> {
@@ -442,8 +436,8 @@ function createEditorState(): EditorState {
 
 		const requestSession = session;
 		const requestRevision = ++analysisRevision;
-		const targetVersion = getEffectiveTargetVersion(session, requestedTargetVersion);
-		analyzedTargetVersion = targetVersion;
+		const targetVersion = getTargetVersion(session, requestedTargetVersion);
+		checkedTargetVersion = targetVersion;
 		const request = {
 			save: $state.snapshot(session.save),
 			sourceBackendSave: $state.snapshot(session.sourceBackendSave),
@@ -492,12 +486,12 @@ function createEditorState(): EditorState {
 			session.compatibilityIssues = analysis.compatibilityIssues;
 			session.compatibilityError = null;
 			session.compatibilityResultsAreCurrent = true;
-			analyzedTargetVersion = request.targetVersion;
+			checkedTargetVersion = request.targetVersion;
 		} else {
 			session.compatibilityIssues = [];
 			session.compatibilityError = analysis.compatibilityError;
 			session.compatibilityResultsAreCurrent = false;
-			analyzedTargetVersion = request.targetVersion;
+			checkedTargetVersion = request.targetVersion;
 		}
 		session.compatibilityPending = false;
 	}
@@ -510,11 +504,11 @@ function createEditorState(): EditorState {
 		saveInProgress = true;
 		try {
 			if (session.mode === "game-rules") {
-				const projection = projectGameRulesDerivedValues(
+				const values = getGameRules(
 					session.save,
 					session.gameRulesBaselineSave ?? null,
-				);
-				applyProjectedGameRulesValues(session.save, projection.values);
+				).values;
+				applyGameRulesValues(session.save, values);
 			}
 
 			await refreshSaveAnalysis(input.targetVersion);
@@ -524,7 +518,7 @@ function createEditorState(): EditorState {
 				return null;
 			}
 
-			const saveDecision = getSaveDecision(currentSession, input, analyzedTargetVersion);
+			const saveDecision = getSaveDecision(currentSession, input, checkedTargetVersion);
 			if (saveDecision.status === "blocked") {
 				await message(saveDecision.message, {
 					title: saveDecision.kind === "info" ? "Force save not needed" : "Save blocked",
@@ -611,8 +605,8 @@ function createEditorState(): EditorState {
 		get layoutVersion() {
 			return layoutVersion;
 		},
-		get gameRulesValues() {
-			return gameRulesValues;
+		get gameRules() {
+			return gameRules;
 		},
 		loadOutputFormatOptions,
 		setParseMode,

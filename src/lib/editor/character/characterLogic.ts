@@ -4,6 +4,10 @@ import {
 	getMaxValueForBitLength,
 	toUInt32OrNull,
 } from "$lib/utils/numbers";
+import experienceTable from "$lib/editor/character/experience.json";
+
+export const MAX_EXPERIENCE = experienceTable[experienceTable.length - 1];
+export const MAX_MAP_SEED = 0xffffffff;
 
 export function formatMapSeedValue(value: number, displayMode: "decimal" | "hex"): string {
 	const normalizedValue = toUInt32OrNull(value);
@@ -51,14 +55,14 @@ export function experienceForLevel(level: number, table: readonly number[]): num
 }
 
 export function levelForExperience(experience: number, table: readonly number[]): number {
-	let resolvedLevel = table.length;
+	let level = table.length;
 
 	for (let index = 0; index < table.length; index += 1) {
 		if (table[index] > experience) {
-			resolvedLevel = index;
+			level = index;
 			break;
 		}
 	}
 
-	return resolvedLevel;
+	return level;
 }

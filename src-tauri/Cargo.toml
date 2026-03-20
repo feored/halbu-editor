@@ -3,8 +3,6 @@ name = "halbu-editor"
 version = "0.2.1"
 description = "Halbu Editor"
 authors = ["feor"]
-license = ""
-repository = ""
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

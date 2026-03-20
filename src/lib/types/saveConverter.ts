@@ -1,83 +1,46 @@
-import { toEditorSkills } from "$lib/editor/skills/skillsAdapters";
-import { DEFAULT_SKILL_SLOT_COUNT } from "$lib/editor/skills/skillsSlots";
+import { ACT_NAMES, DIFFICULTY_NAMES } from "$lib/types/editor";
 
 import type {
-	Act,
-	Attribute,
-	ClassName,
 	Difficulty,
 	EditorSave,
 	EncodableSaveFormatId,
-	KnownClassName,
 	QuestFlag,
 	QuestId,
 	SaveLayoutVersion,
-	SaveFormatId,
-	SkillSlot,
 } from "$lib/types/editor";
 import type {
 	BackendAct,
-	BackendAttributeValue,
 	BackendCharacter,
 	BackendDifficulty,
 	BackendEditorSave,
 	BackendEnumValue,
-	BackendOpenSaveResult,
 	BackendQuestState,
-	BackendSkillPointList,
 } from "$lib/types/backend";
-import type { OpenedSessionData } from "$lib/editor/editorSession";
 
-type UnknownEnumName = `Unknown(${number})`;
-
-type BackendFormatId = EncodableSaveFormatId | { Unknown: number };
-type BackendClassId = KnownClassName | { Unknown: number };
-
-const DIFFICULTY_KEY_PAIRS = [
-	["Normal", "normal"],
-	["Nightmare", "nightmare"],
-	["Hell", "hell"],
-] as const satisfies ReadonlyArray<readonly [Difficulty, BackendDifficulty]>;
-
-const ACT_KEY_PAIRS = [
-	["Act1", "act1"],
-	["Act2", "act2"],
-	["Act3", "act3"],
-	["Act4", "act4"],
-	["Act5", "act5"],
-] as const satisfies ReadonlyArray<readonly [Act, BackendAct]>;
-
-function toEnumName<KnownValue extends string>(
+function toEditorEnum<KnownValue extends string>(
 	value: BackendEnumValue<KnownValue>,
-): KnownValue | UnknownEnumName {
+): KnownValue | `Unknown(${number})` {
 	if (typeof value === "string") {
 		return value;
 	}
 
-	return `Unknown(${value.Unknown})` as UnknownEnumName;
+	return `Unknown(${value.Unknown})`;
 }
 
 function toBackendEnum<KnownValue extends string>(
 	value: KnownValue | `Unknown(${number})`,
-): KnownValue | { Unknown: number } {
+): BackendEnumValue<KnownValue> {
 	if (!value.startsWith("Unknown(")) {
 		return value as KnownValue;
 	}
 
-	const payload = Number(value.slice(8, -1));
-	return { Unknown: payload };
+	return {
+		Unknown: Number(value.slice(8, -1)),
+	};
 }
 
-function toClassName(value: BackendEnumValue<KnownClassName>): ClassName {
-	return toEnumName(value);
-}
-
-function toSaveFormatId(value: BackendEnumValue<EncodableSaveFormatId>): SaveFormatId {
-	return toEnumName(value);
-}
-
-function toAttributeMap(
-	backendAttributes: Record<string, BackendAttributeValue>,
+function toEditorAttributes(
+	backendAttributes: BackendEditorSave["attributes"],
 ): EditorSave["attributes"] {
 	return Object.fromEntries(
 		Object.entries(backendAttributes).map(([name, attribute]) => [
@@ -94,7 +57,7 @@ function toAttributeMap(
 
 function toBackendAttributes(
 	attributes: EditorSave["attributes"],
-): Record<Attribute, BackendAttributeValue> {
+): BackendEditorSave["attributes"] {
 	return Object.fromEntries(
 		Object.entries(attributes).map(([name, attribute]) => [
 			name,
@@ -105,13 +68,13 @@ function toBackendAttributes(
 				value: attribute.value,
 			},
 		]),
-	) as Record<Attribute, BackendAttributeValue>;
+	) as BackendEditorSave["attributes"];
 }
 
-function toCharacter(backendCharacter: BackendCharacter): EditorSave["character"] {
+function toEditorCharacter(backendCharacter: BackendCharacter): EditorSave["character"] {
 	return {
 		name: backendCharacter.name,
-		className: toClassName(backendCharacter.class),
+		className: toEditorEnum(backendCharacter.class),
 		level: backendCharacter.level,
 		progression: backendCharacter.progression,
 		act: backendCharacter.act,
@@ -135,10 +98,10 @@ function toCharacter(backendCharacter: BackendCharacter): EditorSave["character"
 }
 
 function toEditorQuestStates(
-	backendActQuests: Record<string, BackendQuestState>,
+	backendQuestStates: Record<QuestId, BackendQuestState>,
 ): Record<QuestId, { flags: QuestFlag[] }> {
 	return Object.fromEntries(
-		Object.entries(backendActQuests).map(([questId, questState]) => [
+		Object.entries(backendQuestStates).map(([questId, questState]) => [
 			questId,
 			{ flags: [...questState.state] },
 		]),
@@ -146,10 +109,10 @@ function toEditorQuestStates(
 }
 
 function toBackendQuestStates(
-	editorActQuests: Record<QuestId, { flags: QuestFlag[] }>,
+	questStates: Record<QuestId, { flags: QuestFlag[] }>,
 ): Record<QuestId, BackendQuestState> {
 	return Object.fromEntries(
-		Object.entries(editorActQuests).map(([questId, questState]) => [
+		Object.entries(questStates).map(([questId, questState]) => [
 			questId,
 			{ state: [...questState.flags] },
 		]),
@@ -157,50 +120,56 @@ function toBackendQuestStates(
 }
 
 function toEditorQuests(backendQuests: BackendEditorSave["quests"]): EditorSave["quests"] {
-	const editorQuests = {} as EditorSave["quests"];
+	const quests = {} as EditorSave["quests"];
 
-	for (const [editorDifficulty, backendDifficulty] of DIFFICULTY_KEY_PAIRS) {
-		editorQuests[editorDifficulty] = {} as EditorSave["quests"][Difficulty];
+	for (const difficulty of DIFFICULTY_NAMES) {
+		const backendDifficulty = difficulty.toLowerCase() as BackendDifficulty;
+		quests[difficulty] = {} as EditorSave["quests"][Difficulty];
 
-		for (const [editorAct, backendAct] of ACT_KEY_PAIRS) {
-			editorQuests[editorDifficulty][editorAct] = toEditorQuestStates(
+		for (const act of ACT_NAMES) {
+			const backendAct = act.toLowerCase() as BackendAct;
+			quests[difficulty][act] = toEditorQuestStates(
 				backendQuests[backendDifficulty][backendAct],
 			);
 		}
 	}
 
-	return editorQuests;
+	return quests;
 }
 
 function toBackendQuests(editorQuests: EditorSave["quests"]): BackendEditorSave["quests"] {
-	const backendQuests = {} as BackendEditorSave["quests"];
+	const quests = {} as BackendEditorSave["quests"];
 
-	for (const [editorDifficulty, backendDifficulty] of DIFFICULTY_KEY_PAIRS) {
-		backendQuests[backendDifficulty] = {} as BackendEditorSave["quests"][BackendDifficulty];
+	for (const difficulty of DIFFICULTY_NAMES) {
+		const backendDifficulty = difficulty.toLowerCase() as BackendDifficulty;
+		quests[backendDifficulty] = {} as BackendEditorSave["quests"][BackendDifficulty];
 
-		for (const [editorAct, backendAct] of ACT_KEY_PAIRS) {
-			backendQuests[backendDifficulty][backendAct] = toBackendQuestStates(
-				editorQuests[editorDifficulty][editorAct],
+		for (const act of ACT_NAMES) {
+			const backendAct = act.toLowerCase() as BackendAct;
+			quests[backendDifficulty][backendAct] = toBackendQuestStates(
+				editorQuests[difficulty][act],
 			);
 		}
 	}
 
-	return backendQuests;
+	return quests;
 }
 
 function toEditorWaypoints(
 	backendWaypoints: BackendEditorSave["waypoints"],
 ): EditorSave["waypoints"] {
-	const editorWaypoints = {} as EditorSave["waypoints"];
+	const waypoints = {} as EditorSave["waypoints"];
 
-	for (const [editorDifficulty, backendDifficulty] of DIFFICULTY_KEY_PAIRS) {
-		editorWaypoints[editorDifficulty] = {} as EditorSave["waypoints"][Difficulty];
+	for (const difficulty of DIFFICULTY_NAMES) {
+		const backendDifficulty = difficulty.toLowerCase() as BackendDifficulty;
+		waypoints[difficulty] = {} as EditorSave["waypoints"][Difficulty];
 
-		for (const [editorAct, backendAct] of ACT_KEY_PAIRS) {
+		for (const act of ACT_NAMES) {
+			const backendAct = act.toLowerCase() as BackendAct;
 			const backendWaypointGroup = backendWaypoints[backendDifficulty][backendAct];
 
-			editorWaypoints[editorDifficulty][editorAct] = {
-				act: editorAct,
+			waypoints[difficulty][act] = {
+				act,
 				waypoints: backendWaypointGroup.waypoints.map((waypoint) => ({
 					id: waypoint.id,
 					acquired: waypoint.acquired,
@@ -209,23 +178,25 @@ function toEditorWaypoints(
 		}
 	}
 
-	return editorWaypoints;
+	return waypoints;
 }
 
 function toBackendWaypoints(
 	editorWaypoints: EditorSave["waypoints"],
 ): BackendEditorSave["waypoints"] {
-	const backendWaypoints = {} as BackendEditorSave["waypoints"];
+	const waypoints = {} as BackendEditorSave["waypoints"];
 
-	for (const [editorDifficulty, backendDifficulty] of DIFFICULTY_KEY_PAIRS) {
-		backendWaypoints[backendDifficulty] =
+	for (const difficulty of DIFFICULTY_NAMES) {
+		const backendDifficulty = difficulty.toLowerCase() as BackendDifficulty;
+		waypoints[backendDifficulty] =
 			{} as BackendEditorSave["waypoints"][BackendDifficulty];
 
-		for (const [editorAct, backendAct] of ACT_KEY_PAIRS) {
-			const editorWaypointGroup = editorWaypoints[editorDifficulty][editorAct];
+		for (const act of ACT_NAMES) {
+			const backendAct = act.toLowerCase() as BackendAct;
+			const editorWaypointGroup = editorWaypoints[difficulty][act];
 
-			backendWaypoints[backendDifficulty][backendAct] = {
-				act: editorAct,
+			waypoints[backendDifficulty][backendAct] = {
+				act,
 				waypoints: editorWaypointGroup.waypoints.map((waypoint) => ({
 					id: waypoint.id,
 					acquired: waypoint.acquired,
@@ -234,52 +205,26 @@ function toBackendWaypoints(
 		}
 	}
 
-	return backendWaypoints;
+	return waypoints;
 }
 
-export function toEditorSave(
-	backendSave: BackendEditorSave,
-	slotCount = DEFAULT_SKILL_SLOT_COUNT,
-): EditorSave {
+export function toEditorSave(backendSave: BackendEditorSave): EditorSave {
 	return {
 		version: backendSave.version,
 		expansionType: backendSave.expansion_type,
-		character: toCharacter(backendSave.character),
+		character: toEditorCharacter(backendSave.character),
 		quests: toEditorQuests(backendSave.quests),
 		waypoints: toEditorWaypoints(backendSave.waypoints),
 		npcs: backendSave.npcs,
-		attributes: toAttributeMap(backendSave.attributes),
-		skills: toEditorSkills(backendSave.skills, slotCount),
+		attributes: toEditorAttributes(backendSave.attributes),
+		skills: backendSave.skills.points.map((points, index) => ({
+			id: index,
+			points,
+		})),
 		items: backendSave.items,
 		metadata: {
-			formatId: toSaveFormatId(backendSave.meta.format),
+			formatId: toEditorEnum(backendSave.meta.format),
 		},
-	};
-}
-
-export function toOpenedSessionData(
-	backendResult: BackendOpenSaveResult,
-	sourcePath: string | null,
-	slotCount = DEFAULT_SKILL_SLOT_COUNT,
-): OpenedSessionData {
-	return {
-		save: toEditorSave(backendResult.save, slotCount),
-		sourceBackendSave: structuredClone(backendResult.save),
-		parseIssueCount: backendResult.parse_issue_count,
-		parseIssues: backendResult.parse_issues,
-		headerChecksum: backendResult.header_checksum,
-		computedChecksum: backendResult.computed_checksum,
-		sourceFileSize: backendResult.source_file_size,
-		sourcePath,
-		editionHint: backendResult.edition_hint,
-		suggestedTargetVersion: backendResult.suggested_target_version,
-		parserLayoutVersion: backendResult.parser_layout_version,
-	};
-}
-
-export function toBackendSkillPointList(skills: readonly SkillSlot[]): BackendSkillPointList {
-	return {
-		points: skills.map((skill) => skill.points),
 	};
 }
 
@@ -300,7 +245,7 @@ export function toBackendSave(
 		character: {
 			...sourceBackendSave.character,
 			name: editorSave.character.name,
-			class: toBackendEnum(editorSave.character.className) as BackendClassId,
+			class: toBackendEnum(editorSave.character.className),
 			level: editorSave.character.level,
 			progression: editorSave.character.progression,
 			act: editorSave.character.act,
@@ -327,10 +272,12 @@ export function toBackendSave(
 		waypoints: toBackendWaypoints(editorSave.waypoints),
 		npcs: editorSave.npcs,
 		attributes: toBackendAttributes(editorSave.attributes),
-		skills: toBackendSkillPointList(editorSave.skills),
+		skills: {
+			points: editorSave.skills.map((skill) => skill.points),
+		},
 		items: editorSave.items,
 		meta: {
-			format: toBackendEnum(formatId) as BackendFormatId,
+			format: toBackendEnum(formatId),
 		},
 	};
 }

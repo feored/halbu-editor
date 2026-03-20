@@ -1,10 +1,9 @@
+import { homeDir, resolve } from "@tauri-apps/api/path";
 import { type } from "@tauri-apps/plugin-os";
-import { resolve, homeDir } from "@tauri-apps/api/path";
 import { LazyStore } from "@tauri-apps/plugin-store";
 import { readonly, writable } from "svelte/store";
 
-export let initialized = false;
-const settingsStoreFile = new LazyStore("settings.json");
+const store = new LazyStore("settings.json");
 
 export const Key = {
 	Theme: "theme",
@@ -17,12 +16,12 @@ export const Key = {
 	QuestsShowPrologue: "quests_show_prologue",
 } as const;
 
-type SettingKey = (typeof Key)[keyof typeof Key];
-type ThemeSetting = "auto" | "light" | "dark";
-type ParseModeSetting = "lax" | "strict";
-type KnownSettings = {
-	[Key.Theme]: ThemeSetting;
-	[Key.ParseMode]: ParseModeSetting;
+export type SettingKey = (typeof Key)[keyof typeof Key];
+export type Theme = "auto" | "light" | "dark";
+export type ParseMode = "lax" | "strict";
+export type Settings = {
+	[Key.Theme]: Theme;
+	[Key.ParseMode]: ParseMode;
 	[Key.SaveFolder]: string;
 	[Key.BackupsEnabled]: boolean;
 	[Key.BackupsPerCharacter]: number;
@@ -30,183 +29,147 @@ type KnownSettings = {
 	[Key.QuestsAdvancedAllQuests]: boolean;
 	[Key.QuestsShowPrologue]: boolean;
 };
-type SettingsRecord = Record<string, unknown>;
 
-const SETTING_KEYS = Object.values(Key) as SettingKey[];
-const SETTING_KEY_SET = new Set<SettingKey>(SETTING_KEYS);
-const settingsState: {
-	cachedSettings: SettingsRecord;
-	defaultSettings: KnownSettings | null;
-	initializationPromise: Promise<void> | null;
-} = {
-	cachedSettings: {},
-	defaultSettings: null,
-	initializationPromise: null,
+const keys = Object.values(Key) as SettingKey[];
+const baseSettings: Settings = {
+	[Key.Theme]: "auto",
+	[Key.ParseMode]: "lax",
+	[Key.SaveFolder]: "",
+	[Key.BackupsEnabled]: true,
+	[Key.BackupsPerCharacter]: 20,
+	[Key.QuestsAdvancedFlags]: false,
+	[Key.QuestsAdvancedAllQuests]: false,
+	[Key.QuestsShowPrologue]: false,
 };
-const settingsStoreWritable = writable<SettingsRecord>({});
-export const settingsStore = readonly(settingsStoreWritable);
 
-const THEMES = new Set<ThemeSetting>(["auto", "light", "dark"]);
-const PARSE_MODES = new Set<ParseModeSetting>(["lax", "strict"]);
+let initialized = false;
+let values: Settings = { ...baseSettings };
+let defaults: Settings | null = null;
+let initializePromise: Promise<void> | null = null;
 
-function isSettingKey(value: string): value is SettingKey {
-	return SETTING_KEY_SET.has(value as SettingKey);
+const storeValues = writable<Settings>({ ...values });
+export const settingsStore = readonly(storeValues);
+
+function publish(): void {
+	storeValues.set({ ...values });
 }
 
-function publishSettings() {
-	settingsStoreWritable.set({ ...settingsState.cachedSettings });
+function normalizeBoolean(value: unknown, fallback: boolean): boolean {
+	return typeof value === "boolean" ? value : fallback;
 }
 
-function normalizeBoolean(value: unknown, defaultValue: boolean): boolean {
-	return typeof value === "boolean" ? value : defaultValue;
-}
-
-function normalizePositiveInteger(value: unknown, defaultValue: number): number {
+function normalizePositiveInteger(value: unknown, fallback: number): number {
 	const parsed = Number(value);
-	return Number.isInteger(parsed) && parsed > 0 ? parsed : defaultValue;
+	return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-const NORMALIZE_BY_KEY: {
-	[K in SettingKey]: (value: unknown, defaultValue: KnownSettings[K]) => KnownSettings[K];
-} = {
-	[Key.Theme]: (value, defaultValue) =>
-		typeof value === "string" && THEMES.has(value as ThemeSetting)
-			? (value as ThemeSetting)
-			: defaultValue,
-	[Key.ParseMode]: (value, defaultValue) =>
-		typeof value === "string" && PARSE_MODES.has(value as ParseModeSetting)
-			? (value as ParseModeSetting)
-			: defaultValue,
-	[Key.SaveFolder]: (value, defaultValue) =>
-		typeof value === "string" ? value : defaultValue,
-	[Key.BackupsEnabled]: normalizeBoolean,
-	[Key.BackupsPerCharacter]: normalizePositiveInteger,
-	[Key.QuestsAdvancedFlags]: normalizeBoolean,
-	[Key.QuestsAdvancedAllQuests]: normalizeBoolean,
-	[Key.QuestsShowPrologue]: normalizeBoolean,
-};
-
-function normalizeKnownSettingValue<K extends SettingKey>(
-	key: K,
-	value: unknown,
-	defaultSettings: KnownSettings,
-): KnownSettings[K] {
-	return NORMALIZE_BY_KEY[key](value, defaultSettings[key]);
-}
-
-function normalizeSettingValue(
-	key: string,
-	value: unknown,
-	defaultSettings: KnownSettings,
-): unknown {
-	if (!isSettingKey(key)) {
-		return value;
+function normalize(key: SettingKey, value: unknown, fallback: Settings): Settings[SettingKey] {
+	switch (key) {
+		case Key.Theme:
+			return value === "auto" || value === "light" || value === "dark"
+				? value
+				: fallback[key];
+		case Key.ParseMode:
+			return value === "lax" || value === "strict" ? value : fallback[key];
+		case Key.SaveFolder:
+			return typeof value === "string" ? value : fallback[key];
+		case Key.BackupsEnabled:
+		case Key.QuestsAdvancedFlags:
+		case Key.QuestsAdvancedAllQuests:
+		case Key.QuestsShowPrologue:
+			return normalizeBoolean(value, fallback[key]);
+		case Key.BackupsPerCharacter:
+			return normalizePositiveInteger(value, fallback[key]);
 	}
-	return normalizeKnownSettingValue(key, value, defaultSettings);
 }
 
 async function getDefaultSaveFolder(): Promise<string> {
-	const osType = await type();
-	if (osType !== "windows") {
+	if ((await type()) !== "windows") {
 		return "";
 	}
-	const homeDirPath = await homeDir();
-	return resolve(homeDirPath, "Saved Games", "Diablo II Resurrected");
+
+	return resolve(await homeDir(), "Saved Games", "Diablo II Resurrected");
 }
 
-async function getDefaultSettings(): Promise<KnownSettings> {
-	if (settingsState.defaultSettings != null) {
-		return settingsState.defaultSettings;
+async function getDefaults(): Promise<Settings> {
+	if (defaults != null) {
+		return defaults;
 	}
-	const defaultSettings: KnownSettings = {
-		[Key.Theme]: "auto",
-		[Key.ParseMode]: "lax",
+
+	defaults = {
+		...baseSettings,
 		[Key.SaveFolder]: await getDefaultSaveFolder(),
-		[Key.BackupsEnabled]: true,
-		[Key.BackupsPerCharacter]: 20,
-		[Key.QuestsAdvancedFlags]: false,
-		[Key.QuestsAdvancedAllQuests]: false,
-		[Key.QuestsShowPrologue]: false,
 	};
-	settingsState.defaultSettings = defaultSettings;
-	return defaultSettings;
+	return defaults;
 }
 
-function getEffectiveTheme(themeSetting: unknown): unknown {
-	if (themeSetting === "auto") {
+function getTheme(theme: Theme): "light" | "dark" {
+	if (theme === "auto") {
 		return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 	}
-	return themeSetting;
+
+	return theme;
 }
 
-export async function apply() {
-	const theme = getEffectiveTheme(get(Key.Theme));
-	if (theme === "dark" || theme === "light") {
-		document.documentElement.setAttribute("data-bs-theme", theme);
-	}
+export async function apply(): Promise<void> {
+	document.documentElement.setAttribute("data-bs-theme", getTheme(get(Key.Theme)));
 }
 
-async function initializeSettings() {
-	const defaultSettings = await getDefaultSettings();
-	const nextSettings: SettingsRecord = {};
-	for (const key of SETTING_KEYS) {
-		const hasStoredValue = await settingsStoreFile.has(key);
-		const rawValue = hasStoredValue
-			? await settingsStoreFile.get(key)
-				: defaultSettings[key];
-		const normalizedValue = normalizeSettingValue(key, rawValue, defaultSettings);
-		nextSettings[key] = normalizedValue;
-		if (!hasStoredValue || normalizedValue !== rawValue) {
-			await settingsStoreFile.set(key, normalizedValue);
-		}
-	}
-	await settingsStoreFile.save();
-	settingsState.cachedSettings = nextSettings;
-	initialized = true;
-	publishSettings();
-}
-
-export async function initialize() {
+export async function initialize(): Promise<void> {
 	if (initialized) {
 		return;
 	}
-	if (settingsState.initializationPromise != null) {
-		await settingsState.initializationPromise;
+
+	if (initializePromise != null) {
+		await initializePromise;
 		return;
 	}
-	settingsState.initializationPromise = initializeSettings();
+
+	initializePromise = (async () => {
+		const fallback = await getDefaults();
+		const nextValues: Settings = { ...fallback };
+		const next = nextValues as Record<SettingKey, Settings[SettingKey]>;
+
+		for (const key of keys) {
+			const hasValue = await store.has(key);
+			const rawValue = hasValue ? await store.get(key) : fallback[key];
+			const nextValue = normalize(key, rawValue, fallback);
+
+			next[key] = nextValue;
+			if (!hasValue || nextValue !== rawValue) {
+				await store.set(key, nextValue);
+			}
+		}
+
+		await store.save();
+		values = nextValues;
+		initialized = true;
+		publish();
+	})();
+
 	try {
-		await settingsState.initializationPromise;
+		await initializePromise;
 	} finally {
-		settingsState.initializationPromise = null;
+		initializePromise = null;
 	}
 }
 
-async function initializeIfNecessary() {
+export function get<K extends SettingKey>(key: K): Settings[K] {
+	return values[key];
+}
+
+export async function set<K extends SettingKey>(key: K, value: Settings[K]): Promise<void> {
 	if (!initialized) {
 		await initialize();
 	}
-}
 
-export function get<K extends SettingKey>(key: K): KnownSettings[K];
-export function get(key: string): unknown;
-export function get(key: string): unknown {
-	return settingsState.cachedSettings[key];
-}
+	const fallback = await getDefaults();
+	const nextValue = normalize(key, value, fallback) as Settings[K];
 
-export async function set<K extends SettingKey>(
-	key: K,
-	value: KnownSettings[K],
-): Promise<void>;
-export async function set(key: string, value: unknown): Promise<void>;
-export async function set(key: string, value: unknown): Promise<void> {
-	await initializeIfNecessary();
-	const defaultSettings = await getDefaultSettings();
-	const normalizedValue = normalizeSettingValue(key, value, defaultSettings);
-	settingsState.cachedSettings[key] = normalizedValue;
-	await settingsStoreFile.set(key, normalizedValue);
-	await settingsStoreFile.save();
-	publishSettings();
+	values[key] = nextValue;
+	await store.set(key, nextValue);
+	await store.save();
+	publish();
 }
 
 if (typeof window !== "undefined") {

@@ -1,6 +1,6 @@
-import { setAllQuestFlagsCompleted } from "$lib/editor/quests/questsLogic";
+import { setAllQuestFlagsCompleted } from "$lib/editor/quests/quests";
 import { ACT_NAMES, DIFFICULTY_NAMES } from "$lib/types/editor";
-import { setActWaypoints } from "$lib/editor/waypoints/waypointsLogic";
+import { setActWaypoints } from "$lib/editor/waypoints/waypoints";
 import type {
 	Difficulty,
 	EditorSave,

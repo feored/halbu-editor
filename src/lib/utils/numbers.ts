@@ -1,50 +1,33 @@
-function toFiniteInteger(value: unknown, fallback = 0): number {
-	const parsed = Number(value);
-	if (!Number.isFinite(parsed)) {
-		return fallback;
-	}
-	return Math.trunc(parsed);
-}
-
-export function clampInteger(value: unknown, min: number, max: number, fallback = min): number {
-	const lowerBound = Math.min(min, max);
-	const upperBound = Math.max(min, max);
-	const normalized = toFiniteInteger(value, fallback);
-	return Math.max(lowerBound, Math.min(upperBound, normalized));
-}
-
-export function clampByte(value: unknown, fallback = 0): number {
-	return clampInteger(value, 0, 255, fallback);
-}
-
 export const RESOURCE_Q8_SCALE = 256;
 
-function toPositiveIntegerOrNull(value: unknown): number | null {
+export function clampInteger(value: unknown, min: number, max: number, fallback = min): number {
+	const lower = Math.min(min, max);
+	const upper = Math.max(min, max);
 	const parsed = Number(value);
-	if (!Number.isFinite(parsed) || parsed <= 0) {
-		return null;
+
+	if (!Number.isFinite(parsed)) {
+		return Math.max(lower, Math.min(upper, fallback));
 	}
-	return Math.trunc(parsed);
+
+	return Math.max(lower, Math.min(upper, Math.trunc(parsed)));
 }
 
 export function toPositiveInteger(value: unknown, fallback = 1): number {
-	return toPositiveIntegerOrNull(value) ?? fallback;
-}
-
-function toNonNegativeIntegerOrNull(value: unknown): number | null {
 	const parsed = Number(value);
-	if (!Number.isFinite(parsed) || parsed < 0) {
-		return null;
+	if (!Number.isFinite(parsed) || parsed <= 0) {
+		return fallback;
 	}
+
 	return Math.trunc(parsed);
 }
 
 export function toUInt32OrNull(value: unknown): number | null {
-	const normalized = toNonNegativeIntegerOrNull(value);
-	if (normalized == null) {
+	const parsed = Number(value);
+	if (!Number.isFinite(parsed) || parsed < 0) {
 		return null;
 	}
-	return normalized >>> 0;
+
+	return Math.trunc(parsed) >>> 0;
 }
 
 export function getMaxValueForBitLength(bitLength: number): number {
@@ -57,16 +40,19 @@ export function fixedPointToDisplay(value: unknown, scale: unknown = RESOURCE_Q8
 	if (!Number.isFinite(parsedValue) || !Number.isFinite(parsedScale) || parsedScale === 0) {
 		return 0;
 	}
+
 	return parsedValue / parsedScale;
 }
 
 export function formatDisplayNumber(value: unknown, maxFractionDigits = 3): string {
-	const parsedValue = Number(value);
-	if (!Number.isFinite(parsedValue)) {
+	const parsed = Number(value);
+	if (!Number.isFinite(parsed)) {
 		return "0";
 	}
-	if (Number.isInteger(parsedValue)) {
-		return `${parsedValue}`;
+
+	if (Number.isInteger(parsed)) {
+		return String(parsed);
 	}
-	return parsedValue.toFixed(maxFractionDigits).replace(/\.?0+$/, "");
+
+	return parsed.toFixed(maxFractionDigits).replace(/\.?0+$/, "");
 }

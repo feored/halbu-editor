@@ -208,16 +208,11 @@ export type SaveSummary = {
 // BACKUPS
 //
 
-export type BackupStatus =
-	| "Created"
-	| "SkippedNoSourcePath"
-	| "SkippedNotFile"
-	| "SkippedByPolicy"
-	| "Failed";
-
 export type BackupAllDetectedSavesResult = {
-	attempted: number;
-	created: number;
-	statuses: Record<string, BackupStatus>;
-	errors: Record<string, string>;
+	detectedFiles: number;
+	backedUp: number;
+	skippedUnchanged: number;
+	failed: number;
+	cleanupWarnings: string[];
+	errors: string[];
 };

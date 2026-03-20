@@ -5,20 +5,20 @@
 	import { Message, buildMessage } from "$lib/utils/appMessage";
 	import * as settings from "$lib/utils/settings";
 	import { getErrorMessage } from "$lib/utils/errorMessage";
-	import { toEditorSave } from "$lib/types/converters";
+	import { toEditorSave } from "$lib/types/saveConverter";
 	import experienceTable from "$lib/editor/character/experience.json";
-	import { experienceForLevel } from "$lib/editor/character/characterLogic";
 	import {
-		applyProjectedGameRulesValues,
-		getGameRulesClassPrimaryAttributes,
-		projectGameRulesDerivedValues,
+		applyGameRulesValues,
+		getClassBaseAttributes,
+		getGameRules,
 	} from "$lib/editor/character/gameRules";
+	import { setLevel } from "$lib/editor/character/character";
 	import {
 		NEW_CHARACTER_TEMPLATE_OPTIONS,
 		applyAllWaypointsTemplate,
 		applyCampaignCompletedTemplate,
 		type NewCharacterTemplateId,
-	} from "$lib/newCharacter/newCharacterTemplates";
+	} from "$lib/newCharacter/templates";
 	import {
 		getSupportedExpansionTypes,
 		getSupportedClassesForExpansionType,
@@ -30,7 +30,7 @@
 	} from "$lib/types/editor";
 	import type { EditorSave, ExpansionType, GameEdition, KnownClassName } from "$lib/types/editor";
 	import type { BackendEditorSave, OutputFormatOption } from "$lib/types/backend";
-	import type { OpenedSessionData } from "$lib/editor/editorSession";
+	import type { OpenedSessionData } from "$lib/editor/session";
 	import type { AppMessage } from "$lib/utils/appMessage";
 
 	const DEFAULT_CHARACTER_NAME = "NewCharacter";
@@ -55,27 +55,24 @@
 	let createError = $state("");
 	let pathError = $state("");
 
-	const configuredSaveFolder = $derived.by(() => {
-		const configuredValue = settings.get(settings.Key.SaveFolder);
-		return typeof configuredValue === "string" ? configuredValue : "";
-	});
-	const selectedVersion = $derived.by(() => {
+	const saveFolder = $derived(settings.get(settings.Key.SaveFolder));
+	const version = $derived.by(() => {
 		return (
 			outputFormatOptions.find((option) => option.gameEdition === selectedEdition)?.version ??
 			null
 		);
 	});
 	const availableExpansionModes = $derived.by((): readonly ExpansionType[] => {
-		if (selectedVersion == null) {
+		if (version == null) {
 			return [];
 		}
-		return getSupportedExpansionTypes(selectedVersion);
+		return getSupportedExpansionTypes(version);
 	});
 	const availableClasses = $derived.by((): readonly KnownClassName[] => {
-		if (selectedVersion == null) {
+		if (version == null) {
 			return [];
 		}
-		return getSupportedClassesForExpansionType(selectedVersion, selectedExpansionMode).map(
+		return getSupportedClassesForExpansionType(version, selectedExpansionMode).map(
 			(entry) => entry.name,
 		);
 	});
@@ -89,45 +86,45 @@
 		return `${baseName}.d2s`;
 	});
 	const suggestedPath = $derived.by(() => {
-		const saveFolder = configuredSaveFolder.trim();
-		if (saveFolder.length < 1) {
+		const folder = saveFolder.trim();
+		if (folder.length < 1) {
 			return "";
 		}
-		const pathSeparator = saveFolder.includes("\\") ? "\\" : "/";
-		const hasTrailingSeparator = saveFolder.endsWith("\\") || saveFolder.endsWith("/");
+		const pathSeparator = folder.includes("\\") ? "\\" : "/";
+		const hasTrailingSeparator = folder.endsWith("\\") || folder.endsWith("/");
 		return hasTrailingSeparator
-			? `${saveFolder}${suggestedFileName}`
-			: `${saveFolder}${pathSeparator}${suggestedFileName}`;
+			? `${folder}${suggestedFileName}`
+			: `${folder}${pathSeparator}${suggestedFileName}`;
 	});
-	const effectiveSavePath = $derived.by(() =>
+	const savePath = $derived.by(() =>
 		selectedSavePath.trim().length > 0 ? selectedSavePath.trim() : suggestedPath,
 	);
 	const hasSelectedSavePath = $derived(selectedSavePath.trim().length > 0);
-	const createBlockedReason = $derived.by(() => {
-		if (selectedVersion == null) {
+	const blockedReason = $derived.by(() => {
+		if (version == null) {
 			return "No supported output format is available for this edition.";
 		}
 		if (selectedClass == null) {
 			return "Select a valid class for the current edition/mode.";
 		}
-		if (classDisabled(selectedClass)) {
-			if (getGameRulesClassPrimaryAttributes(selectedClass) == null) {
+		if (isClassDisabled(selectedClass)) {
+			if (getClassBaseAttributes(selectedClass) == null) {
 				return "Missing class defaults in charstats.txt.";
 			}
 			return "Class is unavailable for the selected edition/mode.";
 		}
 		return "";
 	});
-	const canCreate = $derived(!createPending && createBlockedReason.length === 0);
+	const canCreate = $derived(!createPending && blockedReason.length === 0);
 
-	function classDisabled(className: KnownClassName): boolean {
-		if (selectedVersion == null) {
+	function isClassDisabled(className: KnownClassName): boolean {
+		if (version == null) {
 			return true;
 		}
 		if (!availableClasses.includes(className)) {
 			return true;
 		}
-		if (getGameRulesClassPrimaryAttributes(className) == null) {
+		if (getClassBaseAttributes(className) == null) {
 			return true;
 		}
 		return false;
@@ -140,38 +137,26 @@
 		return `${path}.d2s`;
 	}
 
-	function applyStartingAttributesFromGameRules(
+	function setBaseAttributes(
 		saveData: EditorSave,
 		className: KnownClassName,
 	): void {
-		const classPrimaryAttributes = getGameRulesClassPrimaryAttributes(className);
-		if (classPrimaryAttributes == null) {
+		const baseAttributes = getClassBaseAttributes(className);
+		if (baseAttributes == null) {
 			throw new Error(`Missing class defaults for ${className} in charstats.txt.`);
 		}
 
-		saveData.attributes.strength.value = classPrimaryAttributes.strength;
-		saveData.attributes.dexterity.value = classPrimaryAttributes.dexterity;
-		saveData.attributes.energy.value = classPrimaryAttributes.energy;
-		saveData.attributes.vitality.value = classPrimaryAttributes.vitality;
-	}
-
-	function setCharacterLevel(saveData: EditorSave, targetLevel: number): void {
-		const clampedLevel = Math.max(1, Math.min(99, targetLevel));
-		saveData.character.level = clampedLevel;
-		saveData.attributes.level.value = clampedLevel;
-		saveData.attributes.experience.value = experienceForLevel(clampedLevel, experienceTable);
-	}
-
-	function applyDerivedValuesFromGameRules(saveData: EditorSave): void {
-		const projection = projectGameRulesDerivedValues(saveData);
-		applyProjectedGameRulesValues(saveData, projection.values);
+		saveData.attributes.strength.value = baseAttributes.strength;
+		saveData.attributes.dexterity.value = baseAttributes.dexterity;
+		saveData.attributes.energy.value = baseAttributes.energy;
+		saveData.attributes.vitality.value = baseAttributes.vitality;
 	}
 
 	async function chooseSavePath(): Promise<void> {
 		pathError = "";
 		try {
 			const chosenPath = await pickSavePath({
-				defaultPath: effectiveSavePath.length > 0 ? effectiveSavePath : suggestedFileName,
+				defaultPath: savePath.length > 0 ? savePath : suggestedFileName,
 				filters: [
 					{
 						name: "D2R Save File",
@@ -189,7 +174,7 @@
 	}
 
 	async function createCharacter(): Promise<void> {
-		if (!canCreate || selectedVersion == null || selectedClass == null) {
+		if (!canCreate || version == null || selectedClass == null) {
 			return;
 		}
 
@@ -197,7 +182,7 @@
 		createError = "";
 		try {
 			const backendSave = await invoke<BackendEditorSave>("new_save", {
-				version: selectedVersion,
+				version,
 				class: selectedClass,
 			});
 			const saveData = toEditorSave(backendSave);
@@ -209,18 +194,17 @@
 			saveData.character.status.died = false;
 			saveData.character.status.expansion = selectedExpansionMode !== "Classic";
 
-			applyStartingAttributesFromGameRules(saveData, selectedClass);
+			setBaseAttributes(saveData, selectedClass);
 			if (selectedTemplate === "level99AllProgress") {
-				setCharacterLevel(saveData, 99);
+				setLevel(saveData, 99, experienceTable);
 				applyCampaignCompletedTemplate(saveData, selectedExpansionMode);
 				applyAllWaypointsTemplate(saveData);
 			} else {
-				setCharacterLevel(saveData, 1);
+				setLevel(saveData, 1, experienceTable);
 			}
-			applyDerivedValuesFromGameRules(saveData);
+			applyGameRulesValues(saveData, getGameRules(saveData).values);
 
-			const resolvedPath =
-				effectiveSavePath.trim().length > 0 ? effectiveSavePath.trim() : null;
+			const sourcePath = savePath.trim().length > 0 ? savePath.trim() : null;
 
 			const openPayload: OpenedSessionData = {
 				save: saveData,
@@ -228,7 +212,7 @@
 				parseIssueCount: 0,
 				parseIssues: [],
 				sourceFileSize: null,
-				sourcePath: resolvedPath,
+				sourcePath,
 				headerChecksum: null,
 				computedChecksum: null,
 				editionHint: null,
@@ -251,8 +235,8 @@
 	});
 
 	$effect(() => {
-		const validClass = availableClasses.find((className) => !classDisabled(className)) ?? null;
-		if (selectedClass == null || classDisabled(selectedClass)) {
+		const validClass = availableClasses.find((className) => !isClassDisabled(className)) ?? null;
+		if (selectedClass == null || isClassDisabled(selectedClass)) {
 			selectedClass = validClass;
 		}
 	});
@@ -322,7 +306,7 @@
 				<span class="form-label mb-0">Class</span>
 				<div class="flex flex-wrap gap-1.5">
 					{#each availableClasses as className}
-						{@const classIsDisabled = classDisabled(className)}
+						{@const classIsDisabled = isClassDisabled(className)}
 						<button
 							type="button"
 							class={`rounded-xs border px-2 py-1.5 text-left text-sm font-medium leading-tight transition ${
@@ -402,8 +386,8 @@
 				<div
 					class="rounded-xs border border-halbu-border bg-halbu-panel px-2 py-1.5 font-mono text-sm text-halbu-text"
 				>
-					{#if effectiveSavePath.length > 0}
-						{effectiveSavePath}
+					{#if savePath.length > 0}
+						{savePath}
 					{:else}
 						No configured save folder. Choose a path now or save later from the editor.
 					{/if}
@@ -429,8 +413,8 @@
 					{createPending ? "Creating..." : "Create Character"}
 				</Button>
 			</div>
-			{#if createBlockedReason.length > 0}
-				<div class="form-text mt-1 text-halbu-warning">{createBlockedReason}</div>
+			{#if blockedReason.length > 0}
+				<div class="form-text mt-1 text-halbu-warning">{blockedReason}</div>
 			{/if}
 			{#if pathError.length > 0}
 				<div class="form-text mt-1 text-halbu-danger">{pathError}</div>

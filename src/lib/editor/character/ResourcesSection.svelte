@@ -20,8 +20,7 @@
 		| "maxmana"
 		| "stamina"
 		| "maxstamina";
-
-	type ResourceFieldDescriptor = {
+	type ResourceRow = {
 		label: string;
 		currentId: string;
 		currentAttr: ResourceAttributeId;
@@ -32,7 +31,7 @@
 	const RESOURCE_DISPLAY_MIN = 1;
 	const RESOURCE_DISPLAY_MAX = 8181;
 
-	const resourceFields: ReadonlyArray<ResourceFieldDescriptor> = [
+	const resources: ResourceRow[] = [
 		{
 			label: "Life",
 			currentId: "lifeCurrent",
@@ -59,24 +58,16 @@
 	const session = $derived(editorState.session!);
 	const save = $derived(session.save);
 	const mode = $derived(session.mode);
-	const effectiveDerivedValues = $derived(editorState.gameRulesValues.values);
 
 	const isGameRulesMode = $derived(mode === "game-rules");
-	let showGameRulesHelp = $state(false);
+	let showHelp = $state(false);
 
 	let resourceEditByField = $state<Record<string, FieldEditState>>({});
-
-	function resolvedResourceValue(attributeId: ResourceAttributeId): number {
-		if (isGameRulesMode && effectiveDerivedValues != null) {
-			return effectiveDerivedValues[attributeId];
-		}
-		return save.attributes[attributeId].value;
-	}
 
 	function getResourceDisplayValue(attributeId: ResourceAttributeId): number {
 		const attribute = save.attributes[attributeId];
 		return resolveResourceDisplayValue(
-			resolvedResourceValue(attributeId),
+			attribute.value,
 			attribute.bitLength,
 			RESOURCE_Q8_SCALE,
 		);
@@ -114,15 +105,6 @@
 		const nextEdits = { ...resourceEditByField };
 		delete nextEdits[fieldId];
 		resourceEditByField = nextEdits;
-	}
-
-	function getResourceInputValue(fieldId: string, attributeId: ResourceAttributeId): string {
-		const resourceEdit = resourceEditByField[fieldId];
-		if (resourceEdit != null) {
-			return resourceEdit.input;
-		}
-
-		return getResourceCanonicalDisplayString(attributeId);
 	}
 
 	function finishResourceEdit(fieldId: string, attributeId: ResourceAttributeId): void {
@@ -191,7 +173,7 @@
 	});
 
 	$effect(() => {
-		for (const resource of resourceFields) {
+		for (const resource of resources) {
 			const currentEdit = resourceEditByField[resource.currentId];
 			if (currentEdit != null) {
 				syncFieldFromValue(
@@ -209,7 +191,7 @@
 
 	$effect(() => {
 		if (!isGameRulesMode) {
-			showGameRulesHelp = false;
+			showHelp = false;
 		}
 	});
 </script>
@@ -221,19 +203,19 @@
 			<button
 				type="button"
 				class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-halbu-borderStrong bg-halbu-panel2 text-2xs font-semibold leading-none text-halbu-textMuted transition hover:bg-halbu-primarySoft hover:text-halbu-text"
-				aria-label={showGameRulesHelp
+				aria-label={showHelp
 					? "Hide game rules explanation"
 					: "Show game rules explanation"}
-				aria-expanded={showGameRulesHelp}
+				aria-expanded={showHelp}
 				onclick={() => {
-					showGameRulesHelp = !showGameRulesHelp;
+					showHelp = !showHelp;
 				}}
 			>
 				?
 			</button>
 		{/if}
 	</div>
-	{#if isGameRulesMode && showGameRulesHelp}
+	{#if isGameRulesMode && showHelp}
 		<div class="form-text mb-1 mt-0.5">
 			Game rules mode: resources are recalculated. Edit level or attributes to change them.
 		</div>
@@ -244,7 +226,7 @@
 		<div class="text-sm text-halbu-textMuted">Current</div>
 		<div class="text-sm text-halbu-textMuted">Base</div>
 
-		{#each resourceFields as resource}
+		{#each resources as resource}
 			<div class="text-sm text-halbu-text">{resource.label}</div>
 
 			{#each [{ id: resource.currentId, attributeId: resource.currentAttr }, { id: resource.baseId, attributeId: resource.baseAttr }] as field}
@@ -257,14 +239,12 @@
 					min={RESOURCE_DISPLAY_MIN}
 					max={RESOURCE_DISPLAY_MAX}
 					step="1"
-					value={getResourceInputValue(field.id, field.attributeId)}
+					value={resourceEditByField[field.id]?.input ??
+						getResourceCanonicalDisplayString(field.attributeId)}
 					disabled={isGameRulesMode}
 					onfocus={() => {
 						const resourceEdit = getOrCreateResourceEdit(field.id, field.attributeId);
-						startFieldEdit(
-							resourceEdit,
-							getResourceCanonicalDisplayString(field.attributeId),
-						);
+						startFieldEdit(resourceEdit, getResourceCanonicalDisplayString(field.attributeId));
 					}}
 					oninput={(event) => {
 						const resourceEdit = getOrCreateResourceEdit(field.id, field.attributeId);

@@ -10,8 +10,8 @@
 		setRawModePointsLeft,
 	} from "$lib/editor/skills/skillsActions";
 	import {
-		buildPageNotices,
-		buildSkillStatesById,
+		getPageNotices,
+		getSkillStates,
 		getPageIndexes,
 		getSkillsData,
 		getActivePageIndex,
@@ -30,8 +30,7 @@
 	const session = $derived(editorState.session!);
 	const save = $derived(session.save);
 	const mode = $derived(session.mode);
-	const effectiveDerivedValues = $derived(editorState.gameRulesValues.values);
-	const effectiveDerivedValuesError = $derived(editorState.gameRulesValues.error);
+	const gameRulesError = $derived(editorState.gameRules.error);
 	const editingVersion = $derived(
 		editorState.targetVersion ?? editorState.layoutVersion ?? save.version,
 	);
@@ -42,12 +41,7 @@
 	);
 
 	const isGameRulesMode = $derived(mode === "game-rules");
-	const effectiveSkillPointsLeft = $derived.by(() => {
-		if (isGameRulesMode && effectiveDerivedValues != null) {
-			return effectiveDerivedValues.newskills;
-		}
-		return save.attributes.newskills.value;
-	});
+	const skillPointsLeft = $derived(save.attributes.newskills.value);
 
 	const skillsDataset = $derived(getSkillsDataset(editingVersion));
 	const hasKnownVersionSkills = $derived(skillsDataset != null);
@@ -70,18 +64,16 @@
 		getSkillPageNames(editingVersion, save.character.className, skillsData),
 	);
 	const canRenderTrees = $derived(hasClassSkills && skillSlotsReady);
-	const headerDisabled = $derived(!hasClassSkills);
-	const inspectorDisabled = $derived(!canRenderTrees);
 	const pageNotices = $derived(
-		buildPageNotices({
+		getPageNotices(
 			hasKnownVersionSkills,
-			hasBackendClassSupport: classSupportedForVersion,
+			classSupportedForVersion,
 			hasClassSkills,
 			skillSlotsReady,
-			version: editingVersion,
-			className: save.character.className,
-			supportedClasses: [...supportedClasses],
-		}),
+			editingVersion,
+			save.character.className,
+			supportedClasses,
+		),
 	);
 
 	let activePageIndex = $state<number | null>(null);
@@ -105,31 +97,28 @@
 	}
 
 	const skillStatesById = $derived(
-		buildSkillStatesById(skillsData, {
-			skillSlotsReady,
-			saveSkills: save.skills,
-			characterLevel: save.character.level,
-			availableSkillPoints: effectiveSkillPointsLeft,
+		getSkillStates(
+			skillsData,
+			save.skills,
+			save.character.level,
+			skillPointsLeft,
 			isGameRulesMode,
 			getSkillSlot,
-		}),
+			skillSlotsReady,
+		),
 	);
 
 	function handleSkillPointChange(skillId: number, delta: number) {
-		const skillNum = getSkillSlot(skillId);
+		const skillSlot = getSkillSlot(skillId);
 		const skillState = skillStatesById[skillId];
 		applySkillPointDelta({
 			save,
-			skillSlot: skillNum,
+			skillSlot,
 			delta,
 			skillState,
-			availableSkillPoints: effectiveSkillPointsLeft,
+			availableSkillPoints: skillPointsLeft,
 			isGameRulesMode,
 		});
-	}
-
-	function refund() {
-		refundAllSkillPointsInSave(save);
 	}
 
 	const selectedSkill = $derived.by(() =>
@@ -156,24 +145,6 @@
 					skillState: selectedSkillState,
 				}),
 	);
-	const selectedCanIncrement = $derived(selectedSkillState?.canIncrement ?? false);
-	const selectedCanDecrement = $derived(selectedSkillState?.canDecrement ?? false);
-
-	function pageTitle(pageIndex: number): string {
-		return skillPageNames[pageIndex] ?? `Skill Page ${pageIndex + 1}`;
-	}
-
-	function selectSkill(skillId: number) {
-		selectedSkillId = skillId;
-	}
-
-	function selectSkillPage(pageIndex: number) {
-		activePageIndex = pageIndex;
-	}
-
-	function setPointsLeft(value: number) {
-		setRawModePointsLeft(save, isGameRulesMode, value);
-	}
 
 	function incrementSelectedSkill() {
 		if (selectedSkill == null) {
@@ -199,34 +170,30 @@
 			nextPoints,
 			currentPoints: save.skills[selectedSkill.saveId].points,
 			skillState: selectedSkillState,
-			availableSkillPoints: effectiveSkillPointsLeft,
+			availableSkillPoints: skillPointsLeft,
 			isGameRulesMode,
 		});
-	}
-
-	function incrementSkill(skillId: number) {
-		handleSkillPointChange(skillId, 1);
-	}
-
-	function decrementSkill(skillId: number) {
-		handleSkillPointChange(skillId, -1);
 	}
 </script>
 
 <div class="skills-page grid content-start gap-2.5">
 	{#if isGameRulesMode}
 		<SkillsHeader
-			pointsLeft={effectiveSkillPointsLeft}
-			disabled={headerDisabled}
-			onRefund={refund}
-			onPointsLeftChange={setPointsLeft}
+			pointsLeft={skillPointsLeft}
+			disabled={!hasClassSkills}
+			onRefund={() => {
+				refundAllSkillPointsInSave(save);
+			}}
+			onPointsLeftChange={(value) => {
+				setRawModePointsLeft(save, isGameRulesMode, value);
+			}}
 		/>
 	{/if}
-	{#if isGameRulesMode && effectiveDerivedValuesError.length > 0}
+	{#if isGameRulesMode && gameRulesError.length > 0}
 		<div
 			class="rounded-sm border border-halbu-warning bg-halbu-warningSoft px-2 py-1.5 text-sm text-halbu-warning"
 		>
-			{effectiveDerivedValuesError}
+			{gameRulesError}
 		</div>
 	{/if}
 
@@ -255,9 +222,14 @@
 					{#if pageIndexes.length > 1}
 						<div class="mb-1.5 flex justify-center">
 							<Tabs
-								tabs={pageIndexes.map((i) => ({ value: i, label: pageTitle(i) }))}
+								tabs={pageIndexes.map((pageIndex) => ({
+									value: pageIndex,
+									label: skillPageNames[pageIndex] ?? `Skill Page ${pageIndex + 1}`,
+								}))}
 								active={activePageIndex}
-								onSelect={selectSkillPage}
+								onSelect={(pageIndex) => {
+									activePageIndex = pageIndex;
+								}}
 							/>
 						</div>
 					{/if}
@@ -267,9 +239,15 @@
 							skills={activePageSkills}
 							{skillStatesById}
 							{selectedSkillId}
-							onSelect={selectSkill}
-							onIncrement={incrementSkill}
-							onDecrement={decrementSkill}
+							onSelect={(skillId) => {
+								selectedSkillId = skillId;
+							}}
+							onIncrement={(skillId) => {
+								handleSkillPointChange(skillId, 1);
+							}}
+							onDecrement={(skillId) => {
+								handleSkillPointChange(skillId, -1);
+							}}
 						/>
 					{/if}
 				</section>
@@ -285,9 +263,9 @@
 		<div class="min-w-0 xl:max-w-xl">
 			<SkillsInspector
 				skillDetails={selectedSkillDetails}
-				disabled={inspectorDisabled}
-				canIncrement={selectedCanIncrement}
-				canDecrement={selectedCanDecrement}
+				disabled={!canRenderTrees}
+				canIncrement={selectedSkillState?.canIncrement ?? false}
+				canDecrement={selectedSkillState?.canDecrement ?? false}
 				onIncrement={incrementSelectedSkill}
 				onDecrement={decrementSelectedSkill}
 				onSetPoints={setSelectedSkillPoints}

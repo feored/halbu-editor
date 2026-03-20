@@ -1,10 +1,10 @@
-import { clampByte } from "$lib/utils/numbers";
+import { clampInteger } from "$lib/utils/numbers";
 import type { SkillSlot } from "$lib/types/editor";
 
 export const DEFAULT_SKILL_SLOT_COUNT = 30;
 
 export function clampSkillPoints(value: number): number {
-	return clampByte(value);
+	return clampInteger(value, 0, 255);
 }
 
 export function createEmptySkillSlots(slotCount = DEFAULT_SKILL_SLOT_COUNT): SkillSlot[] {

@@ -1,6 +1,7 @@
-import skillPagesByClass from "$lib/editor/skills/skillsPages.json";
-import skillsDataV99 from "../../../static/data/generated/skills/v99/skills_complete.json";
-import skillsDataV105 from "../../../static/data/generated/skills/v105/skills_complete.json";
+import skillPagesJson from "$lib/editor/skills/skillsPages.json";
+import skills99Json from "../../../static/data/generated/skills/v99/skills_complete.json";
+import skills105Json from "../../../static/data/generated/skills/v105/skills_complete.json";
+import type { SkillData } from "$lib/editor/skills/skillsTypes";
 import type {
 	EditorSave,
 	ExpansionType,
@@ -8,16 +9,13 @@ import type {
 	SaveFormatId,
 	SaveLayoutVersion,
 } from "$lib/types/editor";
-import type { SkillData } from "$lib/editor/skills/skillsTypes";
 
-type VersionCapabilities = {
-	classes: readonly { name: KnownClassName; requiredExpansion: ExpansionType }[];
-	skillsData: readonly SkillData[];
-	skillPages: Readonly<Record<string, readonly string[]>>;
-	expansionTypes: readonly ExpansionType[];
+type SupportedClass = {
+	name: KnownClassName;
+	requiredExpansion: ExpansionType;
 };
 
-const v99Classes = [
+const CLASSES_99: readonly SupportedClass[] = [
 	{ name: "Amazon", requiredExpansion: "Classic" },
 	{ name: "Assassin", requiredExpansion: "Expansion" },
 	{ name: "Barbarian", requiredExpansion: "Classic" },
@@ -25,171 +23,178 @@ const v99Classes = [
 	{ name: "Necromancer", requiredExpansion: "Classic" },
 	{ name: "Paladin", requiredExpansion: "Classic" },
 	{ name: "Sorceress", requiredExpansion: "Classic" },
-] satisfies ReadonlyArray<{ name: KnownClassName; requiredExpansion: ExpansionType }>;
+];
 
-const v105Classes = [
-	...v99Classes,
+const CLASSES_105: readonly SupportedClass[] = [
+	...CLASSES_99,
 	{ name: "Warlock", requiredExpansion: "RotW" },
-] satisfies ReadonlyArray<{ name: KnownClassName; requiredExpansion: ExpansionType }>;
+];
 
-const femaleClasses = new Set<KnownClassName>(["Amazon", "Assassin", "Sorceress"]);
-const expansionTypes = new Set<ExpansionType>(["Classic", "Expansion", "RotW"]);
-const skillIndexByVersionAndClass = new Map<string, Map<number, number>>();
+const SKILLS_99 = skills99Json as readonly SkillData[];
+const SKILLS_105 = skills105Json as readonly SkillData[];
 
-const versionCapabilities: Record<SaveLayoutVersion, VersionCapabilities> = {
-	99: {
-		classes: v99Classes,
-		skillsData: skillsDataV99 as readonly SkillData[],
-		skillPages: skillPagesByClass as Readonly<Record<string, readonly string[]>>,
-		expansionTypes: ["Classic", "Expansion"],
-	},
-	105: {
-		classes: v105Classes,
-		skillsData: skillsDataV105 as readonly SkillData[],
-		skillPages: {
-			...(skillPagesByClass as Readonly<Record<string, readonly string[]>>),
-			Warlock: ["Chaos", "Eldritch", "Demon"],
-		},
-		expansionTypes: ["Classic", "Expansion", "RotW"],
-	},
+const SKILL_PAGES_99 = skillPagesJson as Readonly<Record<string, readonly string[]>>;
+const SKILL_PAGES_105: Readonly<Record<string, readonly string[]>> = {
+	...SKILL_PAGES_99,
+	Warlock: ["Chaos", "Eldritch", "Demon"],
 };
 
-function getCapabilities(version: number): VersionCapabilities | null {
-	if (version !== 99 && version !== 105) {
-		return null;
-	}
-	return versionCapabilities[version];
-}
+const EXPANSION_TYPES = new Set<ExpansionType>(["Classic", "Expansion", "RotW"]);
+const FEMALE_CLASSES = new Set<KnownClassName>(["Amazon", "Assassin", "Sorceress"]);
+const saveIdsByVersionAndClass = new Map<string, Map<number, number>>();
 
-function getUnknownVariantPayload(value: unknown): number | null {
+function getUnknownPayload(value: unknown): number | null {
 	if (typeof value !== "string") {
 		return null;
 	}
+
 	const match = /^Unknown\((\d+)\)$/.exec(value);
 	return match == null ? null : Number(match[1]);
 }
 
-function getFallbackSkillPageNames(classSkills: readonly SkillData[]): string[] {
-	const pages = Array.from(new Set(classSkills.map((skill) => skill.page))).sort(
+function getClasses(version: number): readonly SupportedClass[] {
+	switch (version) {
+		case 99:
+			return CLASSES_99;
+		case 105:
+			return CLASSES_105;
+		default:
+			return [];
+	}
+}
+
+function getSkillPages(version: number): Readonly<Record<string, readonly string[]>> {
+	switch (version) {
+		case 99:
+			return SKILL_PAGES_99;
+		case 105:
+			return SKILL_PAGES_105;
+		default:
+			return {};
+	}
+}
+
+function getFallbackSkillPages(classSkills: readonly SkillData[]): string[] {
+	const pages = [...new Set(classSkills.map((skill) => skill.page))].sort(
 		(left, right) => left - right,
 	);
+
 	return pages.map((page) => `Skill Page ${page}`);
 }
 
-function buildSkillIndex(version: number, className: string): Map<number, number> | null {
+function getSkillIds(version: number, className: string): Map<number, number> | null {
 	const cacheKey = `${version}:${className}`;
-	const cachedIndex = skillIndexByVersionAndClass.get(cacheKey);
-	if (cachedIndex != null) {
-		return cachedIndex;
+	const cached = saveIdsByVersionAndClass.get(cacheKey);
+	if (cached != null) {
+		return cached;
 	}
 
-	const skillsData = getSkillsDataset(version);
-	if (skillsData == null) {
+	const skills = getSkillsDataset(version);
+	if (skills == null) {
 		return null;
 	}
 
-	const indexBySkillId = new Map<number, number>();
-	for (const skill of skillsData) {
+	const saveIds = new Map<number, number>();
+	for (const skill of skills) {
 		if (skill.class === className) {
-			indexBySkillId.set(skill.id, skill.saveId);
+			saveIds.set(skill.id, skill.saveId);
 		}
 	}
-	skillIndexByVersionAndClass.set(cacheKey, indexBySkillId);
-	return indexBySkillId;
+
+	saveIdsByVersionAndClass.set(cacheKey, saveIds);
+	return saveIds;
 }
 
 export function toExpansionType(value: unknown): ExpansionType {
-	if (typeof value !== "string" || !expansionTypes.has(value as ExpansionType)) {
+	if (typeof value !== "string" || !EXPANSION_TYPES.has(value as ExpansionType)) {
 		throw new Error(`Invalid expansion type label: ${String(value)}.`);
 	}
+
 	return value as ExpansionType;
 }
 
 export function getSaveFormatIdLabel(save: EditorSave): SaveFormatId {
-	const unknownPayload = getUnknownVariantPayload(save.metadata.formatId);
-	if (unknownPayload != null) {
-		return `Unknown(${unknownPayload})`;
-	}
-	return save.metadata.formatId;
+	const payload = getUnknownPayload(save.metadata.formatId);
+	return payload == null ? save.metadata.formatId : `Unknown(${payload})`;
 }
 
 export function getSaveEditionLabel(save: EditorSave): string {
-	if (save.metadata.formatId === "V99") {
-		return "D2R Legacy";
+	switch (save.metadata.formatId) {
+		case "V99":
+			return "D2R Legacy";
+		case "V105":
+			return "RotW";
+		default: {
+			const payload = getUnknownPayload(save.metadata.formatId);
+			return payload == null ? "unknown" : `unknown (${payload})`;
+		}
 	}
-	if (save.metadata.formatId === "V105") {
-		return "RotW";
-	}
-	const unknownPayload = getUnknownVariantPayload(save.metadata.formatId);
-	if (unknownPayload != null) {
-		return `unknown (${unknownPayload})`;
-	}
-	return "unknown";
 }
 
 export function isUnknownSaveFormat(save: EditorSave): boolean {
-	return getUnknownVariantPayload(save.metadata.formatId) != null;
-}
-
-export function getSupportedClasses(
-	version: number,
-): readonly { name: KnownClassName; requiredExpansion: ExpansionType }[] {
-	const capabilities = getCapabilities(version);
-	return capabilities == null ? [] : capabilities.classes;
+	return getUnknownPayload(save.metadata.formatId) != null;
 }
 
 export function getSupportedClassesForExpansionType(
 	version: number,
 	expansionType: ExpansionType,
-): readonly { name: KnownClassName; requiredExpansion: ExpansionType }[] {
-	const capabilities = getCapabilities(version);
-	if (capabilities == null) {
-		return [];
-	}
+): readonly SupportedClass[] {
+	const classes = getClasses(version);
+	const allowedExpansions =
+		expansionType === "Classic"
+			? ["Classic"]
+			: expansionType === "Expansion"
+				? ["Classic", "Expansion"]
+				: ["Classic", "Expansion", "RotW"];
 
-	let validExpansionTypes: readonly ExpansionType[] = ["Classic"];
-	if (expansionType === "Expansion") {
-		validExpansionTypes = ["Classic", "Expansion"];
-	}
-	if (expansionType === "RotW") {
-		validExpansionTypes = ["Classic", "Expansion", "RotW"];
-	}
-
-	return capabilities.classes.filter((classInfo) =>
-		validExpansionTypes.includes(classInfo.requiredExpansion),
+	return classes.filter((classInfo) =>
+		allowedExpansions.includes(classInfo.requiredExpansion),
 	);
 }
 
 export function getSupportedClassNames(version: number): readonly KnownClassName[] {
-	return getSupportedClasses(version).map((classInfo) => classInfo.name);
+	return getClasses(version).map((classInfo) => classInfo.name);
 }
 
 export function isClassSupportedForVersion(version: number, className: string): boolean {
-	return getSupportedClassNames(version).includes(className as KnownClassName);
+	return getClasses(version).some((classInfo) => classInfo.name === className);
 }
 
 export function getSupportedExpansionTypes(version: number): readonly ExpansionType[] {
-	const capabilities = getCapabilities(version);
-	return capabilities == null ? [] : capabilities.expansionTypes;
+	switch (version) {
+		case 99:
+			return ["Classic", "Expansion"];
+		case 105:
+			return ["Classic", "Expansion", "RotW"];
+		default:
+			return [];
+	}
 }
 
 export function getSupportedClass(version: number, className: string | null): KnownClassName | null {
-	const supportedClassNames = getSupportedClassNames(version);
-	if (supportedClassNames.length === 0) {
+	const classes = getClasses(version);
+	if (classes.length < 1) {
 		return null;
 	}
-	return supportedClassNames.includes(className as KnownClassName)
+
+	return classes.some((classInfo) => classInfo.name === className)
 		? (className as KnownClassName)
-		: supportedClassNames[0];
+		: classes[0].name;
 }
 
 export function getSkillsDataset(version: number): readonly SkillData[] | null {
-	const capabilities = getCapabilities(version);
-	return capabilities == null ? null : capabilities.skillsData;
+	switch (version) {
+		case 99:
+			return SKILLS_99;
+		case 105:
+			return SKILLS_105;
+		default:
+			return null;
+	}
 }
 
 export function isFemaleClass(className: string): boolean {
-	return femaleClasses.has(className as KnownClassName);
+	return FEMALE_CLASSES.has(className as KnownClassName);
 }
 
 export function getSkillPageNames(
@@ -197,21 +202,19 @@ export function getSkillPageNames(
 	className: string,
 	classSkills: readonly SkillData[] = [],
 ): readonly string[] {
-	const capabilities = getCapabilities(version);
-	if (capabilities == null) {
-		return getFallbackSkillPageNames(classSkills);
+	const pages = getSkillPages(version)[className];
+	if (pages != null && pages.length > 0) {
+		return pages;
 	}
-	const mappedPages = capabilities.skillPages[className];
-	if (mappedPages != null && mappedPages.length > 0) {
-		return mappedPages;
-	}
-	return getFallbackSkillPageNames(classSkills);
+
+	return getFallbackSkillPages(classSkills);
 }
 
 export function skillIdToSaveId(version: number, className: string, skillId: number): number {
-	const indexBySkillId = buildSkillIndex(version, className);
-	if (indexBySkillId == null) {
+	const saveIds = getSkillIds(version, className);
+	if (saveIds == null) {
 		return -1;
 	}
-	return indexBySkillId.get(skillId) ?? -1;
+
+	return saveIds.get(skillId) ?? -1;
 }

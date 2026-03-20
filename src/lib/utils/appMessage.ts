@@ -1,26 +1,22 @@
-import type { OpenedSessionData } from "$lib/editor/editorSession";
-
-const characterPicked = Symbol("Character Picked");
-const characterUnpicked = Symbol("Character Unpicked");
-const saveFile = Symbol("Save File");
+import type { OpenedSessionData } from "$lib/editor/session";
 
 export const Message = {
-	CharacterPicked: characterPicked,
-	CharacterUnpicked: characterUnpicked,
-	SaveFile: saveFile,
+	CharacterPicked: Symbol("CharacterPicked"),
+	CharacterUnpicked: Symbol("CharacterUnpicked"),
+	SaveFile: Symbol("SaveFile"),
 } as const;
 
 export type AppMessage =
 	| {
-		id: typeof characterPicked;
+		id: typeof Message.CharacterPicked;
 		data: OpenedSessionData;
 	}
 	| {
-		id: typeof characterUnpicked;
+		id: typeof Message.CharacterUnpicked;
 		data?: null;
 	}
 	| {
-		id: typeof saveFile;
+		id: typeof Message.SaveFile;
 		data?: null;
 	};
 
@@ -28,8 +24,5 @@ export function buildMessage<T extends AppMessage["id"]>(
 	id: T,
 	data: Extract<AppMessage, { id: T }>["data"],
 ): Extract<AppMessage, { id: T }> {
-	return {
-		id,
-		data,
-	} as Extract<AppMessage, { id: T }>;
+	return { id, data } as Extract<AppMessage, { id: T }>;
 }

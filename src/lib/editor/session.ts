@@ -2,10 +2,12 @@ import type { EditorMode, EditorSave, GameEdition, SaveLayoutVersion } from "$li
 
 import type {
 	BackendEditorSave,
+	BackendOpenSaveResult,
 	CompatibilityIssue,
 	ParseIssue,
 	ValidationReport,
 } from "$lib/types/backend";
+import { toEditorSave } from "$lib/types/saveConverter";
 import { getSkillsDataset } from "$lib/utils/gameData";
 import { resizeSkillSlots } from "$lib/editor/skills/skillsSlots";
 
@@ -56,12 +58,31 @@ export type OpenedSessionData = {
 	parserLayoutVersion: SaveLayoutVersion | null;
 };
 
+export function toOpenedSessionData(
+	result: BackendOpenSaveResult,
+	sourcePath: string | null,
+): OpenedSessionData {
+	return {
+		save: toEditorSave(result.save),
+		sourceBackendSave: structuredClone(result.save),
+		parseIssueCount: result.parse_issue_count,
+		parseIssues: result.parse_issues,
+		headerChecksum: result.header_checksum,
+		computedChecksum: result.computed_checksum,
+		sourceFileSize: result.source_file_size,
+		sourcePath,
+		editionHint: result.edition_hint,
+		suggestedTargetVersion: result.suggested_target_version,
+		parserLayoutVersion: result.parser_layout_version,
+	};
+}
+
 function deriveClassSkillSlotCount(
 	save: EditorSave,
 	parserLayoutVersion: SaveLayoutVersion | null,
 ): number {
-	const effectiveVersion = parserLayoutVersion == null ? save.version : parserLayoutVersion;
-	const skillsDataset = getSkillsDataset(effectiveVersion);
+	const version = parserLayoutVersion == null ? save.version : parserLayoutVersion;
+	const skillsDataset = getSkillsDataset(version);
 	if (skillsDataset == null) {
 		return save.skills.length;
 	}

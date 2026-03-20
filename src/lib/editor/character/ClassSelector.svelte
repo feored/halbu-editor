@@ -4,9 +4,9 @@
 	import { editorState } from "$lib/editor/editorState.svelte";
 	import { getErrorMessage } from "$lib/utils/errorMessage";
 	import { getSupportedClass, getSupportedClassNames } from "$lib/utils/gameData";
-	import { setCharacterClass } from "$lib/editor/character/characterActions";
+	import { setClass } from "$lib/editor/character/character";
 	import { resizeSkillSlots } from "$lib/editor/skills/skillsSlots";
-	import { toEditorSave } from "$lib/types/converters";
+	import { toEditorSave } from "$lib/types/saveConverter";
 	import type { BackendEditorSave } from "$lib/types/backend";
 	import type { ClassName } from "$lib/types/editor";
 
@@ -36,7 +36,7 @@
 			});
 
 			const templateSave = toEditorSave(response);
-			setCharacterClass(save, nextClassName as ClassName);
+			setClass(save, nextClassName as ClassName);
 
 			const slotCount = Math.max(templateSave.skills.length, save.skills.length);
 			save.skills = resizeSkillSlots(templateSave.skills, slotCount);

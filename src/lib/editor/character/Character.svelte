@@ -10,18 +10,29 @@
 	} from "$lib/editor/editorMetadata";
 
 	import experienceTable from "$lib/editor/character/experience.json";
-	import { formatMapSeedValue, parseMapSeedInput } from "$lib/editor/character/characterLogic";
 	import {
-		getCharacterDerivedState,
-		setCharacterExperience,
-		setCharacterLevel,
-		setClampedAttributeValue,
+		MAX_EXPERIENCE,
+		MAX_MAP_SEED,
+		formatMapSeedValue,
+		parseMapSeedInput,
+	} from "$lib/editor/character/characterLogic";
+	import {
+		getCharacterState,
+		MAX_GOLD_PER_LEVEL,
+		setExperience,
+		setLevel,
+		setAttributeValue,
 		setDifficultyBeaten,
-		setExpansionType,
+		setExpansion,
 		setMapSeed,
-		syncInventoryGoldToLevel,
+		MAX_GOLD,
+		clampInventoryGold,
 		type DifficultyBeaten,
-	} from "$lib/editor/character/characterActions";
+	} from "$lib/editor/character/character";
+	import {
+		applyGameRulesValues,
+		getGameRules,
+	} from "$lib/editor/character/gameRules";
 	import {
 		cancelFieldEdit,
 		finishFieldEdit,
@@ -41,32 +52,12 @@
 	const session = $derived(editorState.session!);
 	const save = $derived(session.save);
 	const mode = $derived(session.mode);
-	const effectiveDerivedValues = $derived(editorState.gameRulesValues.values);
-	const effectiveDerivedValuesError = $derived(editorState.gameRulesValues.error);
+	const gameRulesError = $derived(editorState.gameRules.error);
 	const layoutVersion = $derived(editorState.layoutVersion);
 
-	const MAX_GOLD_PER_LEVEL = 10000;
-	const MAX_XP = 3520485254;
-	const MAP_SEED_MAX = 0xffffffff;
 	const QUICK_ADJUST_STEP = 5;
 
-	type PointsAttributeId = "statpts" | "newskills";
-
 	type DifficultyOption = DifficultyBeaten | "None";
-
-	const pointFields: ReadonlyArray<{
-		id: PointsAttributeId;
-		inputId: string;
-	}> = [
-		{
-			id: "statpts",
-			inputId: "statPointsLeft",
-		},
-		{
-			id: "newskills",
-			inputId: "skillPointsLeft",
-		},
-	];
 
 	const difficultyBeatenOptions: ReadonlyArray<DifficultyOption> = [
 		"None",
@@ -85,16 +76,15 @@
 	let mapSeedEdit = $state(initFieldEdit(""));
 
 	const isGameRulesMode = $derived(mode === "game-rules");
-	const effectiveVersion = $derived(layoutVersion == null ? save.version : layoutVersion);
-	const editingVersion = $derived(editorState.targetVersion ?? effectiveVersion);
+	const editingVersion = $derived(editorState.targetVersion ?? layoutVersion ?? save.version);
 	const mapSeedDisplayValue = $derived(
 		formatMapSeedValue(save.character.mapSeed, mapSeedDisplayMode),
 	);
-	const characterDerivedState = $derived(getCharacterDerivedState(save));
-	const difficultyBeaten = $derived(characterDerivedState.difficultyBeaten);
-	const title = $derived(characterDerivedState.title);
+	const characterState = $derived(getCharacterState(save));
+	const difficultyBeaten = $derived(characterState.difficultyBeaten);
+	const title = $derived(characterState.title);
 	const supportedExpansionTypes = $derived(getSupportedExpansionTypes(editingVersion));
-	let showPointsGameRulesHelp = $state(false);
+	let showPointsHelp = $state(false);
 
 	const classSupportWarning = $derived.by(() => {
 		if (!isClassSupportedForVersion(editingVersion, save.character.className)) {
@@ -110,7 +100,7 @@
 		}
 
 		if (!supportedExpansionTypes.includes(save.expansionType)) {
-			setExpansionType(save, supportedExpansionTypes[0]);
+			setExpansion(save, supportedExpansionTypes[0]);
 		}
 	});
 
@@ -122,7 +112,14 @@
 			return;
 		}
 
-		setCharacterLevel(save, parsedValue, experienceTable);
+		setLevel(save, parsedValue, experienceTable);
+		if (isGameRulesMode) {
+			const values = getGameRules(
+				save,
+				session.gameRulesBaselineSave ?? null,
+			).values;
+			applyGameRulesValues(save, values);
+		}
 		finishFieldEdit(levelEdit);
 		syncFieldFromValue(levelEdit, String(save.attributes.level.value));
 		syncFieldFromValue(experienceEdit, String(save.attributes.experience.value));
@@ -151,7 +148,14 @@
 			return;
 		}
 
-		setCharacterExperience(save, parsedValue, experienceTable, MAX_XP);
+		setExperience(save, parsedValue, experienceTable, MAX_EXPERIENCE);
+		if (isGameRulesMode) {
+			const values = getGameRules(
+				save,
+				session.gameRulesBaselineSave ?? null,
+			).values;
+			applyGameRulesValues(save, values);
+		}
 		finishFieldEdit(experienceEdit);
 		syncFieldFromValue(experienceEdit, String(save.attributes.experience.value));
 		syncFieldFromValue(levelEdit, String(save.attributes.level.value));
@@ -172,7 +176,7 @@
 		}
 	}
 
-	function canAdjustPointsField(attributeId: PointsAttributeId, delta: number): boolean {
+	function canAdjustPointsField(attributeId: "statpts" | "newskills", delta: number): boolean {
 		if (isGameRulesMode) {
 			return false;
 		}
@@ -184,12 +188,12 @@
 		return clampInteger(nextValue, 0, maxValue) !== attribute.value;
 	}
 
-	function adjustPointsField(attributeId: PointsAttributeId, delta: number): void {
+	function adjustPointsField(attributeId: "statpts" | "newskills", delta: number): void {
 		if (isGameRulesMode) {
 			return;
 		}
 
-		setClampedAttributeValue(save, attributeId, save.attributes[attributeId].value + delta);
+		setAttributeValue(save, attributeId, save.attributes[attributeId].value + delta);
 	}
 
 	function reportInputValidity(input: HTMLInputElement | null, message: string): void {
@@ -224,7 +228,7 @@
 	}
 
 	function finishMapSeedEdit(): void {
-		const parsedValue = parseMapSeedInput(mapSeedEdit.input, MAP_SEED_MAX);
+		const parsedValue = parseMapSeedInput(mapSeedEdit.input, MAX_MAP_SEED);
 		if (parsedValue == null) {
 			const error = "Use decimal digits or 0x-prefixed hex.";
 			setFieldError(mapSeedEdit, error);
@@ -270,12 +274,12 @@
 	});
 
 	$effect(() => {
-		syncInventoryGoldToLevel(save, MAX_GOLD_PER_LEVEL);
+		clampInventoryGold(save, MAX_GOLD_PER_LEVEL);
 	});
 
 	$effect(() => {
 		if (!isGameRulesMode) {
-			showPointsGameRulesHelp = false;
+			showPointsHelp = false;
 		}
 	});
 </script>
@@ -312,7 +316,7 @@
 						id="expansionType"
 						name="expansionType"
 						value={save.expansionType}
-						onchange={(event) => setExpansionType(save, event.currentTarget.value)}
+						onchange={(event) => setExpansion(save, event.currentTarget.value)}
 					>
 						{#each supportedExpansionTypes as expansionType}
 							<option value={expansionType}
@@ -443,7 +447,7 @@
 							id="experience"
 							autocomplete="off"
 							min="0"
-							max={MAX_XP}
+					max={MAX_EXPERIENCE}
 							step="1"
 							use:enforceMinMax
 							value={experienceEdit.input}
@@ -518,7 +522,7 @@
 					id="goldStash"
 					autocomplete="off"
 					min="0"
-					max="2500000"
+					max={MAX_GOLD}
 					step="1"
 					bind:value={save.attributes.goldbank.value}
 				/>
@@ -597,94 +601,143 @@
 					<button
 						type="button"
 						class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-halbu-borderStrong bg-halbu-panel2 text-2xs font-semibold leading-none text-halbu-textMuted transition hover:bg-halbu-primarySoft hover:text-halbu-text"
-						aria-label={showPointsGameRulesHelp
+						aria-label={showPointsHelp
 							? "Hide game rules explanation"
 							: "Show game rules explanation"}
-						aria-expanded={showPointsGameRulesHelp}
+						aria-expanded={showPointsHelp}
 						onclick={() => {
-							showPointsGameRulesHelp = !showPointsGameRulesHelp;
+							showPointsHelp = !showPointsHelp;
 						}}
 					>
 						?
 					</button>
 				{/if}
 			</div>
-			{#if isGameRulesMode && showPointsGameRulesHelp}
+			{#if isGameRulesMode && showPointsHelp}
 				<div class="form-text mb-1 mt-0.5">
 					Game rules mode: points are recalculated from level, attributes, skills, and
 					completed quests.
 				</div>
 			{/if}
 
-			{#if isGameRulesMode && effectiveDerivedValuesError.length > 0}
-				<div class="form-text mb-1 text-halbu-warning">{effectiveDerivedValuesError}</div>
+			{#if isGameRulesMode && gameRulesError.length > 0}
+				<div class="form-text mb-1 text-halbu-warning">{gameRulesError}</div>
 			{/if}
 
 			<div class="grid gap-y-1">
-				{#each pointFields as field}
-					<div class="grid grid-cols-form-28 items-center gap-x-2.5">
-						<label class="form-label mb-0" for={field.inputId}
-							>{getAttributeLabel(field.id)}</label
+				<div class="grid grid-cols-form-28 items-center gap-x-2.5">
+					<label class="form-label mb-0" for="statPointsLeft">{getAttributeLabel("statpts")}</label>
+
+					<div class="flex items-center gap-1">
+						<button
+							type="button"
+							class="h-8 min-w-9 rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-1 text-xs font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
+							onclick={() => adjustPointsField("statpts", -QUICK_ADJUST_STEP)}
+							disabled={!canAdjustPointsField("statpts", -QUICK_ADJUST_STEP)}
+							aria-label={`Decrease ${getAttributeLabel("statpts").toLowerCase()} by ${QUICK_ADJUST_STEP}`}
 						>
+							-{QUICK_ADJUST_STEP}
+						</button>
 
-						<div class="flex items-center gap-1">
-							<button
-								type="button"
-								class="h-8 min-w-9 rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-1 text-xs font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
-								onclick={() => adjustPointsField(field.id, -QUICK_ADJUST_STEP)}
-								disabled={!canAdjustPointsField(field.id, -QUICK_ADJUST_STEP)}
-								aria-label={`Decrease ${getAttributeLabel(field.id).toLowerCase()} by ${QUICK_ADJUST_STEP}`}
-							>
-								-{QUICK_ADJUST_STEP}
-							</button>
-
-							{#if isGameRulesMode}
-								<input
-									class="form-control form-control-readonly max-w-20 text-center"
-									type="number"
-									name={field.inputId}
-									id={field.inputId}
-									autocomplete="off"
-									value={isGameRulesMode && effectiveDerivedValues != null
-										? effectiveDerivedValues[field.id]
-										: save.attributes[field.id].value}
-									readonly
-								/>
-							{:else}
-								<input
-									class="form-control max-w-20 text-center"
-									use:enforceMinMax
-									type="number"
-									name={field.inputId}
-									id={field.inputId}
-									autocomplete="off"
-									min="0"
-									max={getMaxValueForBitLength(
-										save.attributes[field.id].bitLength,
+						{#if isGameRulesMode}
+							<input
+								class="form-control form-control-readonly max-w-20 text-center"
+								type="number"
+								name="statPointsLeft"
+								id="statPointsLeft"
+								autocomplete="off"
+								value={save.attributes.statpts.value}
+								readonly
+							/>
+						{:else}
+							<input
+								class="form-control max-w-20 text-center"
+								use:enforceMinMax
+								type="number"
+								name="statPointsLeft"
+								id="statPointsLeft"
+								autocomplete="off"
+								min="0"
+								max={getMaxValueForBitLength(save.attributes.statpts.bitLength)}
+								step="1"
+								bind:value={save.attributes.statpts.value}
+								onchange={(event) =>
+									setAttributeValue(
+										save,
+										"statpts",
+										Number(event.currentTarget.value),
 									)}
-									step="1"
-									bind:value={save.attributes[field.id].value}
-									onchange={(event) =>
-										setClampedAttributeValue(
-											save,
-											field.id,
-											Number(event.currentTarget.value),
-										)}
-								/>
-							{/if}
+							/>
+						{/if}
 
-							<button
-								type="button"
-								class="h-8 min-w-9 rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-1 text-xs font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
-								onclick={() => adjustPointsField(field.id, QUICK_ADJUST_STEP)}
-								disabled={!canAdjustPointsField(field.id, QUICK_ADJUST_STEP)}
-								aria-label={`Increase ${getAttributeLabel(field.id).toLowerCase()} by ${QUICK_ADJUST_STEP}`}
-							>
-								+{QUICK_ADJUST_STEP}
-							</button>
-						</div>
+						<button
+							type="button"
+							class="h-8 min-w-9 rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-1 text-xs font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
+							onclick={() => adjustPointsField("statpts", QUICK_ADJUST_STEP)}
+							disabled={!canAdjustPointsField("statpts", QUICK_ADJUST_STEP)}
+							aria-label={`Increase ${getAttributeLabel("statpts").toLowerCase()} by ${QUICK_ADJUST_STEP}`}
+						>
+							+{QUICK_ADJUST_STEP}
+						</button>
 					</div>
-				{/each}
+				</div>
+
+				<div class="grid grid-cols-form-28 items-center gap-x-2.5">
+					<label class="form-label mb-0" for="skillPointsLeft">{getAttributeLabel("newskills")}</label>
+
+					<div class="flex items-center gap-1">
+						<button
+							type="button"
+							class="h-8 min-w-9 rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-1 text-xs font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
+							onclick={() => adjustPointsField("newskills", -QUICK_ADJUST_STEP)}
+							disabled={!canAdjustPointsField("newskills", -QUICK_ADJUST_STEP)}
+							aria-label={`Decrease ${getAttributeLabel("newskills").toLowerCase()} by ${QUICK_ADJUST_STEP}`}
+						>
+							-{QUICK_ADJUST_STEP}
+						</button>
+
+						{#if isGameRulesMode}
+							<input
+								class="form-control form-control-readonly max-w-20 text-center"
+								type="number"
+								name="skillPointsLeft"
+								id="skillPointsLeft"
+								autocomplete="off"
+								value={save.attributes.newskills.value}
+								readonly
+							/>
+						{:else}
+							<input
+								class="form-control max-w-20 text-center"
+								use:enforceMinMax
+								type="number"
+								name="skillPointsLeft"
+								id="skillPointsLeft"
+								autocomplete="off"
+								min="0"
+								max={getMaxValueForBitLength(save.attributes.newskills.bitLength)}
+								step="1"
+								bind:value={save.attributes.newskills.value}
+								onchange={(event) =>
+									setAttributeValue(
+										save,
+										"newskills",
+										Number(event.currentTarget.value),
+									)}
+							/>
+						{/if}
+
+						<button
+							type="button"
+							class="h-8 min-w-9 rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-1 text-xs font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
+							onclick={() => adjustPointsField("newskills", QUICK_ADJUST_STEP)}
+							disabled={!canAdjustPointsField("newskills", QUICK_ADJUST_STEP)}
+							aria-label={`Increase ${getAttributeLabel("newskills").toLowerCase()} by ${QUICK_ADJUST_STEP}`}
+						>
+							+{QUICK_ADJUST_STEP}
+						</button>
+					</div>
+				</div>
 			</div>
 		</section>
 
