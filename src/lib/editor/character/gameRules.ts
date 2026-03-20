@@ -383,9 +383,13 @@ export function getGameRulesValues(
 	baselineSave: EditorSave | null = null,
 ): GameRulesValues {
 	const stats = requireCharstats(save.character.className);
-	const attributes = structuredClone(
-		baselineSave == null ? save.attributes : baselineSave.attributes,
-	);
+	const sourceAttributes = baselineSave == null ? save.attributes : baselineSave.attributes;
+	const attributes = Object.fromEntries(
+		Object.entries(sourceAttributes).map(([attributeId, attribute]) => [
+			attributeId,
+			{ ...attribute },
+		]),
+	) as AttributeMap;
 
 	if (baselineSave == null) {
 		applyBaseValues(save, stats, attributes);
