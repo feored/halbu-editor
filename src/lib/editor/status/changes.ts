@@ -2,6 +2,7 @@ import { getAttributeLabel } from "$lib/editor/editorMetadata";
 import namesJson from "$lib/editor/mercenary/names.json";
 import variantsJson from "$lib/editor/mercenary/variants.json";
 import { ACTS, getQuestFlagLabel, type QuestDisplay } from "$lib/editor/quests/quests";
+import { getCharacterState } from "$lib/editor/character/character";
 import { WAYPOINT_NAMES } from "$lib/editor/waypoints/waypoints";
 import {
 	ACT_NAMES,
@@ -205,6 +206,10 @@ function formatProgressLabel(
 	return `${difficulty} / ${actLabelsById[act] ?? act} / ${entryLabel}`;
 }
 
+function formatProgression(save: EditorSave): string {
+	return `${getCharacterState(save).difficultyBeaten} (${save.character.progression})`;
+}
+
 function sameList<T>(left: readonly T[], right: readonly T[]): boolean {
 	if (left.length !== right.length) {
 		return false;
@@ -326,7 +331,12 @@ function getCharacterChanges(beforeSave: EditorSave, afterSave: EditorSave): Cha
 	);
 	pushChange(changes, "Map Seed", before.mapSeed, after.mapSeed);
 	pushChange(changes, "Last Played", before.lastPlayed, after.lastPlayed);
-	pushChange(changes, "Progression", before.progression, after.progression);
+	pushFormattedChange(
+		changes,
+		"Difficulty beaten",
+		formatProgression(beforeSave),
+		formatProgression(afterSave),
+	);
 	pushChange(changes, "Hardcore", before.status.hardcore, after.status.hardcore);
 	pushChange(changes, "Ladder", before.status.ladder, after.status.ladder);
 	pushChange(changes, "Died", before.status.died, after.status.died);

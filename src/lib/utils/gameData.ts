@@ -171,17 +171,6 @@ export function getSupportedExpansionTypes(version: number): readonly ExpansionT
 	}
 }
 
-export function getSupportedClass(version: number, className: string | null): KnownClassName | null {
-	const classes = getClasses(version);
-	if (classes.length < 1) {
-		return null;
-	}
-
-	return classes.some((classInfo) => classInfo.name === className)
-		? (className as KnownClassName)
-		: classes[0].name;
-}
-
 export function getSkillsDataset(version: number): readonly SkillData[] | null {
 	switch (version) {
 		case 99:

@@ -4,6 +4,7 @@ import { message } from "@tauri-apps/plugin-dialog";
 import { isUnknownSaveFormat } from "$lib/utils/gameData";
 import { getErrorMessage } from "$lib/utils/errorMessage";
 import { toBackendSave } from "$lib/types/saveConverter";
+import { getValidationMessage } from "$lib/editor/save/validation";
 
 import {
 	createOpenEditorSession,
@@ -50,7 +51,7 @@ type SaveDecision =
 			targetVersion: SaveLayoutVersion;
 			sourceLayoutVersion: SaveLayoutVersion | null;
 			saveAs: boolean;
-			forceConvert: boolean;
+			forceSave: boolean;
 	  };
 
 type SaveAnalysisResult = {
@@ -68,7 +69,7 @@ type EditorState = {
 	readonly isUnknownFormat: boolean;
 	readonly targetVersion: SaveLayoutVersion | null;
 	readonly needsTargetVersion: boolean;
-	readonly canForceConvert: boolean;
+	readonly canForceSave: boolean;
 	readonly isSaveBlocked: boolean;
 	readonly layoutVersion: SaveLayoutVersion | null;
 	readonly gameRules: {
@@ -81,7 +82,6 @@ type EditorState = {
 	restore: () => void;
 	setMode: (nextMode: EditorMode) => void;
 	setTargetVersion: (nextTargetVersion: SaveLayoutVersion | null) => void;
-	setAdvancedSaveOptionsEnabled: (enabled: boolean) => void;
 	save: (input?: SaveCharacterOptions) => Promise<SaveCharacterResult | null>;
 };
 
@@ -90,8 +90,8 @@ function getSaveDecision(
 	input: SaveCharacterOptions,
 	checkedTargetVersion: SaveLayoutVersion | null,
 ): SaveDecision {
-	const saveAs = input.saveAs === true || input.forceConvert === true;
-	const forceConvert = input.forceConvert === true;
+	const saveAs = input.saveAs === true || input.forceSave === true;
+	const forceSave = input.forceSave === true;
 	const targetVersion = getTargetVersion(session, input.targetVersion);
 	const isUnknownFormat = session.save.metadata.formatId.startsWith("Unknown(");
 	const sourceLayoutVersion = isUnknownFormat ? session.parserLayoutVersion : null;
@@ -119,7 +119,7 @@ function getSaveDecision(
 		};
 	}
 
-	if (session.validationError != null) {
+	if (session.validationError != null && !forceSave) {
 		return {
 			status: "blocked",
 			kind: "error",
@@ -129,8 +129,10 @@ function getSaveDecision(
 	}
 
 	const blockingValidationIssues = session.validationReport.issues.filter((issue) => issue.blocking);
-	if (blockingValidationIssues.length > 0) {
-		const details = blockingValidationIssues.map((issue) => `- ${issue.message}`).join("\n");
+	if (blockingValidationIssues.length > 0 && !forceSave) {
+		const details = blockingValidationIssues
+			.map((issue) => `- ${getValidationMessage(issue, session.save)}`)
+			.join("\n");
 		return {
 			status: "blocked",
 			kind: "warning",
@@ -139,7 +141,7 @@ function getSaveDecision(
 		};
 	}
 
-	if (session.compatibilityError != null) {
+	if (session.compatibilityError != null && !forceSave) {
 		return {
 			status: "blocked",
 			kind: "error",
@@ -148,7 +150,7 @@ function getSaveDecision(
 		};
 	}
 
-	if (!compatibilityCurrent) {
+	if (!compatibilityCurrent && !forceSave) {
 		return {
 			status: "blocked",
 			kind: "warning",
@@ -158,7 +160,7 @@ function getSaveDecision(
 	}
 
 	const blockingCompatibilityIssues = session.compatibilityIssues.filter((issue) => issue.blocking);
-	if (blockingCompatibilityIssues.length > 0 && !forceConvert) {
+	if (blockingCompatibilityIssues.length > 0 && !forceSave) {
 		const details = blockingCompatibilityIssues.map((issue) => `- ${issue.message}`).join("\n");
 		return {
 			status: "blocked",
@@ -168,7 +170,14 @@ function getSaveDecision(
 		};
 	}
 
-	if (forceConvert && blockingCompatibilityIssues.length === 0) {
+	if (
+		forceSave &&
+		session.validationError == null &&
+		blockingValidationIssues.length === 0 &&
+		session.compatibilityError == null &&
+		blockingCompatibilityIssues.length === 0 &&
+		compatibilityCurrent
+	) {
 		return {
 			status: "blocked",
 			kind: "info",
@@ -182,7 +191,7 @@ function getSaveDecision(
 		targetVersion,
 		sourceLayoutVersion,
 		saveAs,
-		forceConvert,
+		forceSave,
 	};
 }
 
@@ -309,16 +318,20 @@ function createEditorState(): EditorState {
 		return session.compatibilityIssues.some((issue) => issue.blocking);
 	});
 
-	const canForceConvert = $derived.by(() => {
+	const canForceSave = $derived.by(() => {
 		if (session == null) {
 			return false;
 		}
 
+		if (needsTargetVersion) {
+			return false;
+		}
+
 		return (
-			!hasBlockingValidationIssues &&
-			!needsTargetVersion &&
-			session.compatibilityResultsAreCurrent &&
-			hasBlockingCompatibilityIssues
+			hasBlockingValidationIssues ||
+			session.validationError != null ||
+			hasBlockingCompatibilityIssues ||
+			session.compatibilityError != null
 		);
 	});
 
@@ -421,14 +434,6 @@ function createEditorState(): EditorState {
 		session.targetVersion = nextTargetVersion;
 	}
 
-	function setAdvancedSaveOptionsEnabled(enabled: boolean): void {
-		if (session == null) {
-			return;
-		}
-
-		session.advancedSaveOptionsEnabled = enabled;
-	}
-
 	async function refreshSaveAnalysis(requestedTargetVersion?: SaveLayoutVersion | null): Promise<void> {
 		if (session == null) {
 			return;
@@ -521,7 +526,7 @@ function createEditorState(): EditorState {
 			const saveDecision = getSaveDecision(currentSession, input, checkedTargetVersion);
 			if (saveDecision.status === "blocked") {
 				await message(saveDecision.message, {
-					title: saveDecision.kind === "info" ? "Force save not needed" : "Save blocked",
+					title: saveDecision.kind === "info" ? "Save anyway not needed" : "Save blocked",
 					kind: saveDecision.kind,
 				});
 				if (saveDecision.throwAfterMessage) {
@@ -537,7 +542,7 @@ function createEditorState(): EditorState {
 				targetVersion: saveDecision.targetVersion,
 				sourcePath: currentSession.sourcePath,
 				saveAs: saveDecision.saveAs,
-				forceConvert: saveDecision.forceConvert,
+				forceSave: saveDecision.forceSave,
 			});
 
 			if (result == null || session !== currentSession) {
@@ -550,7 +555,7 @@ function createEditorState(): EditorState {
 			currentSession.sourceBackendSave = result.updatedBackendSave;
 			currentSession.sourcePath = result.filePath;
 			currentSession.baselineSave = $state.snapshot(currentSession.save);
-			currentSession.lastSaveUsedForceConversion = result.forceConvertUsed;
+			currentSession.lastSaveUsedForceSave = result.forceSaveUsed;
 			currentSession.saveRevision += 1;
 			return result;
 		} finally {
@@ -596,8 +601,8 @@ function createEditorState(): EditorState {
 		get needsTargetVersion() {
 			return needsTargetVersion;
 		},
-		get canForceConvert() {
-			return canForceConvert;
+		get canForceSave() {
+			return canForceSave;
 		},
 		get isSaveBlocked() {
 			return isSaveBlocked;
@@ -615,7 +620,6 @@ function createEditorState(): EditorState {
 		restore,
 		setMode,
 		setTargetVersion,
-		setAdvancedSaveOptionsEnabled,
 		save,
 	};
 }

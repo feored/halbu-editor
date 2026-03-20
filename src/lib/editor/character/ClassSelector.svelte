@@ -3,27 +3,27 @@
 
 	import { editorState } from "$lib/editor/editorState.svelte";
 	import { getErrorMessage } from "$lib/utils/errorMessage";
-	import { getSupportedClass, getSupportedClassNames } from "$lib/utils/gameData";
+	import { getSupportedClassNames } from "$lib/utils/gameData";
 	import { setClass } from "$lib/editor/character/character";
 	import { resizeSkillSlots } from "$lib/editor/skills/skillsSlots";
 	import { toEditorSave } from "$lib/types/saveConverter";
 	import type { BackendEditorSave } from "$lib/types/backend";
 	import type { ClassName } from "$lib/types/editor";
 
-	let {
-		editingVersion,
-		classSupportWarning,
-	}: { editingVersion: number; classSupportWarning: string } = $props();
+	let { editingVersion }: { editingVersion: number } = $props();
 
 	const session = $derived(editorState.session!);
 	const save = $derived(session.save);
 	const supportedClasses = $derived(getSupportedClassNames(editingVersion));
+	const classSupported = $derived(
+		supportedClasses.some((className) => className === save.character.className),
+	);
 
 	let classChangeError = $state("");
-	let selectedClass = $state<string | null>(null);
+	let selectedClass = $state("");
 
-	async function applyClassTemplate(nextClassName: string | null): Promise<void> {
-		if (nextClassName == null) {
+	async function applyClassTemplate(nextClassName: string): Promise<void> {
+		if (nextClassName === save.character.className) {
 			return;
 		}
 
@@ -42,48 +42,35 @@
 			save.skills = resizeSkillSlots(templateSave.skills, slotCount);
 		} catch (error) {
 			classChangeError = getErrorMessage(error, "Failed to apply class template.");
-			selectedClass = getSupportedClass(editingVersion, save.character.className);
+			selectedClass = save.character.className;
 		}
 	}
 
 	$effect(() => {
-		selectedClass = getSupportedClass(editingVersion, save.character.className);
+		selectedClass = save.character.className;
 	});
 </script>
 
 <div class="grid grid-cols-form-32 items-center gap-x-2.5">
 	<label class="form-label mb-0" for="class">Class</label>
 
-	{#if selectedClass != null}
-		<select
-			class="form-select"
-			bind:value={selectedClass}
-			name="class"
-			id="class"
-			onchange={() => applyClassTemplate(selectedClass)}
-		>
-			{#each supportedClasses as className}
-				<option value={className}>{className}</option>
-			{/each}
-		</select>
-	{:else}
-		<input
-			class="form-control"
-			type="text"
-			name="class"
-			id="class"
-			autocomplete="off"
-			value={save.character.className}
-			readonly
-		/>
-	{/if}
+	<select
+		class="form-select"
+		bind:value={selectedClass}
+		name="class"
+		id="class"
+		onchange={() => applyClassTemplate(selectedClass)}
+	>
+		{#if !classSupported}
+			<option value={save.character.className}>
+				{save.character.className} (unsupported for v{editingVersion})
+			</option>
+		{/if}
+		{#each supportedClasses as className}
+			<option value={className}>{className}</option>
+		{/each}
+	</select>
 </div>
-
-{#if classSupportWarning.length > 0}
-	<div class="form-text mt-1 text-halbu-warning sm:pl-32">
-		{classSupportWarning}
-	</div>
-{/if}
 
 {#if classChangeError.length > 0}
 	<div class="form-text mt-1 text-halbu-warning sm:pl-32">{classChangeError}</div>

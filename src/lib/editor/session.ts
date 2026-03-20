@@ -38,7 +38,7 @@ export type EditorSession = {
 	validationPending: boolean;
 	validationError: string | null;
 
-	lastSaveUsedForceConversion: boolean;
+	lastSaveUsedForceSave: boolean;
 	saveRevision: number;
 	mode: EditorMode;
 	advancedSaveOptionsEnabled: boolean;
@@ -145,7 +145,7 @@ export function createOpenEditorSession(openedSessionData: OpenedSessionData): E
 		validationPending: false,
 		validationError: null,
 
-		lastSaveUsedForceConversion: false,
+		lastSaveUsedForceSave: false,
 		saveRevision: 0,
 		mode: "raw",
 		advancedSaveOptionsEnabled: false,

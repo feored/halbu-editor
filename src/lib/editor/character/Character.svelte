@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enforceMinMax } from "$lib/utils/actions";
 	import { clampInteger, getMaxValueForBitLength } from "$lib/utils/numbers";
-	import { getSupportedExpansionTypes, isClassSupportedForVersion } from "$lib/utils/gameData";
+import { getSupportedExpansionTypes } from "$lib/utils/gameData";
 	import {
 		ACT_LABELS,
 		DIFFICULTY_LABELS,
@@ -84,25 +84,8 @@
 	const difficultyBeaten = $derived(characterState.difficultyBeaten);
 	const title = $derived(characterState.title);
 	const supportedExpansionTypes = $derived(getSupportedExpansionTypes(editingVersion));
+	const expansionSupported = $derived(supportedExpansionTypes.includes(save.expansionType));
 	let showPointsHelp = $state(false);
-
-	const classSupportWarning = $derived.by(() => {
-		if (!isClassSupportedForVersion(editingVersion, save.character.className)) {
-			return `Current class (${save.character.className}) is not recognized for editing version ${editingVersion}. Apply a supported class template to continue.`;
-		}
-
-		return "";
-	});
-
-	$effect(() => {
-		if (supportedExpansionTypes.length === 0) {
-			return;
-		}
-
-		if (!supportedExpansionTypes.includes(save.expansionType)) {
-			setExpansion(save, supportedExpansionTypes[0]);
-		}
-	});
 
 	function finishLevelEdit(): void {
 		const parsedValue = Number(levelEdit.input);
@@ -307,7 +290,7 @@
 					/>
 				</div>
 
-				<ClassSelector {editingVersion} {classSupportWarning} />
+				<ClassSelector {editingVersion} />
 
 				<div class="grid grid-cols-form-32 items-center gap-x-2.5">
 					<label class="form-label mb-0" for="expansionType">Expansion</label>
@@ -318,6 +301,11 @@
 						value={save.expansionType}
 						onchange={(event) => setExpansion(save, event.currentTarget.value)}
 					>
+						{#if !expansionSupported}
+							<option value={save.expansionType}>
+								{EXPANSION_TYPE_LABELS[save.expansionType]} (unsupported for v{editingVersion})
+							</option>
+						{/if}
 						{#each supportedExpansionTypes as expansionType}
 							<option value={expansionType}
 								>{EXPANSION_TYPE_LABELS[expansionType]}</option

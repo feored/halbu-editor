@@ -14,19 +14,19 @@ type SaveCharacterWriteParams = {
 	targetVersion: SaveLayoutVersion;
 	sourcePath: string | null;
 	saveAs: boolean;
-	forceConvert: boolean;
+	forceSave: boolean;
 };
 
 export type SaveCharacterResult = {
 	filePath: string;
-	forceConvertUsed: boolean;
+	forceSaveUsed: boolean;
 	updatedBackendSave: BackendEditorSave;
 };
 
 export type SaveCharacterOptions = {
 	targetVersion?: SaveLayoutVersion | null;
 	saveAs?: boolean;
-	forceConvert?: boolean;
+	forceSave?: boolean;
 };
 
 export async function saveCharacterFile(
@@ -66,7 +66,7 @@ export async function saveCharacterFile(
 			path: filePath,
 			save: backendSave,
 			targetVersion: params.targetVersion,
-			ignoreCompatibilityChecks: params.forceConvert,
+			ignoreCompatibilityChecks: params.forceSave,
 			backupSourcePath: params.saveAs ? filePath : (params.sourcePath ?? filePath),
 			backupConfig: {
 				enabled: getSetting(SettingKey.BackupsEnabled),
@@ -80,7 +80,7 @@ export async function saveCharacterFile(
 
 		return {
 			filePath,
-			forceConvertUsed: params.forceConvert,
+			forceSaveUsed: params.forceSave,
 			updatedBackendSave: backendSave,
 		};
 	} catch (error) {

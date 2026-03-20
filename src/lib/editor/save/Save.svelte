@@ -3,7 +3,8 @@
 	import { getErrorMessage } from "$lib/utils/errorMessage";
 	import { getChangeReview } from "$lib/editor/status/changes";
 	import SaveChangeReviewDialog from "$lib/editor/save/SaveChangeReviewDialog.svelte";
-	import SaveForceConvertDialog from "$lib/editor/save/SaveForceConvertDialog.svelte";
+	import SaveAnywayDialog from "$lib/editor/save/SaveAnywayDialog.svelte";
+	import { getValidationMessage } from "$lib/editor/save/validation";
 	import { editorState } from "$lib/editor/editorState.svelte";
 
 	import type { CompatibilityIssue } from "$lib/types/backend";
@@ -23,7 +24,6 @@
 	let saveInProgress = $state(false);
 	let reviewDialogOpen = $state(false);
 	let forceSaveDialogOpen = $state(false);
-	let advancedOpen = $state(false);
 
 	const validationIssues = $derived(session.validationReport.issues);
 	const blockingValidationIssues = $derived(validationIssues.filter((issue) => issue.blocking));
@@ -50,7 +50,7 @@
 			issues.push({
 				source: "Validation",
 				blocking: issue.blocking,
-				message: issue.message,
+				message: getValidationMessage(issue, save),
 			});
 		}
 
@@ -157,6 +157,7 @@
 			(validationError ?? "").length > 0 ||
 			(session.compatibilityError ?? "").length > 0
 		) {
+			if (editorState.canForceSave) return "Fix issues or use Save As Anyway.";
 			return "Fix issues before saving.";
 		}
 		if (editorState.isSaveBlocked) return "Saving is currently unavailable.";
@@ -189,6 +190,33 @@
 	const blockingIssueMessages = $derived(
 		blockingCompatibilityIssues.map((issue) => getCompatibilityMessage(issue)),
 	);
+	const hasForceSaveValidationIssues = $derived(
+		(validationError ?? "").length > 0 || hasBlockingValidationIssues,
+	);
+	const hasForceSaveCompatibilityIssues = $derived(
+		(session.compatibilityError ?? "").length > 0 || hasBlockingCompatibilityIssues,
+	);
+	const forceSaveIssues = $derived.by(() => {
+		const issues: string[] = [];
+
+		if ((validationError ?? "").length > 0) {
+			issues.push(`Validation check failed: ${validationError}`);
+		}
+
+		for (const issue of blockingValidationIssues) {
+			issues.push(getValidationMessage(issue, save));
+		}
+
+		if ((session.compatibilityError ?? "").length > 0) {
+			issues.push(`Compatibility check failed: ${session.compatibilityError}`);
+		}
+
+		for (const issue of blockingIssueMessages) {
+			issues.push(issue);
+		}
+
+		return issues;
+	});
 
 	async function saveNow(): Promise<void> {
 		statusError = "";
@@ -219,9 +247,9 @@
 		saveInProgress = true;
 		forceSaveDialogOpen = false;
 		try {
-			await editorState.save({ saveAs: true, forceConvert: true });
+			await editorState.save({ saveAs: true, forceSave: true });
 		} catch (error) {
-			statusError = getErrorMessage(error, "Failed to force-save.");
+			statusError = getErrorMessage(error, "Failed to save anyway.");
 		} finally {
 			saveInProgress = false;
 		}
@@ -236,10 +264,6 @@
 			statusError = getErrorMessage(error, "Failed to restore changes.");
 		}
 	}
-
-	$effect(() => {
-		advancedOpen = session.advancedSaveOptionsEnabled === true;
-	});
 </script>
 
 <div class="grid content-start gap-2.5">
@@ -275,9 +299,9 @@
 				Custom values may be replaced by recalculated values.
 			</div>
 		{/if}
-		{#if session.lastSaveUsedForceConversion}
+		{#if session.lastSaveUsedForceSave}
 			<div class="form-text mt-1 text-halbu-warning">
-				Last save used force conversion; compatibility checks were bypassed.
+				Last save used Save As Anyway; blocking checks were bypassed.
 			</div>
 		{/if}
 	</section>
@@ -386,24 +410,11 @@
 		{/if}
 	</section>
 
-	<details
-		bind:open={advancedOpen}
-		ontoggle={(event) => {
-			advancedOpen = (event.currentTarget as HTMLDetailsElement).open === true;
-			editorState.setAdvancedSaveOptionsEnabled(advancedOpen);
-		}}
-		class={`rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2 ${!isConverting && !advancedOpen ? "opacity-90" : ""}`}
-	>
-		<summary class="flex cursor-pointer list-none items-center justify-between gap-2">
-			<span class="inline-flex items-center gap-1.5">
-				<span aria-hidden="true" class="text-sm text-halbu-textMuted"
-					>{advancedOpen ? "v" : ">"}</span
-				>
-				<span
-					class={`editor-card-title ${!isConverting ? "text-halbu-textMuted" : ""}`}
-					>Conversion</span
-				>
-			</span>
+	<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
+		<div class="flex items-center justify-between gap-2">
+			<h3 class={`editor-card-title mb-0 ${!isConverting ? "text-halbu-textMuted" : ""}`}>
+				Conversion
+			</h3>
 			<span
 				class={`text-sm font-semibold ${
 					!isConverting ? "text-halbu-textMuted" : "text-halbu-text"
@@ -411,43 +422,35 @@
 			>
 				{conversionLabel}
 			</span>
-		</summary>
-		{#if advancedOpen}
-			{#if canChooseTargetFormat}
-				<div class="mt-1 grid grid-cols-form-48 items-center gap-x-2.5 gap-y-1">
-					<label class="form-label mb-0" for="save-target-format">Output format</label>
-					<select
-						id="save-target-format"
-						class="form-select"
-						value={session.targetVersion == null ? "" : session.targetVersion}
-						onchange={(event) => {
-							const nextVersion = Number((event.currentTarget as HTMLSelectElement).value);
-							if (nextVersion === 99 || nextVersion === 105) {
-								editorState.setTargetVersion(nextVersion);
-							}
-						}}
-					>
-						{#if editorState.needsTargetVersion}<option value=""
-								>Select target format...</option
-							>{/if}
-						{#each editorState.outputFormatOptions as format}
-							<option value={format.version}
-								>{format.formatId} (v{format.version}) - {format.gameEdition}</option
-							>
-						{/each}
-					</select>
-				</div>
-			{:else}
-				<div class="form-text mt-1">
-					No output format options are available for this save.
-				</div>
-			{/if}
-		{:else if !isConverting}
+		</div>
+		{#if canChooseTargetFormat}
+			<div class="mt-1 grid grid-cols-form-48 items-center gap-x-2.5 gap-y-1">
+				<label class="form-label mb-0" for="save-target-format">Output format</label>
+				<select
+					id="save-target-format"
+					class="form-select"
+					value={session.targetVersion == null ? "" : session.targetVersion}
+					onchange={(event) => {
+						const nextVersion = Number((event.currentTarget as HTMLSelectElement).value);
+						if (nextVersion === 99 || nextVersion === 105) {
+							editorState.setTargetVersion(nextVersion);
+						}
+					}}
+				>
+					{#if editorState.needsTargetVersion}<option value="">Select target format...</option>{/if}
+					{#each editorState.outputFormatOptions as format}
+						<option value={format.version}
+							>{format.formatId} (v{format.version}) - {format.gameEdition}</option
+						>
+					{/each}
+				</select>
+			</div>
+		{:else}
 			<div class="form-text mt-1">
-				No conversion is required. Expand to change target settings.
+				No output format options are available for this save.
 			</div>
 		{/if}
-	</details>
+	</section>
 
 	<section class="rounded-sm border border-halbu-borderStrong bg-halbu-panel2 px-2.5 py-2">
 		<h3 class="editor-card-title mb-1.5">Actions</h3>
@@ -468,15 +471,15 @@
 				onclick={saveAs}
 				disabled={editorState.isSaveBlocked || saveInProgress}>Save As...</Button
 			>
-			{#if editorState.canForceConvert}
+			{#if editorState.canForceSave}
 				<Button
 					variant="destructive"
 					onclick={() => {
-						if (editorState.canForceConvert && !saveInProgress) {
+						if (editorState.canForceSave && !saveInProgress) {
 							forceSaveDialogOpen = true;
 						}
 					}}
-					disabled={saveInProgress}>Force Save As...</Button
+					disabled={saveInProgress}>Save As Anyway...</Button
 				>
 			{/if}
 			<Button onclick={saveNow} disabled={editorState.isSaveBlocked || saveInProgress}
@@ -498,11 +501,13 @@
 	}}
 	onUndoAllChanges={undoAllChanges}
 />
-<SaveForceConvertDialog
+<SaveAnywayDialog
 	open={forceSaveDialogOpen}
 	targetVersion={targetVersion ?? currentVersion}
-	issues={blockingIssueMessages}
-	canForceSave={editorState.canForceConvert}
+	issues={forceSaveIssues}
+	hasValidationIssues={hasForceSaveValidationIssues}
+	hasCompatibilityIssues={hasForceSaveCompatibilityIssues}
+	canForceSave={editorState.canForceSave}
 	saving={saveInProgress}
 	onClose={() => {
 		forceSaveDialogOpen = false;
