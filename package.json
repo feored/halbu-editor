@@ -6,9 +6,10 @@
 	"scripts": {
 		"dev": "vite",
 		"build": "vite build",
+		"check:paths": "node scripts/check-import-case.mjs",
 		"typecheck": "tsc --noEmit -p ./tsconfig.json",
 		"test": "vitest run",
-		"check": "npm run typecheck && svelte-check --tsconfig ./tsconfig.json",
+		"check": "npm run check:paths && npm run typecheck && svelte-check --tsconfig ./tsconfig.json",
 		"preview": "vite preview",
 		"preprocess:skills": "python3 static/tools/preprocess/main.py --all",
 		"tauri": "tauri"
