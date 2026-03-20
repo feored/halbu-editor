@@ -431,7 +431,7 @@
 							id="experience"
 							autocomplete="off"
 							min="0"
-					max={MAX_EXPERIENCE}
+							max={MAX_EXPERIENCE}
 							step="1"
 							use:enforceMinMax
 							value={experienceEdit.input}

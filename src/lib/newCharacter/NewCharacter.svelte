@@ -242,14 +242,13 @@
 </script>
 
 <div class="container m-0">
-	<div class="grid content-start gap-2.5">
-		<p class="form-text m-0">
-			Choose a base character, optional template, and create directly into the standard editor
-			flow.
-		</p>
-
+	<div class="grid gap-2.5">
 		<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
 			<h3 class="editor-card-title mb-1.5">Character Basics</h3>
+			<p class="form-text m-0">
+				Choose a base character, optional template, and create directly into the standard editor
+				flow.
+			</p>
 
 			<div class="grid grid-cols-form-32 items-center gap-x-2.5 gap-y-1">
 				<label class="form-label mb-0" for="new-character-name">Name</label>
@@ -347,81 +346,89 @@
 			</div>
 		</section>
 
-		<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
-			<h3 class="editor-card-title mb-1.5">Template</h3>
-			<div class="grid gap-1.5">
-				{#each NEW_CHARACTER_TEMPLATE_OPTIONS as template}
-					<label
-						class={`grid grid-cols-[auto_minmax(0,1fr)] items-start gap-1.5 rounded-xs border px-2 py-1.5 text-sm ${
-							selectedTemplate === template.id
-								? "border-halbu-primary bg-halbu-panel2 text-halbu-text"
-								: "border-halbu-border bg-halbu-panel text-halbu-text"
-						}`}
-					>
-						<input
-							class="form-check-input mt-0"
-							type="radio"
-							name="new-character-template"
-							autocomplete="off"
-							value={template.id}
-							checked={selectedTemplate === template.id}
-							onchange={() => {
-								selectedTemplate = template.id;
-							}}
-						/>
-						<span class="min-w-0">
-							<span class="block font-medium leading-tight">{template.label}</span>
-							<span class="form-text m-0 leading-tight">{template.description}</span>
-						</span>
-					</label>
-				{/each}
-			</div>
-		</section>
+		<div class="divide-y divide-halbu-border">
+			<section class="grid gap-1.5 pb-3">
+				<h3 class="text-xs font-semibold uppercase tracking-[0.18em] text-halbu-textMuted">
+					Template
+				</h3>
+				<div class="grid gap-1.5">
+					{#each NEW_CHARACTER_TEMPLATE_OPTIONS as template}
+						<label
+							class={`grid grid-cols-[auto_minmax(0,1fr)] items-start gap-1.5 rounded-xs border px-2 py-1.5 text-sm ${
+								selectedTemplate === template.id
+									? "border-halbu-primary bg-halbu-panel2 text-halbu-text"
+									: "border-halbu-border bg-halbu-panel text-halbu-text"
+							}`}
+						>
+							<input
+								class="form-check-input mt-0"
+								type="radio"
+								name="new-character-template"
+								autocomplete="off"
+								value={template.id}
+								checked={selectedTemplate === template.id}
+								onchange={() => {
+									selectedTemplate = template.id;
+								}}
+							/>
+							<span class="min-w-0">
+								<span class="block font-medium leading-tight">{template.label}</span>
+								<span class="form-text m-0 leading-tight">{template.description}</span>
+							</span>
+						</label>
+					{/each}
+				</div>
+			</section>
 
-		<section class="rounded-sm border border-halbu-borderStrong bg-halbu-panel2 px-2.5 py-2">
-			<h3 class="editor-card-title mb-1.5">Save Location / Create</h3>
-			<div class="grid grid-cols-form-32 items-center gap-x-2.5 gap-y-1">
-				<span class="form-label mb-0">Suggested path</span>
-				<div
-					class="rounded-xs border border-halbu-border bg-halbu-panel px-2 py-1.5 font-mono text-sm text-halbu-text"
-				>
-					{#if savePath.length > 0}
-						{savePath}
-					{:else}
-						No configured save folder. Choose a path now or save later from the editor.
+			<section class="grid gap-1.5 pt-3">
+				<h3 class="text-xs font-semibold uppercase tracking-[0.18em] text-halbu-textMuted">
+					Save Location / Create
+				</h3>
+				<div class="rounded-xs border border-halbu-border bg-halbu-panel2 px-2.5 py-2">
+					<div class="grid grid-cols-form-32 items-center gap-x-2.5 gap-y-1">
+						<span class="form-label mb-0">Suggested path</span>
+						<div
+							class="rounded-xs border border-halbu-border bg-halbu-panel px-2 py-1.5 font-mono text-sm text-halbu-text"
+						>
+							{#if savePath.length > 0}
+								{savePath}
+							{:else}
+								No configured save folder. Choose a path now or save later from the editor.
+							{/if}
+						</div>
+					</div>
+					<div class="form-text mt-1">
+						Starting strength, dexterity, vitality, and energy come from charstats.txt for
+						the selected class.
+					</div>
+					<div class="mt-1 flex flex-wrap items-center gap-1.5">
+						<Button variant="secondary" onclick={chooseSavePath}>Choose Path...</Button>
+						{#if hasSelectedSavePath}
+							<Button
+								variant="secondary"
+								onclick={() => {
+									selectedSavePath = "";
+								}}
+							>
+								Use Suggested Path
+							</Button>
+						{/if}
+						<Button onclick={createCharacter} disabled={!canCreate}>
+							{createPending ? "Creating..." : "Create Character"}
+						</Button>
+					</div>
+					{#if blockedReason.length > 0}
+						<div class="form-text mt-1 text-halbu-warning">{blockedReason}</div>
+					{/if}
+					{#if pathError.length > 0}
+						<div class="form-text mt-1 text-halbu-danger">{pathError}</div>
+					{/if}
+					{#if createError.length > 0}
+						<div class="form-text mt-1 text-halbu-danger">{createError}</div>
 					{/if}
 				</div>
-			</div>
-			<div class="form-text mt-1">
-				Starting strength, dexterity, vitality, and energy come from charstats.txt for the
-				selected class.
-			</div>
-			<div class="mt-1 flex flex-wrap items-center gap-1.5">
-				<Button variant="secondary" onclick={chooseSavePath}>Choose Path...</Button>
-				{#if hasSelectedSavePath}
-					<Button
-						variant="secondary"
-						onclick={() => {
-							selectedSavePath = "";
-						}}
-					>
-						>Use Suggested Path
-					</Button>
-				{/if}
-				<Button onclick={createCharacter} disabled={!canCreate}>
-					{createPending ? "Creating..." : "Create Character"}
-				</Button>
-			</div>
-			{#if blockedReason.length > 0}
-				<div class="form-text mt-1 text-halbu-warning">{blockedReason}</div>
-			{/if}
-			{#if pathError.length > 0}
-				<div class="form-text mt-1 text-halbu-danger">{pathError}</div>
-			{/if}
-			{#if createError.length > 0}
-				<div class="form-text mt-1 text-halbu-danger">{createError}</div>
-			{/if}
-		</section>
+			</section>
+		</div>
 	</div>
 </div>
 

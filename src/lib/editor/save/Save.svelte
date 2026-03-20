@@ -79,9 +79,11 @@
 	}
 </script>
 
-<div class="grid content-start gap-2.5">
-	<section class="rounded-sm border border-halbu-borderStrong bg-halbu-panel2 px-2.5 py-2">
-		<h3 class="editor-card-title mb-1.5">Save Summary</h3>
+<div class="divide-y divide-halbu-border">
+	<section class="grid gap-1.5 pb-3">
+		<h3 class="text-xs font-semibold uppercase tracking-[0.18em] text-halbu-textMuted">
+			Save
+		</h3>
 		<dl class="m-0 grid grid-cols-form-48 items-baseline gap-x-2.5 gap-y-1">
 			<dt class="form-label mb-0">Save readiness</dt>
 			<dd class={`m-0 text-sm font-semibold ${toneClass[saveState.readiness.tone]}`}>
@@ -125,8 +127,10 @@
 		{/if}
 	</section>
 
-	<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
-		<h3 class="editor-card-title mb-1.5">Issues</h3>
+	<section class="grid gap-1.5 py-3">
+		<h3 class="text-xs font-semibold uppercase tracking-[0.18em] text-halbu-textMuted">
+			Issues
+		</h3>
 		<dl class="m-0 grid grid-cols-form-48 items-baseline gap-x-2.5 gap-y-1">
 			<dt class="form-label mb-0">Validation</dt>
 			<dd class={`m-0 text-sm font-semibold ${toneClass[saveState.validation.tone]}`}>
@@ -166,9 +170,7 @@
 			{/if}
 		{/if}
 		{#if saveState.issues.length > 0}
-			<div
-				class="mt-1 overflow-hidden rounded-xs border border-halbu-borderStrong bg-halbu-panel2"
-			>
+			<div class="mt-1 overflow-hidden rounded-xs border border-halbu-border bg-halbu-panel2">
 				<div
 					class="flex items-center justify-between border-b border-halbu-border bg-halbu-panel px-2 py-1"
 				>
@@ -216,9 +218,9 @@
 		{/if}
 	</section>
 
-	<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
+	<section class="grid gap-1.5 py-3">
 		<div class="flex items-center justify-between gap-2">
-			<h3 class={`editor-card-title mb-0 ${!saveState.isConverting ? "text-halbu-textMuted" : ""}`}>
+			<h3 class="text-xs font-semibold uppercase tracking-[0.18em] text-halbu-textMuted">
 				Conversion
 			</h3>
 			<span
@@ -258,8 +260,10 @@
 		{/if}
 	</section>
 
-	<section class="rounded-sm border border-halbu-borderStrong bg-halbu-panel2 px-2.5 py-2">
-		<h3 class="editor-card-title mb-1.5">Actions</h3>
+	<section class="grid gap-1.5 pt-3">
+		<h3 class="text-xs font-semibold uppercase tracking-[0.18em] text-halbu-textMuted">
+			Actions
+		</h3>
 		<div class="flex flex-wrap items-center gap-1.5">
 			<Button
 				variant="secondary"
