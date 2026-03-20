@@ -172,9 +172,7 @@
 
 <div class="divide-y divide-halbu-border">
 	<section class="pb-3">
-		<p class="mb-2 text-xs font-semibold uppercase tracking-wider text-halbu-textMuted">
-			File Information
-		</p>
+		<p class="editor-section-title mb-2">File Information</p>
 		<dl class="m-0 grid grid-cols-form-48 items-baseline gap-x-2.5 gap-y-1">
 			{#if isUnknownSaveFormat(save)}
 				<dt class="form-label mb-0">Detected version</dt>
@@ -255,9 +253,7 @@
 	</section>
 
 	<section class="py-3">
-		<p class="mb-2 text-xs font-semibold uppercase tracking-wider text-halbu-textMuted">
-			Parser Status
-		</p>
+		<p class="editor-section-title mb-2">Parser Status</p>
 		<dl class="m-0 grid grid-cols-form-48 items-baseline gap-x-2.5 gap-y-1">
 			<dt class="form-label mb-0">Parse mode</dt>
 			<dd class="m-0 text-sm text-halbu-text">
@@ -275,9 +271,7 @@
 	</section>
 
 	<section class="py-3">
-		<p class="mb-2 text-xs font-semibold uppercase tracking-wider text-halbu-textMuted">
-			Backups
-		</p>
+		<p class="editor-section-title mb-2">Backups</p>
 		<dl class="m-0 grid grid-cols-form-48 items-baseline gap-x-2.5 gap-y-1">
 			<dt class="form-label mb-0">Backups stored</dt>
 			<dd class="m-0 text-sm text-halbu-text">{backups.totalBackups}</dd>
@@ -304,9 +298,7 @@
 	</section>
 
 	<section class="pt-3">
-		<p class="mb-2 text-xs font-semibold uppercase tracking-wider text-halbu-textMuted">
-			Diagnostics
-		</p>
+		<p class="editor-section-title mb-2">Diagnostics</p>
 		{#if parseIssues.length > 0}
 			<div class="overflow-auto rounded-xs border border-halbu-border bg-halbu-panel2">
 				<table class="w-full border-collapse text-sm">

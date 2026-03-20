@@ -265,7 +265,7 @@
 
 <div class="grid grid-cols-1 content-start gap-2.5 xl:grid-cols-2">
 	<div class="grid content-start gap-2.5">
-		<section class="rounded-sm border border-halbu-borderStrong bg-halbu-panel2 px-2.5 py-2">
+		<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
 			<h3 class="editor-card-title mb-1.5">Identity</h3>
 
 			<div class="grid gap-1">
@@ -357,123 +357,104 @@
 			<h3 class="editor-card-title mb-1.5">Progression</h3>
 
 			<div
-				class="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:divide-x sm:divide-halbu-borderStrong"
+				class="grid grid-cols-form-32 items-center gap-x-2.5 gap-y-1 sm:grid-cols-[7.25rem_minmax(0,1fr)_5.75rem_minmax(0,1fr)] sm:gap-x-2"
 			>
-				<div class="grid gap-1 sm:pr-3">
-					<div class="grid grid-cols-form-24 items-center gap-x-2">
-						<label class="form-label mb-0" for="level">Level</label>
-						<input
-							class="form-control"
-							type="number"
-							name="level"
-							id="level"
-							autocomplete="off"
-							min="1"
-							max="99"
-							step="1"
-							use:enforceMinMax
-							value={levelEdit.input}
-							onfocus={() =>
-								startFieldEdit(levelEdit, String(save.attributes.level.value))}
-							oninput={(event) => setFieldInput(levelEdit, event.currentTarget.value)}
-							onblur={finishLevelEdit}
-							onkeydown={handleLevelKeydown}
-						/>
-					</div>
+				<label class="form-label mb-0" for="level">Level</label>
+				<input
+					class="form-control"
+					type="number"
+					name="level"
+					id="level"
+					autocomplete="off"
+					min="1"
+					max="99"
+					step="1"
+					use:enforceMinMax
+					value={levelEdit.input}
+					onfocus={() =>
+						startFieldEdit(levelEdit, String(save.attributes.level.value))}
+					oninput={(event) => setFieldInput(levelEdit, event.currentTarget.value)}
+					onblur={finishLevelEdit}
+					onkeydown={handleLevelKeydown}
+				/>
 
-					<div class="grid grid-cols-form-24 items-center gap-x-2">
-						<label class="form-label mb-0" for="currentAct">Act</label>
-						<select
-							class="form-select"
-							bind:value={save.character.act}
-							name="currentAct"
-							id="currentAct"
-						>
-							<option value="Act1">{ACT_LABELS.Act1}</option>
-							<option value="Act2">{ACT_LABELS.Act2}</option>
-							<option value="Act3">{ACT_LABELS.Act3}</option>
-							<option value="Act4">{ACT_LABELS.Act4}</option>
-							<option value="Act5">{ACT_LABELS.Act5}</option>
-						</select>
-					</div>
+				<label class="form-label mb-0" for="experience">Experience</label>
+				<input
+					class="form-control"
+					type="number"
+					name="experience"
+					id="experience"
+					autocomplete="off"
+					min="0"
+					max={MAX_EXPERIENCE}
+					step="1"
+					use:enforceMinMax
+					value={experienceEdit.input}
+					onfocus={() =>
+						startFieldEdit(
+							experienceEdit,
+							String(save.attributes.experience.value),
+						)}
+					oninput={(event) => setFieldInput(experienceEdit, event.currentTarget.value)}
+					onblur={finishExperienceEdit}
+					onkeydown={handleExperienceKeydown}
+				/>
 
-					<div class="grid grid-cols-form-24 items-center gap-x-2">
-						<label class="form-label mb-0" for="difficultyBeaten"
-							>Difficulty beaten</label
-						>
-						<select
-							class="form-select"
-							value={difficultyBeaten}
-							name="difficultyBeaten"
-							id="difficultyBeaten"
-							onchange={(event) =>
-								setDifficultyBeaten(
-									save,
-									event.currentTarget.value as DifficultyBeaten,
-								)}
-						>
-							{#each difficultyBeatenOptions as option}
-								<option value={option}>
-									{option === "None" ? "None" : DIFFICULTY_LABELS[option]}
-								</option>
-							{/each}
-						</select>
-					</div>
-				</div>
+				<label class="form-label mb-0" for="currentAct">Act</label>
+				<select
+					class="form-select"
+					bind:value={save.character.act}
+					name="currentAct"
+					id="currentAct"
+				>
+					<option value="Act1">{ACT_LABELS.Act1}</option>
+					<option value="Act2">{ACT_LABELS.Act2}</option>
+					<option value="Act3">{ACT_LABELS.Act3}</option>
+					<option value="Act4">{ACT_LABELS.Act4}</option>
+					<option value="Act5">{ACT_LABELS.Act5}</option>
+				</select>
 
-				<div class="grid gap-1 sm:pl-3">
-					<div class="grid grid-cols-form-24 items-center gap-x-2">
-						<label class="form-label mb-0" for="experience">Experience</label>
-						<input
-							class="form-control"
-							type="number"
-							name="experience"
-							id="experience"
-							autocomplete="off"
-							min="0"
-							max={MAX_EXPERIENCE}
-							step="1"
-							use:enforceMinMax
-							value={experienceEdit.input}
-							onfocus={() =>
-								startFieldEdit(
-									experienceEdit,
-									String(save.attributes.experience.value),
-								)}
-							oninput={(event) =>
-								setFieldInput(experienceEdit, event.currentTarget.value)}
-							onblur={finishExperienceEdit}
-							onkeydown={handleExperienceKeydown}
-						/>
-					</div>
+				<label class="form-label mb-0" for="currentDifficulty">Difficulty</label>
+				<select
+					class="form-select"
+					bind:value={save.character.difficulty}
+					name="currentDifficulty"
+					id="currentDifficulty"
+				>
+					<option value="Normal">{DIFFICULTY_LABELS.Normal}</option>
+					<option value="Nightmare">{DIFFICULTY_LABELS.Nightmare}</option>
+					<option value="Hell">{DIFFICULTY_LABELS.Hell}</option>
+				</select>
 
-					<div class="grid grid-cols-form-24 items-center gap-x-2">
-						<label class="form-label mb-0" for="currentDifficulty">Difficulty</label>
-						<select
-							class="form-select"
-							bind:value={save.character.difficulty}
-							name="currentDifficulty"
-							id="currentDifficulty"
-						>
-							<option value="Normal">{DIFFICULTY_LABELS.Normal}</option>
-							<option value="Nightmare">{DIFFICULTY_LABELS.Nightmare}</option>
-							<option value="Hell">{DIFFICULTY_LABELS.Hell}</option>
-						</select>
-					</div>
+				<label class="form-label mb-0" for="difficultyBeaten">Difficulty beaten</label>
+				<select
+					class="form-select"
+					value={difficultyBeaten}
+					name="difficultyBeaten"
+					id="difficultyBeaten"
+					onchange={(event) =>
+						setDifficultyBeaten(
+							save,
+							event.currentTarget.value as DifficultyBeaten,
+						)}
+				>
+					{#each difficultyBeatenOptions as option}
+						<option value={option}>
+							{option === "None" ? "None" : DIFFICULTY_LABELS[option]}
+						</option>
+					{/each}
+				</select>
 
-					<div class="grid grid-cols-form-24 items-center gap-x-2">
-						<label class="form-label mb-0" for="title">Title</label>
-						<input
-							class="form-control form-control-readonly"
-							type="text"
-							name="title"
-							id="title"
-							autocomplete="off"
-							value={title}
-							readonly
-						/>
-					</div>
-				</div>
+				<label class="form-label mb-0" for="title">Title</label>
+				<input
+					class="form-control form-control-readonly"
+					type="text"
+					name="title"
+					id="title"
+					autocomplete="off"
+					value={title}
+					readonly
+				/>
 			</div>
 		</section>
 
@@ -481,7 +462,7 @@
 			<h3 class="editor-card-title mb-1.5">Gold</h3>
 
 			<div
-				class="grid grid-cols-form-28 items-center gap-y-1 sm:grid-cols-form-32 sm:gap-x-2.5"
+				class="grid grid-cols-form-32 items-center gap-x-2.5 gap-y-1"
 			>
 				<label class="form-label mb-0" for="goldInventory">Inventory</label>
 				<input
@@ -516,17 +497,15 @@
 		<section class="rounded-sm border border-halbu-border bg-halbu-panel px-2.5 py-2">
 			<h3 class="editor-card-title mb-1.5">Map Seed</h3>
 
-			<div class="grid grid-cols-form-28 items-center gap-x-2 gap-y-1">
+			<div class="grid grid-cols-form-32 items-center gap-x-2.5 gap-y-1">
 				<span class="form-label mb-0">Format</span>
 				<div
-					class="inline-flex w-fit overflow-hidden rounded-xs border border-halbu-borderStrong"
+					class="inline-flex w-fit overflow-hidden rounded-xs border border-halbu-border"
 				>
 					<button
 						type="button"
-						class={`h-7 min-w-20 px-2 text-sm font-semibold transition ${
-							mapSeedDisplayMode === "decimal"
-								? "bg-halbu-card text-halbu-text shadow-[inset_0_-2px_0_0_var(--halbu-primary)]"
-								: "bg-halbu-panel2 text-halbu-textMuted hover:bg-halbu-card hover:text-halbu-text"
+						class={`editor-toggle-button h-7 min-w-20 border-0 px-2 text-sm font-semibold ${
+							mapSeedDisplayMode === "decimal" ? "editor-toggle-button--selected" : ""
 						}`}
 						onclick={() => {
 							mapSeedDisplayMode = "decimal";
@@ -536,10 +515,8 @@
 					</button>
 					<button
 						type="button"
-						class={`h-7 min-w-20 border-l border-halbu-borderStrong px-2 text-sm font-semibold transition ${
-							mapSeedDisplayMode === "hex"
-								? "bg-halbu-card text-halbu-text shadow-[inset_0_-2px_0_0_var(--halbu-primary)]"
-								: "bg-halbu-panel2 text-halbu-textMuted hover:bg-halbu-card hover:text-halbu-text"
+						class={`editor-toggle-button h-7 min-w-20 border-0 border-l border-halbu-border px-2 text-sm font-semibold ${
+							mapSeedDisplayMode === "hex" ? "editor-toggle-button--selected" : ""
 						}`}
 						onclick={() => {
 							mapSeedDisplayMode = "hex";
@@ -584,7 +561,7 @@
 				{#if isGameRulesMode}
 					<button
 						type="button"
-						class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-halbu-borderStrong bg-halbu-panel2 text-2xs font-semibold leading-none text-halbu-textMuted transition hover:bg-halbu-primarySoft hover:text-halbu-text"
+						class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-halbu-border bg-halbu-panel2 text-2xs font-semibold leading-none text-halbu-textMuted transition hover:bg-halbu-primarySoft hover:text-halbu-text"
 						aria-label={showPointsHelp
 							? "Hide game rules explanation"
 							: "Show game rules explanation"}
@@ -615,7 +592,7 @@
 					<div class="flex items-center gap-1">
 						<button
 							type="button"
-							class="h-8 min-w-9 rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-1 text-xs font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
+							class="editor-step-button h-8 min-w-9 rounded-xs px-1 text-xs font-semibold"
 							onclick={() => adjustPointsField("statpts", -QUICK_ADJUST_STEP)}
 							disabled={!canAdjustPointsField("statpts", -QUICK_ADJUST_STEP)}
 							aria-label={`Decrease ${getAttributeLabel("statpts").toLowerCase()} by ${QUICK_ADJUST_STEP}`}
@@ -656,7 +633,7 @@
 
 						<button
 							type="button"
-							class="h-8 min-w-9 rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-1 text-xs font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
+							class="editor-step-button h-8 min-w-9 rounded-xs px-1 text-xs font-semibold"
 							onclick={() => adjustPointsField("statpts", QUICK_ADJUST_STEP)}
 							disabled={!canAdjustPointsField("statpts", QUICK_ADJUST_STEP)}
 							aria-label={`Increase ${getAttributeLabel("statpts").toLowerCase()} by ${QUICK_ADJUST_STEP}`}
@@ -672,7 +649,7 @@
 					<div class="flex items-center gap-1">
 						<button
 							type="button"
-							class="h-8 min-w-9 rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-1 text-xs font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
+							class="editor-step-button h-8 min-w-9 rounded-xs px-1 text-xs font-semibold"
 							onclick={() => adjustPointsField("newskills", -QUICK_ADJUST_STEP)}
 							disabled={!canAdjustPointsField("newskills", -QUICK_ADJUST_STEP)}
 							aria-label={`Decrease ${getAttributeLabel("newskills").toLowerCase()} by ${QUICK_ADJUST_STEP}`}
@@ -713,7 +690,7 @@
 
 						<button
 							type="button"
-							class="h-8 min-w-9 rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-1 text-xs font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
+							class="editor-step-button h-8 min-w-9 rounded-xs px-1 text-xs font-semibold"
 							onclick={() => adjustPointsField("newskills", QUICK_ADJUST_STEP)}
 							disabled={!canAdjustPointsField("newskills", QUICK_ADJUST_STEP)}
 							aria-label={`Increase ${getAttributeLabel("newskills").toLowerCase()} by ${QUICK_ADJUST_STEP}`}

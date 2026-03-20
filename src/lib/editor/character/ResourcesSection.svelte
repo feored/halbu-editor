@@ -202,7 +202,7 @@
 		{#if isGameRulesMode}
 			<button
 				type="button"
-				class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-halbu-borderStrong bg-halbu-panel2 text-2xs font-semibold leading-none text-halbu-textMuted transition hover:bg-halbu-primarySoft hover:text-halbu-text"
+				class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-halbu-border bg-halbu-panel2 text-2xs font-semibold leading-none text-halbu-textMuted transition hover:bg-halbu-primarySoft hover:text-halbu-text"
 				aria-label={showHelp
 					? "Hide game rules explanation"
 					: "Show game rules explanation"}

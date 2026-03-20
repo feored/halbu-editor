@@ -81,9 +81,7 @@
 
 <div class="divide-y divide-halbu-border">
 	<section class="grid gap-1.5 pb-3">
-		<h3 class="text-xs font-semibold uppercase tracking-[0.18em] text-halbu-textMuted">
-			Save
-		</h3>
+		<h3 class="editor-section-title">Save</h3>
 		<dl class="m-0 grid grid-cols-form-48 items-baseline gap-x-2.5 gap-y-1">
 			<dt class="form-label mb-0">Save readiness</dt>
 			<dd class={`m-0 text-sm font-semibold ${toneClass[saveState.readiness.tone]}`}>
@@ -128,9 +126,7 @@
 	</section>
 
 	<section class="grid gap-1.5 py-3">
-		<h3 class="text-xs font-semibold uppercase tracking-[0.18em] text-halbu-textMuted">
-			Issues
-		</h3>
+		<h3 class="editor-section-title">Issues</h3>
 		<dl class="m-0 grid grid-cols-form-48 items-baseline gap-x-2.5 gap-y-1">
 			<dt class="form-label mb-0">Validation</dt>
 			<dd class={`m-0 text-sm font-semibold ${toneClass[saveState.validation.tone]}`}>
@@ -220,9 +216,7 @@
 
 	<section class="grid gap-1.5 py-3">
 		<div class="flex items-center justify-between gap-2">
-			<h3 class="text-xs font-semibold uppercase tracking-[0.18em] text-halbu-textMuted">
-				Conversion
-			</h3>
+			<h3 class="editor-section-title">Conversion</h3>
 			<span
 				class={`text-sm font-semibold ${
 					!saveState.isConverting ? "text-halbu-textMuted" : "text-halbu-text"
@@ -261,9 +255,7 @@
 	</section>
 
 	<section class="grid gap-1.5 pt-3">
-		<h3 class="text-xs font-semibold uppercase tracking-[0.18em] text-halbu-textMuted">
-			Actions
-		</h3>
+		<h3 class="editor-section-title">Actions</h3>
 		<div class="flex flex-wrap items-center gap-1.5">
 			<Button
 				variant="secondary"

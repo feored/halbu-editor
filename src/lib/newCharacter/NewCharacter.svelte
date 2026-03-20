@@ -268,10 +268,8 @@
 					{#each GAME_EDITIONS as edition}
 						<button
 							type="button"
-							class={`selection-button ${
-								selectedEdition === edition
-									? "selection-button--selected"
-									: "selection-button--idle"
+							class={`selection-button editor-toggle-button ${
+								selectedEdition === edition ? "editor-toggle-button--selected" : ""
 							}`}
 							onclick={() => {
 								selectedEdition = edition;
@@ -287,10 +285,10 @@
 					{#each availableExpansionModes as mode}
 						<button
 							type="button"
-							class={`selection-button ${
+							class={`selection-button editor-toggle-button ${
 								selectedExpansionMode === mode
-									? "selection-button--selected"
-									: "selection-button--idle"
+									? "editor-toggle-button--selected"
+									: ""
 							}`}
 							onclick={() => {
 								selectedExpansionMode = mode;
@@ -307,10 +305,8 @@
 						{@const classIsDisabled = isClassDisabled(className)}
 						<button
 							type="button"
-							class={`selection-button ${
-								selectedClass === className
-									? "selection-button--selected"
-									: "selection-button--idle"
+							class={`selection-button editor-toggle-button ${
+								selectedClass === className ? "editor-toggle-button--selected" : ""
 							}`}
 							disabled={classIsDisabled}
 							onclick={() => {
@@ -348,15 +344,13 @@
 
 		<div class="divide-y divide-halbu-border">
 			<section class="grid gap-1.5 pb-3">
-				<h3 class="text-xs font-semibold uppercase tracking-[0.18em] text-halbu-textMuted">
-					Template
-				</h3>
+				<h3 class="editor-section-title">Template</h3>
 				<div class="grid gap-1.5">
 					{#each NEW_CHARACTER_TEMPLATE_OPTIONS as template}
 						<label
 							class={`grid grid-cols-[auto_minmax(0,1fr)] items-start gap-1.5 rounded-xs border px-2 py-1.5 text-sm ${
 								selectedTemplate === template.id
-									? "border-halbu-primary bg-halbu-panel2 text-halbu-text"
+									? "border-halbu-border bg-halbu-card text-halbu-text shadow-[inset_0_-2px_0_0_var(--halbu-primary)]"
 									: "border-halbu-border bg-halbu-panel text-halbu-text"
 							}`}
 						>
@@ -381,9 +375,7 @@
 			</section>
 
 			<section class="grid gap-1.5 pt-3">
-				<h3 class="text-xs font-semibold uppercase tracking-[0.18em] text-halbu-textMuted">
-					Save Location / Create
-				</h3>
+				<h3 class="editor-section-title">Save Location / Create</h3>
 				<div class="rounded-xs border border-halbu-border bg-halbu-panel2 px-2.5 py-2">
 					<div class="grid grid-cols-form-32 items-center gap-x-2.5 gap-y-1">
 						<span class="form-label mb-0">Suggested path</span>
@@ -447,38 +439,10 @@
 		width: 100%;
 		min-height: 2.125rem;
 		padding: 0.375rem 0.625rem;
-		border: 1px solid var(--halbu-border-strong);
 		border-radius: var(--app-radius-xs);
-		background: var(--halbu-panel2);
-		color: var(--halbu-text);
 		font-size: 0.8125rem;
 		font-weight: 600;
 		line-height: 1.15;
 		text-align: center;
-		transition:
-			background-color 0.12s ease,
-			border-color 0.12s ease,
-			box-shadow 0.12s ease,
-			color 0.12s ease;
-	}
-
-	.selection-button--idle {
-		color: var(--halbu-text-muted);
-	}
-
-	.selection-button--idle:hover:not(:disabled) {
-		background: var(--halbu-card);
-		color: var(--halbu-text);
-	}
-
-	.selection-button--selected {
-		background: var(--halbu-card);
-		box-shadow: inset 0 -2px 0 0 var(--halbu-primary);
-		color: var(--halbu-text);
-	}
-
-	.selection-button:disabled {
-		opacity: 0.55;
-		cursor: default;
 	}
 </style>

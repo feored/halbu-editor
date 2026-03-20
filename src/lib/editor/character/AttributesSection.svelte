@@ -115,7 +115,7 @@
 		{#if isGameRulesMode}
 			<button
 				type="button"
-				class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-halbu-borderStrong bg-halbu-panel2 text-2xs font-semibold leading-none text-halbu-textMuted transition hover:bg-halbu-primarySoft hover:text-halbu-text"
+				class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-halbu-border bg-halbu-panel2 text-2xs font-semibold leading-none text-halbu-textMuted transition hover:bg-halbu-primarySoft hover:text-halbu-text"
 				aria-label={showHelp
 					? "Hide game rules explanation"
 					: "Show game rules explanation"}
@@ -143,7 +143,7 @@
 				<div class="flex items-center gap-1">
 					<button
 						type="button"
-						class="h-8 min-w-9 rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-1 text-xs font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
+						class="editor-step-button h-8 min-w-9 rounded-xs px-1 text-xs font-semibold"
 						onclick={() => adjustPrimaryAttribute(field, -QUICK_ADJUST_STEP)}
 						disabled={!canDecreasePrimaryAttribute(field)}
 						aria-label={`Decrease ${getAttributeLabel(field).toLowerCase()} by ${QUICK_ADJUST_STEP}`}
@@ -168,7 +168,7 @@
 
 					<button
 						type="button"
-						class="h-8 min-w-9 rounded-xs border border-halbu-borderStrong bg-halbu-panel2 px-1 text-xs font-semibold text-halbu-text transition hover:bg-halbu-primarySoft disabled:cursor-not-allowed disabled:opacity-45"
+						class="editor-step-button h-8 min-w-9 rounded-xs px-1 text-xs font-semibold"
 						onclick={() => adjustPrimaryAttribute(field, QUICK_ADJUST_STEP)}
 						disabled={!canIncreasePrimaryAttribute(field)}
 						aria-label={`Increase ${getAttributeLabel(field).toLowerCase()} by ${QUICK_ADJUST_STEP}`}

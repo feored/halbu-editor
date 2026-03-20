@@ -3,13 +3,13 @@
 	import { twMerge } from "tailwind-merge";
 
 	const BASE =
-		"inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-sm text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-halbu-primary/45 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-100";
+		"inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-sm text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-halbu-primary/45 disabled:pointer-events-none disabled:cursor-default disabled:opacity-100";
 
 	const VARIANTS = {
 		default:
 			"bg-halbu-primary text-halbu-white hover:bg-halbu-primaryHover active:bg-halbu-primaryActive disabled:bg-halbu-panel2 disabled:text-halbu-textDim",
 		secondary:
-			"border border-halbu-border bg-halbu-panel text-halbu-text hover:bg-halbu-panel2 active:bg-halbu-panel2 disabled:border-halbu-borderStrong disabled:bg-halbu-panel2 disabled:text-halbu-textDim",
+			"border border-halbu-border bg-halbu-panel text-halbu-text hover:bg-halbu-panel2 active:bg-halbu-panel2 disabled:border-halbu-border disabled:bg-halbu-panel2 disabled:text-halbu-textDim",
 		outline:
 			"border border-halbu-borderStrong bg-transparent text-halbu-text hover:bg-halbu-primarySoft disabled:border-halbu-border disabled:bg-halbu-panel disabled:text-halbu-textDim",
 		destructive:
