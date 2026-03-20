@@ -143,6 +143,16 @@
 		syncFieldFromValue(experienceEdit, String(save.attributes.experience.value));
 	}
 
+	function setLevelFromInput(inputValue: string): void {
+		const value = Number(inputValue);
+		if (!Number.isFinite(value)) {
+			return;
+		}
+
+		setLevel(save, value, experienceTable);
+		syncGameRules();
+	}
+
 	function handleLevelKeydown(event: KeyboardEvent): void {
 		handleEditKeydown(
 			event,
@@ -163,6 +173,16 @@
 
 		syncFieldFromValue(experienceEdit, String(save.attributes.experience.value));
 		syncFieldFromValue(levelEdit, String(save.attributes.level.value));
+	}
+
+	function setExperienceFromInput(inputValue: string): void {
+		const value = Number(inputValue);
+		if (!Number.isFinite(value)) {
+			return;
+		}
+
+		setExperience(save, value, experienceTable, MAX_EXPERIENCE);
+		syncGameRules();
 	}
 
 	function handleExperienceKeydown(event: KeyboardEvent): void {
@@ -360,45 +380,77 @@
 				class="grid grid-cols-form-32 items-center gap-x-2.5 gap-y-1 sm:grid-cols-[7.25rem_minmax(0,1fr)_5.75rem_minmax(0,1fr)] sm:gap-x-2"
 			>
 				<label class="form-label mb-0" for="level">Level</label>
-				<input
-					class="form-control"
-					type="number"
-					name="level"
-					id="level"
-					autocomplete="off"
-					min="1"
-					max="99"
-					step="1"
-					use:enforceMinMax
-					value={levelEdit.input}
-					onfocus={() =>
-						startFieldEdit(levelEdit, String(save.attributes.level.value))}
-					oninput={(event) => setFieldInput(levelEdit, event.currentTarget.value)}
-					onblur={finishLevelEdit}
-					onkeydown={handleLevelKeydown}
-				/>
+				{#if isGameRulesMode}
+					<input
+						class="form-control"
+						type="number"
+						name="level"
+						id="level"
+						autocomplete="off"
+						min="1"
+						max="99"
+						step="1"
+						use:enforceMinMax
+						value={save.attributes.level.value}
+						oninput={(event) => setLevelFromInput(event.currentTarget.value)}
+					/>
+				{:else}
+					<input
+						class="form-control"
+						type="number"
+						name="level"
+						id="level"
+						autocomplete="off"
+						min="1"
+						max="99"
+						step="1"
+						use:enforceMinMax
+						value={levelEdit.input}
+						onfocus={() =>
+							startFieldEdit(levelEdit, String(save.attributes.level.value))}
+						oninput={(event) => setFieldInput(levelEdit, event.currentTarget.value)}
+						onblur={finishLevelEdit}
+						onkeydown={handleLevelKeydown}
+					/>
+				{/if}
 
 				<label class="form-label mb-0" for="experience">Experience</label>
-				<input
-					class="form-control"
-					type="number"
-					name="experience"
-					id="experience"
-					autocomplete="off"
-					min="0"
-					max={MAX_EXPERIENCE}
-					step="1"
-					use:enforceMinMax
-					value={experienceEdit.input}
-					onfocus={() =>
-						startFieldEdit(
-							experienceEdit,
-							String(save.attributes.experience.value),
-						)}
-					oninput={(event) => setFieldInput(experienceEdit, event.currentTarget.value)}
-					onblur={finishExperienceEdit}
-					onkeydown={handleExperienceKeydown}
-				/>
+				{#if isGameRulesMode}
+					<input
+						class="form-control"
+						type="number"
+						name="experience"
+						id="experience"
+						autocomplete="off"
+						min="0"
+						max={MAX_EXPERIENCE}
+						step="1"
+						use:enforceMinMax
+						value={save.attributes.experience.value}
+						oninput={(event) => setExperienceFromInput(event.currentTarget.value)}
+					/>
+				{:else}
+					<input
+						class="form-control"
+						type="number"
+						name="experience"
+						id="experience"
+						autocomplete="off"
+						min="0"
+						max={MAX_EXPERIENCE}
+						step="1"
+						use:enforceMinMax
+						value={experienceEdit.input}
+						onfocus={() =>
+							startFieldEdit(
+								experienceEdit,
+								String(save.attributes.experience.value),
+							)}
+						oninput={(event) => setFieldInput(experienceEdit, event.currentTarget.value)}
+						onblur={finishExperienceEdit}
+						onkeydown={handleExperienceKeydown}
+					/>
+				{/if}
 
 				<label class="form-label mb-0" for="currentAct">Act</label>
 				<select

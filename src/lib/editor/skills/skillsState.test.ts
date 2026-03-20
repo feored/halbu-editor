@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 
 import { getSkillStates } from "$lib/editor/skills/skillsState";
+import { MAX_SKILL_POINTS } from "$lib/editor/skills/skillsSlots";
 
 import type { SkillSlot } from "$lib/types/editor";
 import type { SkillData } from "$lib/editor/skills/skillsTypes";
@@ -106,7 +107,7 @@ describe("skillsState", () => {
 	test("shows when a skill is already at maximum", () => {
 		const states = getStates(
 			[
-				{ id: 0, points: 255 },
+				{ id: 0, points: MAX_SKILL_POINTS },
 				{ id: 1, points: 0 },
 			],
 			10,

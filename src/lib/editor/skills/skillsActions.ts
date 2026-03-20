@@ -1,4 +1,9 @@
-import { addSkillPoints, clampSkillPoints, refundAllSkillPoints } from "$lib/editor/skills/skillsSlots";
+import {
+	addSkillPoints,
+	clampSkillPoints,
+	refundAllSkillPoints,
+	setSkillPoints,
+} from "$lib/editor/skills/skillsSlots";
 import type { SkillState } from "$lib/editor/skills/skillsState";
 import type { SkillSlot } from "$lib/types/editor";
 
@@ -97,6 +102,18 @@ export function applySkillPointsTarget({
 	isGameRulesMode,
 }: ApplySkillPointsTargetOptions): void {
 	const clampedPoints = clampSkillPoints(nextPoints);
+	if (skillSlot < 0) {
+		return;
+	}
+
+	if (!isGameRulesMode) {
+		const nextSkills = setSkillPoints(save.skills, skillSlot, clampedPoints);
+		if (nextSkills !== save.skills) {
+			save.skills = nextSkills;
+		}
+		return;
+	}
+
 	const delta = clampedPoints - currentPoints;
 	if (delta === 0) {
 		return;

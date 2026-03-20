@@ -9,7 +9,7 @@
 		startFieldEdit,
 		syncFieldFromValue,
 	} from "$lib/utils/fieldEdit";
-	import { clampSkillPoints } from "$lib/editor/skills/skillsSlots";
+	import { clampSkillPoints, MAX_SKILL_POINTS } from "$lib/editor/skills/skillsSlots";
 
 	let {
 		pointsLeft,
@@ -80,7 +80,7 @@
 				class="form-control h-7 w-32 text-right"
 				type="number"
 				min="0"
-				max="255"
+				max={MAX_SKILL_POINTS}
 				step="1"
 				value={pointsEdit.input}
 				disabled={disabled}

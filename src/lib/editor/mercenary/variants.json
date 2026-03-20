@@ -115,15 +115,15 @@
         "id": 16,
         "type": "Iron Wolf",
         "difficulty": "Normal",
-        "variant": "Lightning",
-        "rate" : 110
+        "variant": "Cold",
+        "rate" : 120
     },
     {
         "id": 17,
         "type": "Iron Wolf",
         "difficulty": "Normal",
-        "variant": "Cold",
-        "rate" : 120
+        "variant": "Lightning",
+        "rate" : 110
     },
     {
         "id": 18,
@@ -136,15 +136,15 @@
         "id": 19,
         "type": "Iron Wolf",
         "difficulty": "Nightmare",
-        "variant": "Lightning",
-        "rate" : 120
+        "variant": "Cold",
+        "rate" : 130
     },
     {
         "id": 20,
         "type": "Iron Wolf",
         "difficulty": "Nightmare",
-        "variant": "Cold",
-        "rate" : 130
+        "variant": "Lightning",
+        "rate" : 120
     },
     {
         "id": 21,
@@ -157,15 +157,15 @@
         "id": 22,
         "type": "Iron Wolf",
         "difficulty": "Hell",
-        "variant": "Lightning",
-        "rate" : 130
+        "variant": "Cold",
+        "rate" : 140
     },
     {
         "id": 23,
         "type": "Iron Wolf",
         "difficulty": "Hell",
-        "variant": "Cold",
-        "rate" : 140
+        "variant": "Lightning",
+        "rate" : 130
     },
     {
         "id": 24,

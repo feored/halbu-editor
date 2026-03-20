@@ -22,6 +22,7 @@ export type EditorSession = {
 	computedChecksum: number | null;
 	sourceFileSize: number | null;
 	sourcePath: string | null;
+	pendingFolder: string | null;
 	editionHint: GameEdition | null;
 	suggestedTargetVersion: SaveLayoutVersion | null;
 	parserLayoutVersion: SaveLayoutVersion | null;
@@ -52,6 +53,7 @@ export type OpenedSessionData = {
 	computedChecksum: number | null;
 	sourceFileSize: number | null;
 	sourcePath: string | null;
+	pendingFolder: string | null;
 	editionHint: GameEdition | null;
 	suggestedTargetVersion: SaveLayoutVersion | null;
 	parserLayoutVersion: SaveLayoutVersion | null;
@@ -70,6 +72,7 @@ export function toOpenedSessionData(
 		computedChecksum: result.computed_checksum,
 		sourceFileSize: result.source_file_size,
 		sourcePath,
+		pendingFolder: null,
 		editionHint: result.edition_hint,
 		suggestedTargetVersion: result.suggested_target_version,
 		parserLayoutVersion: result.parser_layout_version,
@@ -126,6 +129,7 @@ export function createOpenEditorSession(openedSessionData: OpenedSessionData): E
 		computedChecksum: openedSessionData.computedChecksum,
 		sourceFileSize: openedSessionData.sourceFileSize,
 		sourcePath: openedSessionData.sourcePath,
+		pendingFolder: openedSessionData.pendingFolder,
 		editionHint: openedSessionData.editionHint,
 		suggestedTargetVersion: openedSessionData.suggestedTargetVersion,
 		parserLayoutVersion: openedSessionData.parserLayoutVersion,

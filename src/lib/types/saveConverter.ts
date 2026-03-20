@@ -243,7 +243,7 @@ export function toBackendSave(
 			? (`V${sourceLayoutVersion}` as EncodableSaveFormatId)
 			: editorSave.metadata.formatId;
 
-	const save = structuredClone(sourceBackendSave);
+	const save = JSON.parse(JSON.stringify(sourceBackendSave)) as BackendEditorSave;
 	save.version = editorSave.version;
 	save.expansion_type = editorSave.expansionType;
 	save.character.name = editorSave.character.name;
@@ -265,10 +265,10 @@ export function toBackendSave(
 	save.character.mercenary.name_id = editorSave.character.mercenary.nameId;
 	save.quests = toBackendQuests(editorSave.quests);
 	save.waypoints = toBackendWaypoints(editorSave.waypoints);
-	save.npcs = editorSave.npcs;
+	save.npcs = JSON.parse(JSON.stringify(editorSave.npcs));
 	save.attributes = toBackendAttributes(editorSave.attributes);
 	save.skills.points = editorSave.skills.map((skill) => skill.points);
-	save.items = editorSave.items;
+	save.items = JSON.parse(JSON.stringify(editorSave.items));
 	save.meta.format = toBackendEnum(formatId);
 	return save;
 }

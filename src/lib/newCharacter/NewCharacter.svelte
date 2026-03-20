@@ -203,7 +203,8 @@
 			}
 			applyGameRules(saveData);
 
-			const sourcePath = savePath.trim().length > 0 ? savePath.trim() : null;
+			const chosenPath = selectedSavePath.trim();
+			const lastPathSeparator = Math.max(chosenPath.lastIndexOf("\\"), chosenPath.lastIndexOf("/"));
 
 			const openPayload: OpenedSessionData = {
 				save: saveData,
@@ -211,7 +212,10 @@
 				parseIssueCount: 0,
 				parseIssues: [],
 				sourceFileSize: null,
-				sourcePath,
+				sourcePath: null,
+				pendingFolder: hasSelectedSavePath && lastPathSeparator >= 0
+					? chosenPath.slice(0, lastPathSeparator)
+					: null,
 				headerChecksum: null,
 				computedChecksum: null,
 				editionHint: null,

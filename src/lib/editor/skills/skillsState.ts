@@ -1,5 +1,6 @@
 import type { SkillSlot } from "$lib/types/editor";
 import type { SkillData } from "$lib/editor/skills/skillsTypes";
+import { MAX_SKILL_POINTS } from "$lib/editor/skills/skillsSlots";
 
 export type PageNotice = {
 	level: "warning" | "info";
@@ -163,7 +164,7 @@ function getSkillState(
 	}
 
 	let incrementReason: string | null = null;
-	if (points >= 255) {
+	if (points >= MAX_SKILL_POINTS) {
 		incrementReason = "Already at maximum";
 	} else if (!levelRequirementMet) {
 		incrementReason = `Requires Level ${skill.reqlevel}`;

@@ -229,6 +229,11 @@ function createEditorState(): EditorState {
 			return null;
 		}
 
+		const activeElement = document.activeElement;
+		if (activeElement instanceof HTMLElement) {
+			activeElement.blur();
+		}
+
 		saveInProgress = true;
 		try {
 			if (session.mode === "game-rules") {
@@ -265,6 +270,7 @@ function createEditorState(): EditorState {
 				sourceLayoutVersion: saveDecision.sourceLayoutVersion,
 				targetVersion: saveDecision.targetVersion,
 				sourcePath: currentSession.sourcePath,
+				pendingFolder: currentSession.pendingFolder,
 				saveAs: saveDecision.saveAs,
 				forceSave: saveDecision.forceSave,
 			});
@@ -278,6 +284,7 @@ function createEditorState(): EditorState {
 				saveDecision.targetVersion === 99 ? "V99" : "V105";
 			currentSession.sourceBackendSave = result.updatedBackendSave;
 			currentSession.sourcePath = result.filePath;
+			currentSession.pendingFolder = null;
 			currentSession.baselineSave = $state.snapshot(currentSession.save);
 			currentSession.lastSaveUsedForceSave = result.forceSaveUsed;
 			currentSession.saveRevision += 1;
