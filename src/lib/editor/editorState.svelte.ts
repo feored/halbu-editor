@@ -21,6 +21,7 @@ import {
 	analyzeSave,
 	getSaveDecision,
 	getSaveState,
+	getTargetVersion,
 	type SaveState,
 } from "$lib/editor/save/saveState";
 
@@ -160,13 +161,16 @@ function createEditorState(): EditorState {
 
 		const requestSession = session;
 		const requestRevision = ++analysisRevision;
-		const requestState = getSaveState(session, checkedTargetVersion, requestedTargetVersion);
-		checkedTargetVersion = requestState.targetVersion;
+		const targetVersion = getTargetVersion(session, requestedTargetVersion);
+		const sourceLayoutVersion = session.save.metadata.formatId.startsWith("Unknown(")
+			? session.parserLayoutVersion
+			: null;
+		checkedTargetVersion = targetVersion;
 		const request = {
 			save: $state.snapshot(session.save),
 			sourceBackendSave: $state.snapshot(session.sourceBackendSave),
-			targetVersion: requestState.targetVersion,
-			sourceLayoutVersion: requestState.sourceLayoutVersion,
+			targetVersion,
+			sourceLayoutVersion,
 		};
 
 		session.validationReport = { issues: [] };
@@ -289,7 +293,6 @@ function createEditorState(): EditorState {
 			void session?.sourceBackendSave;
 			void session?.targetVersion;
 			void session?.parserLayoutVersion;
-			void isUnknownFormat;
 
 			if (session == null || saveInProgress) {
 				return;
