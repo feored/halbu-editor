@@ -9,44 +9,36 @@
 
 A native save editor for **Diablo II: Resurrected**.
 
-[Download the latest release](../../releases/latest) · [Changelog](CHANGELOG.md)
+[Download the latest release](../../releases/latest) | [Changelog](CHANGELOG.md)
 
 ---
 
 ## About
 
-Halbu Editor started as a Rust learning project and grew into a full-featured hero editor for D2R.
+The design goals are: a **fully offline** native editor, graceful handling of mangled saves, compatibility with the latest patches, validation checks to help prevent broken save states, and zero reliance on copyrighted assets (no exocet font or ripped skill icons).
 
-The design goals: a **fully offline** native editor, graceful handling of mangled saves, compatibility with the latest patches, validation checks to prevent broken save states, and zero reliance on copyrighted assets (no Exocet font or ripped skill icons).
-
-Save file parsing and writing is handled by [halbu](https://github.com/feored/halbu) — a dedicated Rust library that the editor frontend is built directly on top of.
+Save parsing and writing is handled by [halbu](https://github.com/feored/halbu), the Rust library the editor is built directly on top of.
 
 ## Features
 
-
-- Edit your character information, skills, waypoints, quests and mercenary data
-- Built-in skill calculator
-- Per-quest flag editing, including advanced states and unused quests
-- Bulk controls for waypoints/quests
-- Validate saves before writing, with compatibility checks and force-convert support
-- Review full list of changes before committing to disk, grouped by section with old → new values
-- Inspect save metadata and parse issues in the Status tab
-- Restore workflow for reverting changes
-- Open saves directly from the character library once your save folder is configured
-- New character creation from built-in templates
-- Automatic backups for each character with configurable retention
+- Safe save workflow with validation, compatibility checks, change review, and automatic backups
+- Edit character, skills, quests, waypoints, and mercenary data
+- Built-in skill planner/editor
+- Create new characters from built-in templates
+- Open and manage saves from the character library
+- Inspect save metadata and parse issues for broken or mangled saves
 
 ## Limitations
 
-- D2R only. Saves from 1.10+ classic D2 may parse correctly, but will be written back in D2R format. Do not overwrite non-D2R saves.
+- D2R only. Saves from 1.10+ classic D2 may parse correctly, but they will be written back in D2R format. Do not overwrite non-D2R saves.
 - No item editing
-- Some minion skills (primarily Necromancer skeletons and golems) are unsupported and some rounding errors may occur in the skill calculator.
+- Some minion skills display incorrect values and some rounding errors may occur in the skill calculator.
 
 > D2R must be relaunched after saving for changes to take effect.
 
 ## Development
 
-Halbu Editor is a [Tauri](https://v2.tauri.app/) application with a [Svelte](https://svelte.dev) frontend. Save file parsing and serialization lives in the [halbu](https://github.com/feored/halbu) Rust library — changes to `.d2s` format handling should be made there.
+Halbu Editor is a [Tauri](https://v2.tauri.app/) application with a [Svelte](https://svelte.dev) frontend. Save parsing and serialization live in the [halbu](https://github.com/feored/halbu) Rust library, so changes to `.d2s` format handling should be made there.
 
 ### Prerequisites
 
@@ -69,6 +61,12 @@ npm install
 npm run tauri dev
 ```
 
+### Building
+
+```sh
+npm run tauri build
+```
+
 ### Testing
 
 Frontend tests currently use Vitest.
@@ -79,15 +77,9 @@ Run with:
 npm test
 ```
 
-### Building
+### Skill Data Preprocessing 
 
-```sh
-npm run tauri build
-```
-
-## Skill Data Preprocessing
-
-The skill calculator is backed by versioned JSON files generated from D2's data text files. The preprocessor lives in `/static/tools/preprocess/` and outputs files like:
+The skill calculator is backed by versioned JSON files generated from D2 data text files. The preprocessor lives in `/static/tools/preprocess/` and outputs files like:
 
 - `static/data/generated/skills/v99/skills_complete.json`
 - `static/data/generated/skills/v105/skills_complete.json`
