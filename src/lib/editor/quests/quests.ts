@@ -238,6 +238,25 @@ export function isQuestStatePresent(
 	return state.flags.every((flag) => flags.includes(flag));
 }
 
+export function isQuestStatePartial(
+	quests: QuestMap,
+	difficulty: Difficulty,
+	act: Act,
+	questId: QuestId,
+	state: QuestState,
+): boolean {
+	const flags = getQuestFlags(quests, difficulty, act, questId);
+	let present = 0;
+
+	for (const flag of state.flags) {
+		if (flags.includes(flag)) {
+			present += 1;
+		}
+	}
+
+	return present > 0 && present < state.flags.length;
+}
+
 export function toggleQuestState(
 	quests: QuestMap,
 	difficulty: Difficulty,

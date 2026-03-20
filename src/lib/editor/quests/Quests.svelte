@@ -3,6 +3,7 @@
 	import Tabs from "$lib/components/ui/Tabs.svelte";
 	import * as settings from "$lib/utils/settings";
 	import { editorState } from "$lib/editor/editorState.svelte";
+	import { applyGameRulesValues, getGameRules } from "$lib/editor/character/gameRules";
 	import {
 		ACTS,
 		applyRewardGrantedChange,
@@ -10,11 +11,13 @@
 		getRenderedActQuests,
 		getStandardActQuests,
 		hasQuestFlag,
+		isQuestStatePartial,
 		isQuestStatePresent,
 		removeQuestFlag,
 		addQuestFlag,
 		setAllActQuestFlags,
 		toggleQuestState,
+		type QuestState,
 		type RewardFeedback,
 	} from "$lib/editor/quests/quests";
 	import { DIFFICULTY_NAMES, type Act, type Difficulty, type QuestFlag, type QuestId } from "$lib/types/editor";
@@ -80,6 +83,16 @@
 	});
 
 	const actColumns = $derived([ACTS.slice(0, 3), ACTS.slice(3)]);
+
+	function indeterminate(node: HTMLInputElement, value: boolean) {
+		node.indeterminate = value;
+
+		return {
+			update(nextValue: boolean) {
+				node.indeterminate = nextValue;
+			},
+		};
+	}
 
 	function getFeedbackKey(difficulty: Difficulty, act: Act, questId: QuestId): string {
 		return `${difficulty}:${act}:${questId}`;
@@ -155,21 +168,47 @@
 	}
 
 	function toggleFlag(difficulty: Difficulty, act: Act, questId: QuestId, flag: QuestFlag): void {
+		const hadReward = hasQuestFlag(save.quests, difficulty, act, questId, "RewardGranted");
+
 		if (hasQuestFlag(save.quests, difficulty, act, questId, flag)) {
 			const removed = removeQuestFlag(save.quests, difficulty, act, questId, flag);
-			if (removed) {
-				updateRewardFeedback(difficulty, act, questId, flag, false);
+			if (!removed) {
+				return;
 			}
+		} else {
+			const added = addQuestFlag(save.quests, difficulty, act, questId, flag);
+			if (!added) {
+				return;
+			}
+		}
+
+		if (session.mode === "game-rules") {
+			applyGameRulesValues(
+				save,
+				getGameRules(save, session.gameRulesBaselineSave!).values,
+			);
+			clearFeedback(difficulty, act, questId);
 			return;
 		}
 
-		const added = addQuestFlag(save.quests, difficulty, act, questId, flag);
-		if (added) {
-			updateRewardFeedback(difficulty, act, questId, flag, true);
+		const hasReward = hasQuestFlag(save.quests, difficulty, act, questId, "RewardGranted");
+		if (hadReward !== hasReward) {
+			updateRewardFeedback(difficulty, act, questId, "RewardGranted", hasReward);
+			return;
 		}
+
+		clearFeedback(difficulty, act, questId);
 	}
 
 	function toggleAllActQuests(difficulty: Difficulty, act: (typeof ACTS)[number], value: boolean): void {
+		const quests = advancedFlags
+			? getRenderedActQuests(act, showPrologue, showAllQuests)
+			: getStandardActQuests(act, showPrologue);
+		const rewardStates = quests.map((quest) => ({
+			questId: quest.id,
+			hadReward: hasQuestFlag(save.quests, difficulty, act.id, quest.id, "RewardGranted"),
+		}));
+
 		setAllActQuestFlags(
 			save.quests,
 			difficulty,
@@ -180,6 +219,68 @@
 			questFlags,
 			value,
 		);
+
+		if (session.mode === "game-rules") {
+			applyGameRulesValues(
+				save,
+				getGameRules(save, session.gameRulesBaselineSave!).values,
+			);
+			for (const quest of quests) {
+				clearFeedback(difficulty, act.id, quest.id);
+			}
+			return;
+		}
+
+		for (const rewardState of rewardStates) {
+			const hasReward = hasQuestFlag(
+				save.quests,
+				difficulty,
+				act.id,
+				rewardState.questId,
+				"RewardGranted",
+			);
+
+			if (rewardState.hadReward !== hasReward) {
+				updateRewardFeedback(
+					difficulty,
+					act.id,
+					rewardState.questId,
+					"RewardGranted",
+					hasReward,
+				);
+				continue;
+			}
+
+			clearFeedback(difficulty, act.id, rewardState.questId);
+		}
+	}
+
+	function toggleState(
+		difficulty: Difficulty,
+		act: Act,
+		questId: QuestId,
+		state: QuestState,
+	): void {
+		const hadReward = hasQuestFlag(save.quests, difficulty, act, questId, "RewardGranted");
+
+		toggleQuestState(save.quests, difficulty, act, questId, state);
+
+		if (session.mode === "game-rules") {
+			applyGameRulesValues(
+				save,
+				getGameRules(save, session.gameRulesBaselineSave!).values,
+			);
+			clearFeedback(difficulty, act, questId);
+			return;
+		}
+
+		const hasReward = hasQuestFlag(save.quests, difficulty, act, questId, "RewardGranted");
+		if (hadReward !== hasReward) {
+			updateRewardFeedback(difficulty, act, questId, "RewardGranted", hasReward);
+			return;
+		}
+
+		clearFeedback(difficulty, act, questId);
 	}
 </script>
 
@@ -340,6 +441,20 @@
 
 										<div class="grid gap-0.5">
 											{#each quest.states ?? [] as state}
+												{@const checked = isQuestStatePresent(
+													save.quests,
+													activeDifficulty,
+													act.id,
+													quest.id,
+													state,
+												)}
+												{@const partial = isQuestStatePartial(
+													save.quests,
+													activeDifficulty,
+													act.id,
+													quest.id,
+													state,
+												)}
 												<label
 													class="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-1.5 rounded-xs px-0.5 py-px text-sm text-halbu-text"
 													for={`${activeDifficulty}-${act.id}-${quest.id}-${state.display}`}
@@ -348,16 +463,15 @@
 														class="form-check-input mt-0"
 														type="checkbox"
 														id={`${activeDifficulty}-${act.id}-${quest.id}-${state.display}`}
-														checked={isQuestStatePresent(
-															save.quests,
-															activeDifficulty,
-															act.id,
-															quest.id,
-															state,
-														)}
+														checked={checked}
+														aria-checked={partial
+															? "mixed"
+															: checked
+																? "true"
+																: "false"}
+														use:indeterminate={partial}
 														onchange={() =>
-															toggleQuestState(
-																save.quests,
+															toggleState(
 																activeDifficulty,
 																act.id,
 																quest.id,
