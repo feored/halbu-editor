@@ -41,7 +41,8 @@ export type CompatibilityCode =
 	| "WarlockRequiresRotWExpansion"
 	| "RotWExpansionRequiresRotWEdition"
 	| "ExpansionClassRequiresExpansionMode"
-	| "UnknownClassRequiresKnownTarget";
+	| "UnknownClassRequiresKnownTarget"
+	| "MercenaryHireStateToggleUnsupported";
 
 export type CompatibilityIssue = {
 	code: CompatibilityCode;
@@ -57,6 +58,8 @@ export type ValidationCode =
 	| "ProgressionNonCanonical"
 	| "ImpossibleDifficultySelection"
 	| "ImpossibleActSelection"
+	| "MercenaryDataWithoutHire"
+	| "MercenaryHireStateToggleUnsupported"
 	| "MercenaryVariantUnknown"
 	| "MercenaryNameIdOutOfRange"
 	| "MercenaryLevelImpossible"

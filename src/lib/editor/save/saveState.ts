@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 
+import variantsJson from "$lib/editor/mercenary/variants.json";
 import { getValidationMessage } from "$lib/editor/save/validation";
 import { type EditorSession } from "$lib/editor/session";
 import { type SaveCharacterOptions } from "$lib/editor/save/saveFile";
@@ -36,7 +37,7 @@ export type SaveAnalysisResult = {
 	compatibilityError: string | null;
 };
 
-export type SaveIssueSource = "Validation" | "Compatibility";
+export type SaveIssueSource = "Validation" | "Compatibility" | "Editor";
 
 export type SaveIssue = {
 	source: SaveIssueSource;
@@ -75,6 +76,15 @@ export type SaveState = {
 	isConverting: boolean;
 };
 
+type MercenaryVariant = {
+	id: number;
+	type: string;
+};
+
+const mercenaryVariantTypes = new Map(
+	(variantsJson as MercenaryVariant[]).map((variant) => [variant.id, variant.type]),
+);
+
 function getBlockingValidationIssues(session: EditorSession): ValidationIssue[] {
 	return session.validationReport.issues.filter((issue) => issue.blocking);
 }
@@ -91,6 +101,39 @@ function getBlockingValidationMessages(session: EditorSession): string[] {
 
 function getBlockingCompatibilityMessages(session: EditorSession): string[] {
 	return getBlockingCompatibilityIssues(session).map((issue) => getCompatibilityMessage(issue));
+}
+
+function getEditorIssues(session: EditorSession): SaveIssue[] {
+	const issues: SaveIssue[] = [];
+
+	if (session.save.character.className !== session.baselineSave.character.className) {
+		issues.push({
+			source: "Editor",
+			blocking: false,
+			message: `Class changed from ${session.baselineSave.character.className} to ${session.save.character.className}. Equipped items may no longer be valid.`,
+		});
+	}
+
+	const baselineMercenary = session.baselineSave.character.mercenary;
+	const currentMercenary = session.save.character.mercenary;
+	if (baselineMercenary.id !== 0 && currentMercenary.id !== 0) {
+		const baselineMercenaryType = mercenaryVariantTypes.get(baselineMercenary.variantId) ?? null;
+		const currentMercenaryType = mercenaryVariantTypes.get(currentMercenary.variantId) ?? null;
+
+		if (
+			baselineMercenaryType != null &&
+			currentMercenaryType != null &&
+			baselineMercenaryType !== currentMercenaryType
+		) {
+			issues.push({
+				source: "Editor",
+				blocking: false,
+				message: `Mercenary type changed from ${baselineMercenaryType} to ${currentMercenaryType}. Mercenary equipment may no longer be valid.`,
+			});
+		}
+	}
+
+	return issues;
 }
 
 export function getLayoutVersion(version: number): SaveLayoutVersion | null {
@@ -183,7 +226,11 @@ export function getCompatibilityMessage(issue: CompatibilityIssue): string {
 			return "Druid and Assassin require Expansion or Reign of the Warlock mode.";
 		case "UnknownClassRequiresKnownTarget":
 			return "Unknown classes cannot be safely converted to known target formats.";
+		case "MercenaryHireStateToggleUnsupported":
+			return "Changing mercenary hire state is not supported by this version of halbu.";
 	}
+
+	return issue.code;
 }
 
 export function getSaveDecision(
@@ -313,6 +360,8 @@ export function getSaveState(
 	const hasBlockingCompatibilityIssues = blockingCompatibilityIssues.length > 0;
 	const compatibilityCurrent =
 		session.compatibilityResultsAreCurrent && checkedTargetVersion === targetVersion;
+	const editorIssues = getEditorIssues(session);
+	const hasEditorWarnings = editorIssues.length > 0;
 	const canForceSave =
 		!needsTargetVersion &&
 		(
@@ -357,6 +406,7 @@ export function getSaveState(
 			message: getCompatibilityMessage(issue),
 		});
 	}
+	issues.push(...editorIssues);
 
 	const hasValidationWarnings = validationWarnings.length > 0;
 	const hasCompatibilityIssues = compatibilityIssues.length > 0;
@@ -392,12 +442,12 @@ export function getSaveState(
 		readiness: {
 			label: isSaveBlocked
 				? "Blocked"
-				: hasValidationWarnings || hasConversionWarnings
+				: hasValidationWarnings || hasConversionWarnings || hasEditorWarnings
 					? "Warning"
 					: "Ready",
 			tone: isSaveBlocked
 				? "danger"
-				: hasValidationWarnings || hasConversionWarnings
+				: hasValidationWarnings || hasConversionWarnings || hasEditorWarnings
 					? "warning"
 					: "normal",
 		},

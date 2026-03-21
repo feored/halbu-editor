@@ -1,6 +1,6 @@
 [package]
 name = "halbu-editor"
-version = "0.2.2"
+version = "0.2.3"
 description = "Halbu Editor"
 authors = ["feor"]
 edition = "2021"

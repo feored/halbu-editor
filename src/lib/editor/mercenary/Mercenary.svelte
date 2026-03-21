@@ -42,7 +42,10 @@
 	const save = $derived(session.save);
 	const mercenary = $derived(save.character.mercenary);
 
+	const originalHired = $derived(session.sourceBackendSave.character.mercenary.id !== 0);
 	const hired = $derived(mercenary.id !== 0);
+	const hireStateLocked = $derived(hired === originalHired);
+	const canEditMercenaryId = $derived(hired && originalHired);
 	const variant = $derived(
 		variants.find((current) => current.id === mercenary.variantId) ?? variants[0],
 	);
@@ -54,9 +57,18 @@
 	const nameOptions = $derived(namesByType[variant.type] ?? []);
 	const maxLevel = $derived(clampInteger(save.character.level, MIN_LEVEL, MAX_LEVEL));
 	const level = $derived(clampLevel(levelFromExperience(mercenary.experience, variant.rate)));
+	const hasInactiveMercenaryData = $derived(
+		!hired &&
+			(mercenary.isDead ||
+				mercenary.nameId !== 0 ||
+				mercenary.variantId !== 0 ||
+				mercenary.experience !== 0),
+	);
 
 	let levelEdit = $state(initFieldEdit(""));
 	let experienceEdit = $state(initFieldEdit(""));
+	let showHireStateHelp = $state(false);
+	let showMercenaryIdHelp = $state(false);
 
 	function experienceForLevel(level: number, rate: number): number {
 		return rate * (level + 1) * level * level;
@@ -90,13 +102,25 @@
 		mercenary.nameId = clampInteger(mercenary.nameId, 0, nameOptions.length - 1);
 	}
 
-	function setHired(hired: boolean): void {
-		mercenary.id = hired ? randomId() : 0;
+	function clearInactiveMercenaryData(): void {
+		mercenary.id = 0;
+		mercenary.isDead = false;
+		mercenary.nameId = 0;
+		mercenary.variantId = 0;
+		mercenary.experience = 0;
+	}
 
-		if (!hired) {
-			mercenary.isDead = false;
+	function setHired(nextHired: boolean): void {
+		if (nextHired === hired || nextHired !== originalHired) {
 			return;
 		}
+
+		if (!nextHired) {
+			clearInactiveMercenaryData();
+			return;
+		}
+
+		mercenary.id = randomId();
 
 		if (levelFromExperience(mercenary.experience, variant.rate) < MIN_LEVEL) {
 			mercenary.experience = experienceForLevel(MIN_LEVEL, variant.rate);
@@ -235,6 +259,18 @@
 	$effect(() => {
 		syncFieldFromValue(experienceEdit, String(mercenary.experience));
 	});
+
+	$effect(() => {
+		if (!hireStateLocked) {
+			showHireStateHelp = false;
+		}
+	});
+
+	$effect(() => {
+		if (!canEditMercenaryId) {
+			showMercenaryIdHelp = false;
+		}
+	});
 </script>
 
 <div class="grid max-w-3xl content-start gap-2.5">
@@ -242,17 +278,48 @@
 		<h3 class="editor-card-title mb-1.5">Status</h3>
 
 		<div class="grid gap-1 text-sm">
-			<label class="inline-flex items-center gap-2">
-				<input
-					class="form-check-input mt-0"
-					type="checkbox"
-					id="hired"
-					name="hired"
-					checked={hired}
-					onchange={(event) => setHired((event.currentTarget as HTMLInputElement).checked)}
-				/>
-				<span>Hired</span>
-			</label>
+			<div class="flex flex-wrap items-center gap-2">
+				<label
+					class={`inline-flex items-center gap-2 ${hireStateLocked ? "cursor-not-allowed opacity-65" : ""}`}
+				>
+					<input
+						class="form-check-input mt-0"
+						type="checkbox"
+						id="hired"
+						name="hired"
+						checked={hired}
+						onchange={(event) =>
+							setHired((event.currentTarget as HTMLInputElement).checked)}
+						disabled={hireStateLocked}
+					/>
+					<span class={hireStateLocked ? "font-medium text-halbu-textMuted" : ""}>Hired</span>
+				</label>
+
+				{#if hireStateLocked}
+					<button
+						type="button"
+						class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-halbu-border bg-halbu-panel2 text-2xs font-semibold leading-none text-halbu-textMuted transition hover:bg-halbu-primarySoft hover:text-halbu-text"
+						aria-label={showHireStateHelp
+							? "Hide hired state explanation"
+							: "Show hired state explanation"}
+						aria-expanded={showHireStateHelp}
+						onclick={() => {
+							showHireStateHelp = !showHireStateHelp;
+						}}
+					>
+						?
+					</button>
+				{/if}
+			</div>
+
+			{#if hireStateLocked && showHireStateHelp}
+				<div class="form-text mt-0.5">
+					The hired state can&apos;t be changed for this save. Changing it would require
+					rewriting item data that Halbu currently preserves as-is.
+					You can edit mercenary details after recruiting one in-game, then reopening the
+					save here.
+				</div>
+			{/if}
 
 			<label class="inline-flex items-center gap-2">
 				<input
@@ -272,6 +339,27 @@
 
 		{#if !hired}
 			<div class="form-text mt-1">Mercenary data is inactive until the mercenary is hired.</div>
+		{/if}
+
+		{#if hasInactiveMercenaryData}
+			<div
+				class="mt-2 grid gap-1 rounded-sm border border-halbu-warning bg-halbu-warningSoft px-2 py-1.5 text-sm text-halbu-warning"
+			>
+				<div>
+					This save still has mercenary name, type, or experience data even though no
+					mercenary is hired.
+				</div>
+				<div class="flex items-center gap-2">
+					<button
+						type="button"
+						class="rounded-xs border border-halbu-border bg-halbu-panel2 px-2 py-1 text-xs font-medium text-halbu-text hover:bg-halbu-panel"
+						onclick={clearInactiveMercenaryData}
+					>
+						Clear inactive data
+					</button>
+					<span class="text-xs">Halbu expects those inactive fields to be zero.</span>
+				</div>
+			</div>
 		{/if}
 	</section>
 
@@ -307,19 +395,43 @@
 				</button>
 			</div>
 
-			<label class="form-label mb-0" for="mercenary-id">ID</label>
+			<div class="flex items-center gap-1.5">
+				<label class="form-label mb-0" for="mercenary-id">ID</label>
+				{#if canEditMercenaryId}
+					<button
+						type="button"
+						class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-halbu-border bg-halbu-panel2 text-2xs font-semibold leading-none text-halbu-textMuted transition hover:bg-halbu-primarySoft hover:text-halbu-text"
+						aria-label={showMercenaryIdHelp
+							? "Hide mercenary id explanation"
+							: "Show mercenary id explanation"}
+						aria-expanded={showMercenaryIdHelp}
+						onclick={() => {
+							showMercenaryIdHelp = !showMercenaryIdHelp;
+						}}
+					>
+						?
+					</button>
+				{/if}
+			</div>
 			<input
 				class="form-control"
 				type="number"
 				name="mercenary-id"
 				id="mercenary-id"
-				min="0"
+				min={originalHired ? "1" : "0"}
 				max={U32_MAX}
 				step="1"
 				use:enforceMinMax
 				bind:value={mercenary.id}
-				disabled={!hired}
+				disabled={!canEditMercenaryId}
 			/>
+
+			{#if canEditMercenaryId && showMercenaryIdHelp}
+				<div></div>
+				<div class="form-text mt-0">
+					Mercenary ID stays above 0 because 0 means unhired.
+				</div>
+			{/if}
 		</div>
 	</section>
 

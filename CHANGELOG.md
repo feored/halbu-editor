@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.3
+
+- Updated libhalbu to the latest main branch and synced the editor with the backend changes
+- Added save review warnings for class and mercenary type changes that may affect equipped items
+- Locked hired state for mercenaries and added cleanup for stale inactive mercenary data
+
 ## 0.2.2
 
 - Improved save workflow with clearer warnings

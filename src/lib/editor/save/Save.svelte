@@ -171,7 +171,7 @@
 					class="flex items-center justify-between border-b border-halbu-border bg-halbu-panel px-2 py-1"
 				>
 					<span class="text-sm font-semibold text-halbu-text">Issues</span>
-					<span class="text-xs text-halbu-textMuted">Validation and compatibility</span>
+					<span class="text-xs text-halbu-textMuted">Save review</span>
 				</div>
 				<table class="w-full border-collapse text-sm">
 					<thead>

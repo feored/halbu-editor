@@ -429,6 +429,16 @@ function getSkillChanges(beforeSave: EditorSave, afterSave: EditorSave): Change[
 		const beforeLabel = getSkillLabel(beforeSave, index);
 		const afterLabel = getSkillLabel(afterSave, index);
 
+		if (beforeLabel !== afterLabel && before.points !== after.points) {
+			pushFormattedChange(
+				changes,
+				slotLabel,
+				formatSkillSlot(beforeSave, index, before),
+				formatSkillSlot(afterSave, index, after),
+			);
+			continue;
+		}
+
 		if (beforeLabel !== afterLabel) {
 			pushFormattedChange(changes, slotLabel, beforeLabel, afterLabel);
 		}

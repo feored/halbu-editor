@@ -96,6 +96,7 @@ fn format_id_label(format: FormatId) -> String {
         FormatId::V99 => "V99".to_string(),
         FormatId::V105 => "V105".to_string(),
         FormatId::Unknown(version) => format!("Unknown({version})"),
+        _ => format!("Unknown({})", format.version()),
     }
 }
 

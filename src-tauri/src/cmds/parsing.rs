@@ -55,6 +55,7 @@ fn detect_hardcore_and_last_played(
         FormatId::V99 => (CHARACTER_SECTION_START + 20, CHARACTER_SECTION_START + 32),
         FormatId::V105 => (CHARACTER_SECTION_START + 4, CHARACTER_SECTION_START + 16),
         FormatId::Unknown(_) => return (None, None),
+        _ => return (None, None),
     };
 
     let hardcore = bytes
@@ -85,12 +86,18 @@ pub fn get_character_from_path_with_meta(
         FormatId::V99 => Some(99),
         FormatId::V105 => Some(105),
         FormatId::Unknown(_) => None,
+        _ => None,
     };
     let suggested_target_version = match detected_format {
         FormatId::Unknown(version) => {
             Some(FormatId::fallback_for_unknown_version(version, edition_hint).version())
         }
         FormatId::V99 | FormatId::V105 => match edition_hint {
+            Some(GameEdition::D2RLegacy) => Some(99),
+            Some(GameEdition::RotW) => Some(105),
+            None => None,
+        },
+        _ => match edition_hint {
             Some(GameEdition::D2RLegacy) => Some(99),
             Some(GameEdition::RotW) => Some(105),
             None => None,
