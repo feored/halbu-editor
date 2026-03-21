@@ -15,7 +15,7 @@ A native save editor for **Diablo II: Resurrected**.
 
 ## About
 
-The design goals are: a **fully offline** native editor, graceful handling of mangled saves, compatibility with the latest patches, validation checks to help prevent broken save states, and zero reliance on copyrighted assets (no exocet font or ripped skill icons).
+**Halbu Editor** is a fully offline native editor, focused on graceful handling of mangled saves, compatibility with the latest patches, and validation to help prevent broken save states. It avoids bundling game assets where possible.
 
 Save parsing and writing is handled by [halbu](https://github.com/feored/halbu), the Rust library the editor is built directly on top of.
 
